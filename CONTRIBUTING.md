@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to claude-code-marketplace!
+Thanks for your interest in contributing to agent-plugin-bazaar!
 
 ## Submitting a Plugin
 

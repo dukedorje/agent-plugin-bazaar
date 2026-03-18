@@ -1,4 +1,4 @@
-# claude-code-marketplace
+# agent-plugin-bazaar
 
 A curated marketplace of Claude Code plugins — skills, agents, hooks, and MCP integrations.
 
@@ -7,7 +7,7 @@ A curated marketplace of Claude Code plugins — skills, agents, hooks, and MCP 
 Add this marketplace to Claude Code:
 
 ```
-/plugin marketplace add dukejones/claude-code-marketplace
+/plugin marketplace add dukejones/agent-plugin-bazaar
 ```
 
 Then browse and install plugins:
@@ -19,7 +19,7 @@ Then browse and install plugins:
 Or install directly:
 
 ```
-/plugin install example-skill@claude-code-marketplace
+/plugin install example-skill@agent-plugin-bazaar
 ```
 
 ## Available Plugins
