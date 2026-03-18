@@ -1,0 +1,14 @@
+{
+  "name": "example-skill",
+  "version": "0.1.0",
+  "description": "An example plugin demonstrating skills, agents, and hooks",
+  "author": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "license": "MIT",
+  "keywords": ["example", "template"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks.json"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "claude-code-marketplace",
+  "owner": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "metadata": {
+    "description": "A curated marketplace of Claude Code plugins — skills, agents, hooks, and MCP integrations",
+    "version": "0.1.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "example-skill",
+      "source": "./plugins/example-skill",
+      "description": "An example plugin demonstrating the skill format",
+      "version": "0.1.0",
+      "category": "examples",
+      "keywords": ["example", "template", "starter"],
+      "license": "MIT"
+    }
+  ]
+}

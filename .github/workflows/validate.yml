@@ -1,0 +1,70 @@
+name: Validate Marketplace
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate marketplace.json
+        run: |
+          if [ ! -f .claude-plugin/marketplace.json ]; then
+            echo "ERROR: .claude-plugin/marketplace.json not found"
+            exit 1
+          fi
+          # Validate JSON syntax
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+
+      - name: Validate plugin manifests
+        run: |
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            if [ -f "$manifest" ]; then
+              echo "Validating $manifest..."
+              python3 -m json.tool "$manifest" > /dev/null
+
+              # Check required fields
+              name=$(python3 -c "import json; print(json.load(open('$manifest')).get('name', ''))")
+              if [ -z "$name" ]; then
+                echo "ERROR: $manifest missing 'name' field"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Check plugin READMEs
+        run: |
+          for plugin_dir in plugins/*/; do
+            if [ -d "$plugin_dir" ]; then
+              if [ ! -f "${plugin_dir}README.md" ]; then
+                echo "WARNING: $plugin_dir is missing README.md"
+              fi
+            fi
+          done
+
+      - name: Validate skill frontmatter
+        run: |
+          for skill in plugins/*/skills/*/SKILL.md; do
+            if [ -f "$skill" ]; then
+              echo "Checking $skill..."
+              # Verify frontmatter delimiters exist
+              head -1 "$skill" | grep -q "^---" || {
+                echo "ERROR: $skill missing YAML frontmatter"
+                exit 1
+              }
+            fi
+          done
+
+      - name: Validate hooks JSON
+        run: |
+          for hooks in plugins/*/hooks/hooks.json; do
+            if [ -f "$hooks" ]; then
+              echo "Validating $hooks..."
+              python3 -m json.tool "$hooks" > /dev/null
+            fi
+          done

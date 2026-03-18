@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code local state
+.claude/settings.local.json
+.omc/
+
+# Node (for plugins with MCP servers)
+node_modules/
+package-lock.json
+
+# Python (for plugins with MCP servers)
+__pycache__/
+*.pyc
+.venv/
