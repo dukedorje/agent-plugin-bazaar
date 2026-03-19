@@ -56,8 +56,8 @@ ln -s sprint-{NNN} .omc/sprint-plan/current
 
 ### 2d. Determine Mode
 
-- Sprint 1: defaults to `thorough` (unless `--fast` flag provided)
-- Sprint 2+: defaults to `fast` (unless `--thorough` flag provided)
+- All sprints default to `thorough` mode.
+- Use `--fast` to opt into single-pass mode (no RALPLAN-DR, autonomous steering).
 - Flags always override the default.
 
 ### 2e. Initialize phase-state.json
