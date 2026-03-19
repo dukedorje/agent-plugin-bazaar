@@ -19,14 +19,14 @@ Then browse and install plugins:
 Or install directly:
 
 ```
-/plugin install example-skill@agent-plugin-bazaar
+/plugin install sprint-plan@agent-plugin-bazaar
 ```
 
 ## Available Plugins
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
-| [example-skill](plugins/example-skill/) | Template plugin demonstrating the plugin format | examples |
+| [sprint-plan](plugins/sprint-plan/) | Multi-phase sprint planning workflow with Decision Steering and RALPLAN-DR consensus | productivity |
 
 ## Creating a Plugin
 

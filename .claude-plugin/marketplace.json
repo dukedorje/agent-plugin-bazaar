@@ -11,15 +11,6 @@
   },
   "plugins": [
     {
-      "name": "example-skill",
-      "source": "./plugins/example-skill",
-      "description": "An example plugin demonstrating the skill format",
-      "version": "0.1.0",
-      "category": "examples",
-      "keywords": ["example", "template", "starter"],
-      "license": "MIT"
-    },
-    {
       "name": "sprint-plan",
       "source": "./plugins/sprint-plan",
       "description": "Multi-phase sprint planning workflow with Decision Steering, RALPLAN-DR consensus, and cross-sprint intelligence",
