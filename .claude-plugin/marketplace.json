@@ -14,7 +14,7 @@
       "name": "sprint-plan",
       "source": "./plugins/sprint-plan",
       "description": "Multi-phase sprint planning workflow with Decision Steering, RALPLAN-DR consensus, and cross-sprint intelligence",
-      "version": "0.2.0",
+      "version": "0.2.2",
       "category": "productivity",
       "keywords": ["sprint", "planning", "requirements", "architecture", "stories", "agile", "RALPLAN", "workflow"],
       "license": "MIT"
@@ -23,7 +23,7 @@
       "name": "ultra-research",
       "source": "./plugins/ultra-research",
       "description": "Multi-agent research swarm with tree-structured hypothesis exploration, parallel investigation, and synthesized output with source citations",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "productivity",
       "keywords": ["research", "multi-agent", "hypothesis", "synthesis", "swarm", "deep-research", "analysis"],
       "license": "MIT"
