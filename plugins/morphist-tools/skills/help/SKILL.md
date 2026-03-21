@@ -23,7 +23,7 @@ Display the following usage guide directly to the user. Do NOT run any agents or
                                                            ├─> /reconcile
                                                            └─> /review-fix
 
-  AT ANY TIME:  /status  /ral  /audit-story  /replan  /update-status  /ultraresearch
+  AT ANY TIME:  /status  /ral  /audit-story  /replan  /log  /doc  /update-status  /ultraresearch
 ```
 
 **Typical happy path**: `/prd` -> `/sprint-plan` -> `/sprint-exec` -> `/retro`
@@ -354,7 +354,56 @@ Automatically dispatches `/reconcile --all` for full-sprint code style reconcili
 
 ---
 
-## 14. `/ultraresearch` — Multi-Agent Research Swarm
+## 14. `/log` — Work Log Annotations
+
+**When**: You want to record a decision, discovery, or note. Auto-detects sprint context and enriches entries with epic/story/decision refs.
+
+```
+/log "figured out auth needs refresh tokens"
+/log "SSE requires custom adapter" --story=3.2 --decision=D-005
+/log "decided Zustand over Redux" --tag=state-management --doc
+/log "webhook retry logic" --doc=architecture/webhook-retries
+```
+
+| Flag | Effect |
+|------|--------|
+| `--story=N.M` | Associate with a story |
+| `--epic=N` | Associate with an epic |
+| `--decision=D-NNN` | Reference an architecture decision |
+| `--tag=TAG` | Free-form tag (repeatable) |
+| `--doc` | Also create permanent doc in `docs/` |
+| `--doc=PATH` | Create doc at specific `docs/PATH.md` |
+
+Log file: `.omc/sprint-plan/current/work-log.md` (sprint) or `.omc/work-log.md` (project).
+
+Cross-references entries in story files. Consumed by `/retro` for retrospective context.
+
+---
+
+## 15. `/doc` — Permanent Documentation
+
+**When**: You want to create lasting documentation in `docs/`. Can derive content from sprint artifacts (stories, epics, decisions) or standalone topics.
+
+```
+/doc "authentication flow"                        # From topic
+/doc architecture/auth-flow                       # Explicit path
+/doc api/webhooks --from-story=2.3                # From a story's implementation
+/doc architecture/state --from-decision=D-007     # From a decision
+/doc --from-epic=2                                # Document an entire epic
+```
+
+| Flag | Effect |
+|------|--------|
+| `--from-story=N.M` | Derive from story spec + implementation |
+| `--from-epic=N` | Derive from all stories/decisions in epic |
+| `--from-decision=D-NNN` | Document a specific architecture decision |
+| `--update` | Update existing doc instead of creating new |
+
+Docs are standalone — readable without sprint artifacts. Cross-references logged in the work log.
+
+---
+
+## 16. `/ultraresearch` — Multi-Agent Research Swarm
 
 **When**: You have a question that needs broad exploration, multiple perspectives, or deep investigation. Standalone — not part of the sprint lifecycle.
 
@@ -387,5 +436,7 @@ Automatically dispatches `/reconcile --all` for full-sprint code style reconcili
 | "Review says there are issues" | `/review-fix` |
 | "Where am I? What phase is this?" | `/status` |
 | "I did manual work, update the status" | `/update-status --story=N.M --status=done` |
+| "I want to note why I made this choice" | `/log "reason" --story=N.M` |
+| "Document this for future devs" | `/doc topic --from-story=N.M` or `/log "note" --doc` |
 | "Sprint is done, what did we learn?" | `/retro` |
 | "I need to research a technical question" | `/ultraresearch "question"` |

@@ -94,4 +94,6 @@ This loads the plugin from source. The local copy takes precedence over any inst
 | `replan` | Scoped mid-sprint replanning for broken assumptions |
 | `verify` | Quick independent epic completion check (auto-runs between epics) |
 | `audit-story` | Validate story completion, gap analysis, work plans (--tdd for test gates) |
+| `log` | Work log annotations with auto-detected sprint/epic/story context |
+| `doc` | Create permanent documentation in docs/ from sprint artifacts or topics |
 | `help` | Sprint-plan usage guide |
