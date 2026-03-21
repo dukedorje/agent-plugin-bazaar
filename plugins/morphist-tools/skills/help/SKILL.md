@@ -88,7 +88,21 @@ After each epic completes, a background code review is dispatched to `.omc/sprin
 
 Review epic implementations manually at any time: `/sprint-review --epic=N` or `/sprint-review --all`.
 
-Reconcile code style across parallel agent work: `/reconcile --epic=N` or `/reconcile --all`. Auto-runs during reviews and retro.
+Reconcile code style across parallel agent work: `/reconcile --epic=N` or `/reconcile --all`. Auto-runs during reviews and retro. Propagate ADR changes to dependent stories: `/reconcile --decisions`.
+
+Validate and fix review findings: `/review-fix path/to/review.md` or just `/review-fix` to pick from recent reviews. Use `--dry-run` to preview.
+
+View and update epic/story statuses: `/update-status --show` (dashboard with decision graph), `/update-status --sync` (recalculate from stories), `/update-status --epic=N --status=done`, `/update-status --story=N.M --status=done`.
+
+### Pre-Execution Preparation
+
+Deep dive into an epic before execution: `/epic-prep --epic=N`. Interactive session for enriching stories, revising decisions, and drilling into specifics. Drill into a specific story: `/epic-prep --story=3.2`. View the decision graph: `/epic-prep --graph`. If ADRs were revised, suggests `/reconcile --decisions` to propagate.
+
+### Quality & Course Correction
+
+Audit story completion — verify ACs are met, find gaps, generate work plans: `/audit-story --story=N.M`, `/audit-story --epic=N`, `/audit-story --all`. Check against new context: `/audit-story --all --context="switched from Eden Treaty to ky"`. Use `--tdd` to generate failing tests as validation gates: `/audit-story --story=3.2 --tdd`.
+
+Mid-sprint replanning when an assumption breaks: `/replan --story=3.2 --reason="Eden Treaty doesn't support SSE"`, `/replan --decision=D-005`. Updates architecture decisions, propagates to affected story specs, resets stories for re-execution.
 
 ### After Implementation
 

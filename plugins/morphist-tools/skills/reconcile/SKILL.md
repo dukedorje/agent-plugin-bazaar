@@ -23,6 +23,7 @@ Parse `$ARGUMENTS`:
 |------|---------|----------|
 | `--epic=N` | none | Reconcile within a specific epic's stories |
 | `--all` | off | Full-sprint reconciliation across all epics |
+| `--decisions` | off | Propagate ADR changes to dependent story specs (reads decision graph). Use after `/epic-prep` revises ADRs. |
 | `--auto` | off | Auto-resolve all inconsistencies without elicitation (use majority-wins rule) |
 
 If no flag is provided, reconcile the most recently completed epic (same logic as `/sprint-review`).
@@ -283,7 +284,114 @@ Write the reconciliation report to `.omc/sprint-plan/current/reviews/reconciliat
 
 ---
 
-## 7. Integration Points
+## 7. Decision Propagation (`--decisions`)
+
+When `--decisions` is specified, reconcile operates in a different mode: instead of scanning code for style inconsistencies, it propagates ADR changes to dependent story specs.
+
+### 7a. Read Decision Graph
+
+Read `.omc/sprint-plan/current/decision-graph.md` to identify which stories depend on which ADRs.
+
+If the graph doesn't exist, halt:
+```
+No decision graph found. Run /epic-prep to build one, or create it manually at current/decision-graph.md.
+```
+
+### 7b. Detect Changed ADRs
+
+Read `architecture-decisions.md` and look for decisions with a `## Revision History` entry newer than the last reconciliation (or since sprint start if no prior reconciliation).
+
+If no recent revisions found:
+```
+No ADR revisions detected since last reconciliation. Nothing to propagate.
+```
+
+### 7c. Find Affected Stories
+
+For each revised ADR, look up its dependents in the decision graph. Filter to stories NOT in the epic where the change was made (those were already updated during `/epic-prep`).
+
+### 7d. Propagate to Story Specs
+
+For each affected story, dispatch an executor agent to update the story spec:
+
+```python
+Agent(
+    subagent_type="oh-my-claudecode:executor",
+    model="sonnet",
+    prompt="""
+You are updating a story specification due to an architecture decision revision.
+
+## Revised Decision
+Decision D-{NNN} has been updated:
+
+### Before
+{old_decision_summary}
+
+### After
+{new_decision_summary}
+
+### Migration Notes
+{migration_notes_from_revision_history}
+
+## Story to Update
+{story_file_content}
+
+## Task
+Update this story file to reflect the revised decision:
+
+1. Update `## Architecture Compliance` section for the revised decision
+2. Update acceptance criteria that reference the old approach
+3. Update `## Technical Notes` or implementation guidance
+4. Add or update `## Prep Notes` with a note about the decision change:
+   - Date: {date}
+   - Decision revised: D-{NNN}
+   - What changed in this story's spec
+5. Do NOT modify the Dev Agent Record (if present)
+6. Do NOT change the story number, title, or epic assignment
+
+Return the complete updated story file.
+""",
+)
+```
+
+### 7e. Update Story Status
+
+For affected stories with status `done`:
+- Change status to `ready-for-dev` (needs re-implementation with the new decision)
+- Add `replan_reason: "D-{NNN} revised during epic-prep for Epic {X}"`
+- Preserve existing Dev Agent Record
+
+For affected stories with status `ready-for-dev`:
+- Just update the spec, keep status
+
+### 7f. Decision Propagation Report
+
+```
+═══════════════════════════════════════════════════
+  DECISION PROPAGATION COMPLETE
+═══════════════════════════════════════════════════
+
+  ADRs propagated:     {count}
+  Stories updated:     {count}
+  Stories reset:       {count} (done → ready-for-dev)
+
+  Changes:
+    D-{NNN}: {title}
+      → Story {N.M}: spec updated
+      → Story {N.M}: spec updated, reset to ready-for-dev
+
+  Re-run affected stories:
+    /sprint-exec --story={N.M}
+═══════════════════════════════════════════════════
+```
+
+---
+
+## 8. Integration Points
+
+### From `/epic-prep` (decision propagation)
+
+After `/epic-prep` revises ADRs, it suggests `/reconcile --decisions`. This propagates the decision changes to story specs in other epics that depend on the same ADRs (via the decision graph). The epic-prep skill handles updating stories within its own epic.
 
 ### From `/sprint-review` (per-epic)
 

@@ -17,15 +17,17 @@ validate.sh                       # Pre-flight validation script
 
 ## Pre-Push Checklist
 
-Before pushing any update, ALWAYS:
+Before pushing to the GitHub remote, ALWAYS:
 
-1. Bump the version (default to **patch** — see below)
-2. Run `./validate.sh`
+1. Bump the version intelligently (see below), commit the bump, then push
+2. Run `./validate.sh` before the version bump commit
 3. Fix all errors before pushing
+
+**Do NOT bump the version on every change or every commit.** Only bump when pushing to the remote.
 
 ## Version Bumping
 
-When making changes, bump the plugin version. Default to a **patch** bump unless the change warrants more:
+Bump the plugin version **only when pushing to the remote**. Assess all commits being pushed since the last version bump to determine the appropriate bump level:
 
 - **Patch** (1.0.0 → 1.0.1): Bug fixes, wording changes, small adjustments
 - **Minor** (1.0.1 → 1.1.0): New skills, new agents, significant feature additions
@@ -35,7 +37,7 @@ Update the version in **both** files:
 1. `plugins/morphist-tools/.claude-plugin/plugin.json`
 2. `.claude-plugin/marketplace.json`
 
-Then run `./validate.sh` to confirm they match.
+Then run `./validate.sh` to confirm they match. Commit the version bump separately, then push.
 
 ## Validation
 
@@ -85,4 +87,9 @@ This loads the plugin from source. The local copy takes precedence over any inst
 | `ultraresearch` | Multi-agent research swarm |
 | `sprint-review` | Review epic implementations against specs and architecture |
 | `reconcile` | Cross-story/epic code style reconciliation |
+| `epic-prep` | Pre-execution deep dive: enrich stories, revise decisions, decision graph |
+| `review-fix` | Validate and fix issues from reviews and reconciliation |
+| `update-status` | Manually view/update epic and story statuses |
+| `replan` | Scoped mid-sprint replanning for broken assumptions |
+| `audit-story` | Validate story completion, gap analysis, work plans (--tdd for test gates) |
 | `help` | Sprint-plan usage guide |

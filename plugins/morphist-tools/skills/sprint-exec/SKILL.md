@@ -66,7 +66,17 @@ If `execution_status` already exists in `phase-state.json`:
   This sprint has already been fully executed (execution_status: complete).
   Use --story=N.M to re-run a specific story, or confirm to re-run all.
   ```
-- If `"in-progress"`: Resume from where execution left off — skip stories already in `execution_log` with status `done`.
+- If `"in-progress"`: Resume from where execution left off — skip stories already in `execution_log` with status `done`. Also check `epic_status` to skip epics already marked `"done"`.
+- If `"halted"`: Inform the user that execution was previously halted for replanning:
+  ```
+  Sprint execution was halted for replanning.
+  Reason: {halt_reason from phase-state.json}
+  Halted at: {halted_at from phase-state.json}
+
+  Resume execution? Stories/epics already marked done will be skipped.
+  Use --story=N.M to re-run a specific story, or confirm to resume all remaining.
+  ```
+  Wait for user confirmation. Then resume using the same logic as `"in-progress"` — skip stories already in `execution_log` with status `done`, and skip epics already marked `"done"` in `epic_status`.
 
 ### 1e. Update Phase State
 
@@ -79,9 +89,12 @@ Update `phase-state.json` by adding or updating these sibling fields alongside `
   "current_phase": "validation",
   "stale_phases": [],
   "execution_status": "in-progress",
-  "execution_log": []
+  "execution_log": [],
+  "epic_status": {}
 }
 ```
+
+The `epic_status` object tracks per-epic completion state. Keys are epic numbers (as strings), values are `"pending"` | `"in-progress"` | `"done"` | `"partial"` | `"failed"`. Initialize all epics (in scope) to `"pending"`. Preserve existing `epic_status` if resuming.
 
 Preserve the existing `execution_log` array if resuming a partial execution.
 
@@ -158,7 +171,14 @@ Within the filtered set, apply status filtering:
 
 Process epics SEQUENTIALLY. Within each epic, dispatch eligible stories in PARALLEL, respecting `--concurrency=N` if set. When concurrency is limited, dispatch up to N stories at once, and as each completes, dispatch the next eligible story until all stories in the epic are done.
 
-### 4a. Pre-Dispatch: Update Story Status
+### 4a. Pre-Epic: Update Epic Status
+
+Before processing any stories in an epic:
+
+1. Update `epic_status` in `phase-state.json`: set epic N to `"in-progress"`
+2. Update `epics.md`: add or update a `Status: in-progress` line under the `## Epic N` heading (insert after the `### Goal` section if not present)
+
+### 4b. Pre-Dispatch: Update Story Status
 
 Before dispatching an executor for a story:
 
@@ -168,7 +188,7 @@ Before dispatching an executor for a story:
    - `started_at: {ISO 8601 timestamp}`
 3. Write the updated story file back
 
-### 4b. Dispatch Story Executors (Parallel Within Epic)
+### 4c. Dispatch Story Executors (Parallel Within Epic)
 
 For each story in the current epic (all in parallel via simultaneous Agent calls):
 
@@ -195,13 +215,27 @@ Instructions:
    - Agent Model Used
    - Completion Notes (what you did)
    - Any problems encountered
+   - Blocker Type (if you could NOT complete the story, classify why):
+     - `none` — completed successfully
+     - `coding` — normal bug or implementation difficulty (retry-able)
+     - `library_incompatible` — a specified library/framework does not support the required use case
+     - `architecture_mismatch` — an architecture decision doesn't hold in practice
+     - `dependency_missing` — depends on something that doesn't exist or isn't ready yet
+     - `spec_unclear` — the story spec is ambiguous or contradictory
+   - Blocker Detail (if Blocker Type is not `none`): 1-2 sentences explaining what specifically doesn't work and why
    - Files created or modified (File List)
 5. Do not modify any section of the story file above the Dev Agent Record.
+6. IMPORTANT: If you encounter a fundamental blocker (library doesn't work, architecture assumption is wrong),
+   do NOT silently work around it or deliver a partial solution. Set the Blocker Type and Detail clearly
+   so the orchestrator can surface it for a human decision.
+7. If the story frontmatter contains a `tdd_tests` field, run those tests after implementation.
+   All listed tests must pass before the story is considered done. Do not delete or weaken tests.
+   Report test results in the Completion Notes.
 """,
 )
 ```
 
-### 4c. Post-Completion: Update Story Status
+### 4d. Post-Completion: Update Story Status
 
 **IMPORTANT**: Update story status **immediately** as each individual agent returns — do NOT batch updates until the end of the epic. This ensures that if the session is interrupted mid-epic, completed stories are already persisted as `done` and won't be re-executed on resume.
 
@@ -221,32 +255,41 @@ As each story executor completes (regardless of whether other stories in the epi
       - Add to Completion Notes: `"VALIDATION FAILED: Dev Agent Record lists files that do not exist"`
    d. Check that acceptance criteria have corresponding implementation:
       - Count the tasks/subtasks in the story — if all checkboxes are unchecked AND no files were modified, this is a false completion
-4. Determine final outcome:
+4. Extract blocker classification from the Dev Agent Record:
+   - Read the `Blocker Type` field (default to `"none"` if not present or if story succeeded)
+   - Read the `Blocker Detail` field (if present)
+   - Architectural blockers are: `library_incompatible`, `architecture_mismatch`, `dependency_missing`
+5. Determine final outcome:
    - If executor reported failure or threw an error: outcome = `failed`
    - If done-validation gate failed (step 3): outcome = `failed`
+   - If blocker_type is an architectural blocker (`library_incompatible`, `architecture_mismatch`, `dependency_missing`): outcome = `blocked`
+     (The story cannot proceed due to external factors, not agent failure. This is distinct from `failed` which indicates the agent didn't complete its work.)
    - Otherwise: outcome = `done`
-5. Update story frontmatter:
-   - `status: {done|failed}`
+6. Update story frontmatter:
+   - `status: {done|failed|blocked}`
    - `completed_at: {ISO 8601 timestamp}`
    - If validation failed: `validation_failure: {reason from step 3}`
-6. Write the updated story file back **immediately**
-7. Append to `execution_log` in `phase-state.json` **immediately** (read-modify-write):
+   - If blocker_type is not `none`: `blocker_type: {value}`, `blocker_detail: {detail}`
+7. Write the updated story file back **immediately**
+8. Append to `execution_log` in `phase-state.json` **immediately** (read-modify-write):
    ```json
    {
      "story": "N.M",
-     "status": "done|failed",
+     "status": "done|failed|blocked",
      "started_at": "...",
      "completed_at": "...",
-     "validation_failure": null | "zero files created" | "listed files do not exist"
+     "validation_failure": null | "zero files created" | "listed files do not exist",
+     "blocker_type": "none|coding|library_incompatible|architecture_mismatch|dependency_missing|spec_unclear",
+     "blocker_detail": null | "Eden Treaty does not support streaming responses for SSE endpoints"
    }
    ```
-8. Update `stories_completed` count in `phase-state.json`
+9. Update `stories_completed` count in `phase-state.json`
 
 Each story's status must be persisted to disk before processing the next agent result. This is the source of truth for resume (section 1d) and for `/sprint-review` to know which stories are reviewable.
 
 Stories that fail done-validation are treated identically to executor failures — they appear in the epic progress report as failed and can be retried with `/sprint-exec --story=N.M`.
 
-### 4d. Handle Failures Within an Epic
+### 4e. Handle Failures Within an Epic
 
 If an executor fails on a story:
 - Mark `status: failed` on the story frontmatter
@@ -267,13 +310,107 @@ If ALL stories in an epic fail:
   ```
   Wait for user input.
 
-### 4e. Epic Progress Report
+### 4f. Post-Epic: Update Epic Status
+
+After all stories in an epic have completed (or been skipped), determine and persist the epic's status:
+
+1. Determine epic outcome:
+   - If all stories are `done` (or `done` + skipped-as-already-done): epic status = `"done"`
+   - If some stories are `done` and some `failed`: epic status = `"partial"`
+   - If all stories `failed`: epic status = `"failed"`
+   - If all stories were skipped (blocked or already done): epic status = `"done"`
+2. Update `epic_status` in `phase-state.json`: set epic N to the determined status
+3. Update `epics.md`: set `Status: {done|partial|failed}` under the `## Epic N` heading
+
+This must happen **before** the progress report so that the persisted state is accurate if the session is interrupted.
+
+### 4g. Blocker Triage (elicitation gate)
+
+After updating epic status, check whether any failed stories in this epic have architectural blockers — i.e., `blocker_type` is `library_incompatible`, `architecture_mismatch`, or `dependency_missing`.
+
+If there are **no architectural blockers**, skip to 4h (Epic Progress Report).
+
+If there **are** architectural blockers, this is a **blocking elicitation** — do NOT proceed to the next epic until the user responds.
+
+#### Step 1: Impact Analysis
+
+For each architectural blocker, scan upcoming epics and stories for potential impact:
+- Search remaining story files for references to the same library, API, or architecture decision
+- Check epic dependency chains in `epics.md`
+- Build a list of potentially affected stories
+
+#### Step 2: Present Blocker Elicitation
+
+```
+══════════════════════════════════════════════════════
+  ⚠ ARCHITECTURE BLOCKER — Decision Required
+══════════════════════════════════════════════════════
+
+  Story {N.M} ({story_title}) — {blocker_type}:
+  {blocker_detail}
+
+  {if multiple blockers in same epic}
+  Also blocked:
+    Story {N.X}: {blocker_type} — {blocker_detail}
+  {/if}
+
+  Potentially affected stories in upcoming epics:
+    {list stories that reference the same library/decision/dependency}
+    {or "None identified" if no downstream impact found}
+
+  ──────────────────────────────────────────────────
+  Options:
+
+  1. Swap approach — Specify an alternative (e.g., different library,
+     different pattern) and re-run affected stories with the new approach
+  2. Update architecture decision — Revise the relevant decision in
+     architecture-decisions.md, then re-run affected stories
+  3. Accept partial — Continue to Epic {N+1} as-is, address later
+  4. Halt sprint — Stop execution for replanning
+
+  Which approach? (If option 1 or 2, describe the alternative)
+══════════════════════════════════════════════════════
+```
+
+Wait for user input.
+
+#### Step 3: Act on Decision
+
+Based on user response:
+
+- **Option 1 (Swap approach)**: Record the user's alternative in the story's `blocker_detail` field as a resolution note. When the user later retries with `/sprint-exec --story=N.M`, the retry prompt (section 5) will include this context. Also update any affected stories in upcoming epics: append a note to their story file under a `## Blocker Resolution` heading (before the Dev Agent Record) so the executor knows about the change.
+
+- **Option 2 (Update architecture)**: Read the relevant architecture decision from `current/architecture-decisions.md`. Present the current decision text and ask the user to confirm the revision. Update the decision in the file. Then apply the same story annotation as option 1.
+
+- **Option 3 (Accept partial)**: Log the decision and continue. Add to `execution_log`:
+  ```json
+  {
+    "type": "blocker_accepted",
+    "story": "N.M",
+    "blocker_type": "...",
+    "decision": "accepted_partial",
+    "rationale": "{user's explanation if provided}"
+  }
+  ```
+
+- **Option 4 (Halt)**: Update `phase-state.json`:
+  - Set `execution_status` to `"halted"`
+  - Set `halted_at` to the current ISO 8601 timestamp
+  - Set `halt_reason` to a brief summary of the blocker(s) that triggered the halt (e.g., `"Eden Treaty does not support SSE — stories 3.2, 4.1 affected"`)
+  - Set `halt_blocker_stories` to an array of story IDs that triggered the halt (e.g., `["3.2", "4.1"]`)
+
+  Print instructions for resuming after replanning. Stop execution.
+
+After processing all architectural blockers for the epic, continue to 4h.
+
+### 4h. Epic Progress Report
 
 After all stories in an epic complete (or are skipped), output a prominent report:
 
 ```
 ═══════════════════════════════════════════════════
   EPIC {N} COMPLETE: {epic_title}
+  Status: {done|partial|failed}
 ═══════════════════════════════════════════════════
 
   Stories:  {done_count}/{total_count} done
@@ -295,7 +432,7 @@ After all stories in an epic complete (or are skipped), output a prominent repor
 ═══════════════════════════════════════════════════
 ```
 
-### 4f. Background Code Review (optional)
+### 4i. Background Code Review (optional)
 
 After reporting epic completion, dispatch the `sprint-review` skill in the background to review the epic's work while the next epic starts executing. This is non-blocking — execution continues immediately.
 
@@ -305,7 +442,7 @@ This is equivalent to running `/sprint-review --epic={N}` in the background. Use
 
 Review results accumulate in `current/reviews/` and are available for the user to check at any time. They do NOT block execution. The user can also run `/sprint-review` manually at any point.
 
-### 4g. Notification (optional)
+### 4j. Notification (optional)
 
 If OMC notification tools are configured (via `/configure-notifications`), send a notification on epic completion. This is non-blocking — skip gracefully if notifications are not set up.
 
@@ -352,8 +489,12 @@ Instructions:
    - Agent Model Used
    - Completion Notes (what you did and how you resolved any previous issues)
    - Any problems encountered
+   - Blocker Type: `none` | `coding` | `library_incompatible` | `architecture_mismatch` | `dependency_missing` | `spec_unclear`
+   - Blocker Detail: (if Blocker Type is not `none`) what specifically doesn't work and why
    - Files created or modified (File List)
-5. Do not modify any section of the story file above the Dev Agent Record.
+5. Do not modify any section of the story file above the Dev Agent Record (except the Blocker Resolution section if present).
+6. If a "Blocker Resolution" section exists in the story, read it carefully — it contains
+   guidance from the user about an alternative approach to use instead of the original spec.
 """,
 )
 ```
