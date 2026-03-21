@@ -14,15 +14,16 @@ Display the following usage guide directly to the user. Do NOT run any agents or
 ## Lifecycle at a Glance
 
 ```
-  PLAN                PREPARE           EXECUTE           REVIEW            CLOSE
-  ────                ───────           ───────           ──────            ─────
-  /prd           ──>  /sprint-plan ──>  /epic-prep  ──>  /sprint-exec ──>  /sprint-review
-                                        (optional)        (per epic)        (auto or manual)
-                                                                    ──>  /reconcile
-                                                                    ──>  /review-fix
-                                                                    ──>  /retro
+  PLAN                PREPARE           EXECUTE            VERIFY & REVIEW       CLOSE
+  ────                ───────           ───────            ───────────────       ─────
+  /prd           ──>  /sprint-plan ──>  /epic-prep   ──>  /sprint-exec    ──>  /retro
+                                        (optional)         │ (per epic)
+                                                           ├─> /verify         (auto, inline)
+                                                           ├─> /sprint-review  (auto, background)
+                                                           ├─> /reconcile
+                                                           └─> /review-fix
 
-  AT ANY TIME:  /ral  /audit-story  /replan  /update-status  /ultraresearch
+  AT ANY TIME:  /status  /ral  /audit-story  /replan  /update-status  /ultraresearch
 ```
 
 **Typical happy path**: `/prd` -> `/sprint-plan` -> `/sprint-exec` -> `/retro`
@@ -150,7 +151,7 @@ Interactive session. If ADRs are revised during prep, suggests `/reconcile --dec
 - **Default is incremental**: just the next epic, so you stay in control
 - `--full-auto` runs everything and auto-accepts partial failures / blockers
 - Epics run sequentially, stories within an epic run in parallel
-- After each epic, a background `/sprint-review` is dispatched automatically
+- After each epic: `/verify` runs inline (gate), then `/sprint-review` in background
 - Resume-safe: re-running skips already-done stories
 - Failed stories can be retried individually with `--story=N.M` (upgrades to opus)
 
@@ -380,7 +381,8 @@ Automatically dispatches `/reconcile --all` for full-sprint code style reconcili
 | "This epic is complex, let me prepare" | `/epic-prep --epic=N` |
 | "The architecture phase feels weak" | `/ral architecture` |
 | "A library we chose doesn't work" | `/replan --decision=D-NNN --reason="..."` |
-| "Is this story actually done?" | `/audit-story --story=N.M` |
+| "Quick check — did this epic actually get built?" | `/verify --epic=N` |
+| "Is this story actually done? (deep)" | `/audit-story --story=N.M` |
 | "The agents used different naming styles" | `/reconcile --epic=N` or `--all` |
 | "Review says there are issues" | `/review-fix` |
 | "Where am I? What phase is this?" | `/status` |
