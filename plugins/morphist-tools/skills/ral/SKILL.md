@@ -1,8 +1,8 @@
 ---
 name: ral
-description: On-demand RALPLAN-DR refinement pass for any sprint-plan phase output. Triggers Planner→Architect→Critic consensus on a specific phase artifact.
+description: On-demand RALPLAN-DR refinement pass for any sprint-plan phase output. Triggers Planner→Architect→Critic consensus on a phase artifact, with optional --epic=N or --story=N.M scoping.
 user-invocable: true
-argument-hint: "<phase> [--force]"
+argument-hint: "<phase> [--epic=N] [--story=N.M] [--force]"
 ---
 
 # RAL: Refinement at Level
@@ -16,16 +16,29 @@ You are the `ral` skill for the sprint-plan plugin. You trigger a RALPLAN-DR con
 Parse `$ARGUMENTS` for:
 
 1. **Phase name** (required): First positional argument. Valid values: `requirements`, `architecture`, `epics`, `stories`, `enrichment`, `prd`, `retro`
-2. **`--force` flag** (optional): Bypasses the 2-pass limit on ral invocations
+2. **`--epic=N`** (optional): Scope refinement to a specific epic. Valid for phases: `epics`, `stories`, `enrichment`
+3. **`--story=N.M`** (optional): Scope refinement to a specific story. Valid for phase: `enrichment` only. When provided, `--epic` is inferred from N.
+4. **`--force` flag** (optional): Bypasses the 2-pass limit on ral invocations
+
+**Scope validation**:
+- `--epic` is only valid for `epics`, `stories`, and `enrichment` phases. If used with other phases, respond: `--epic is not supported for the "{phase}" phase.`
+- `--story` is only valid for `enrichment`. If used with other phases, respond: `--story is not supported for the "{phase}" phase. Use --epic=N to scope epics or stories phases.`
+- `--epic` and `--story` are mutually exclusive. If both are provided, `--story` wins and `--epic` is inferred.
 
 If no phase is provided, respond:
 ```
-Usage: ral <phase> [--force]
+Usage: ral <phase> [--epic=N] [--story=N.M] [--force]
 
 Valid phases: requirements, architecture, epics, stories, enrichment, prd, retro
 
+Scoping:
+  --epic=N      Refine only epic N (epics, stories, enrichment phases)
+  --story=N.M   Refine only story N.M (enrichment phase only)
+
 Examples:
   ral architecture
+  ral epics --epic=2
+  ral enrichment --story=3.1
   ral prd
   ral retro
 ```
@@ -64,11 +77,16 @@ Phase "{phase}" has not been completed yet. Complete this phase first before ref
 
 ## 3. Check RAL Pass Limit
 
-Read `ral_passes[phase]` from `phase-state.json`.
+Read `ral_passes` from `phase-state.json`.
 
-If `ral_passes[phase] >= 2` AND the `--force` flag is NOT present, respond:
+**Pass tracking key**: When a scope flag is used, track passes with a scoped key instead of the bare phase name:
+- `--epic=N` → key is `{phase}:epic-{N}` (e.g., `epics:epic-2`)
+- `--story=N.M` → key is `enrichment:story-{N.M}` (e.g., `enrichment:story-3.1`)
+- No scope → key is `{phase}` (unchanged from current behavior)
+
+Look up `ral_passes[key]`. If `ral_passes[key] >= 2` AND the `--force` flag is NOT present, respond:
 ```
-This phase has been refined 2 times. Further refinement has diminishing returns. Proceed to the next phase, or override with `ral --force {phase}`.
+This {scope description} has been refined 2 times. Further refinement has diminishing returns. Proceed to the next phase, or override with `ral --force {phase}`.
 ```
 
 If `--force` is present, proceed regardless of the count.
@@ -91,7 +109,33 @@ Load ONLY the artifact file for the specified phase. Do not rely on memory of pr
 | enrichment | All files in `.omc/sprint-plan/current/stories/` |
 | retro | `.omc/sprint-plan/current/retrospective.md` |
 
-If the artifact file does not exist, respond:
+### Scoped artifact loading
+
+When `--epic=N` or `--story=N.M` is provided, load only the relevant portion of the artifact:
+
+**`epics` phase with `--epic=N`**:
+- Load `.omc/sprint-plan/current/epics.md`
+- Extract only the `## Epic N: ...` section (from the `## Epic N` heading up to but not including the next `## Epic` heading or end of file)
+- Pass this extracted section as the artifact content to the agents
+
+**`stories` phase with `--epic=N`**:
+- Load `.omc/sprint-plan/current/epics.md`
+- Extract only the `## Epic N: ...` section (same extraction as above — story details are nested within epic sections)
+
+**`enrichment` phase with `--epic=N`**:
+- Load only story files matching `E{N}-S*.md` from `.omc/sprint-plan/current/stories/`
+- Concatenate them with `---` separators between files, preserving filenames as headers
+
+**`enrichment` phase with `--story=N.M`**:
+- Load only `.omc/sprint-plan/current/stories/E{N}-S{M}.md`
+- This is the sole artifact content
+
+If the scoped artifact cannot be found (e.g., no `## Epic 3` heading exists, or `E2-S1.md` doesn't exist), respond:
+```
+Could not find {scope description} in the artifact. Check that the epic/story number is correct.
+```
+
+If the artifact file itself does not exist, respond:
 ```
 Artifact file for phase "{phase}" not found at expected path. The phase may not have produced output yet.
 ```
@@ -100,7 +144,11 @@ Artifact file for phase "{phase}" not found at expected path. The phase may not 
 
 ## 5. Run RALPLAN-DR Consensus
 
-Run three sequential agent passes. Each agent receives the full artifact content and the outputs from previous agents in the chain.
+Run three sequential agent passes. Each agent receives the artifact content (full or scoped) and the outputs from previous agents in the chain.
+
+When a scope is active, include a scope line in each agent prompt so the agents understand they are reviewing a subset:
+- `Scope: Epic {N}` or `Scope: Story {N.M}`
+- If no scope: omit the scope line
 
 ### 5a. Planner Pass
 
@@ -110,12 +158,13 @@ Dispatch to `planner` (opus):
 You are reviewing a sprint planning artifact for quality improvements.
 
 Phase: {phase}
+{if scoped}Scope: {scope_description}{/if}
 Artifact:
 ---
 {artifact_content}
 ---
 
-Review this {phase} artifact. Identify weaknesses, gaps, inconsistencies, or quality issues. Propose specific improvements with rationale for each. Focus on substance over style.
+Review this {phase} artifact{if scoped} (scoped to {scope_description}){/if}. Identify weaknesses, gaps, inconsistencies, or quality issues. Propose specific improvements with rationale for each. Focus on substance over style.
 
 For each proposed improvement, provide:
 - What to change (be specific — quote or reference the exact section)
@@ -133,6 +182,7 @@ Dispatch to `architect` (opus), passing the artifact content AND the planner's p
 You are adversarially reviewing proposed improvements to a sprint planning artifact.
 
 Phase: {phase}
+{if scoped}Scope: {scope_description}{/if}
 Original Artifact:
 ---
 {artifact_content}
@@ -162,6 +212,7 @@ Dispatch to `critic` (opus), passing the artifact, planner improvements, AND arc
 You are the final arbiter determining which changes should be applied to a sprint planning artifact.
 
 Phase: {phase}
+{if scoped}Scope: {scope_description}{/if}
 Original Artifact:
 ---
 {artifact_content}
@@ -196,9 +247,13 @@ If there are no APPLY or MODIFY changes, state: "No changes recommended. The art
 
 ### If consensus is clear (critic produced APPLY or MODIFY verdicts):
 
-Apply all APPLY and MODIFY changes to the artifact file. Rewrite the artifact with the changes integrated. Do not change sections that were not targeted by the consensus.
+Apply all APPLY and MODIFY changes to the artifact. Do not change sections that were not targeted by the consensus.
 
-Write the updated artifact back to the same path it was loaded from.
+**Scoped write-back**: When a scope was used, write changes back to the correct location:
+- **`--epic=N` on `epics` or `stories`**: Replace only the `## Epic N` section in `epics.md`, leaving all other epic sections untouched.
+- **`--epic=N` on `enrichment`**: Write each modified story file back to its original path in `stories/`.
+- **`--story=N.M`**: Write the modified content back to `stories/E{N}-S{M}.md`.
+- **No scope**: Write the updated artifact back to the same path it was loaded from (unchanged behavior).
 
 ### If no consensus (critic found no APPLY or MODIFY changes):
 
@@ -238,8 +293,8 @@ Wait for user input before proceeding on disagreements.
 After the refinement pass completes (regardless of whether changes were applied):
 
 1. Read `phase-state.json`.
-2. Increment `ral_passes[phase]` by 1.
-3. If the artifact WAS modified, mark downstream phases as stale in `stale_phases`.
+2. Increment `ral_passes[key]` by 1 (using the same scoped key from section 3).
+3. If the artifact WAS modified, mark downstream phases as stale in `stale_phases`. Scoped refinements use the same stale-marking rules as unscoped — changing one epic's design still potentially affects downstream phases.
 
 **Downstream stale marking**:
 
@@ -262,8 +317,8 @@ Write the updated `phase-state.json` back to `.omc/sprint-plan/current/phase-sta
 After applying changes and updating state, report to the user:
 
 ```
---- RAL Pass Complete: {phase} ---
-Pass number: {ral_passes[phase]} of 2 (use --force to exceed limit)
+--- RAL Pass Complete: {phase}{if scoped} ({scope_description}){/if} ---
+Pass number: {ral_passes[key]} of 2 (use --force to exceed limit)
 
 Changes applied: {count}
 Changes rejected: {count}
@@ -279,15 +334,15 @@ Downstream phases marked stale: {list}
 Re-run those phases or use --restart-from=<phase> to regenerate downstream artifacts.
 {/if}
 
-{if ral_passes[phase] == 2}
-Note: This phase has now been refined 2 times. Further `ral {phase}` calls will require --force.
+{if ral_passes[key] == 2}
+Note: This {scope_description or phase} has now been refined 2 times. Further `ral {phase}` calls for this scope will require --force.
 {/if}
 ```
 
 If no changes were applied:
 ```
---- RAL Pass Complete: {phase} ---
-Pass number: {ral_passes[phase]} of 2
+--- RAL Pass Complete: {phase}{if scoped} ({scope_description}){/if} ---
+Pass number: {ral_passes[key]} of 2
 
 Result: No changes applied. The artifact is at high quality for this iteration.
 No downstream phases marked stale.
