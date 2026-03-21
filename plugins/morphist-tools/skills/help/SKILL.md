@@ -127,7 +127,9 @@ Interactive session. If ADRs are revised during prep, suggests `/reconcile --dec
 **When**: Planning is complete and you're ready to implement. This is where code gets written.
 
 ```
-/sprint-exec                       # Execute all epics sequentially, stories in parallel
+/sprint-exec                       # Execute NEXT incomplete epic (default)
+/sprint-exec --full-auto           # Execute ALL remaining epics, no stopping
+/sprint-exec --next-story          # Execute just the next unfinished story
 /sprint-exec --epic=2              # Execute only Epic 2
 /sprint-exec --story=2.3           # Execute only story 2.3 (infers epic)
 /sprint-exec --dry-run             # Preview execution plan without running agents
@@ -136,14 +138,18 @@ Interactive session. If ADRs are revised during prep, suggests `/reconcile --dec
 
 | Flag | Effect |
 |------|--------|
+| *(no flags)* | Execute the next incomplete epic only (incremental) |
+| `--full-auto` | Execute all remaining epics, auto-resolve failures and blockers |
+| `--next-story` | Execute just the next unfinished story |
 | `--epic=N` | Execute only epic N |
 | `--story=N.M` | Execute only story N.M (uses opus model for retries) |
 | `--dry-run` | Show plan without dispatching agents |
 | `--concurrency=N` | Max parallel executor agents per epic |
 
 **Behavior**:
-- Epics run sequentially (Epic 1 completes before Epic 2 starts)
-- Stories within an epic run in parallel
+- **Default is incremental**: just the next epic, so you stay in control
+- `--full-auto` runs everything and auto-accepts partial failures / blockers
+- Epics run sequentially, stories within an epic run in parallel
 - After each epic, a background `/sprint-review` is dispatched automatically
 - Resume-safe: re-running skips already-done stories
 - Failed stories can be retried individually with `--story=N.M` (upgrades to opus)
@@ -347,7 +353,7 @@ Automatically dispatches `/reconcile --all` for full-sprint code style reconcili
 | Situation | Skill |
 |-----------|-------|
 | "I have an idea, where do I start?" | `/prd` then `/sprint-plan` |
-| "Planning is done, let's build" | `/sprint-exec` |
+| "Planning is done, let's build" | `/sprint-exec` (next epic) or `--full-auto` (all) |
 | "This epic is complex, let me prepare" | `/epic-prep --epic=N` |
 | "The architecture phase feels weak" | `/ral architecture` |
 | "A library we chose doesn't work" | `/replan --decision=D-NNN --reason="..."` |

@@ -1,8 +1,8 @@
 ---
 name: sprint-exec
-description: Execute validated sprint stories by dispatching executor agents. Processes epics sequentially, stories within each epic in parallel. Supports --epic, --story, and --dry-run flags.
+description: Execute validated sprint stories by dispatching executor agents. Default: next epic. Use --full-auto for all remaining epics, --next-story for one story at a time.
 user-invocable: true
-argument-hint: "[--epic=N] [--story=N.M] [--dry-run] [--concurrency=N]"
+argument-hint: "[--epic=N] [--story=N.M] [--next-story] [--full-auto] [--dry-run] [--concurrency=N]"
 ---
 
 # sprint-exec: Story Execution Orchestrator
@@ -51,21 +51,34 @@ Parse `$ARGUMENTS` for the following optional flags:
 
 | Flag | Default | Behavior |
 |------|---------|----------|
-| `--epic=N` | all epics | Execute only epic N |
-| `--story=N.M` | all stories in scope | Execute only story N.M |
+| `--epic=N` | — | Execute only epic N |
+| `--story=N.M` | — | Execute only story N.M |
+| `--next-story` | off | Execute only the next unfinished story (first `ready-for-dev` story in the first incomplete epic) |
+| `--full-auto` | off | Execute ALL remaining epics without stopping for user confirmation. Auto-resolves failures (proceed to next epic) and blockers (accept partial). |
 | `--dry-run` | off | Show execution plan without dispatching agents |
 | `--concurrency=N` | unlimited | Max executor agents running simultaneously within an epic |
 
+**Default scope** (no scope flags): execute only the **next incomplete epic** — the first epic whose `epic_status` is not `"done"`. This keeps execution incremental and controllable.
+
+**Scope precedence**: `--story` > `--next-story` > `--epic` > default (next epic) > `--full-auto` (all remaining).
+
 If `--story=N.M` is specified, `--epic` is inferred from the story number (N).
+
+If `--next-story` is specified, determine the target by:
+1. Find the first epic whose `epic_status` is not `"done"`
+2. Within that epic, find the first story with `status: ready-for-dev` (or `in-progress` if resuming)
+3. Execute only that single story
+4. If no unfinished stories remain, report: `All stories are complete. Nothing to execute.`
 
 ### 1d. Check Existing Execution Status
 
 If `execution_status` already exists in `phase-state.json`:
-- If `"complete"`: Inform the user and ask whether to re-run:
+- If `"complete"`: Inform the user and suggest targeted re-runs:
   ```
   This sprint has already been fully executed (execution_status: complete).
-  Use --story=N.M to re-run a specific story, or confirm to re-run all.
+  Use --story=N.M to re-run a specific story, --epic=N for an epic, or --full-auto to re-run all.
   ```
+  Stop here unless an explicit scope flag was provided (`--story`, `--epic`, or `--full-auto`).
 - If `"in-progress"`: Resume from where execution left off — skip stories already in `execution_log` with status `done`. Also check `epic_status` to skip epics already marked `"done"`.
 - If `"halted"`: Inform the user that execution was previously halted for replanning:
   ```
@@ -155,10 +168,12 @@ For each story, read its frontmatter to get current `status`.
 
 ### 3c. Filter by Scope
 
-Apply scope filtering based on parsed arguments:
+Apply scope filtering based on parsed arguments (in precedence order):
 - If `--story=N.M`: only include that single story
+- If `--next-story`: only include the next unfinished story (see section 1c for resolution logic)
 - If `--epic=N`: only include stories in epic N
-- Otherwise: all stories
+- If `--full-auto`: include all stories across all remaining epics
+- Default (no scope flags): only include stories in the **next incomplete epic** — the first epic whose `epic_status` is not `"done"` in `phase-state.json`. If all epics are `"done"`, report completion and stop.
 
 Within the filtered set, apply status filtering:
 - Skip stories with `status: blocked` (log as skipped)
@@ -297,7 +312,11 @@ If an executor fails on a story:
 - Continue dispatching/completing remaining stories in the epic (do not abort the epic for one failure)
 
 If ALL stories in an epic fail:
-- Halt execution and ask the user:
+- If `--full-auto`: automatically proceed to the next epic (option 1). Log the auto-decision to `execution_log`:
+  ```json
+  { "type": "auto_proceed", "epic": N, "reason": "all stories failed, --full-auto active" }
+  ```
+- Otherwise, halt execution and ask the user:
   ```
   All stories in Epic {N} failed. Possible causes: missing dependencies, environment issues, or ambiguous story spec.
 
@@ -330,7 +349,13 @@ After updating epic status, check whether any failed stories in this epic have a
 
 If there are **no architectural blockers**, skip to 4h (Epic Progress Report).
 
-If there **are** architectural blockers, this is a **blocking elicitation** — do NOT proceed to the next epic until the user responds.
+If there **are** architectural blockers:
+- If `--full-auto`: automatically choose option 3 (accept partial) for each blocker. Log the auto-decision to `execution_log`:
+  ```json
+  { "type": "blocker_auto_accepted", "story": "N.M", "blocker_type": "...", "decision": "accepted_partial_auto" }
+  ```
+  Skip to 4h (Epic Progress Report).
+- Otherwise, this is a **blocking elicitation** — do NOT proceed to the next epic until the user responds.
 
 #### Step 1: Impact Analysis
 
