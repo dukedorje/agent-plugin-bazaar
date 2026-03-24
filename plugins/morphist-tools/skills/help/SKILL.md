@@ -23,7 +23,7 @@ Display the following usage guide directly to the user. Do NOT run any agents or
                                                            ├─> /reconcile
                                                            └─> /review-fix
 
-  AT ANY TIME:  /status  /ral  /audit-story  /replan  /log  /doc  /update-status  /ultraresearch
+  AT ANY TIME:  /status  /ral  /audit  /replan  /log  /doc  /update-status  /ultraresearch
 ```
 
 **Typical happy path**: `/prd` -> `/sprint-plan` -> `/sprint-exec` -> `/retro`
@@ -261,7 +261,7 @@ Dispatched automatically by `/sprint-review` (per-epic) and `/retro` (full-sprin
 
 ## 9. `/verify` — Quick Epic Completion Check
 
-**When**: After an epic executes, you want a fast independent check that files exist, ACs were addressed, and architecture was followed. Auto-runs between epics in `/sprint-exec`. For deep analysis, use `/audit-story` instead.
+**When**: After an epic executes, you want a fast independent check that files exist, ACs were addressed, and architecture was followed. Auto-runs between epics in `/sprint-exec`. For deep analysis, use `/audit` instead.
 
 ```
 /verify                            # Verify most recently completed epic
@@ -282,29 +282,29 @@ Auto-runs after each epic in `/sprint-exec`. Failures pause execution (unless `-
 
 ---
 
-## 10. `/audit-story` — Deep Story Completion Audit
+## 10. `/audit` — Deep Story Investigation & Fix Planning
 
-**When**: You want to verify that implemented stories actually meet their acceptance criteria. Especially useful after library changes, mid-sprint pivots, or before marking work as done.
+**When**: Something went wrong — a story failed, code shifted, a library changed, a story was blocked. You need to understand the real state of the implementation against its ACs and get a concrete plan to fix it.
 
 ```
-/audit-story --story=3.2           # Audit a specific story
-/audit-story --epic=2              # Audit all stories in Epic 2
-/audit-story --all                 # Audit everything
-/audit-story --all --context="switched from Eden Treaty to ky"
-/audit-story --story=3.2 --tdd    # Generate failing tests as gates
-/audit-story --dry-run             # Preview audit plan
+/audit --story=3.2                 # Investigate a specific story
+/audit --epic=2                    # Investigate all stories in Epic 2
+/audit --all                       # Investigate everything
+/audit --all --context="switched from Eden Treaty to ky"
+/audit --story=3.2 --tdd          # Generate failing tests as gates
+/audit --dry-run                   # Preview audit plan
 ```
 
 | Flag | Effect |
 |------|--------|
-| `--story=N.M` | Audit specific story |
-| `--epic=N` | Audit all stories in epic N |
-| `--all` | Audit all stories |
+| `--story=N.M` | Investigate specific story |
+| `--epic=N` | Investigate all stories in epic N |
+| `--all` | Investigate all stories |
 | `--context="..."` | New facts to check against (library changes, etc.) |
 | `--tdd` | Generate failing tests as validation gates |
 | `--dry-run` | Preview without making changes |
 
-Produces a gap analysis and actionable work plan. Updates story metadata so the next implementor (or `/sprint-exec --story=N.M` retry) knows what's left.
+Reads every implementation file, checks each AC (MET/PARTIAL/NOT_MET), produces a gap analysis and actionable fix plan. Updates story metadata so the next implementor (or `/sprint-exec --story=N.M` retry) knows what's left.
 
 ---
 
@@ -447,7 +447,8 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 | "The architecture phase feels weak" | `/ral architecture` |
 | "A library we chose doesn't work" | `/replan --decision=D-NNN --reason="..."` |
 | "Quick check — did this epic actually get built?" | `/verify --epic=N` |
-| "Is this story actually done? (deep)" | `/audit-story --story=N.M` |
+| "Something's wrong with a story, what's the real state?" | `/audit --story=N.M` |
+| "A library changed, what broke?" | `/audit --all --context="library X changed"` |
 | "The agents used different naming styles" | `/reconcile --epic=N` or `--all` |
 | "Review says there are issues" | `/review-fix` |
 | "Where am I? What phase is this?" | `/status` |
@@ -456,3 +457,42 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 | "Document this for future devs" | `/doc topic --from-story=N.M` or `/log "note" --doc` |
 | "Sprint is done, what did we learn?" | `/retro` |
 | "I need to research a technical question" | `/ultraresearch "question"` |
+| "What follow-ups are piling up?" | `/backlog --show` or `/backlog --scan` |
+
+---
+
+## Workflows: When Things Go Wrong
+
+When a story fails, gets blocked, or the codebase shifts, here's the natural sequence:
+
+### Verify → Audit → Fix → Post-Mortem
+
+```
+/verify --epic=3                   # Quick: did it work?
+  ↓ (FAIL or CONCERNS)
+/audit --epic=3                    # Deep: what's broken and how to fix it?
+  ↓ (produces fix plan)
+/sprint-exec --story=3.4           # Re-execute with the fix plan
+  ↓ (done)
+/post-mortem --story=3.4           # Document what went wrong for future agents
+/backlog --scan --story=3.4        # Catch any TODOs or workarounds left behind
+```
+
+### When the Problem Is Bigger
+
+```
+/audit --story=3.4 --context="we switched to ky"
+  ↓ (reveals architecture decision is broken)
+/replan --decision=D-005 --reason="Eden Treaty doesn't support SSE"
+  ↓ (updates specs, resets affected stories)
+/sprint-exec --epic=3              # Re-execute affected stories
+/post-mortem --epic=3              # Document the whole incident
+```
+
+### Quick Reference
+
+| Tool | Question | Speed |
+|------|----------|-------|
+| `/verify` | "Is it done?" (pass/fail gate) | ~30s |
+| `/audit` | "What's broken and how do I fix it?" (investigation) | ~3min |
+| `/post-mortem` | "Why did it fail? What should future agents know?" (lessons) | ~2min |

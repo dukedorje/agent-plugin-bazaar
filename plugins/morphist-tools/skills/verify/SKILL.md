@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Quick independent verification that an epic's stories were actually built. Checks file existence, build health, and AC coverage without the full depth of /audit-story.
+description: Quick independent verification that an epic's stories were actually built. Checks file existence, build health, and AC coverage without the full depth of `/audit`.
 user-invocable: true
 argument-hint: "[--epic=N] [--story=N.M] [--all]"
 ---
@@ -9,7 +9,7 @@ argument-hint: "[--epic=N] [--story=N.M] [--all]"
 
 Quick, independent verification that stories were actually implemented. A fresh agent checks file existence, build health, and AC satisfaction with one-line verdicts — no deep analysis, no work plans, no TDD.
 
-Use this as a smoke test between epics, or before declaring a sprint done. For deep analysis, use `/audit-story` instead.
+Use this as a smoke test between epics, or before declaring a sprint done. For deep analysis, use `/audit` instead.
 
 ---
 
@@ -166,11 +166,11 @@ After the verifier returns, display a clear summary:
   {if concerns or failures}
   Next steps:
     {if concerns}
-    Review concerns — may be fine, or run /audit-story --epic={N} for deep analysis
+    Review concerns — may be fine, or run /audit --epic={N} for deep analysis
     {/if}
     {if failures}
     /sprint-exec --story={N.M}     # Re-run failed stories
-    /audit-story --story={N.M}     # Deep audit before re-running
+    /audit --story={N.M}     # Deep audit before re-running
     {/if}
   {/if}
 ═══════════════════════════════════════════════════
@@ -237,11 +237,11 @@ When `--all` is specified, verify every done story across all epics. Group outpu
 - If any FAIL in non-`--full-auto` mode: pause and ask the user whether to proceed or fix first
 - If any FAIL in `--full-auto` mode: log the failures and proceed
 
-### With `/audit-story`
+### With `/audit`
 
-`/verify` is the quick gate; `/audit-story` is the deep dive. Typical flow:
+`/verify` is the quick gate; `/audit` is the deep dive. Typical flow:
 1. `/verify --epic=2` → spots concerns
-2. `/audit-story --epic=2` → deep analysis of the concerns
+2. `/audit --epic=2` → deep analysis of the concerns
 3. `/sprint-exec --story=2.3` → re-run what needs fixing
 
 ### With `/retro`

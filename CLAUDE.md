@@ -94,7 +94,7 @@ This loads the plugin from source. The local copy takes precedence over any inst
 | `replan` | Scoped mid-sprint replanning for broken assumptions |
 | `post-mortem` | Incident post-mortem — documents root cause and lessons in story docs for future agents |
 | `verify` | Quick independent epic completion check (auto-runs between epics) |
-| `audit-story` | Validate story completion, gap analysis, work plans (--tdd for test gates) |
+| `audit` | Deep story investigation — gap analysis, fix plans, what's broken and how to fix it (--tdd for test gates) |
 | `backlog` | Persistent cross-sprint backlog for follow-ups, tech debt, ideas, and deferred work |
 | `log` | Work log annotations with auto-detected sprint/epic/story context |
 | `doc` | Create permanent documentation in docs/ from sprint artifacts or topics |

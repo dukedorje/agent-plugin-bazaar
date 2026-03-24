@@ -489,7 +489,7 @@ Dispatch a verifier agent (sonnet) with the story file lists, acceptance criteri
 
   1. Proceed to Epic {N+1} anyway
   2. Re-run failed stories: /sprint-exec --story=N.M
-  3. Deep audit: /audit-story --epic={N}
+  3. Deep audit: /audit --epic={N}
   ```
   Wait for user input.
 

@@ -412,5 +412,5 @@ If `decision-graph.md` does not exist when `/epic-prep` is invoked:
 ### With `/update-status --show`
 - The status dashboard renders the decision graph for each epic (see update-status integration)
 
-### With `/audit-story`
-- After executing a prepped epic, `/audit-story` can verify that prep notes and enrichments were followed
+### With `/audit`
+- After executing a prepped epic, `/audit` can verify that prep notes and enrichments were followed

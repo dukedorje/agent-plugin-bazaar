@@ -463,7 +463,7 @@ Append to `execution_log` in `phase-state.json`:
 ## 9. Integration Points
 
 - **After `/sprint-exec`**: When a story fails or gets blocked, run `/post-mortem --story=N.M` to document why before retrying
-- **After `/audit-story`**: If audit reveals NEEDS_REWORK or INCOMPLETE, a post-mortem captures the deeper context about what went wrong
+- **After `/audit`**: If audit reveals NEEDS_REWORK or INCOMPLETE, a post-mortem captures the deeper context about what went wrong
 - **Before `/sprint-exec --story=N.M` (re-run)**: The executor reads the story doc and sees the Post-Mortem section — it knows what failed before and what to avoid
 - **Feeds `/retro`**: The retro skill should check for `post-mortems/` directory and incorporate per-story findings into the sprint retrospective
 - **Feeds `/replan`**: If post-mortem identifies a broken architecture decision, suggests `/replan` commands

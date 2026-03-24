@@ -1,13 +1,15 @@
 ---
-name: audit-story
-description: Validate story completion against acceptance criteria and current codebase. Identifies gaps, checks against new facts/libraries, produces an actionable work plan, and updates story metadata for re-implementation.
+name: audit
+description: Deep investigation of story completion — checks implementation against ACs and current codebase, identifies what's broken, produces an actionable fix plan. Use when something went wrong or code shifted.
 user-invocable: true
 argument-hint: "[--story=N.M] [--epic=N] [--all] [--context=\"...\"] [--tdd] [--dry-run]"
 ---
 
-# audit-story: Story Completion Audit & Work Plan
+# audit: Story Investigation & Fix Planning
 
-Validates whether a story is actually complete by checking the implementation against acceptance criteria, architecture decisions, and optionally new facts or library changes. Produces a gap analysis and actionable work plan, then updates story metadata so the next implementor knows exactly what's left.
+Deeply investigates whether a story's implementation is actually complete by checking code against acceptance criteria, architecture decisions, and optionally new facts or library changes. Produces a gap analysis and actionable fix plan, then updates story metadata so the next implementor knows exactly what's left.
+
+Use `/audit` when something went wrong, code shifted, a story was blocked, or you need to understand the real state of a story given the current codebase.
 
 ---
 
@@ -514,10 +516,10 @@ Write to `.omc/sprint-plan/current/audit-report.md` (append if exists):
 
 ## 9. Integration Points
 
-- **After `/sprint-exec`**: Run `/audit-story --all` to validate the sprint before calling it done
-- **With TDD**: Run `/audit-story --all --tdd` to generate failing tests as validation gates for incomplete stories
-- **With new context**: When a library or API changes, run `/audit-story --all --context="library X changed to Y"` to find what broke
-- **TDD + new context**: `/audit-story --story=3.2 --tdd --context="switched to ky"` — generates tests reflecting the new expectations
+- **After `/sprint-exec`**: Run `/audit --all` to validate the sprint before calling it done
+- **With TDD**: Run `/audit --all --tdd` to generate failing tests as validation gates for incomplete stories
+- **With new context**: When a library or API changes, run `/audit --all --context="library X changed to Y"` to find what broke
+- **TDD + new context**: `/audit --story=3.2 --tdd --context="switched to ky"` — generates tests reflecting the new expectations
 - **Feeds into `/replan`**: If the audit finds systemic architecture issues, it suggests `/replan` commands
 - **Feeds into `/sprint-exec`**: Stories reset to `ready-for-dev` can be re-executed with `/sprint-exec --story=N.M`. When `tdd_tests` is set in frontmatter, the executor prompt should include the test command so the agent can validate its work
-- **After `/replan`**: Run `/audit-story` on replanned stories to verify the updated specs make sense before re-executing
+- **After `/replan`**: Run `/audit` on replanned stories to verify the updated specs make sense before re-executing

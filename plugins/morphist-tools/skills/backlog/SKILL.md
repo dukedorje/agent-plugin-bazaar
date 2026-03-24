@@ -478,9 +478,9 @@ After writing the retrospective (retro skill section 5), for each item in the Te
 
 Append to backlog with `source: retro:sprint-{N}`.
 
-### 11c. From `/audit-story`
+### 11c. From `/audit`
 
-After writing the audit report (audit-story skill section 6), for each work item with priority `must` in stories that are NOT going to be immediately re-executed:
+After writing the audit report (audit skill section 6), for each work item with priority `must` in stories that are NOT going to be immediately re-executed:
 
 Append to backlog with `source: audit:story-{N.M}`.
 
@@ -550,7 +550,7 @@ Backlog updated: {added_count} items added, {skipped_count} duplicates skipped
 |-------|---------|----------------|
 | `/post-mortem` | Preventive measures generated | Auto-add preventive items |
 | `/retro` | Retrospective complete | Auto-add tech debt + unfinished work |
-| `/audit-story` | Stories need rework but won't be re-executed immediately | Auto-add must-priority work items |
+| `/audit` | Stories need rework but won't be re-executed immediately | Auto-add must-priority work items |
 | `/sprint-exec` | Story completes with workarounds/TODOs | Auto-add follow-up items |
 | `/sprint-plan` | Phase 0 discovery | Read promoted items + open backlog |
 | `/backlog --scan` | Manual trigger | Scan stories for implicit follow-ups |
