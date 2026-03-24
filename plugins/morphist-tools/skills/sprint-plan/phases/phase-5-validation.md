@@ -258,7 +258,7 @@ After auto-fixes are applied, the verifier re-runs its mechanical checks to conf
 **If critical findings remain after auto-fix loop**:
 - Status: `fail`
 - Present unresolved critical issues to user with actionable guidance
-- User must address them and re-run Phase 5 (`ral validation` not applicable here — re-run the phase)
+- User must address them and re-run Phase 5 (`refine validation` not applicable here — re-run the phase)
 
 **If only warnings remain (no criticals)**:
 - Status: `pass-with-warnings`
@@ -432,7 +432,7 @@ Return a JSON object:
 
 After a passing verdict (before state updates), build the decision graph at `current/decision-graph.md`.
 
-This is the initial seed — `/epic-prep` and `/replan` will maintain it going forward.
+This is the initial seed — `/refine` and `/replan` will maintain it going forward.
 
 ### Process
 
@@ -446,7 +446,7 @@ This is the initial seed — `/epic-prep` and `/replan` will maintain it going f
 ```markdown
 # Decision Graph
 
-Maps architecture decisions to dependent stories. Updated by /sprint-plan, /epic-prep, /replan.
+Maps architecture decisions to dependent stories. Updated by /sprint-plan, /refine, /replan.
 
 ## D-001: {decision title}
 - 1.1: {story title}

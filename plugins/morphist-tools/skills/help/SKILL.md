@@ -16,14 +16,14 @@ Display the following usage guide directly to the user. Do NOT run any agents or
 ```
   PLAN                PREPARE           EXECUTE            VERIFY & REVIEW       CLOSE
   ────                ───────           ───────            ───────────────       ─────
-  /prd           ──>  /sprint-plan ──>  /epic-prep   ──>  /sprint-exec    ──>  /retro
+  /prd           ──>  /sprint-plan ──>  /refine      ──>  /sprint-exec    ──>  /retro
                                         (optional)         │ (per epic)
                                                            ├─> /verify         (auto, inline)
                                                            ├─> /sprint-review  (auto, background)
                                                            ├─> /reconcile
                                                            └─> /review-fix
 
-  AT ANY TIME:  /status  /ral  /audit  /replan  /log  /doc  /update-status  /ultraresearch
+  AT ANY TIME:  /status  /refine  /audit  /replan  /log  /doc  /update-status  /ultraresearch
 ```
 
 **Typical happy path**: `/prd` -> `/sprint-plan` -> `/sprint-exec` -> `/retro`
@@ -111,25 +111,45 @@ All artifacts in `.omc/sprint-plan/sprint-NNN/` (symlinked as `current/`):
 
 ---
 
-## 3. `/epic-prep` — Pre-Execution Deep Dive (Optional)
+## 3. `/refine` — Refine Artifacts & Epic Deep-Dive
 
-**When**: Before executing an epic, you want to enrich stories, revise decisions, or drill into specifics. Especially useful for complex or risky epics.
+**When**: A phase artifact needs improvement (consensus pass), OR you want to deep-dive into an epic before execution (interactive preparation).
+
+### Consensus mode (refine a phase artifact)
 
 ```
-/epic-prep --epic=2                # Deep dive into Epic 2
-/epic-prep --story=3.2             # Drill into a specific story
-/epic-prep --graph                 # View the decision dependency graph
+/refine architecture               # Refine architecture decisions
+/refine requirements                # Refine requirements
+/refine sprint-scoping              # Re-evaluate sprint boundary
+/refine epics --epic=2              # Refine Epic 2's design
+/refine enrichment --story=3.1      # Refine a single story's spec
+/refine prd                         # Refine the PRD
+/refine retro                       # Refine the retrospective
 ```
+
+Runs a Planner → Architect → Critic adversarial consensus pass. Each scope gets 2 passes before diminishing-returns warning. If the artifact changes, downstream phases are marked stale.
+
+### Interactive deep-dive (pre-execution preparation)
+
+```
+/refine --epic=3                   # Deep dive into Epic 3
+/refine --story=3.2                # Drill into a specific story
+/refine --epic=3 --graph           # View decision graph for Epic 3
+/refine --epic=3 --propagate       # Deep dive + auto-reconcile ADR changes
+```
+
+Interactive session for enriching stories, revising decisions, and drilling into specifics. Re-runnable — previous prep notes are preserved.
 
 | Flag | Effect |
 |------|--------|
-| `--epic=N` | Target epic N for deep dive |
-| `--story=N.M` | Drill into a specific story |
+| `<phase>` | Run consensus on that phase's artifact |
+| `--epic=N` | Scope to epic N (with phase: scoped consensus; without: interactive deep-dive) |
+| `--story=N.M` | Scope to story N.M |
 | `--graph` | Display the decision dependency graph |
+| `--propagate` | Auto-run reconcile after ADR changes |
+| `--force` | Bypass the 2-pass-per-scope limit |
 
-Interactive session. Re-runnable — if new information surfaces (library changes, API discoveries, user feedback), run `/epic-prep --epic=N` again to add updated prep notes. Previous notes are preserved so executors see the full context.
-
-If ADRs are revised during prep, suggests `/reconcile --decisions` to propagate changes to other epics.
+Valid phases: `requirements`, `sprint-scoping`, `architecture`, `epics`, `stories`, `enrichment`, `prd`, `retro`
 
 ---
 
@@ -173,32 +193,7 @@ If ADRs are revised during prep, suggests `/reconcile --decisions` to propagate 
 
 ---
 
-## 5. `/ral` — Refine Any Phase Artifact
-
-**When**: A phase is complete but you want higher quality. Runs a Planner -> Architect -> Critic adversarial consensus pass.
-
-```
-/ral architecture                  # Refine architecture decisions
-/ral epics --epic=2                # Refine only Epic 2's design
-/ral enrichment --story=3.1        # Refine a single story's enrichment
-/ral prd                           # Refine the PRD
-/ral retro                         # Refine the retrospective
-/ral stories --force               # Override the 2-pass limit
-```
-
-| Flag | Effect |
-|------|--------|
-| `--epic=N` | Scope to epic N (valid for: `epics`, `stories`, `enrichment`) |
-| `--story=N.M` | Scope to story N.M (valid for: `enrichment` only) |
-| `--force` | Bypass the 2-pass-per-scope limit |
-
-Valid phases: `requirements`, `sprint-scoping`, `architecture`, `epics`, `stories`, `enrichment`, `prd`, `retro`
-
-Each scope gets 2 refinement passes before diminishing-returns warning. If the artifact changes, downstream phases are marked stale.
-
----
-
-## 6. `/sprint-review` — Review Completed Work
+## 5. `/sprint-review` — Review Completed Work
 
 **When**: An epic (or all epics) has been executed and you want a quality review against specs and architecture decisions. Runs automatically after each epic in `/sprint-exec`, but can also be called manually.
 
@@ -217,9 +212,9 @@ Output lands in `.omc/sprint-plan/current/reviews/`.
 
 ---
 
-## 7. `/reconcile` — Fix Style Drift Across Agents
+## 6. `/reconcile` — Fix Style Drift Across Agents
 
-**When**: Parallel agent execution produced inconsistent naming, patterns, or conventions across stories/epics. Also use after `/epic-prep` revises ADRs to propagate changes.
+**When**: Parallel agent execution produced inconsistent naming, patterns, or conventions across stories/epics. Also use after `/refine` revises ADRs to propagate changes (or use `/refine --propagate` to auto-trigger).
 
 ```
 /reconcile --epic=2                # Reconcile within Epic 2
@@ -239,7 +234,7 @@ Dispatched automatically by `/sprint-review` (per-epic) and `/retro` (full-sprin
 
 ---
 
-## 8. `/review-fix` — Fix Issues from Reviews
+## 7. `/review-fix` — Fix Issues from Reviews
 
 **When**: You have findings from `/sprint-review` or `/reconcile` and want to validate and fix them. Checks each finding against actual code, discards false positives, fixes real issues.
 
@@ -259,7 +254,7 @@ Dispatched automatically by `/sprint-review` (per-epic) and `/retro` (full-sprin
 
 ---
 
-## 9. `/verify` — Quick Epic Completion Check
+## 8. `/verify` — Quick Epic Completion Check
 
 **When**: After an epic executes, you want a fast independent check that files exist, ACs were addressed, and architecture was followed. Auto-runs between epics in `/sprint-exec`. For deep analysis, use `/audit` instead.
 
@@ -282,7 +277,7 @@ Auto-runs after each epic in `/sprint-exec`. Failures pause execution (unless `-
 
 ---
 
-## 10. `/audit` — Deep Story Investigation & Fix Planning
+## 9. `/audit` — Deep Story Investigation & Fix Planning
 
 **When**: Something went wrong — a story failed, code shifted, a library changed, a story was blocked. You need to understand the real state of the implementation against its ACs and get a concrete plan to fix it.
 
@@ -308,7 +303,7 @@ Reads every implementation file, checks each AC (MET/PARTIAL/NOT_MET), produces 
 
 ---
 
-## 11. `/replan` — Mid-Sprint Course Correction
+## 10. `/replan` — Mid-Sprint Course Correction
 
 **When**: An architecture assumption, library choice, or dependency breaks mid-sprint. Surgically updates affected artifacts instead of restarting planning.
 
@@ -331,7 +326,7 @@ Updates architecture decisions, propagates changes to affected story specs, and 
 
 ---
 
-## 12. `/status` / `/update-status` — View/Update Statuses
+## 11. `/status` / `/update-status` — View/Update Statuses
 
 **When**: You want to see where things stand — what phase you're in, what artifacts exist, epic/story progress. Also use to fix statuses after manual work.
 
@@ -355,7 +350,7 @@ Updates architecture decisions, propagates changes to affected story specs, and 
 
 ---
 
-## 13. `/retro` — Sprint Retrospective
+## 12. `/retro` — Sprint Retrospective
 
 **When**: Sprint execution is complete (or use `--force` for a partial retro). Analyzes git history, Dev Agent Records, and ADR adherence. Produces cross-sprint intelligence for the next sprint's Phase 0.
 
@@ -370,7 +365,7 @@ Automatically dispatches `/reconcile --all` for full-sprint code style reconcili
 
 ---
 
-## 14. `/log` — Work Log Annotations
+## 13. `/log` — Work Log Annotations
 
 **When**: You want to record a decision, discovery, or note. Auto-detects sprint context and enriches entries with epic/story/decision refs.
 
@@ -396,7 +391,7 @@ Cross-references entries in story files. Consumed by `/retro` for retrospective 
 
 ---
 
-## 15. `/doc` — Permanent Documentation
+## 14. `/doc` — Permanent Documentation
 
 **When**: You want to create lasting documentation in `docs/`. Can derive content from sprint artifacts (stories, epics, decisions) or standalone topics.
 
@@ -419,7 +414,7 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 
 ---
 
-## 16. `/ultraresearch` — Multi-Agent Research Swarm
+## 15. `/ultraresearch` — Multi-Agent Research Swarm
 
 **When**: You have a question that needs broad exploration, multiple perspectives, or deep investigation. Standalone — not part of the sprint lifecycle.
 
@@ -443,8 +438,8 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 |-----------|-------|
 | "I have an idea, where do I start?" | `/prd` then `/sprint-plan` |
 | "Planning is done, let's build" | `/sprint-exec` (next epic) or `--full-auto` (all) |
-| "This epic is complex, let me prepare" | `/epic-prep --epic=N` |
-| "The architecture phase feels weak" | `/ral architecture` |
+| "This epic is complex, let me prepare" | `/refine --epic=N` |
+| "The architecture phase feels weak" | `/refine architecture` |
 | "A library we chose doesn't work" | `/replan --decision=D-NNN --reason="..."` |
 | "Quick check — did this epic actually get built?" | `/verify --epic=N` |
 | "Something's wrong with a story, what's the real state?" | `/audit --story=N.M` |

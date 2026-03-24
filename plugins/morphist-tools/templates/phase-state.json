@@ -9,7 +9,7 @@
   "refinement_loops": {
     "requirements_architecture": { "count": 0, "max": 3 }
   },
-  "ral_passes": {
+  "refine_passes": {
     "requirements": 0,
     "architecture": 0,
     "epics": 0,

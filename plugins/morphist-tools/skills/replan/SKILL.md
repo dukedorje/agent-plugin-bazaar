@@ -291,7 +291,7 @@ If `current/decision-graph.md` exists, update it to reflect the replanned decisi
 5. Remove any stories that no longer depend on this decision (if the revision changed the technology entirely)
 6. Write the updated graph back
 
-If the graph file does not exist, skip this step — the graph will be built on the next `/epic-prep` invocation.
+If the graph file does not exist, skip this step — the graph will be built on the next `/refine` invocation.
 
 ---
 

@@ -104,7 +104,7 @@ Write `.omc/sprint-plan/current/phase-state.json`:
   "refinement_loops": {
     "requirements_architecture": { "count": 0, "max": 3 }
   },
-  "ral_passes": {
+  "refine_passes": {
     "requirements": 0,
     "architecture": 0,
     "epics": 0,
@@ -224,7 +224,7 @@ If the current phase is NOT a pause point for the active mode, skip the summary 
     continue       — proceed to {next_phase_name}
     review         — open the artifact for detailed review
     edit           — make changes before proceeding
-    /ral {phase}   — run a refinement pass on this phase
+    /refine {phase}   — run a refinement pass on this phase
     /sprint-plan --restart-from={phase} — redo this phase
 ═══════════════════════════════════════════════════
 ```
@@ -758,7 +758,7 @@ This is the **single source of truth** for all workflow state. Update it after e
 - `significance_calibration`: Appended on user overrides (max 3)
 - `decisions_log`: Appended for every decision made
 - `refinement_loops`: Incremented on Requirements-Architecture loops
-- `ral_passes`: Incremented on `ral` invocations
+- `refine_passes`: Incremented on `refine` invocations
 - `stale_phases`: Phases downstream of a re-run phase are added here
 - `epics_count`, `stories_total`, `stories_enriched`: Updated as artifacts are produced
 - `validation_status`: Set in Phase 5
@@ -867,13 +867,14 @@ On resume (workflow was interrupted):
 
 ---
 
-## 9. The `ral` Command
+## 9. The `refine` Command
 
-The `ral` command triggers RALPLAN-DR refinement on any phase output. This is handled by the separate `/ral` skill, but the orchestrator must support it:
+The `refine` command triggers RALPLAN-DR refinement on any phase output, or an interactive epic deep-dive. This is handled by the separate `/refine` skill, but the orchestrator must support it:
 
-- Track `ral_passes` per phase in `phase-state.json`
-- Max 2 `ral` invocations per phase (respond with diminishing returns message after 2; `--force` overrides)
-- Each `ral` pass: Planner reviews -> Architect challenges -> Critic validates
+- Track `refine_passes` per phase in `phase-state.json`
+- Max 2 refinement passes per phase/scope (respond with diminishing returns message after 2; `--force` overrides)
+- Each consensus pass: Planner reviews -> Architect challenges -> Critic validates
 - On consensus: apply changes to the phase artifact
 - On no consensus after 3 iterations: present disagreements via Decision Steering
-- Mark downstream phases as stale after a `ral` pass modifies an artifact
+- Mark downstream phases as stale after a refinement pass modifies an artifact
+- When `--propagate` is used and ADRs change: auto-run reconcile to ripple changes

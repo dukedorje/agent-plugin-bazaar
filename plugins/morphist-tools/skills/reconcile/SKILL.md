@@ -23,7 +23,7 @@ Parse `$ARGUMENTS`:
 |------|---------|----------|
 | `--epic=N` | none | Reconcile within a specific epic's stories |
 | `--all` | off | Full-sprint reconciliation across all epics |
-| `--decisions` | off | Propagate ADR changes to dependent story specs (reads decision graph). Use after `/epic-prep` revises ADRs. |
+| `--decisions` | off | Propagate ADR changes to dependent story specs (reads decision graph). Use after `/refine` revises ADRs. |
 | `--auto` | off | Auto-resolve all inconsistencies without elicitation (use majority-wins rule) |
 
 If no flag is provided, reconcile the most recently completed epic (same logic as `/sprint-review`).
@@ -294,7 +294,7 @@ Read `.omc/sprint-plan/current/decision-graph.md` to identify which stories depe
 
 If the graph doesn't exist, halt:
 ```
-No decision graph found. Run /epic-prep to build one, or create it manually at current/decision-graph.md.
+No decision graph found. Run /refine to build one, or create it manually at current/decision-graph.md.
 ```
 
 ### 7b. Detect Changed ADRs
@@ -308,7 +308,7 @@ No ADR revisions detected since last reconciliation. Nothing to propagate.
 
 ### 7c. Find Affected Stories
 
-For each revised ADR, look up its dependents in the decision graph. Filter to stories NOT in the epic where the change was made (those were already updated during `/epic-prep`).
+For each revised ADR, look up its dependents in the decision graph. Filter to stories NOT in the epic where the change was made (those were already updated during `/refine`).
 
 ### 7d. Propagate to Story Specs
 
@@ -358,7 +358,7 @@ Return the complete updated story file.
 
 For affected stories with status `done`:
 - Change status to `ready-for-dev` (needs re-implementation with the new decision)
-- Add `replan_reason: "D-{NNN} revised during epic-prep for Epic {X}"`
+- Add `replan_reason: "D-{NNN} revised during refine for Epic {X}"`
 - Preserve existing Dev Agent Record
 
 For affected stories with status `ready-for-dev`:
@@ -389,9 +389,9 @@ For affected stories with status `ready-for-dev`:
 
 ## 8. Integration Points
 
-### From `/epic-prep` (decision propagation)
+### From `/refine` (decision propagation)
 
-After `/epic-prep` revises ADRs, it suggests `/reconcile --decisions`. This propagates the decision changes to story specs in other epics that depend on the same ADRs (via the decision graph). The epic-prep skill handles updating stories within its own epic.
+After `/refine` revises ADRs, it suggests `/reconcile --decisions`. This propagates the decision changes to story specs in other epics that depend on the same ADRs (via the decision graph). The refine skill handles updating stories within its own epic.
 
 ### From `/sprint-review` (per-epic)
 

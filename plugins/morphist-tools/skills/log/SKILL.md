@@ -227,6 +227,6 @@ The retro skill should read `current/work-log.md` if it exists and pass it to th
 
 - **`/sprint-exec`**: After a blocker triage decision, auto-log the decision with the story context
 - **`/replan`**: After replanning completes, auto-log the reason and affected stories
-- **`/epic-prep`**: After revising an ADR, auto-log the revision with decision context
+- **`/refine`**: After revising an ADR, auto-log the revision with decision context
 - **`/retro`**: Reads the work log for additional sprint context
 - **`/doc`**: The `--doc` flag bridges ephemeral log entries to permanent documentation

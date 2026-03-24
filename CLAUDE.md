@@ -82,12 +82,11 @@ This loads the plugin from source. The local copy takes precedence over any inst
 | `sprint-plan` | Multi-phase sprint planning workflow |
 | `prd` | Interactive PRD workshop |
 | `sprint-exec` | Execute validated sprint stories |
-| `ral` | RALPLAN-DR refinement pass on any phase |
+| `refine` | Refine any artifact with consensus, or deep-dive into an epic before execution |
 | `retro` | Sprint retrospective generation |
 | `ultraresearch` | Multi-agent research swarm |
 | `sprint-review` | Review epic implementations against specs and architecture |
 | `reconcile` | Cross-story/epic code style reconciliation |
-| `epic-prep` | Pre-execution deep dive: enrich stories, revise decisions, decision graph |
 | `review-fix` | Validate and fix issues from reviews and reconciliation |
 | `status` | Quick sprint overview: phase, artifacts, statuses (alias for update-status --show) |
 | `update-status` | Manually view/update epic and story statuses |

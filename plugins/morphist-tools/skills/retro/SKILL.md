@@ -361,4 +361,4 @@ No additional wiring is needed.
 
 ## 9. RAL Support
 
-The `/ral retro` command targets this artifact at `.omc/sprint-plan/current/retrospective.md`. The `retro` phase is terminal — refining it does NOT mark any downstream phases stale.
+The `/refine retro` command targets this artifact at `.omc/sprint-plan/current/retrospective.md`. The `retro` phase is terminal — refining it does NOT mark any downstream phases stale.

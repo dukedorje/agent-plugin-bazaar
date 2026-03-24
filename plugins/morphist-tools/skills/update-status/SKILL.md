@@ -64,7 +64,7 @@ Read `phase-state.json` and extract:
 - `validation_status` (if present)
 - `retrospective_status` (if present)
 - `stale_phases` (if any)
-- `ral_passes` (if any)
+- `refine_passes` (if any)
 
 List artifacts in `current/` to determine what exists:
 
@@ -92,8 +92,8 @@ List artifacts in `current/` to determine what exists:
     {✓ or ✗} replan-log.md
     {✓ or ✗} reviews/{if ✓} ({review_count} reviews){/if}
 
-  {if ral_passes}
-  RAL passes: {list each phase:count}
+  {if refine_passes}
+  Refinement passes: {list each phase:count}
   {/if}
 
   {suggest next action based on phase}
@@ -108,7 +108,7 @@ List artifacts in `current/` to determine what exists:
 - `epic-design` → "Next: story decomposition. Resume with `/sprint-plan --continue`"
 - `story-decomposition` → "Next: story enrichment. Resume with `/sprint-plan --continue`"
 - `story-enrichment` → "Next: validation. Resume with `/sprint-plan --continue`"
-- `validation` (pass) → "Ready for execution. Run `/sprint-exec` or `/epic-prep --epic=1` first"
+- `validation` (pass) → "Ready for execution. Run `/sprint-exec` or `/refine --epic=1` first"
 - `validation` (fail) → "Validation failed. Fix issues and re-run `/sprint-plan --restart-from=validation`"
 - If `execution_status: complete` → "Execution complete. Run `/retro` to generate retrospective"
 - If `execution_status: in-progress` → "Execution in progress. Resume with `/sprint-exec`"

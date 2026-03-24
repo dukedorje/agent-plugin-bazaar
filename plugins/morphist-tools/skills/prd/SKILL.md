@@ -464,9 +464,9 @@ Resolve these issues manually by editing .omc/sprint-plan/prd-{slug}.md, then re
 
 ---
 
-## /ral prd Support
+## /refine prd Support
 
-`prd` is a valid target in the `/ral` skill.
+`prd` is a valid target in the `/refine` skill.
 
 - **Artifact path**: `.omc/sprint-plan/prd-{slug}.md` (most recent by mtime if no explicit path given)
 - **RALPLAN-DR pass**: Planner proposes improvements → Architect challenges → Critic arbitrates
