@@ -204,7 +204,7 @@ If phase was skipped (user chose Skip or AUTONOMOUS mode), set:
 }
 ```
 
-Do NOT update `current_phase` when skipping — it remains `"requirements"` until Phase 2A sets it to `"architecture"`.
+Do NOT update `current_phase` when skipping — it remains at its current value (`"sprint-scoping"` if Phase 1B ran, or `"requirements"` otherwise) until Phase 2A sets it to `"architecture"`.
 
 ---
 

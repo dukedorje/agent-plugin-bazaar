@@ -192,7 +192,7 @@ If ADRs are revised during prep, suggests `/reconcile --decisions` to propagate 
 | `--story=N.M` | Scope to story N.M (valid for: `enrichment` only) |
 | `--force` | Bypass the 2-pass-per-scope limit |
 
-Valid phases: `requirements`, `architecture`, `epics`, `stories`, `enrichment`, `prd`, `retro`
+Valid phases: `requirements`, `sprint-scoping`, `architecture`, `epics`, `stories`, `enrichment`, `prd`, `retro`
 
 Each scope gets 2 refinement passes before diminishing-returns warning. If the artifact changes, downstream phases are marked stale.
 

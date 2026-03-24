@@ -29,7 +29,7 @@ If no phase is provided, respond:
 ```
 Usage: ral <phase> [--epic=N] [--story=N.M] [--force]
 
-Valid phases: requirements, architecture, epics, stories, enrichment, prd, retro
+Valid phases: requirements, sprint-scoping, architecture, epics, stories, enrichment, prd, retro
 
 Scoping:
   --epic=N      Refine only epic N (epics, stories, enrichment phases)
@@ -61,7 +61,8 @@ Check that the specified phase has been completed. Use this mapping to determine
 | Phase Argument | Completed When `current_phase` Is... |
 |----------------|--------------------------------------|
 | prd | Always valid (PRD is a standalone artifact, not gated by current_phase) |
-| requirements | requirements, architecture, epic-design, story-decomposition, story-enrichment, validation |
+| requirements | requirements, sprint-scoping, architecture, epic-design, story-decomposition, story-enrichment, validation |
+| sprint-scoping | sprint-scoping, architecture, epic-design, story-decomposition, story-enrichment, validation |
 | architecture | architecture, epic-design, story-decomposition, story-enrichment, validation |
 | epics | epic-design, story-decomposition, story-enrichment, validation |
 | stories | story-decomposition, story-enrichment, validation |
@@ -103,6 +104,7 @@ Load ONLY the artifact file for the specified phase. Do not rely on memory of pr
 |-------|--------------|
 | prd | `.omc/sprint-plan/prd-{slug}.md` (most recent by mtime if no path given) |
 | requirements | `.omc/sprint-plan/current/requirements.md` |
+| sprint-scoping | `.omc/sprint-plan/current/sprint-scope.md` |
 | architecture | `.omc/sprint-plan/current/architecture-decisions.md` |
 | epics | `.omc/sprint-plan/current/epics.md` |
 | stories | `.omc/sprint-plan/current/epics.md` (stories sections) |
@@ -309,7 +311,8 @@ After the refinement pass completes (regardless of whether changes were applied)
 | Phase Refined | Phases Marked Stale |
 |--------------|-------------------|
 | prd | None (PRD is upstream of sprint-plan, does not mark sprint phases stale) |
-| requirements | architecture, epic-design, story-decomposition, story-enrichment, validation |
+| requirements | sprint-scoping, architecture, epic-design, story-decomposition, story-enrichment, validation |
+| sprint-scoping | architecture, epic-design, story-decomposition, story-enrichment, validation |
 | architecture | epic-design, story-decomposition, story-enrichment, validation |
 | epics | story-decomposition, story-enrichment, validation |
 | stories | story-enrichment, validation |

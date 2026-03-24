@@ -156,6 +156,7 @@ GUIDED <---> AUTONOMOUS
 |-------|----------------|-------|
 | Phase 0 (Intake) | **Dormant** | No decisions to make |
 | Phase 1 (Requirements) | **Active** | Scope, assumptions, constraints |
+| Phase 1B (Sprint Scoping) | **Active** | Sprint boundary is a CRITICAL scope decision |
 | Phase 2A (Architecture) | **Maximally Active** | All architecture decisions flow through steering |
 | Phase 2B (Epic Design) | **Active** | Epic boundaries, ordering decisions |
 | Phase 3 (Story Decomposition) | **Dormant** | Decisions locked from Phase 2 |
