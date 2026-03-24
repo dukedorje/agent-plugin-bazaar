@@ -628,7 +628,10 @@ All stories completed successfully.
 {/if}
 
 Dev Agent Records have been written to each story file.
-Run /sprint-retro to generate a retrospective from the execution results.
+Next steps:
+  /retro                    # Generate sprint retrospective
+  /audit --all              # Deep audit of all stories (optional)
+  /backlog --scan           # Catch follow-ups and TODOs
 ```
 
 ---
