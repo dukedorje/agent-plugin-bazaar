@@ -123,4 +123,5 @@ Morphist-tools depends on OMC for execution infrastructure. The integration boun
 | `backlog` | Persistent cross-sprint backlog for follow-ups, tech debt, ideas, and deferred work |
 | `log` | Work log annotations with auto-detected sprint/epic/story context |
 | `doc` | Create permanent documentation in docs/ from sprint artifacts or topics |
+| `release` | Orchestrate releases — version bump, notes, validation, tagging, GitHub release |
 | `help` | Sprint-plan usage guide |

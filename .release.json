@@ -1,0 +1,48 @@
+{
+  "version_files": [
+    {
+      "path": "plugins/morphist-tools/.claude-plugin/plugin.json",
+      "type": "json",
+      "key": "version"
+    },
+    {
+      "path": ".claude-plugin/marketplace.json",
+      "type": "json",
+      "key": "plugins[0].version"
+    }
+  ],
+  "tag_prefix": "v",
+  "tag_format": "${TAG_PREFIX}${VERSION}",
+  "branch": "main",
+  "validation": [
+    {
+      "name": "Plugin validation",
+      "command": "./validate.sh",
+      "required": true
+    }
+  ],
+  "pre_release": [],
+  "post_release": [],
+  "release_notes": {
+    "style": "grouped",
+    "group_by": "type",
+    "types": {
+      "feat": "Features",
+      "fix": "Bug Fixes",
+      "refactor": "Refactoring",
+      "docs": "Documentation",
+      "chore": "Maintenance"
+    },
+    "include_authors": false,
+    "include_pr_links": false,
+    "header_template": "## What's Changed\n\n",
+    "footer_template": "\n**Full Changelog**: https://github.com/${REPO}/compare/${PREV_TAG}...${TAG}"
+  },
+  "github_release": {
+    "enabled": true,
+    "draft": false,
+    "prerelease": false,
+    "title_template": "${TAG} — ${TITLE}"
+  },
+  "ci_trigger": null
+}

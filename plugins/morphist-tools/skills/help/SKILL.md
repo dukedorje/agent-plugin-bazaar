@@ -476,7 +476,36 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 
 ---
 
-## 15. `/ultraresearch` — Multi-Agent Research Swarm
+## 15. `/release` — Project Release Orchestrator
+
+**When**: You're ready to publish a release. Reads `.release.json` from the repo root to know which files to bump, what validation to run, and how to create the GitHub release.
+
+```
+/release minor                     # Bump minor version, full release
+/release patch                     # Bump patch version
+/release 2.0.0                     # Set exact version
+/release --init                    # Create .release.json for this repo
+/release --dry-run minor           # Preview without making changes
+/release --notes-only              # Generate release notes only
+/release --no-push patch           # Local only, don't push or create GH release
+```
+
+| Flag | Effect |
+|------|--------|
+| `patch` / `minor` / `major` | Semver bump level |
+| `<version>` | Exact version |
+| `--init` | Create or update `.release.json` |
+| `--dry-run` | Show what would happen |
+| `--notes-only` | Generate release notes only |
+| `--no-push` | Don't push or create GitHub release |
+
+Steps: pre-flight checks → generate release notes → bump versions → validate → commit & tag → push → GitHub release → post-release hooks.
+
+Each repo defines its own process in `.release.json` (version files, validation scripts, CI triggers, release note format).
+
+---
+
+## 16. `/ultraresearch` — Multi-Agent Research Swarm
 
 **When**: You have a question that needs broad exploration, multiple perspectives, or deep investigation. Standalone — not part of the sprint lifecycle.
 
