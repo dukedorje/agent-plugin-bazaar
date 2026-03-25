@@ -59,7 +59,7 @@ Architecture Decisions: {decisions}
 Technical Notes from story stub: {technical_notes}
 
 ## Architecture Decisions (for tech stack context)
-{full_content_of_architecture_decisions_md}
+Read from: .omc/sprint-plan/current/architecture-decisions.md
 
 For each referenced library or framework:
 1. Latest stable version as of today
@@ -95,10 +95,10 @@ Generate a comprehensive implementation guide for this story. Your output will b
 {story_stub_content_from_epics_md}
 
 ## Architecture Decisions
-{full_content_of_architecture_decisions_md}
+Read from: .omc/sprint-plan/current/architecture-decisions.md
 
 ## Requirements
-{full_content_of_requirements_md}
+Read from: .omc/sprint-plan/current/requirements.md
 
 ## Previous Story Intelligence
 Files created by prior stories: {file_list_from_prior_stories}

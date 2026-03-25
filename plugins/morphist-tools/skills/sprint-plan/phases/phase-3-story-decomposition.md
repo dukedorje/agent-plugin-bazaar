@@ -48,10 +48,10 @@ You are decomposing Epic {epic_num}: {epic_title} into implementation-ready stor
 {epic_content_from_epics_md}
 
 ## Architecture Decisions
-{full_content_of_architecture_decisions_md}
+Read the full architecture decisions from: .omc/sprint-plan/current/architecture-decisions.md
 
 ## Requirements
-{full_content_of_requirements_md}
+Read the full requirements from: .omc/sprint-plan/current/requirements.md
 
 ## Rules
 - Size each story for single dev agent completion (~1-4 hours of focused work)
@@ -97,10 +97,10 @@ Decisions: {decisions}
 Technical Notes: {technical_notes}
 
 ## Architecture Decisions (for context)
-{full_content_of_architecture_decisions_md}
+Read from: .omc/sprint-plan/current/architecture-decisions.md
 
 ## Requirements (for FR details)
-{full_content_of_requirements_md}
+Read from: .omc/sprint-plan/current/requirements.md
 
 ## Rules
 - Use Given/When/Then format exactly
