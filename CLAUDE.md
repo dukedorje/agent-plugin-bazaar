@@ -68,6 +68,27 @@ This loads the plugin from source. The local copy takes precedence over any inst
 2. If the skill needs custom agents, add them to `plugins/morphist-tools/agents/`
 3. Bump version and run `./validate.sh`
 
+## Design Principles
+
+### Progressive Disclosure & Context Efficiency
+
+Skills should be **small, single-purpose, and focused**. Avoid monolithic skill prompts that try to orchestrate everything in one context window. Instead:
+
+- **Thin dispatchers over monoliths**: Orchestration skills should read state, determine what to do next, and delegate to agents — not embed full agent prompts inline. Each agent runs in its own context window.
+- **Pass file paths, not file contents**: When dispatching agents, pass the path to read rather than injecting the full content into the prompt. Agents can read files themselves. This saves thousands of tokens from the orchestrator's context.
+- **Extract reusable concerns into separate skills**: If a skill contains an inline sub-workflow (verification, blocker triage, review), extract it into its own skill that can be invoked independently. This enables progressive disclosure — users see only the skills they need.
+- **Lean on OMC for execution infrastructure**: Don't reimplement parallelism, persistence loops, or verification pipelines. Use OMC's executor agents, ralph/ultrawork for persistence, and team for multi-agent coordination. Morphist-tools' value is in *planning* (sprint-plan, PRD, architecture decisions, story specs), not in being its own execution engine.
+- **Default to autonomy**: Elicitation gates should default to `high` severity threshold, not `all`. Most decisions are low-severity and should auto-resolve. Users who want maximum control can opt in with `--stop-at=all`.
+- **Context checkpointing**: Long-running skills should checkpoint progress after each major unit of work so that resume is seamless if the context window is exhausted.
+
+### OMC Integration Strategy
+
+Morphist-tools depends on OMC for execution infrastructure. The integration boundary is:
+
+- **Morphist-tools owns**: Sprint planning, PRD generation, story specs, architecture decisions, verification criteria, retrospectives — the *what* and *why*
+- **OMC owns**: Agent dispatch, parallelism, persistence loops, model routing, verification execution — the *how*
+- **Integration point**: Sprint-exec translates story specs into task definitions that OMC's execution primitives (executor, team, ultrapilot) can process
+
 ## Conventions
 
 - Skills dispatch plugin agents via `subagent_type="morphist-tools:<agent-name>"`
@@ -81,7 +102,10 @@ This loads the plugin from source. The local copy takes precedence over any inst
 |-------|-------------|
 | `sprint-plan` | Multi-phase sprint planning workflow |
 | `prd` | Interactive PRD workshop |
-| `sprint-exec` | Execute validated sprint stories |
+| `sprint-exec` | Execute validated sprint stories (thin dispatcher) |
+| `done-validate` | Post-execution validation — checks file existence, Dev Agent Record, AC coverage |
+| `blocker-triage` | Architectural blocker analysis, downstream impact, resolution options |
+| `exec-report` | Epic/sprint progress report generation (internal) |
 | `refine` | Refine any artifact with consensus, or deep-dive into an epic before execution |
 | `retro` | Sprint retrospective generation |
 | `ultraresearch` | Multi-agent research swarm |

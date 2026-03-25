@@ -56,7 +56,7 @@ Parse `$ARGUMENTS` for the following optional flags:
 | `--next-story` | off | Execute only the next unfinished story (first `ready-for-dev` story in the first incomplete epic) |
 | `--auto` | off | Execute ALL remaining epics sequentially. Stops on epic failure or architectural blockers (asks user). Does not stop on individual story failures within an epic. |
 | `--full-auto` | off | Execute ALL remaining epics without stopping for ANY user confirmation. Auto-resolves failures (proceed to next epic) and blockers (accept partial). |
-| `--stop-at=LEVEL` | varies | Decision severity threshold for pausing. Values: `critical`, `high`, `medium`, `all`. Default: `all` (default mode), `high` (`--auto`), `critical` (`--full-auto`). |
+| `--stop-at=LEVEL` | varies | Decision severity threshold for pausing. Values: `critical`, `high`, `medium`, `all`. Default: `high` (default mode), `high` (`--auto`), `critical` (`--full-auto`). |
 | `--dry-run` | off | Show execution plan without dispatching agents |
 | `--concurrency=N` | unlimited | Max executor agents running simultaneously within an epic |
 
@@ -87,14 +87,15 @@ During execution, decision points arise at blocker triage, verification failures
 
 | Mode | Default `--stop-at` | Stops for | Auto-resolves |
 |------|---------------------|-----------|---------------|
-| Default (next epic) | `all` | Everything — every decision point pauses | Nothing |
+| Default (next epic) | `high` | `critical` + `high` | `medium` + `low` (proceeds automatically) |
 | `--auto` | `high` | `critical` + `high` | `medium` + `low` (proceeds automatically) |
 | `--full-auto` | `critical` | Only `critical` if explicitly set via `--stop-at=critical` | Everything by default |
 
 `--stop-at` overrides the default for any mode. For example:
 - `--auto --stop-at=critical` — runs all epics, only stops on critical issues
 - `--full-auto --stop-at=high` — full auto but still stops on high-severity decisions
-- `--stop-at=medium` — default next-epic mode but auto-resolves low-severity items
+- `--stop-at=all` — default next-epic mode but pauses on every decision point (maximum control)
+- `--stop-at=medium` — auto-resolves only low-severity items
 
 When a decision point is **below the stop threshold**, auto-resolve using the least-disruptive option:
 - Blocker triage: accept partial (option 3)
@@ -253,13 +254,12 @@ You are implementing a story from the sprint plan.
 Working directory: {working_directory}
 Sprint directory: .omc/sprint-plan/current/
 Story file: {story_file_path}
-
-Here is the full story specification:
-
-{story_file_content}
+Story: {story_title} ({story_id})
+Acceptance criteria count: {ac_count}
+Key architecture decisions: {decision_ids_csv}
 
 Instructions:
-1. Read the story carefully, including all acceptance criteria.
+1. Read the story file at {story_file_path} — it contains the full specification and acceptance criteria.
 2. Implement every requirement in the story.
 3. Follow the architecture decisions and file list specified.
 4. When complete, fill in the "Dev Agent Record" section at the bottom of the story file with:
@@ -286,59 +286,21 @@ Instructions:
 )
 ```
 
-### 4d. Post-Completion: Update Story Status
+**Context efficiency**: Do NOT inject the full story file content into the executor prompt. The executor agent can read the file itself. Pass only the file path and a brief summary (title, AC count, key decision IDs) to orient the agent. This saves 2,000-4,000 tokens per story from the orchestrator's context window.
+
+### 4d. Post-Completion: Validate & Update Story Status
 
 **IMPORTANT**: Update story status **immediately** as each individual agent returns — do NOT batch updates until the end of the epic. This ensures that if the session is interrupted mid-epic, completed stories are already persisted as `done` and won't be re-executed on resume.
 
-As each story executor completes (regardless of whether other stories in the epic are still running):
+As each story executor completes, run the `/done-validate --story=N.M --update` skill to:
+1. Check Dev Agent Record completeness
+2. Verify file existence (done-validation gate)
+3. Check acceptance criteria coverage
+4. Extract blocker classification
+5. Determine final outcome (`done` | `failed` | `blocked`)
+6. Update story frontmatter and `execution_log` in `phase-state.json`
 
-1. Read the story file back
-2. Check if the Dev Agent Record section has been filled in
-   - If the Dev Agent Record is still empty or missing content: write a note in the Completion Notes field: `"Agent completed without filling Dev Agent Record"`
-3. **Done-validation gate** — verify the agent actually produced work:
-   a. Extract the File List from the Dev Agent Record
-   b. If the File List is empty, missing, or contains no entries:
-      - Check git status for any uncommitted changes attributable to this story
-      - If still no files found: outcome = `failed`
-      - Add to Completion Notes: `"VALIDATION FAILED: Agent reported completion but created/modified zero files"`
-   c. If the File List has entries, spot-check that at least one listed file actually exists on disk
-      - If none of the listed files exist: outcome = `failed`
-      - Add to Completion Notes: `"VALIDATION FAILED: Dev Agent Record lists files that do not exist"`
-   d. Check that acceptance criteria have corresponding implementation:
-      - Count the tasks/subtasks in the story — if all checkboxes are unchecked AND no files were modified, this is a false completion
-4. Extract blocker classification from the Dev Agent Record:
-   - Read the `Blocker Type` field (default to `"none"` if not present or if story succeeded)
-   - Read the `Blocker Detail` field (if present)
-   - Architectural blockers are: `library_incompatible`, `architecture_mismatch`, `dependency_missing`
-5. Determine final outcome:
-   - If executor reported failure or threw an error: outcome = `failed`
-   - If done-validation gate failed (step 3): outcome = `failed`
-   - If blocker_type is an architectural blocker (`library_incompatible`, `architecture_mismatch`, `dependency_missing`): outcome = `blocked`
-     (The story cannot proceed due to external factors, not agent failure. This is distinct from `failed` which indicates the agent didn't complete its work.)
-   - Otherwise: outcome = `done`
-6. Update story frontmatter:
-   - `status: {done|failed|blocked}`
-   - `completed_at: {ISO 8601 timestamp}`
-   - If validation failed: `validation_failure: {reason from step 3}`
-   - If blocker_type is not `none`: `blocker_type: {value}`, `blocker_detail: {detail}`
-7. Write the updated story file back **immediately**
-8. Append to `execution_log` in `phase-state.json` **immediately** (read-modify-write):
-   ```json
-   {
-     "story": "N.M",
-     "status": "done|failed|blocked",
-     "started_at": "...",
-     "completed_at": "...",
-     "validation_failure": null | "zero files created" | "listed files do not exist",
-     "blocker_type": "none|coding|library_incompatible|architecture_mismatch|dependency_missing|spec_unclear",
-     "blocker_detail": null | "Eden Treaty does not support streaming responses for SSE endpoints"
-   }
-   ```
-9. Update `stories_completed` count in `phase-state.json`
-
-Each story's status must be persisted to disk before processing the next agent result. This is the source of truth for resume (section 1d) and for `/sprint-review` to know which stories are reviewable.
-
-Stories that fail done-validation are treated identically to executor failures — they appear in the epic progress report as failed and can be retried with `/sprint-exec --story=N.M`.
+See the `done-validate` skill for full validation logic. Each story's status is persisted to disk immediately (not batched). This is the source of truth for resume (section 1d) and for `/sprint-review`.
 
 ### 4e. Handle Failures Within an Epic
 
@@ -352,8 +314,8 @@ If ALL stories in an epic fail:
   ```json
   { "type": "auto_proceed", "epic": N, "reason": "all stories failed, --full-auto active" }
   ```
-- If `--auto`: halt and ask the user (same prompt as default below). `--auto` runs all epics but stops on epic-level failures.
-- Otherwise (default or `--epic`), halt execution and ask the user:
+- If `--auto` or default: halt and ask the user. Both default and `--auto` use `--stop-at=high`, which stops on epic-level failures.
+- Otherwise (if `--stop-at=all` was explicitly set), also halt and ask:
   ```
   All stories in Epic {N} failed. Possible causes: missing dependencies, environment issues, or ambiguous story spec.
 
@@ -380,110 +342,47 @@ After all stories in an epic have completed (or been skipped), determine and per
 
 This must happen **before** the progress report so that the persisted state is accurate if the session is interrupted.
 
-### 4g. Blocker Triage (elicitation gate)
+### 4f-2. Context Checkpoint
 
-After updating epic status, check whether any failed stories in this epic have architectural blockers — i.e., `blocker_type` is `library_incompatible`, `architecture_mismatch`, or `dependency_missing`.
+After updating epic status, write a resume checkpoint to `phase-state.json`:
 
-If there are **no architectural blockers**, skip to 4h (Verification Gate).
+```json
+{
+  "resume_point": {
+    "last_completed_epic": N,
+    "next_epic": N+1,
+    "timestamp": "{ISO 8601}"
+  }
+}
+```
+
+This checkpoint enables seamless resume if the context window is exhausted mid-sprint. When the user types "continue" or re-invokes `/sprint-exec`, the skill reads `resume_point` and skips directly to the next epic without re-processing completed work. Combined with `epic_status` and `execution_log`, this provides full resume fidelity.
+
+### 4g. Blocker Triage
+
+After updating epic status, check whether any failed stories in this epic have architectural blockers (`blocker_type` is `library_incompatible`, `architecture_mismatch`, or `dependency_missing`).
+
+If there are **no architectural blockers**, skip to 4h.
 
 If there **are** architectural blockers:
-- If `--full-auto`: automatically choose option 3 (accept partial) for each blocker. Log the auto-decision to `execution_log`:
-  ```json
-  { "type": "blocker_auto_accepted", "story": "N.M", "blocker_type": "...", "decision": "accepted_partial_auto" }
-  ```
-  Skip to 4h (Verification Gate).
-- If `--auto`: this is a **blocking elicitation** — `--auto` stops on blockers so the user can decide.
-- Otherwise (default), this is a **blocking elicitation** — do NOT proceed to the next epic until the user responds.
+- If `--full-auto`: invoke `/blocker-triage --epic={N} --auto-accept`
+- Otherwise: invoke `/blocker-triage --epic={N}`
 
-#### Step 1: Impact Analysis
-
-For each architectural blocker, scan upcoming epics and stories for potential impact:
-- Search remaining story files for references to the same library, API, or architecture decision
-- Check epic dependency chains in `epics.md`
-- Build a list of potentially affected stories
-
-#### Step 2: Present Blocker Elicitation
-
-```
-══════════════════════════════════════════════════════
-  ⚠ ARCHITECTURE BLOCKER — Decision Required
-══════════════════════════════════════════════════════
-
-  Story {N.M} ({story_title}) — {blocker_type}:
-  {blocker_detail}
-
-  {if multiple blockers in same epic}
-  Also blocked:
-    Story {N.X}: {blocker_type} — {blocker_detail}
-  {/if}
-
-  Potentially affected stories in upcoming epics:
-    {list stories that reference the same library/decision/dependency}
-    {or "None identified" if no downstream impact found}
-
-  ──────────────────────────────────────────────────
-  Options:
-
-  1. Swap approach — Specify an alternative (e.g., different library,
-     different pattern) and re-run affected stories with the new approach
-  2. Update architecture decision — Revise the relevant decision in
-     architecture-decisions.md, then re-run affected stories
-  3. Accept partial — Continue to Epic {N+1} as-is, address later
-  4. Halt sprint — Stop execution for replanning
-
-  Which approach? (If option 1 or 2, describe the alternative)
-══════════════════════════════════════════════════════
-```
-
-Wait for user input.
-
-#### Step 3: Act on Decision
-
-Based on user response:
-
-- **Option 1 (Swap approach)**: Record the user's alternative in the story's `blocker_detail` field as a resolution note. When the user later retries with `/sprint-exec --story=N.M`, the retry prompt (section 5) will include this context. Also update any affected stories in upcoming epics: append a note to their story file under a `## Blocker Resolution` heading (before the Dev Agent Record) so the executor knows about the change.
-
-- **Option 2 (Update architecture)**: Read the relevant architecture decision from `current/architecture-decisions.md`. Present the current decision text and ask the user to confirm the revision. Update the decision in the file. Then apply the same story annotation as option 1.
-
-- **Option 3 (Accept partial)**: Log the decision and continue. Add to `execution_log`:
-  ```json
-  {
-    "type": "blocker_accepted",
-    "story": "N.M",
-    "blocker_type": "...",
-    "decision": "accepted_partial",
-    "rationale": "{user's explanation if provided}"
-  }
-  ```
-
-- **Option 4 (Halt)**: Update `phase-state.json`:
-  - Set `execution_status` to `"halted"`
-  - Set `halted_at` to the current ISO 8601 timestamp
-  - Set `halt_reason` to a brief summary of the blocker(s) that triggered the halt (e.g., `"Eden Treaty does not support SSE — stories 3.2, 4.1 affected"`)
-  - Set `halt_blocker_stories` to an array of story IDs that triggered the halt (e.g., `["3.2", "4.1"]`)
-
-  Print instructions for resuming after replanning. Stop execution.
-
-After processing all architectural blockers for the epic, continue to 4h.
+See the `blocker-triage` skill for the full flow (impact analysis, 4-option resolution, architecture decision updates). If blocker-triage results in a halt (option 4), stop execution. Otherwise continue to 4h.
 
 ### 4h. Verification Gate
 
-After blocker triage (or skipping it), run a quick independent verification of the epic's completed stories. This is equivalent to dispatching `/verify --epic={N}` inline.
+After blocker triage (or skipping it), invoke `/verify --epic={N}` to run independent verification of the epic's completed stories.
 
 Skip this step if:
 - The epic had zero completed stories (all failed or blocked)
 - The scope is `--next-story` (single-story execution doesn't trigger epic-level verification)
 
-Dispatch a verifier agent (sonnet) with the story file lists, acceptance criteria, and architecture decisions. The verifier checks: file existence, basic import health, AC spot-check, and architecture compliance. See the `/verify` skill (section 3) for the full agent prompt.
-
-**Display the verification summary** (see `/verify` section 4 for format) before the epic progress report.
-
 **Gate behavior**:
 - All stories PASS: proceed normally
 - CONCERNS only: show results, proceed (concerns are non-blocking)
 - Any FAIL + `--full-auto`: log failures to `verification_log` in `phase-state.json`, proceed
-- Any FAIL + `--auto`: pause and ask (same as default — `--auto` stops on failures)
-- Any FAIL + default: pause and ask:
+- Any FAIL + default or `--auto` (`--stop-at=high`): pause and ask:
   ```
   Verification found failures in Epic {N}. Fix before proceeding?
 
@@ -497,36 +396,7 @@ Dispatch a verifier agent (sonnet) with the story file lists, acceptance criteri
 
 ### 4i. Epic Progress Report
 
-After all stories in an epic complete (or are skipped), output a prominent report:
-
-```
-═══════════════════════════════════════════════════
-  EPIC {N} COMPLETE: {epic_title}
-  Status: {done|partial|failed}
-═══════════════════════════════════════════════════
-
-  Stories:  {done_count}/{total_count} done
-            {failed_count} failed, {blocked_count} blocked, {already_done_count} already done
-
-  Files changed:
-    {list files from all story Dev Agent Records in this epic}
-
-  {if failed_count > 0}
-  Failed stories:
-    {list each: "Story N.M: {title} — {failure reason from execution_log}"}
-  Retry with: /sprint-exec --story=N.M
-  {/if}
-
-  {if verification_ran}
-  Verification: {pass_count} passed, {concerns_count} concerns, {fail_count} failed
-  {/if}
-
-  {if not last_epic}
-  Next: Epic {N+1}: {next_epic_title}
-  Background code review dispatched → .omc/sprint-plan/current/reviews/epic-{N}-review.md
-  {/if}
-═══════════════════════════════════════════════════
-```
+After all stories in an epic complete (or are skipped), generate the progress report using the `exec-report` skill (internal). See the `exec-report` skill for the full format.
 
 ### 4j. Background Code Review (optional)
 
@@ -569,16 +439,13 @@ You are retrying a story implementation that previously failed.
 Working directory: {working_directory}
 Sprint directory: .omc/sprint-plan/current/
 Story file: {story_file_path}
+Story: {story_title} ({story_id})
 
 Previous failure context:
 {failure_notes_from_execution_log_if_available}
 
-Here is the full story specification:
-
-{story_file_content}
-
 Instructions:
-1. Read the story carefully, including all acceptance criteria.
+1. Read the story file at {story_file_path} — it contains the full specification and acceptance criteria.
 2. Implement every requirement in the story.
 3. Follow the architecture decisions and file list specified.
 4. When complete, fill in the "Dev Agent Record" section at the bottom of the story file with:
@@ -603,36 +470,7 @@ After all epics (in scope) have been processed:
 
 1. Update `phase-state.json`: set `execution_status: "complete"`
 2. Write the final state back
-3. Print the completion summary:
-
-```
---- Sprint {sprint_number} Execution Complete ---
-
-Results:
-  Done:    {total_done} stories
-  Failed:  {total_failed} stories
-  Skipped: {total_skipped} stories (blocked or already done)
-
-{if total_failed > 0}
-Failed stories require attention:
-{list each failed story: "  - Story N.M: {title}"}
-
-Retry individual stories with:
-  /sprint-exec --story=N.M
-
-Retries use opus model for improved reasoning.
-{/if}
-
-{if total_failed == 0}
-All stories completed successfully.
-{/if}
-
-Dev Agent Records have been written to each story file.
-Next steps:
-  /retro                    # Generate sprint retrospective
-  /audit --all              # Deep audit of all stories (optional)
-  /backlog --scan           # Catch follow-ups and TODOs
-```
+3. Generate the sprint completion report using the `exec-report` skill (internal). See the `exec-report` skill for the full format.
 
 ---
 
