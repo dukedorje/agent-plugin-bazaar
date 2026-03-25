@@ -15,29 +15,16 @@ plugins/
 validate.sh                       # Pre-flight validation script
 ```
 
-## Pre-Push Checklist
+## Releasing
 
-Before pushing to the GitHub remote, ALWAYS:
+Use `/release` to handle version bumps, validation, tagging, and GitHub releases. The release process is defined in `.release.json`.
 
-1. Bump the version intelligently (see below), commit the bump, then push
-2. Run `./validate.sh` before the version bump commit
-3. Fix all errors before pushing
-
-**Do NOT bump the version on every change or every commit.** Only bump when pushing to the remote.
-
-## Version Bumping
-
-Bump the plugin version **only when pushing to the remote**. Assess all commits being pushed since the last version bump to determine the appropriate bump level:
-
-- **Patch** (1.0.0 → 1.0.1): Bug fixes, wording changes, small adjustments
-- **Minor** (1.0.1 → 1.1.0): New skills, new agents, significant feature additions
-- **Major** (1.1.0 → 2.0.0): Breaking changes to skill interfaces or agent contracts
-
-Update the version in **both** files:
-1. `plugins/morphist-tools/.claude-plugin/plugin.json`
-2. `.claude-plugin/marketplace.json`
-
-Then run `./validate.sh` to confirm they match. Commit the version bump separately, then push.
+```bash
+/release minor          # New skills, features
+/release patch          # Bug fixes, wording
+/release major          # Breaking changes
+/release --dry-run minor  # Preview first
+```
 
 ## Validation
 
