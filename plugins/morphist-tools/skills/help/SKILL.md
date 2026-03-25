@@ -23,8 +23,8 @@ Display the following usage guide directly to the user. Do NOT run any agents or
                                                            ├─> /reconcile
                                                            └─> /review-fix
 
-  AT ANY TIME:  /status  /refine  /audit  /replan  /log  /doc  /update-status  /ultraresearch
-                /done-validate  /blocker-triage
+  AT ANY TIME:  /status  /refine  /audit  /replan  /scope  /log  /doc  /update-status
+                /sprint-validate  /done-validate  /blocker-triage  /ultraresearch
 ```
 
 **Typical happy path**: `/prd` -> `/sprint-plan` -> `/sprint-exec` -> `/retro`
@@ -109,6 +109,37 @@ All artifacts in `.omc/sprint-plan/sprint-NNN/` (symlinked as `current/`):
 | `epics.md` | Epic structure with story summaries |
 | `stories/E{N}-S{M}.md` | Enriched story files ready for dev agents |
 | `readiness-report.md` | Final validation summary |
+
+---
+
+## 2b. `/scope` — Sprint Scope Negotiation
+
+**When**: You want to (re-)negotiate which FRs are in scope for this sprint. Runs automatically as Phase 1B of `/sprint-plan`, but also available standalone for mid-sprint re-scoping.
+
+```
+/scope                         # Re-negotiate sprint scope
+/scope --show                  # View current IN/STRETCH/DEFER split
+/scope --sprint-size=focused   # Re-scope as a focused sprint
+/scope --auto                  # Auto-accept analyst's proposal
+```
+
+Clusters FRs by cohesion/dependency, estimates story counts, proposes a sprint boundary, and presents an interactive negotiation. Deferred items are added to the backlog.
+
+---
+
+## 2c. `/sprint-validate` — Full Sprint Validation
+
+**When**: Sprint planning artifacts are complete (or partially complete) and you want adversarial validation. Runs automatically as Phase 5 of `/sprint-plan`, but also available standalone after manual edits.
+
+```
+/sprint-validate               # Validate current sprint artifacts
+/sprint-validate --fix         # Validate and auto-fix issues (max 2 iterations)
+/sprint-validate --force       # Validate even if enrichment is incomplete
+```
+
+Dispatches `critic` (opus) + `verifier` (sonnet) in parallel. Checks FR coverage, architecture compliance, dependency validation, story quality, epic health, and mechanical correctness. Produces a readiness report.
+
+For a quick post-execution smoke test, use `/verify` instead.
 
 ---
 
@@ -470,6 +501,9 @@ Docs are standalone — readable without sprint artifacts. Cross-references logg
 | "I have an idea, where do I start?" | `/prd` then `/sprint-plan` |
 | "Planning is done, let's build" | `/sprint-exec` (next epic) or `--full-auto` (all) |
 | "This epic is complex, let me prepare" | `/refine --epic=N` |
+| "What's in scope for this sprint?" | `/scope --show` |
+| "Let me re-scope to a smaller sprint" | `/scope --sprint-size=focused` |
+| "Re-validate planning after edits" | `/sprint-validate` or `/sprint-validate --fix` |
 | "The architecture phase feels weak" | `/refine architecture` |
 | "A library we chose doesn't work" | `/replan --decision=D-NNN --reason="..."` |
 | "Quick check — did this epic actually get built?" | `/verify --epic=N` |

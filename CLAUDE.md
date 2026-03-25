@@ -106,6 +106,8 @@ Morphist-tools depends on OMC for execution infrastructure. The integration boun
 | `done-validate` | Post-execution validation — checks file existence, Dev Agent Record, AC coverage |
 | `blocker-triage` | Architectural blocker analysis, downstream impact, resolution options |
 | `exec-report` | Epic/sprint progress report generation (internal) |
+| `scope` | Sprint scope negotiation — IN/STRETCH/DEFER split, standalone or as Phase 1B |
+| `sprint-validate` | Full adversarial validation of sprint artifacts — produces readiness report |
 | `refine` | Refine any artifact with consensus, or deep-dive into an epic before execution |
 | `retro` | Sprint retrospective generation |
 | `ultraresearch` | Multi-agent research swarm |
