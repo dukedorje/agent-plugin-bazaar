@@ -61,6 +61,13 @@ Read the full requirements from: SPRINT_DIR/requirements.md
 - Assign estimated complexity: small | medium | large
 - Be aware of what OTHER epics cover — don't duplicate their scope into your stories
 - If your epic depends on entities/patterns from another epic, reference them by name but don't recreate them
+- Assign a test_tier to each story based on risk and complexity:
+  - "yolo": Small, clear, low-risk, UI tweaks, config changes. Build check only — if it compiles/runs, ship it.
+  - "smoke": Medium complexity, standard CRUD, familiar patterns. Happy path tests only. Default tier.
+  - "thorough": Large, novel, security-sensitive, data integrity, complex state. Full TDD with edge cases and error handling.
+- Default to "smoke" unless there's a clear reason to go higher or lower.
+- Stories touching auth, payments, data migration, or security → always "thorough"
+- Stories that are pure UI layout, config, or documentation → "yolo"
 
 ## Output Format
 Return a JSON array of story stubs:
@@ -72,6 +79,7 @@ Return a JSON array of story stubs:
     "frs": ["FR1", "FR3"],
     "decisions": ["D-001", "D-003"],
     "complexity": "small|medium|large",
+    "test_tier": "yolo|smoke|thorough",
     "technical_notes": "Brief technical guidance from architecture decisions"
   }
 ]
@@ -195,6 +203,7 @@ After processing all stories for all epics, compute and record health metrics:
 | Complexity distribution | Count small/medium/large per epic | Flag if all large (epic may need splitting) |
 | FR coverage | Verify every FR assigned to this epic has at least one story | Flag any uncovered FRs |
 | Cross-epic dependencies | Scan story technical notes for references to future epic entities | Flag any detected forward deps |
+| Test tier distribution | Count yolo/smoke/thorough per epic | Flag if >50% thorough (may be over-testing) |
 
 ### Step 5: Update epics.md
 
@@ -213,6 +222,7 @@ Append stories and health metrics directly to `SPRINT_DIR/epics.md` under each e
 **FRs**: [FR1, FR3]
 **Decisions**: [D-001, D-003]
 **Complexity**: small | medium | large
+**Test Tier**: yolo | smoke | thorough
 
 #### Acceptance Criteria
 - **AC1**: Given [precondition], When [action], Then [expected result]

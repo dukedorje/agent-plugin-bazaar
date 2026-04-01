@@ -19,9 +19,9 @@ This skill is called with context about which epic just completed. It reads:
 
 ---
 
-## 2. Epic Completion Report — Inter-Epic Review Brief
+## 2. Epic Completion Report — Inter-Epic Huddle
 
-After an epic completes, generate a human-oriented review brief. This is the primary checkpoint for the user to assess quality before proceeding. It has four sections: summary, story results, cross-story reconciliation, and suggested next steps (including optional manual testing).
+After an epic completes, run the inter-epic huddle. This is the primary checkpoint for the user to assess quality, absorb learnings, and decide how to proceed before the next epic begins.
 
 ### 2a. Gather Inputs
 
@@ -85,54 +85,85 @@ Output:
 
 If all clean, show a single `✓ No cross-story inconsistencies detected`. If issues found, mark with `⚠` — these are informational, not blocking.
 
-### 2e. Manual Test Suggestions (optional)
+### 2e. Learnings for Next Epic
 
-Dispatch a writer agent (haiku) to generate 3-6 concrete manual test actions derived from the acceptance criteria of all completed stories. Frame as quick, practical things the user can try — not a formal test plan.
+Dispatch a sonnet agent to read all Dev Agent Records from the just-completed epic and extract insights relevant to upcoming epics. The agent should look for:
+
+- Patterns discovered during implementation that upcoming stories should follow
+- Unexpected API behaviors or library quirks that affect future work
+- Files/modules created that future epics will need to integrate with
+- Anything that worked well or went wrong that should inform the next epic
+
+Format output as concrete, actionable bullet points:
 
 ```
-  Try it yourself (optional):
-    □ {concrete action — what to do and what to expect}
-    □ {concrete action}
-    □ {concrete action}
+  Learnings for Epic {N+1}:
+    • {actionable insight}
+    • {actionable insight}
     ...
 ```
 
-Guidelines for the writer agent:
-- Derive from acceptance criteria, not from implementation details
-- Be specific: include example commands, URLs, inputs, or UI actions
-- State the expected outcome for each action
-- Prioritize user-facing behavior over internal correctness
-- Keep it to 3-6 items — enough to build confidence, not enough to be a chore
+Persist the learnings to `phase-state.json` under `epic_learnings.{N}` before proceeding.
 
-### 2f. Next Steps
+### 2f. User Feedback Prompt
 
-Show contextual next steps based on the epic's outcome. Only show options that are relevant.
+After displaying everything above, prompt the user:
+
+```
+  Anything you're noticing? Feedback, feelings, course corrections?
+  (Type your thoughts, or just hit enter to see options)
+```
+
+Wait for user input. If they type feedback:
+- Fold it into the learnings by appending to `epic_learnings.{N}` in `phase-state.json`
+- Acknowledge briefly (one line)
+- Then show the menu
+
+If the user hits enter with no input, proceed directly to the menu.
+
+### 2g. Next Steps Menu
+
+Show contextual options based on epic outcome. Only show options that are relevant.
 
 ```
   ─────────────────────────────────────────────────
-  Next steps:
-    [continue]     → Epic {N+1}: {next_epic_title} ({story_count} stories)
-    {if failed_count > 0}
-    [fix {N.M}]    → Re-run a failed story (e.g., /sprint-exec --story={first_failed})
-    {/if}
-    {if reconcile_warnings > 0}
-    [reconcile]    → Full cross-story reconciliation (/reconcile --epic={N})
-    {/if}
-    [audit {N.M}]  → Deep investigation of a story (/audit --epic={N})
-    [refine]       → Revise epic spec before continuing (/refine --epic={N+1})
-    [log "..."]    → Annotate a finding (/log "..." --epic={N})
-    [backlog]      → Add follow-up items (/backlog add "...")
-    [halt]         → Pause execution for manual work
-    {if last_epic}
-    [retro]        → Generate sprint retrospective (/retro)
-    {/if}
+  Next up: Epic {N+1} — {title} ({story_count} stories)
+
+  [go]           → Execute as-is
+  [enrich N.M]   → Flesh out an underspecified story before executing
+  [redirect]     → Adjust next epic's stories based on learnings
+  [replan]       → Significant course correction (/replan)
+  [yolo]         → Skip huddles for remaining epics, just build
+  [hold]         → Pause execution for manual work
+  {if failed stories}
+  [fix N.M]      → Re-run a failed story (/sprint-exec --story=N.M)
+  {/if}
+  {if reconcile_warnings}
+  [reconcile]    → Full reconciliation (/reconcile --epic={N})
+  {/if}
+  {if last_epic}
+  [retro]        → Generate sprint retrospective (/retro)
+  {/if}
+
   {if background_review}
   Background review dispatched → SPRINT_DIR/reviews/epic-{N}-review.md
   {/if}
 ═══════════════════════════════════════════════════
 ```
 
-Wait for user input before proceeding to the next epic.
+Wait for user input before proceeding.
+
+**Menu action handling:**
+
+- **go**: Proceed to next epic
+- **enrich N.M**: Run enrichment for that specific story (invoke Phase 4 enrichment for just that story), then return to the menu
+- **redirect**: Present the learnings and user feedback to a planner (sonnet) agent that reads the next epic's stories from `SPRINT_DIR/epics.md` and proposes adjustments. Show proposed changes, let user approve/modify, then update the stories.
+- **replan**: Invoke `/replan` skill
+- **yolo**: Set `huddle_mode: "skip"` in `phase-state.json` so remaining epics auto-continue without huddles
+- **hold**: Stop execution, preserve `resume_point` in `phase-state.json`
+- **fix N.M**: Invoke `/sprint-exec --story=N.M`
+- **reconcile**: Invoke `/reconcile --epic={N}`
+- **retro**: Invoke `/retro`
 
 ---
 

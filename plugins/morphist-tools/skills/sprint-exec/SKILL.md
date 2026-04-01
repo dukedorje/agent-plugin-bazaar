@@ -100,9 +100,11 @@ Read `SPRINT_DIR/epics.md` for the ordered list of epics and their stories.
 
 ### 3b. Resolve Story Files
 
-Stories at: `SPRINT_DIR/stories/{epic}-{story}-{slug}.md`
+Check for enriched story files at: `SPRINT_DIR/stories/{epic}-{story}-{slug}.md`
 
-For each story, read frontmatter to get `status`, `title`, `decisions`, and AC count.
+If enriched story files exist, read frontmatter to get `status`, `title`, `decisions`, `test_tier`, and AC count.
+
+If no enriched story files exist (Phase 4 was skipped — the default workflow), read story stubs from `SPRINT_DIR/epics.md` instead. Extract `test_tier`, `complexity`, `decisions`, and ACs from the stub format.
 
 ### 3c. Filter by Scope
 
@@ -118,13 +120,36 @@ For each eligible story, build a task object:
   "epic": N,
   "title": "Story title",
   "file_path": "SPRINT_DIR/stories/N-M-slug.md",
+  "source": "enriched|stub",
   "ac_count": 5,
+  "test_tier": "yolo|smoke|thorough",
   "decision_ids": ["D-001", "D-003"],
+  "complexity": "small|medium|large",
   "status": "ready-for-dev"
 }
 ```
 
 Group tasks by epic for sequential epic dispatch.
+
+### 3e. Pre-Execution Enrichment Check
+
+For each epic about to execute, scan its stories for enrichment candidates. A story is flagged if ALL of:
+- No enriched story file exists (`source: "stub"`)
+- Complexity is `large` OR it references 3+ architecture decisions OR `test_tier` is `thorough`
+
+If candidates are found and not in `--full-auto` mode, suggest enrichment:
+
+```
+Stories that may benefit from enrichment before execution:
+  ⚠ Story {N.M}: {title} — {reason}
+
+[enrich]  → Enrich flagged stories (adds ~1 min per story)
+[skip]    → Execute from stubs (default in 10 seconds)
+```
+
+Auto-skip after 10 seconds if no response. In `--full-auto` mode, always skip.
+
+If the user chooses `[enrich]`, run Phase 4 enrichment for only the flagged stories, then proceed to dispatch.
 
 ---
 
@@ -156,20 +181,31 @@ Previous failure context:
 {failure_notes_from_execution_log}
 {/if}
 
+Test tier: {test_tier}
+{if epic_learnings}
+Learnings from previous epics:
+{epic_learnings}
+{/if}
+
 Instructions:
 1. Read the story file at {story_file_path} — it contains the full specification and acceptance criteria.
-2. Implement every requirement in the story.
-3. Follow the architecture decisions and file list specified.
-4. When complete, fill in the "Dev Agent Record" section at the bottom of the story file with:
+2. If no enriched story file exists at SPRINT_DIR/stories/, read the story stub from SPRINT_DIR/epics.md instead. Also read SPRINT_DIR/architecture-decisions.md for referenced decisions.
+3. Implement every requirement in the story.
+4. Follow the architecture decisions specified.
+5. Testing approach based on test_tier:
+   - "yolo": No tests required. Just make it work — verify it builds/runs.
+   - "smoke": Write happy-path tests for key functionality. Skip edge cases and error paths.
+   - "thorough": Full TDD — write tests first, cover happy paths, edge cases, and error handling.
+6. When complete, fill in the "Dev Agent Record" section at the bottom of the story file with:
    - Agent Model Used
    - Completion Notes (what you did)
    - Any problems encountered
    - Blocker Type: `none` | `coding` | `library_incompatible` | `architecture_mismatch` | `dependency_missing` | `spec_unclear`
    - Blocker Detail (if not `none`): what specifically doesn't work and why
    - Files created or modified (File List)
-5. Do not modify any section of the story file above the Dev Agent Record.
-6. IMPORTANT: If you encounter a fundamental blocker, set the Blocker Type and Detail clearly — do NOT silently work around it.
-7. If the story frontmatter contains a `tdd_tests` field, run those tests. All must pass. Report results in Completion Notes.
+7. Do not modify any section of the story file above the Dev Agent Record.
+8. IMPORTANT: If you encounter a fundamental blocker, set the Blocker Type and Detail clearly — do NOT silently work around it.
+9. If the story frontmatter contains a `tdd_tests` field, run those tests regardless of test_tier. Report results in Completion Notes.
 """,
 )
 ```
@@ -255,15 +291,24 @@ If the epic had completed stories and scope is not `--next-story`:
 
 If epic had completed stories: dispatch `/sprint-review --epic={N}` with `run_in_background=True`.
 
-### 5g. Inter-Epic Review Brief
+### 5g. Inter-Epic Huddle
 
-Generate the review brief via the `exec-report` skill (internal). This produces the epic narrative summary, per-story results, cross-story reconciliation scan, manual test suggestions, and contextual next steps.
+Generate the huddle via the `exec-report` skill (internal). This produces:
+1. Epic narrative summary (what was built)
+2. Per-story results with cross-story reconciliation
+3. Learnings for the next epic (extracted from Dev Agent Records)
+4. User feedback prompt (freeform input)
+5. Next steps menu: go, enrich, redirect, replan, yolo, hold, fix, reconcile
 
-The review brief ends with a **pause for user input** (unless `--full-auto`). The user can continue, fix a story, run reconcile, audit, refine the next epic, annotate findings, or halt.
+The huddle persists learnings to `phase-state.json` under `epic_learnings.{N}`. These learnings are injected into executor prompts for the next epic (via the `{epic_learnings}` template variable in section 4a).
 
-- `--auto`: Pause only if there are failed stories or reconciliation warnings. Otherwise auto-continue.
-- `--full-auto`: Never pause (all output is informational only, auto-continues immediately).
-- Default (single epic): Always pause.
+**Huddle behavior by mode:**
+- **Default**: Always huddle. This is where the human steers.
+- **`--auto`**: Huddle only if there are failed stories, reconciliation warnings, or the user previously chose `[redirect]`. Otherwise auto-continue with `[go]`.
+- **`--full-auto`**: Never huddle. Learnings are still extracted and persisted but displayed as informational output only.
+- **`huddle_mode: "skip"` in phase-state.json**: User chose `[yolo]` at a previous huddle — skip remaining huddles, auto-continue.
+
+**Passing learnings forward:** When dispatching the next epic's stories (section 4), read `epic_learnings` from `phase-state.json` and include all learnings from completed epics in the executor prompt. This is the forward intelligence that replaces sequential enrichment.
 
 ### 5h. Notification
 

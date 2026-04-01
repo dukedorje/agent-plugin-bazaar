@@ -3,8 +3,7 @@
 **Purpose**: Adversarial review of the complete artifact chain, including epic health metrics from Phase 3.
 
 **Agents**:
-- `critic` (opus): Full coverage validation
-- `verifier` (sonnet): Mechanical correctness checks
+- `verifier` (sonnet): FR coverage audit, dependency validation, and mechanical correctness checks
 
 **Input**: All artifacts from the current sprint directory:
 - `current/requirements.md`
@@ -17,26 +16,9 @@
 
 ## Process
 
-### Step 1: Fire Critic and Verifier in Parallel
+### Step 1: Fire Verifier
 
-Both agents receive the full artifact set simultaneously. Neither waits on the other.
-
-```
-critic (opus)  ──────────────────────────────────────────────────> findings-critic.json
-verifier (sonnet) ───────────────────────────────────────────────> findings-verifier.json
-                                                                         |
-                                                                         v
-                                                               merge -> unified-findings
-```
-
-**Agent dispatch**:
 ```python
-# Fire both in parallel
-critic_task = Agent(
-    subagent_type="oh-my-claudecode:critic",
-    model="opus",
-    prompt=CRITIC_PROMPT  # see below
-)
 verifier_task = Agent(
     subagent_type="oh-my-claudecode:verifier",
     model="sonnet",
@@ -46,9 +28,9 @@ verifier_task = Agent(
 
 ---
 
-### Step 2: Critic Agent Validation (opus)
+### Step 2: Verifier Agent Checks (sonnet)
 
-The critic performs adversarial, high-judgment validation. It is looking for gaps, not just surface errors.
+The verifier performs both coverage/dependency validation and mechanical correctness checks.
 
 #### 2a. FR Coverage Audit
 
@@ -63,7 +45,7 @@ The critic performs adversarial, high-judgment validation. It is looking for gap
 - Load every decision from `architecture-decisions.md` (D-001, D-002, ...)
 - For each decision, check whether at least one story's `## Architecture Compliance` section references it
 - **Uncovered decision**: A decision with no story implementation coverage
-- Note: Not every decision needs a story reference — only decisions with downstream implementation consequences. The critic uses judgment here.
+- Note: Not every decision needs a story reference — only decisions with downstream implementation consequences. Use judgment here.
 - Output: Decision coverage table with status
 
 #### 2c. Dependency Validation
@@ -97,7 +79,7 @@ Using story counts from `epics.md` and complexity data from `phase-state.json`:
 | Cross-Epic Coupling | >30% of an epic's stories reference stories in another epic | Review dependency direction |
 | Complexity Mismatch | High-complexity epic early in sequence | Review sequencing |
 
-Epic health flags are **advisory only** — they appear in the readiness report but do not block a pass verdict unless the critic judges them severe.
+Epic health flags are **advisory only** — they appear in the readiness report but do not block a pass verdict unless the severity warrants it.
 
 #### 2f. Sprint Size Compliance
 
@@ -144,7 +126,7 @@ If `sprint-scope.md` does not exist (Phase 1B was skipped in `--fast` mode), ski
 
 ---
 
-### Step 3: Verifier Agent Checks (sonnet)
+#### Mechanical Correctness Checks
 
 The verifier performs mechanical, deterministic correctness checks. No judgment required — these are binary pass/fail.
 
@@ -199,9 +181,9 @@ Every story referenced in `epics.md` must have a corresponding file in `stories/
 
 ---
 
-### Step 4: Merge Findings
+### Step 3: Merge Findings
 
-After both agents complete, the orchestrator merges findings into a single unified list:
+After the verifier completes, classify findings into a single unified list:
 
 ```python
 findings = {
@@ -231,7 +213,7 @@ findings = {
 
 ---
 
-### Step 5: Auto-Fix Loop
+### Step 4: Auto-Fix Loop
 
 **Trigger**: One or more `auto_fixable` findings exist.
 
@@ -253,7 +235,7 @@ After auto-fixes are applied, the verifier re-runs its mechanical checks to conf
 
 ---
 
-### Step 6: Final Verdict and Readiness Report
+### Step 5: Final Verdict and Readiness Report
 
 **If critical findings remain after auto-fix loop**:
 - Status: `fail`

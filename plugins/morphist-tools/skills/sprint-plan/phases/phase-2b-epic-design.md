@@ -8,21 +8,11 @@ Group requirements into user-value-focused epics with FR coverage maps. Epics ar
 
 ## Agent Flow
 
-### Thorough Mode (default for sprint 1)
-
-RALPLAN-DR consensus: planner proposes, architect reviews, critic validates. Max 3 iterations until consensus.
+Single planner/opus call. Architect and critic validation concerns are embedded as inline checklist rules in the planner prompt.
 
 | Step | Agent | Model | Role |
 |------|-------|-------|------|
-| 1 | planner | opus | Propose epic structure with FR coverage map |
-| 2 | architect | opus | Verify epic boundaries respect architecture decisions |
-| 3 | critic | opus | Validate FR coverage, dependencies, and epic quality |
-
-If no consensus after 3 iterations, present disagreements to the user via Decision Steering.
-
-### Fast Mode (sprint 2+ default)
-
-Planner runs once. No architect or critic review.
+| 1 | planner | opus | Design epic structure with built-in architecture and coverage validation |
 
 ---
 
@@ -58,47 +48,31 @@ For each epic, the planner must provide:
 - **Dependencies**: Which earlier epics this one depends on, and which later epics it enables
 - **Estimated complexity**: Low / Medium / High (based on FR count, architecture constraints, and integration surface)
 
----
+### Validation Checklist (self-verify before writing output)
 
-## Architect Agent Prompt (thorough mode only)
+Before finalizing the epic structure, verify each item. Flag any violations inline in the output.
 
-Review the proposed epic structure for:
+**Coverage rules** (from FR coverage audit):
+- [ ] Every FR from `requirements.md` is assigned to exactly one epic — no orphans, no duplicates
+- [ ] Every NFR is noted as applicable to at least one epic
 
-1. **Architecture alignment**: Do epic boundaries respect the architecture decisions? For example, if the architecture specifies a specific auth provider, is all auth-related work in a single epic (or explicitly split with justification)?
-2. **Undecided patterns**: Does any epic require an architectural pattern that was not decided in Phase 2A? If so, flag it — Phase 2A may need a supplemental decision.
-3. **Epic ordering**: Does the proposed ordering respect technical dependencies? Can Epic 1 actually be built without anything from Epic 2+?
-4. **Foundation coverage**: Is infrastructure and setup work (database schema, auth scaffolding, CI/CD) placed in early epics where it belongs?
-5. **Integration surfaces**: Are integration points between epics clearly identified? Are they minimal and well-defined?
+**Size rules** (from epic size validation):
+- [ ] Each epic has 2–6 stories estimated — flag with `[SIZE WARNING: too large — consider splitting]` if >6, or `[SIZE WARNING: too small — consider merging]` if <2
 
-For each epic, either:
-- APPROVE with optional notes
-- MODIFY with specific boundary changes and rationale
-- FLAG with concerns requiring planner revision
+**Dependency rules** (from dependency validation):
+- [ ] No circular dependencies between epics
+- [ ] Epic 1 has zero dependencies on any other epic
+- [ ] No hidden cross-epic dependencies left undeclared
 
----
+**Architecture rules** (from architecture alignment):
+- [ ] Epic boundaries respect all decisions in `architecture-decisions.md` — related work is grouped appropriately
+- [ ] Any epic that requires an architectural pattern not decided in Phase 2A is flagged with `[ARCH GAP: {description}]`
+- [ ] Infrastructure and setup work (database schema, auth scaffolding, CI/CD) is placed in early epics
 
-## Critic Agent Prompt (thorough mode only)
-
-Validate the epic structure for completeness and quality:
-
-### Coverage Validation
-- **Every FR must appear in exactly one epic.** List any orphaned FRs (not assigned to any epic) or duplicated FRs (assigned to multiple epics).
-- **Every NFR must be noted** as applicable to at least one epic (most NFRs apply broadly).
-
-### Size Validation
-- Flag epics with more than 5-6 FRs — suggests the epic should be split into smaller, more focused units.
-- Flag epics with only 1 FR — suggests the epic should be merged with a related epic.
-
-### Dependency Validation
-- Check for hidden dependencies between epics that the planner did not declare.
-- Verify no circular dependencies exist.
-- Confirm that the first epic has zero dependencies.
-
-### Quality Validation
-- Verify epic goals are user-value statements, not technical descriptions. "Users can register and log in" is good. "Set up authentication middleware" is bad.
-- Check that estimated complexity is justified (a "Low" epic with 6 FRs and 3 architecture constraints should be questioned).
-
-For each issue found, provide: [CRITIC: ISSUE — {description with specific fix suggestion}].
+**Quality rules** (from quality validation):
+- [ ] Epic goals are user-value statements, not technical descriptions ("Users can register and log in" is good; "Set up authentication middleware" is bad)
+- [ ] Complexity estimates are justified — a "Low" epic with many FRs and architecture constraints should be questioned
+- [ ] Earlier epics establish foundations that later epics build on; sequencing is logical
 
 ---
 
@@ -192,7 +166,7 @@ consensus_iterations: [number]
 
 ## Agent Dispatch
 
-### Step 1: Planner (always runs)
+### Step 1: Planner (single call)
 
 ```python
 Agent(
@@ -201,7 +175,7 @@ Agent(
     prompt="""
 You are running Phase 2B: Epic Design for the sprint-plan workflow.
 
-Your role: PLANNER — design the epic structure.
+Your role: PLANNER — design the epic structure and self-validate it.
 
 ## Inputs
 
@@ -219,7 +193,9 @@ Design the epic structure for this sprint following these principles:
 3. **No forward dependencies**: Epic N never depends on Epic N+1. Dependencies flow forward only.
 4. **Complete FR coverage**: Every FR maps to exactly one epic. No orphans, no duplicates.
 5. **Foundation first**: Auth, data model, and core infrastructure in early epics.
-6. **Right-sized**: Target 3-6 FRs per epic.
+6. **Right-sized**: Target 2-6 stories per epic.
+7. **Independently valuable**: Each epic should deliver standalone user or system value where possible.
+8. **Foundation before features**: Earlier epics establish foundations that later epics build on.
 
 For each epic provide:
 - Title (user-value-focused)
@@ -229,6 +205,31 @@ For each epic provide:
 - Architecture constraints (by decision ID from architecture-decisions.md)
 - Dependencies (which earlier epics, if any)
 - Estimated complexity (Low/Medium/High with justification)
+
+## Validation Checklist
+
+After drafting the epic structure, self-verify each item below. Flag any violations inline.
+
+**Coverage**:
+- Every FR from requirements.md is assigned to exactly one epic (no orphans, no duplicates)
+- Every NFR is noted as applicable to at least one epic
+
+**Size** — flag inline if violated:
+- Each epic has 2–6 stories estimated: flag `[SIZE WARNING: too large — consider splitting]` if >6, `[SIZE WARNING: too small — consider merging]` if <2
+
+**Dependencies**:
+- No circular dependencies between epics
+- Epic 1 has zero dependencies
+- No hidden cross-epic dependencies left undeclared
+
+**Architecture alignment**:
+- Epic boundaries respect all decisions in architecture-decisions.md
+- Any epic requiring an undecided architectural pattern is flagged `[ARCH GAP: {description}]`
+- Infrastructure and setup work is in early epics
+
+**Quality**:
+- Epic goals are user-value statements, not technical descriptions
+- Complexity estimates are justified by FR count and architecture constraints
 
 ## Output
 
@@ -244,95 +245,6 @@ Include:
 )
 ```
 
-### Step 2: Architect Review (thorough mode only)
-
-```python
-Agent(
-    subagent_type="oh-my-claudecode:architect",
-    model="opus",
-    prompt="""
-You are running Phase 2B: Epic Design for the sprint-plan workflow.
-
-Your role: ARCHITECT — review the proposed epic structure.
-
-## Inputs
-
-Read the following files:
-- SPRINT_DIR/epics.md (planner's proposed epic structure)
-- SPRINT_DIR/architecture-decisions.md (Phase 2A output)
-- SPRINT_DIR/requirements.md (Phase 1 output)
-
-## Task
-
-Review the proposed epic structure for:
-
-1. **Architecture alignment**: Do epic boundaries respect architecture decisions? Is related work grouped appropriately?
-2. **Undecided patterns**: Does any epic require an architectural pattern not decided in Phase 2A? Flag for supplemental decision.
-3. **Epic ordering**: Does ordering respect technical dependencies? Can Epic 1 be built standalone?
-4. **Foundation coverage**: Is infrastructure/setup work in early epics?
-5. **Integration surfaces**: Are integration points between epics minimal and well-defined?
-
-For each epic, mark:
-- [ARCHITECT: APPROVED] with optional notes
-- [ARCHITECT: MODIFY — {specific boundary changes and rationale}]
-- [ARCHITECT: FLAG — {concern requiring planner revision}]
-
-## Output
-
-Update SPRINT_DIR/epics.md with your review marks and any proposed modifications.
-""",
-)
-```
-
-### Step 3: Critic Validation (thorough mode only)
-
-```python
-Agent(
-    subagent_type="oh-my-claudecode:critic",
-    model="opus",
-    prompt="""
-You are running Phase 2B: Epic Design for the sprint-plan workflow.
-
-Your role: CRITIC — validate FR coverage, dependencies, and epic quality.
-
-## Inputs
-
-Read the following files:
-- SPRINT_DIR/epics.md (with architect's review marks)
-- SPRINT_DIR/requirements.md (Phase 1 output)
-- SPRINT_DIR/architecture-decisions.md (Phase 2A output)
-
-## Task
-
-### Coverage Validation
-- Verify every FR appears in exactly one epic. List any orphaned or duplicated FRs.
-- Verify every NFR is noted as applicable to at least one epic.
-
-### Size Validation
-- Flag epics with >5-6 FRs (suggest splitting).
-- Flag epics with only 1 FR (suggest merging).
-
-### Dependency Validation
-- Check for hidden dependencies not declared by the planner.
-- Verify no circular dependencies.
-- Confirm Epic 1 has zero dependencies.
-
-### Quality Validation
-- Verify epic goals are user-value statements, not technical descriptions.
-- Check that complexity estimates are justified.
-
-## Output
-
-Update SPRINT_DIR/epics.md with validation results.
-
-For each issue: [CRITIC: ISSUE — {description with specific fix suggestion}].
-If all valid: [CRITIC: VALIDATED].
-
-Add summary: ## Consensus: REACHED (iteration {N}) or ## Consensus: NOT REACHED — issues listed above.
-""",
-)
-```
-
 ---
 
 ## Phase Completion
@@ -341,7 +253,7 @@ Phase 2B is complete when:
 
 1. `current/epics.md` exists with all required sections
 2. FR Coverage Map shows every FR assigned to exactly one epic
-3. Consensus reached (thorough mode) or single pass complete (fast mode)
+3. Single planner pass complete with no unresolved validation flags
 4. No orphaned or duplicated FRs
 5. No circular dependencies between epics
 

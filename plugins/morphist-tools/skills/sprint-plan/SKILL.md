@@ -23,8 +23,9 @@ Parse `$ARGUMENTS` for:
 
 | Flag | Effect |
 |------|--------|
-| `--fast` | Single-pass, no RALPLAN-DR, AUTONOMOUS steering, implies `--auto` |
-| `--thorough` | Full consensus, GUIDED steering, refinement loops (default) |
+| `--fast` | Single-pass, no RALPLAN-DR, AUTONOMOUS steering, implies `--auto`, skip enrichment |
+| `--thorough` | Full consensus, GUIDED steering, refinement loops, enrich all stories |
+| `--enrich` | Force Phase 4 enrichment even in default mode (default skips enrichment) |
 | `--auto` | No inter-phase pauses (only Decision Steering can pause) |
 | `--step` | Pause after every phase |
 | `--sprint-size=SIZE` | `focused` (3-8 stories), `standard` (8-18, default), `ambitious` (15-30) |
@@ -33,7 +34,9 @@ Parse `$ARGUMENTS` for:
 | `--restart-from=phase` | Re-run a phase and mark all downstream stale |
 | `--sprint=ID` | Target a specific sprint (e.g., `--sprint=sprint-002`). For `--continue`/`--restart-from`, operates on this sprint instead of the most recent. For new sprints, ignored. |
 
-**Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto`.
+**Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto`. `--thorough` implies `--enrich`.
+
+**Default mode** (neither `--fast` nor `--thorough`): Single-pass architecture and epic design, GUIDED steering at key decision points, skip Phase 4 enrichment (stories go to execution as stubs with BDD criteria — enrichment is on-demand during execution). This is the huddle-driven workflow: plan light, execute an epic, huddle, repeat.
 
 ---
 
@@ -52,7 +55,7 @@ Parse `$ARGUMENTS` for:
 ```json
 {
   "sprint": "sprint-{NNN}",
-  "mode": "thorough|fast",
+  "mode": "default|thorough|fast",
   "active": true,
   "current_phase": "discovery",
   "steering_mode": "GUIDED|AUTONOMOUS",
@@ -131,16 +134,17 @@ Execute phases sequentially. For each phase:
 | 2A: Architecture | `phase-2a-architecture.md` | **Yes** | **Max Active** | `architecture-decisions.md` |
 | 2B: Epic Design | `phase-2b-epic-design.md` | step only | Active | `epics.md` |
 | 3: Stories | `phase-3-story-decomposition.md` | step only | Dormant | Updates `epics.md` |
-| 4: Enrichment | `phase-4-story-enrichment.md` | step only | Dormant | `stories/*.md` |
+| 4: Enrichment | `phase-4-story-enrichment.md` | step only | Dormant | `stories/*.md` | **Skipped by default** — runs only with `--thorough` or `--enrich` |
 | 5: Validation | `phase-5-validation.md` | Informational | Dormant | `readiness-report.md` |
 
 ### Phase-Specific Notes
 
 - **Phase 1.5 trigger**: Run if `has_frontend: true` AND `has_ux_artifacts: false` AND not `--skip-ux` AND not `--fast`. Otherwise skip (`ux_design_phase: "skipped"`).
 - **Phase 2A refinement loop** (thorough only): If decisions create new requirements, loop back to Phase 1 (incremental), then re-run 2A. Max 3 iterations via `refinement_loops.requirements_architecture.count`.
-- **Phase 3**: All epics decompose in parallel (each planner gets full `epics.md` for context). BDD writers fire in parallel across all stories. Post-decomposition reconciliation scan catches cross-epic issues.
-- **Phase 4**: All stories across all epics enrich in parallel. Shared context manifest replaces sequential backward intelligence. Post-enrichment reconciliation catches file ownership conflicts and pattern divergence.
-- **Phase 5**: Auto-fix loop (max 2 iterations). Readiness report always shown.
+- **Phase 2B**: Single planner pass with inline validation (default and fast modes). Full RALPLAN-DR consensus only in `--thorough` mode.
+- **Phase 3**: All epics decompose in parallel (each planner gets full `epics.md` for context). BDD writers fire in parallel across all stories. Post-decomposition reconciliation scan catches cross-epic issues. Each story gets a `test_tier` (yolo/smoke/thorough) based on risk — defaults to smoke.
+- **Phase 4** (skipped by default): Enrichment runs only with `--thorough` or `--enrich`. In the default workflow, stories go to execution as stubs with BDD criteria. Enrichment is available on-demand during execution via the inter-epic huddle (`[enrich N.M]`), or when sprint-exec detects a complex story that would benefit from it.
+- **Phase 5**: Sonnet verifier only (no opus critic). Auto-fix loop (max 2 iterations). Readiness report always shown.
 
 ### Inter-Phase Summary & Pause
 
