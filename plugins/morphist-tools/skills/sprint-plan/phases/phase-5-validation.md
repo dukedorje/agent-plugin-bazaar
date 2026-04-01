@@ -126,61 +126,6 @@ If `sprint-scope.md` does not exist (Phase 1B was skipped in `--fast` mode), ski
 
 ---
 
-#### Mechanical Correctness Checks
-
-The verifier performs mechanical, deterministic correctness checks. No judgment required — these are binary pass/fail.
-
-#### 3a. Frontmatter Consistency
-
-For each story file:
-- `frs` field lists FRs that are actually discussed in the story body (not phantom references)
-- `decisions` field lists D-NNN codes that appear in the `## Architecture Compliance` section
-- `epic` and `story` numbers match the filename
-
-#### 3b. Section Completeness
-
-Every story file must have all template sections present and non-placeholder:
-- `## Story` — not "TODO" or empty
-- `## Acceptance Criteria` — not "TODO" or empty
-- `## Scope Boundaries` — not "TODO" or empty
-- `## Tasks / Subtasks` — not "TODO" or empty
-- `## Architecture Compliance` — not "TODO" or empty (may state "No specific decisions apply" explicitly)
-- `## Technical Requirements` — not "TODO" or empty
-- `## Dev Agent Record` — may be empty (not yet implemented), but section header must be present
-
-#### 3c. File Naming
-
-Every story file must match pattern: `{epic_num}-{story_num}-{slug}.md`
-
-Examples of valid names: `1-1-user-auth.md`, `2-3-dashboard-layout.md`
-
-Examples of invalid names: `story-1.md`, `epic1-story2.md`, `1.1-auth.md`
-
-#### 3d. FR Coverage Map Consistency
-
-The FR Coverage Map table in `epics.md` must match actual story file existence:
-- Every story listed in the map must have a corresponding file in `stories/`
-- Every story file in `stories/` must appear in the map
-
-#### 3e. Decision Reference Integrity
-
-Every D-NNN reference in any story file must point to a real decision in `architecture-decisions.md`.
-
-No dangling references (e.g., story references D-007 but no D-007 exists).
-
-#### 3f. Story Number Uniqueness
-
-Within each epic, no two stories share the same story number.
-
-Valid: `1-1-auth.md`, `1-2-profile.md`
-Invalid: `1-1-auth.md`, `1-1-login.md`
-
-#### 3g. Map-File Consistency
-
-Every story referenced in `epics.md` must have a corresponding file in `stories/`. Every file in `stories/` must be referenced in `epics.md`. No orphaned files, no missing files.
-
----
-
 ### Step 3: Merge Findings
 
 After the verifier completes, classify findings into a single unified list:
@@ -326,30 +271,52 @@ No circular dependencies detected.
 
 ---
 
-## Critic Prompt Template
+## Verifier Prompt Template
 
 ```
-You are performing adversarial validation of a sprint planning artifact chain.
+You are performing validation of a sprint planning artifact chain. Your tasks cover both coverage/dependency analysis (which requires judgment) and mechanical correctness checks (binary pass/fail).
 
-Your role is to find REAL problems that would cause a developer agent to fail or produce incorrect output. Do not invent problems. Do not flag style preferences. Flag only substantive issues.
+Flag only REAL problems that would cause a developer agent to fail or produce incorrect output. Do not invent problems. Do not flag style preferences.
 
 ## Artifacts Provided
 - requirements.md: [contents]
 - architecture-decisions.md: [contents]
 - epics.md: [contents]
-- stories/: [all story file contents]
+- stories/: [all story file contents with filenames]
+- phase-state.json: [sprint state]
+- sprint-scope.md: [if present]
 
 ## Your Tasks
 
-1. FR COVERAGE: List every FR from requirements.md. For each, identify whether a story implements it. Output a table.
+### Coverage and Dependency Checks
 
-2. ARCHITECTURE COMPLIANCE: List every decision from architecture-decisions.md. For each, assess whether any story's Architecture Compliance section reflects it. Decisions with no implementation consequences (e.g., purely naming decisions) may be marked "Not applicable." Use judgment.
+1. FR COVERAGE: List every FR from requirements.md. For each, identify whether a story implements it. Output a table with status (Covered / Orphan).
 
-3. DEPENDENCY VALIDATION: For each story, identify any implied prerequisites. Flag any forward dependencies (story requires a later story).
+2. ARCHITECTURE COMPLIANCE: List every decision from architecture-decisions.md. For each, assess whether any story's Architecture Compliance section reflects it. Decisions with no implementation consequences may be marked "Not applicable." Use judgment.
+
+3. DEPENDENCY VALIDATION: For each story, identify any implied prerequisites. Flag any forward dependencies (story requires a later story to be complete first).
 
 4. STORY QUALITY: For each story, check: (a) completable by single agent, (b) has BDD criteria, (c) has scope boundaries, (d) has technical requirements. Flag failures.
 
-5. EPIC HEALTH: Count stories per epic. Flag epics with >8 stories (too large) or <2 stories (too small). Flag any cross-epic coupling concerns.
+5. EPIC HEALTH: Count stories per epic. Flag epics with >8 stories (too large) or <2 stories (too small). Flag cross-epic coupling concerns where >30% of an epic's stories reference another epic.
+
+6. SPRINT SIZE COMPLIANCE: If sprint-scope.md exists, validate actual story and epic counts against sprint size guardrails from phase-state.json. Flag over/under threshold and >30% divergence from estimated_stories.
+
+### Mechanical Correctness Checks
+
+7. FRONTMATTER: Does `frs` match FRs discussed in body? Does `decisions` match D-NNN refs in Architecture Compliance? Do epic/story numbers match filename?
+
+8. COMPLETENESS: Are all template sections present and non-placeholder ("TODO", empty string, "TBD")?
+
+9. FILE NAMING: Does filename match `{epic_num}-{story_num}-{slug}.md`?
+
+10. FR MAP CONSISTENCY: Does every story in epics.md FR Coverage Map have a file? Does every story file appear in the map?
+
+11. DECISION REFERENCES: Does every D-NNN ref in any story point to a real decision in architecture-decisions.md?
+
+12. DUPLICATE STORY NUMBERS: Are story numbers unique within each epic?
+
+13. MAP-FILE CONSISTENCY: Are all story files in stories/ referenced in epics.md? Are all stories in epics.md present as files?
 
 ## Output Format
 Return a JSON object:
@@ -359,52 +326,18 @@ Return a JSON object:
   "dependency_violations": [...],
   "story_quality_issues": [...],
   "epic_health_flags": [...],
-  "summary": {
-    "critical_count": N,
-    "warning_count": N
-  }
-}
-```
-
-## Verifier Prompt Template
-
-```
-You are performing mechanical correctness checks on sprint planning artifacts. These are binary pass/fail checks — no judgment required.
-
-## Artifacts Provided
-- requirements.md: [contents]
-- architecture-decisions.md: [contents]
-- epics.md: [contents]
-- stories/: [all story file contents with filenames]
-
-## Your Tasks
-
-For each story file, check ALL of the following:
-
-1. FRONTMATTER: Does `frs` match FRs discussed in body? Does `decisions` match D-NNN refs in Architecture Compliance? Do epic/story numbers match filename?
-
-2. COMPLETENESS: Are all template sections present? Are any sections placeholder text ("TODO", empty string, "TBD")?
-
-3. FILE NAMING: Does filename match `{epic_num}-{story_num}-{slug}.md`?
-
-4. FR MAP CONSISTENCY: Does every story in epics.md FR Coverage Map have a file? Does every story file appear in the map?
-
-5. DECISION REFERENCES: Does every D-NNN ref in any story point to a real decision in architecture-decisions.md?
-
-6. DUPLICATE STORY NUMBERS: Are story numbers unique within each epic?
-
-7. MAP-FILE CONSISTENCY: Are all story files in stories/ referenced in epics.md? Are all stories in epics.md present as files?
-
-## Output Format
-Return a JSON object:
-{
+  "sprint_size_compliance": [...],
   "frontmatter_issues": [...],
   "completeness_issues": [...],
   "naming_violations": [...],
   "fr_map_inconsistencies": [...],
   "broken_decision_refs": [...],
   "duplicate_story_numbers": [...],
-  "map_file_mismatches": [...]
+  "map_file_mismatches": [...],
+  "summary": {
+    "critical_count": N,
+    "warning_count": N
+  }
 }
 ```
 
