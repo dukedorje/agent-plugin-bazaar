@@ -2,7 +2,7 @@
 name: prd
 description: Interactive PRD workshop — conducts a structured interview, researches existing codebase context, generates a validated, scope-tiered PRD consumable by /sprint-plan.
 user-invocable: true
-argument-hint: "[<topic-text-or-file-path>] [--fast]"
+argument-hint: "[<topic-text-or-file-path>] [--fast] [--product=<name>]"
 ---
 
 # PRD: Product Requirements Document Workshop
@@ -19,6 +19,7 @@ Parse `$ARGUMENTS` for:
    - Inline text: a brief description of the problem or feature idea
    - File path: path to an existing document (requirements doc, brief, etc.) — read it before beginning
 2. **`--fast` flag** (optional): Skips blocker promotion to warnings; sets final status to `validated-with-warnings`
+3. **`--product=<name>` flag** (optional): Associates this PRD with a product dimension. Saves to `docs/products/{name}/prd.md` instead of `docs/prd-{slug}.md`. Creates the product directory if it doesn't exist. If a product vision exists at `docs/products/{name}/vision.md`, reads it as additional seed context.
 
 Store parsed values for use in Phase A.
 
@@ -299,9 +300,9 @@ Generate a slug from the PRD title:
 - Max 40 characters
 - Example: "User Authentication System" → `user-authentication-system`
 
-Save path: `docs/prd-{slug}.md`
-
-Ensure `docs/` directory exists. Create it if not.
+**Save path:**
+- If `--product=<name>` was provided: `docs/products/{name}/prd.md`. Ensure `docs/products/{name}/` exists.
+- Otherwise: `docs/prd-{slug}.md`. Ensure `docs/` exists.
 
 Write the PRD to the save path.
 
@@ -468,7 +469,7 @@ Resolve these issues manually by editing docs/prd-{slug}.md, then re-run `/prd` 
 
 `prd` is a valid target in the `/refine` skill.
 
-- **Artifact path**: `docs/prd-{slug}.md` (most recent by mtime if no explicit path given)
+- **Artifact path**: `docs/prd-{slug}.md` or `docs/products/{name}/prd.md` (most recent by mtime if no explicit path given)
 - **RALPLAN-DR pass**: Planner proposes improvements → Architect challenges → Critic arbitrates
 - **Downstream stale marking**: Does NOT mark downstream phases stale (PRD is an upstream artifact; sprint-plan phases are downstream and not tracked in PRD's phase-state)
 

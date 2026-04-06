@@ -320,10 +320,12 @@ After writing `requirements.md`, evaluate for significant decisions embedded in 
 ---
 project: [name]
 sprint: sprint-[NNN]
+product: [product dimension name | null]
 created: [date]
 steering_mode: GUIDED | AUTONOMOUS
 previous_sprint: sprint-[NNN-1] | null
 input_quality: raw-idea | structured-brief | existing-prd
+source_prd: [path to PRD if one was provided as input | null]
 ---
 
 ## Product Vision

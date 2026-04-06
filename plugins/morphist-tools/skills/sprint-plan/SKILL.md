@@ -2,7 +2,7 @@
 name: sprint-plan
 description: Multi-phase sprint planning workflow that transforms product ideas into implementation-ready user stories with architecture decisions, requirements expansion, and adversarial validation
 user-invocable: true
-argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--continue[=phase]] [--restart-from=phase] [--sprint=ID]"
+argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--continue[=phase]] [--restart-from=phase] [--sprint=ID] [--product=<name>]"
 ---
 
 # Sprint Plan — Thin Orchestrator
@@ -33,6 +33,7 @@ Parse `$ARGUMENTS` for:
 | `--continue[=phase]` | Resume from next incomplete phase (or after specified phase) |
 | `--restart-from=phase` | Re-run a phase and mark all downstream stale |
 | `--sprint=ID` | Target a specific sprint (e.g., `--sprint=sprint-002`). For `--continue`/`--restart-from`, operates on this sprint instead of the most recent. For new sprints, ignored. |
+| `--product=<name>` | Associate this sprint with a product dimension. Writes `product` field to phase-state.json and requirements.md frontmatter. If omitted and the product input is a PRD path under `docs/products/{name}/`, auto-infer the product from the path. |
 
 **Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto`. `--thorough` implies `--enrich`.
 
@@ -58,6 +59,7 @@ Parse `$ARGUMENTS` for:
 {
   "sprint": "sprint-{NNN}",
   "spec_dir": "docs/sprints/{NNN}-{slug}/",
+  "product": null,
   "mode": "default|thorough|fast",
   "active": true,
   "current_phase": "discovery",
