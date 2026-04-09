@@ -48,10 +48,14 @@ model: claude-sonnet-4-6
     Based on the investigation_type in your assignment:
 
     **web** — External research:
-    1. Use WebSearch to find official documentation, authoritative sources
-    2. Use WebFetch to extract specific details from promising results
-    3. Prefer official docs over blog posts, blog posts over Stack Overflow
-    4. Note version/date of sources — flag anything older than 2 years
+    1. If the `search-router` skill is available (check for `bun` and search scripts),
+       use its multi-provider routing for better coverage:
+       - Assess query dimensions (recency, semantic depth, authority, breadth)
+       - Fan out to 2-3 providers in parallel for research-grade queries
+       - Use `firecrawl-scrape` for full-page drill-down on promising URLs
+       If search-router is not available, fall back to WebSearch + WebFetch.
+    2. Prefer official docs over blog posts, blog posts over Stack Overflow
+    3. Note version/date of sources — flag anything older than 2 years
 
     **codebase** — Internal code exploration:
     1. Use Grep/Glob to locate relevant files and symbols
@@ -66,8 +70,10 @@ model: claude-sonnet-4-6
 
     **hybrid** — Both external and internal:
     1. Start with whichever side is likely to resolve faster
-    2. Use findings from one side to guide the other
-    3. Note where external docs and internal code agree or diverge
+    2. For the web side, follow the same provider strategy as **web** above
+       (prefer search-router if available, fall back to WebSearch + WebFetch)
+    3. Use findings from one side to guide the other
+    4. Note where external docs and internal code agree or diverge
   </Investigation_Protocol>
 
   <Sub_Branching>
