@@ -14,6 +14,20 @@
 
 ---
 
+## Ceremony: Inline Form
+
+The full verifier pass and `readiness-report.md` below are `full` ceremony. At `lean` or `standard`, do **not** write `readiness-report.md`. Run an **inline sanity check** instead:
+
+- Every epic has ≥1 story.
+- Every story has ≥1 acceptance criterion.
+- No orphaned FRs — only if requirements were captured (i.e. `requirements_inline` / `requirements.md` exists); skip this check when requirements were folded directly into stories.
+
+Record the outcome in `STATE_DIR/phase-state.json` — set `validation_status` (`pass` | `pass-with-warnings` | `fail`) plus a 1–3 line `validation_summary` noting what was checked and any gaps. No standalone document.
+
+Only `full` ceremony runs the full verifier and writes `readiness-report.md` as described below.
+
+---
+
 ## Process
 
 ### Step 1: Fire Verifier

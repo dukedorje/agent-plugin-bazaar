@@ -14,10 +14,12 @@ model: sonnet
 # sprint-to-beads: Sprint → Beads Materializer
 
 Reads a planned sprint and writes its epics, stories, and architecture decisions directly into
-[beads](https://github.com/steveyegge/beads) (`bd`) as the durable, single source of truth for work
-items. After materialization, **beads owns the task & epic information** — the `docs/sprints/` story
-files (if any) and `.omc/` planning artifacts are reduced to ephemeral planning scratch, not a second
-system of reference.
+[beads](https://github.com/steveyegge/beads) (`bd`) as the durable, single source of truth for **work
+items**. After materialization, **beads owns the task & epic information** — the `docs/sprints/.../stories/*.md`
+story specs (if any) collapse into bead fields and are no longer a second system of reference for work
+items. Planning **narrative** docs (PRD, requirements, architecture-decisions) are *kept* as committed
+supplementary documentation — they are the "why," not a competing work-item store. Architecture rationale
+stays doc-sourced; decision beads are lightweight pointers to it.
 
 This skill is the integration seam between morphist-tools (the planning *what/why*) and beads (the
 execution *where*). It is invoked automatically by `sprint-plan --beads`, or run standalone against any
@@ -41,12 +43,17 @@ Do **not** use this skill to:
 ## Core Principle: Single Source of Truth
 
 When a sprint is materialized to beads, **beads holds the task & epic content** — not a parallel set of
-markdown specs. Concretely:
+markdown story specs. Concretely:
 
 - A story's description, acceptance criteria, and design notes live **in the bead's fields**
   (`--description`, `--acceptance`, `--design`), not in a `docs/sprints/.../stories/*.md` file that the
-  bead merely points at. There is no `--spec-id` pointer to a competing document.
-- Architecture decisions become first-class `decision` beads, linked to the stories they constrain.
+  bead merely points at. There is no `--spec-id` pointer to a competing story document.
+- **Architecture decisions are the exception** — their rationale is *supplementary documentation*, which
+  beads does not own. The full ADR rationale lives in `architecture-decisions.md` / `docs/decisions/`
+  (the source of truth). The `decision` bead is a **lightweight pointer**: title + one-line decision +
+  a reference to the doc, linked `related` to the stories it constrains. Beads carries enough to surface
+  the decision in `bd show`; the doc carries the *why*. This mirrors the task/doc boundary: work items in
+  beads, planning narrative in docs.
 - The only retained out-of-band state is a tiny **ephemeral** id-map in `STATE_DIR` used purely for
   reporting; idempotency itself is derived from beads via `--external-ref` keys, so beads remains
   self-describing even if the map is deleted.
@@ -96,10 +103,16 @@ Read the sprint artifacts from `SPEC_DIR`. These are the planner's outputs; this
 Read `SPEC_DIR/architecture-decisions.md`. For each ADR block (`## D-{NNN}: {Title}`), extract:
 - `id` (e.g. `D-001`), `title`
 - `significance` (CRITICAL/HIGH/MEDIUM → priority mapping below)
-- The Context / Decision / Alternatives / Consequences body
+- The one-line **Decision** statement (NOT the full Context/Alternatives/Consequences body)
 
-Skip decisions whose `Status` is `superseded by ...` — only materialize live decisions (but if a
-superseding decision exists, materialize that one).
+The `decision` bead is a **pointer, not a copy**: its description holds only the one-line decision plus a
+reference to the source doc (`See architecture-decisions.md#D-{NNN}` or the `docs/decisions/` path). The
+full rationale stays in the doc — beads does not duplicate it. This keeps the architecture narrative
+single-sourced in the doc while letting `bd show` surface the decision against the stories it governs.
+
+Only materialize decisions of significance CRITICAL or HIGH as beads (these are the ones that constrain
+stories). MEDIUM/LOW decisions stay in the doc only — they don't earn a bead. Skip decisions whose
+`Status` is `superseded by ...` (but materialize the superseding decision).
 
 ### 2b. Epics → epic beads
 
@@ -155,14 +168,15 @@ This makes the skill safe to run repeatedly (e.g. after `/refine`).
 
 ### Field Mapping
 
-**Decision bead:**
+**Decision bead** (pointer only — CRITICAL/HIGH decisions only):
 ```
 bd create "{D-NNN}: {title}" -t decision \
-  --description "Context: {context}\n\nDecision: {decision}\n\nAlternatives: {alternatives}\n\nConsequences: {consequences}" \
+  --description "{one-line decision}. Rationale: see architecture-decisions.md#D-{NNN}" \
   --priority {sig→pri} \
   --external-ref "morphist:{sprint}:D-{NNN}" \
   --labels "adr,{sprint}" --silent
 ```
+The full Context/Alternatives/Consequences stays in the doc; the bead does not copy it.
 
 **Epic bead:**
 ```

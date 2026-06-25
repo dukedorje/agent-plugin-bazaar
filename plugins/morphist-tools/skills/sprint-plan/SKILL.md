@@ -36,16 +36,55 @@ Parse `$ARGUMENTS` for:
 | `--sprint=ID` | Target a specific sprint (e.g., `--sprint=sprint-002`). For `--continue`/`--restart-from`, operates on this sprint instead of the most recent. For new sprints, ignored. |
 | `--product=<name>` | Associate this sprint with a product dimension. Writes `product` field to phase-state.json and requirements.md frontmatter. If omitted and the product input is a PRD path under `docs/products/{name}/`, auto-infer the product from the path. |
 | `--beads` | After planning completes, materialize the sprint (epics, stories, ADRs) into the beads tracker (`bd`) via the `sprint-to-beads` skill — beads becomes the single source of truth for work items. Sets `beads_mode: true` in phase-state.json. See Phase 6. |
+| `--lean` / `--standard` / `--full` | Force the **ceremony** level (override auto-derivation). Controls how much process and how many documents the sprint produces. See Section 1.5. `--ceremony=<level>` is an equivalent long form. |
 
-**Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto` + `--skip-stories`. `--thorough` implies `--write-stories`. `--write-stories` > `--skip-stories` (explicit opt-in wins).
+**Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto` + `--skip-stories`. `--thorough` implies `--write-stories`. `--write-stories` > `--skip-stories` (explicit opt-in wins). For ceremony: an explicit `--lean`/`--standard`/`--full` wins over auto-derivation; `--fast` implies `lean`, `--thorough` implies `full`.
 
-**Default mode** (neither `--fast` nor `--thorough`): Single-pass architecture and epic design, GUIDED steering at key decision points. Phase 4 "write stories" is **size-gated** by default:
+**Default mode** (neither `--fast` nor `--thorough`): Single-pass architecture and epic design, GUIDED steering at key decision points. The amount of process and documentation is governed by the **ceremony level** (Section 1.5), which is **auto-derived from the size and risk of the work** — small sprints stay lean, complex ones get the full treatment. Phase 4 "write stories" is **size-gated** by default:
 
 - ≤ 5 stories AND no `large`/`thorough`/3+-decision stories → skip (stubs fine)
 - 6–15 stories OR any flagged story → prompt the user at Phase 3.5 (elaborated below)
 - 16+ stories OR any `sprint-size=ambitious` → default to write-all (user can opt out with `--skip-stories`)
 
 This is the huddle-driven workflow: plan light when the sprint is small, write proper stories when complexity warrants, execute an epic, huddle, repeat.
+
+---
+
+## 1.5. Ceremony Tiering
+
+**Ceremony scales the process and document load to the size and risk of the work.** The goal is to never spend more planning effort than the work warrants — a three-task epic should not produce a PRD, an architecture document, and a readiness report.
+
+### Levels
+
+| Level | Trigger (auto) | What it produces |
+|-------|----------------|------------------|
+| `lean` | ≤5 stories AND no CRITICAL/HIGH decision | **Work items only.** Epic + stories (stubs with ACs + test_tier). No requirements/architecture/readiness docs. Discovery, scoping, UX, and validation collapse to inline checks. Decisions that matter are one-line notes on the epic. In `--beads` mode this is pure beads, zero docs. |
+| `standard` | 6–15 stories, OR any HIGH decision | **Work items + one lightweight planning doc** (goal, key decisions, scope — a thin PRD). Lean story template. Full ADR-lite only for CRITICAL/HIGH decisions; MEDIUM → one-liners; LOW dropped. |
+| `full` | 16+ stories, OR any CRITICAL decision, OR `--thorough` | **Today's complete process** — all phases, full story template, full ADR-lite, readiness report. Nothing is lost for the cases that warrant it. |
+
+### Derivation
+
+Ceremony is resolved in two steps because its inputs (story count, decision significance) are discovered mid-pipeline:
+
+1. **Tentative** (at init): seed from `--sprint-size` if given (`focused`→`lean`, `standard`→`standard`, `ambitious`→`full`) and from mode (`--fast`→`lean`, `--thorough`→`full`). Default tentative = `lean` (optimistic — most sprints are small). An explicit `--lean`/`--standard`/`--full` **pins** the level and skips auto-derivation entirely.
+2. **Finalized** (after Phase 2A architecture + Phase 2B epic-design, when decisions and story count are known): recompute via the trigger table. **Ceremony may only escalate, never silently downgrade** — once a higher-ceremony artifact is written, stay there. Record the final level and the reason in `phase-state.json`.
+
+If finalization escalates the level (e.g. a CRITICAL decision surfaced in a sprint that looked lean), surface it: *"Escalated to `full` ceremony — D-002 is CRITICAL."* This is an informational note, not a pause (unless `--step`).
+
+### What each lever gates
+
+| Lever | lean | standard | full |
+|-------|------|----------|------|
+| Discovery (Phase 0) | inline note | inline note | `discovery.md` |
+| Requirements (Phase 1) | inline brief | thin doc | `requirements.md` |
+| Sprint scoping (Phase 1B) | skip | skip unless scope-cut needed | as today |
+| UX design (Phase 1.5) | skip | conditional | conditional |
+| Architecture (Phase 2A) | only if CRITICAL/HIGH; else skip | ADR-lite for CRITICAL/HIGH only | full RALPLAN-DR |
+| Epic design (Phase 2B) | brief, in beads/epics.md | as today | as today |
+| Story template (Phase 4) | stub (Story + ACs + tier) | lean template | full template |
+| Validation (Phase 5) | inline sanity check | inline + report | `readiness-report.md` |
+
+The lean story template and significance-tiered decisions are detailed in the Phase 4 and Phase 2A files respectively; this table is the routing contract the orchestrator enforces.
 
 ---
 
@@ -83,13 +122,22 @@ This is the huddle-driven workflow: plan light when the sprint is small, write p
   "stories_total": 0,
   "stories_enriched": 0,
   "validation_status": "pending",
-  "beads_mode": false
+  "beads_mode": false,
+  "ceremony": "lean",
+  "ceremony_pinned": false,
+  "ceremony_reason": "tentative: default"
 }
 ```
 
 Set `steering_mode` to `GUIDED` if thorough, `AUTONOMOUS` if fast. Set `beads_mode: true` if `--beads`.
 
-When `beads_mode` is true, the `docs/sprints/` story specs are treated as **ephemeral planning scratch**, not the committed deliverable — beads is the single source of truth for epics and stories (see Phase 6). The planning phases still run normally (they produce the intermediate artifacts the agents pass between phases); only the *final ownership* of work-item content moves to beads.
+Set the tentative `ceremony` per Section 1.5 derivation step 1. If `--lean`/`--standard`/`--full` was passed, set `ceremony` to that level and `ceremony_pinned: true` (finalization will not change a pinned level). Otherwise `ceremony_pinned: false` and finalization recomputes after Phase 2B.
+
+When `beads_mode` is true, the task/doc boundary applies:
+- **Work items** (epics, stories) live in **beads only** — the `docs/sprints/.../stories/*.md` story specs are not the committed deliverable; their content collapses into bead fields (see Phase 6). Beads is the single source of truth for epics, stories, and status.
+- **Planning narrative** (PRD/requirements, architecture-decisions) is **kept as committed docs** at whatever ceremony level produced it — it is supplementary documentation, not a competing work-item store. Architecture decisions remain doc-sourced; any `decision` bead is a lightweight pointer to the doc (see `sprint-to-beads`).
+
+In other words, beads mode redirects only the *story spec* role to beads; it does not suppress the narrative docs. (At `lean` ceremony there simply are no narrative docs to keep — that is the ceremony level's doing, not beads mode's.)
 
 ### 2c. OMC State & Auto-Continuation (optional)
 
@@ -141,20 +189,26 @@ Execute phases sequentially. For each phase:
 
 ### Phase Chain
 
-| Phase | File | Pause? | Steering | Output |
-|-------|------|--------|----------|--------|
-| 0: Discovery | `phase-0-discovery.md` | step only | Dormant | `discovery.md` |
-| 1: Requirements | `phase-1-requirements.md` | **Yes** | Active | `requirements.md` |
-| 1B: Scoping | `phase-1b-sprint-scoping.md` | **Yes** | Active (CRITICAL) | `sprint-scope.md` |
-| 1.5: UX Design | `phase-1.5-ux-design.md` | Conditional | Active | `ux-design.md` |
-| 2A: Architecture | `phase-2a-architecture.md` | **Yes** | **Max Active** | `architecture-decisions.md` |
-| 2B: Epic Design | `phase-2b-epic-design.md` | step only | Active | `epics.md` |
-| 3: Stories | `phase-3-story-decomposition.md` | step only | Dormant | Updates `epics.md` |
-| 3.5: Write-Stories Gate | *(inline — see Phase-Specific Notes)* | **Yes** | Dormant | user choice → feeds Phase 4 or skips |
-| 4: Write Stories | `phase-4-write-stories.md` | step only | Dormant | `stories/*.md` | **Size-gated** — skipped if ≤5 simple stories, prompted at 6–15, default-write at 16+ |
-| 5: Validation | `phase-5-validation.md` | Informational | Dormant | `readiness-report.md` |
+The **Ceremony** column shows the lowest level at which the phase runs as a full standalone phase producing its document. At lower levels the phase still happens, but collapses to an inline check (no separate document). See Section 1.5.
+
+| Phase | File | Ceremony | Pause? | Steering | Output |
+|-------|------|----------|--------|----------|--------|
+| 0: Discovery | `phase-0-discovery.md` | full (else inline) | step only | Dormant | `discovery.md` |
+| 1: Requirements | `phase-1-requirements.md` | standard+ (lean: inline brief) | **Yes** | Active | `requirements.md` |
+| 1B: Scoping | `phase-1b-sprint-scoping.md` | full (or when scope-cut needed) | **Yes** | Active (CRITICAL) | `sprint-scope.md` |
+| 1.5: UX Design | `phase-1.5-ux-design.md` | conditional (any level, if frontend) | Conditional | Active | `ux-design.md` |
+| 2A: Architecture | `phase-2a-architecture.md` | standard+ (lean: only if CRITICAL/HIGH) | **Yes** | **Max Active** | `architecture-decisions.md` |
+| 2B: Epic Design | `phase-2b-epic-design.md` | all (brief at lean) | step only | Active | `epics.md` |
+| — | *ceremony finalization (after 2B)* | all | — | — | recompute `ceremony` in phase-state |
+| 3: Stories | `phase-3-story-decomposition.md` | all | step only | Dormant | Updates `epics.md` |
+| 3.5: Write-Stories Gate | *(inline — see Phase-Specific Notes)* | standard+ | **Yes** | Dormant | user choice → feeds Phase 4 or skips |
+| 4: Write Stories | `phase-4-write-stories.md` | standard (lean template) / full (full template) | step only | Dormant | `stories/*.md` | **Size-gated** — lean→stubs, skipped if ≤5 simple stories, prompted at 6–15, default-write at 16+ |
+| 5: Validation | `phase-5-validation.md` | full (else inline sanity check) | Informational | Dormant | `readiness-report.md` |
 
 ### Phase-Specific Notes
+
+- **Ceremony gating (applies to every phase)**: Before running a phase, check the resolved `ceremony` against the Ceremony column. If the level is below the threshold, run the phase's **inline** form — a brief check whose result is captured in `phase-state.json` (or as a note on the epic in `--beads` mode) rather than a standalone document — and do not write the phase's document. The phase files describe both their full and inline forms.
+- **Ceremony finalization**: After Phase 2B completes (story count and decision significance now known), recompute `ceremony` per Section 1.5 unless `ceremony_pinned`. Escalate-only. If escalated, re-run any now-required phase that was previously run inline (e.g. lean→standard means Phase 1 requirements now needs its document). Record `ceremony_reason`.
 
 - **Phase 1.5 trigger**: Run if `has_frontend: true` AND `has_ux_artifacts: false` AND not `--skip-ux` AND not `--fast`. Otherwise skip (`ux_design_phase: "skipped"`).
 - **Phase 2A refinement loop** (thorough only): If decisions create new requirements, loop back to Phase 1 (incremental), then re-run 2A. Max 3 iterations via `refinement_loops.requirements_architecture.count`.

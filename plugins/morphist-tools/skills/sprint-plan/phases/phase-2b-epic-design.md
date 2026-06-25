@@ -76,6 +76,12 @@ Before finalizing the epic structure, verify each item. Flag any violations inli
 
 ---
 
+## Ceremony
+
+At `lean`, capture epics **briefly** — title + goal + FR refs + dependencies — without the full Requirements Inventory or FR Coverage Map prose. Those sections are `standard`+ only. The epic **list and dependencies are always produced** at every level (they become beads in `--beads` mode and the backbone of execution regardless). The full output schema below applies unchanged at `standard` and `full`.
+
+---
+
 ## Decision Steering Integration
 
 Decision Steering is **active but less frequent** than Phase 2A. Most architecture decisions are already made.

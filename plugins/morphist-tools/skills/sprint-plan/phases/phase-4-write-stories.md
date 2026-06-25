@@ -30,6 +30,18 @@ Load from `current/` at phase start (context shedding — load artifacts only, n
 
 ---
 
+## Ceremony: Template Selection
+
+The story template is chosen by ceremony. Both templates are referenced by path: `templates/story-lean.md` (lean) and `templates/story.md` (the full schema below).
+
+- **`lean`**: Use `templates/story-lean.md` — Story + ACs + `test_tier` + an optional one-line Notes field. This lean template is also the **per-story default** whenever an individual story is `complexity=small` / `tier=smoke`, even at higher ceremony.
+- **`standard`**: Use `templates/story-lean.md` for normal stories. Promote an individual story to the full template (`templates/story.md`) only if `complexity=large` **OR** `tier=thorough` **OR** it references **≥3 decisions**.
+- **`full`**: Use `templates/story.md` (the existing full template documented under "Story File Schema" below) for all stories.
+
+**`--beads` mode**: Omit the **Dev Agent Record** section from whichever template is used — execution state lives on the bead (recorded via `bd note`), not in the story file.
+
+---
+
 ## Process
 
 ### Step 0: Build Shared Context Manifest

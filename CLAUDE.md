@@ -104,6 +104,7 @@ PRDs save to `docs/prd-{slug}.md`. Project-level architecture lives in `docs/arc
 | `prd` | Interactive PRD workshop |
 | `sprint-exec` | Execute validated sprint stories (thin dispatcher) |
 | `sprint-to-beads` | Materialize a planned sprint (epics, stories, ADRs) into the beads tracker (`bd`) as single source of truth |
+| `sprint-from-beads` | Reverse-migrate an existing beads corpus into a structured sprint — cluster orphans into epics, infer ADRs/PRD, backfill ACs (additive; rewrites gated) |
 | `done-validate` | Post-execution validation — checks file existence, Dev Agent Record, AC coverage |
 | `blocker-triage` | Architectural blocker analysis, downstream impact, resolution options |
 | `exec-report` | Epic/sprint progress report generation (internal) |

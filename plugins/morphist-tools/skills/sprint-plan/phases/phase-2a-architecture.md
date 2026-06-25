@@ -144,6 +144,40 @@ Each decision is recorded in this format in the output:
 
 ---
 
+## Ceremony: Decision Tiering
+
+The RALPLAN-DR flow above is the `full` path. At lower ceremony, the architecture phase scales to the **significance of the decisions actually present** rather than running unconditionally.
+
+### Run gate (lean)
+
+At `lean`, only run this phase if there is **at least one CRITICAL or HIGH decision**.
+
+- **No CRITICAL/HIGH decision** → skip the architecture phase entirely. Do not write `architecture-decisions.md`. Record in `STATE_DIR/phase-state.json`:
+  ```json
+  { "architecture_phase": "skipped-no-significant-decisions" }
+  ```
+- **A CRITICAL/HIGH decision exists** → the sprint escalates to at least `standard` (a HIGH decision implies `standard`, a CRITICAL implies `full` per the Ceremony Tiering trigger table). Note this; ceremony finalization after Phase 2B applies the escalation. Write the decision(s) per the tiering rules below.
+
+### ADR detail by significance
+
+Tier the recorded detail to each decision's significance — do not spend a full ADR block on a trivial choice:
+
+| Significance | What gets written |
+|--------------|-------------------|
+| CRITICAL / HIGH | Full **ADR-lite** block (Context / Decision / Alternatives / Consequences) — the format below. |
+| MEDIUM | A single one-line entry: `D-NNN: {title} — {one-line decision}`. No Context/Alternatives/Consequences. |
+| LOW | Dropped, or at most a single inline mention. **Never** a full ADR block. |
+
+`standard` writes full ADR-lite for CRITICAL/HIGH only and one-liners for MEDIUM; `full` writes full ADR-lite for everything that warrants it (today's behavior).
+
+### ADR home (source of truth)
+
+The architecture **document is the source of truth for decision rationale.** The full rationale (Context, Alternatives, Consequences) always lives in `architecture-decisions.md` (or `docs/decisions/`), **not** in a bead.
+
+In `--beads` mode a `decision` bead is a lightweight **pointer** to the doc — it carries the ID and title for traceability, but the rationale stays in the document. (This supersedes earlier design notes that placed decision rationale primarily in beads.)
+
+---
+
 ## Requirements-Architecture Refinement Loop
 
 After architecture decisions are made, check whether any decision invalidates, constrains, or creates new requirements not captured in `requirements.md`.

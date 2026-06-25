@@ -392,6 +392,24 @@ For new repos, note "New repository — no existing codebase constraints."]
 
 ---
 
+## Ceremony: Inline Form
+
+The full path above (parallel analyst/architect/explore merge into `requirements.md`) is `full` ceremony. At lower levels, requirements are captured more cheaply:
+
+**At `lean`**: Do not write `requirements.md`. The analyst still extracts requirements, but capture them as a **terse FR-only bullet list** — no NFR expansion, no personas/metrics/risk sections, no scope-boundary prose. Either:
+- Record the list in `STATE_DIR/phase-state.json` under `requirements_inline` (e.g. `["FR1: user can log in", "FR2: user can reset password", ...]`), **or**
+- Fold the FRs directly into Phase 2B epic/story creation — each FR becomes a story line on an epic, with no intermediate document.
+
+Skip the architect and explore passes unless the input clearly raises a technical constraint worth one line.
+
+**At `standard`**: Write a **thin `requirements.md`** — the FR list plus a brief NFR note where one genuinely applies. Skip the elaborate sections (personas, success metrics, risk assessment, assumptions table, the per-FR acceptance-criteria hints). The full analyst/architect merge is `full` only.
+
+**At `full`**: Unchanged — the complete process above.
+
+(Per the Ceremony Tiering contract, escalation re-runs this phase at the higher level: `lean`→`standard` means the inline brief is promoted to a thin doc; `standard`→`full` runs the full merge.)
+
+---
+
 ## Refinement Loop Note
 
 This phase may loop with Phase 2A. The Requirements <-> Architecture refinement loop works as follows:

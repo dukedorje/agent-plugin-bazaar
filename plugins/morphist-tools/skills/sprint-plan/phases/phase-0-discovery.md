@@ -196,6 +196,24 @@ previous_sprint: sprint-[NNN-1] | null
 
 ---
 
+## Ceremony: Inline Form (lean/standard)
+
+At `lean` or `standard` ceremony, do **not** write `discovery.md`. The scan still runs (the explore agent still inventories the codebase), but its result collapses to an inline summary rather than a standalone document.
+
+Capture a 2–4 sentence discovery summary into `STATE_DIR/phase-state.json` under a `discovery_inline` field:
+
+```json
+{
+  "discovery_inline": "Stack: Next.js 14 + tRPC + Postgres (Drizzle). has_frontend: true. Key constraints: existing auth via NextAuth must be reused; API routes are app-router only."
+}
+```
+
+The summary must capture at minimum: the detected **stack**, `has_frontend` (true/false), and the **key constraints** downstream phases need (existing patterns to respect, integration points, anything that bounds the work). Skip the full schema sections — no `## Available Artifacts`, no `## Recommendations` prose.
+
+Only `full` ceremony writes the complete `discovery.md` described below. (Per the Ceremony Tiering contract, an escalation to `full` after Phase 2B re-runs this phase to produce the full document.)
+
+---
+
 ## Agent Dispatch
 
 Dispatch to the explore agent using the `Agent` tool:
