@@ -2,7 +2,7 @@
 name: sprint-plan
 description: Multi-phase sprint planning workflow that transforms product ideas into implementation-ready user stories with architecture decisions, requirements expansion, and adversarial validation
 user-invocable: true
-argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--write-stories] [--skip-stories] [--continue[=phase]] [--restart-from=phase] [--sprint=ID] [--product=<name>]"
+argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--write-stories] [--skip-stories] [--continue[=phase]] [--restart-from=phase] [--sprint=ID] [--product=<name>] [--beads]"
 ---
 
 # Sprint Plan — Thin Orchestrator
@@ -35,6 +35,7 @@ Parse `$ARGUMENTS` for:
 | `--restart-from=phase` | Re-run a phase and mark all downstream stale |
 | `--sprint=ID` | Target a specific sprint (e.g., `--sprint=sprint-002`). For `--continue`/`--restart-from`, operates on this sprint instead of the most recent. For new sprints, ignored. |
 | `--product=<name>` | Associate this sprint with a product dimension. Writes `product` field to phase-state.json and requirements.md frontmatter. If omitted and the product input is a PRD path under `docs/products/{name}/`, auto-infer the product from the path. |
+| `--beads` | After planning completes, materialize the sprint (epics, stories, ADRs) into the beads tracker (`bd`) via the `sprint-to-beads` skill — beads becomes the single source of truth for work items. Sets `beads_mode: true` in phase-state.json. See Phase 6. |
 
 **Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto` + `--skip-stories`. `--thorough` implies `--write-stories`. `--write-stories` > `--skip-stories` (explicit opt-in wins).
 
@@ -81,11 +82,14 @@ This is the huddle-driven workflow: plan light when the sprint is small, write p
   "epics_count": 0,
   "stories_total": 0,
   "stories_enriched": 0,
-  "validation_status": "pending"
+  "validation_status": "pending",
+  "beads_mode": false
 }
 ```
 
-Set `steering_mode` to `GUIDED` if thorough, `AUTONOMOUS` if fast.
+Set `steering_mode` to `GUIDED` if thorough, `AUTONOMOUS` if fast. Set `beads_mode: true` if `--beads`.
+
+When `beads_mode` is true, the `docs/sprints/` story specs are treated as **ephemeral planning scratch**, not the committed deliverable — beads is the single source of truth for epics and stories (see Phase 6). The planning phases still run normally (they produce the intermediate artifacts the agents pass between phases); only the *final ownership* of work-item content moves to beads.
 
 ### 2c. OMC State & Auto-Continuation (optional)
 
@@ -242,7 +246,12 @@ After each phase: report phase name, artifacts, decisions, next phase. Present D
 
 At completion:
 1. **Deactivate auto-continuation**: Delete the ralph state file written in step 2c (or set `active: false`). This prevents the Stop hook from blocking after planning is done.
-2. Report sprint number, mode, epic/story counts, decision counts, validation status, readiness report path, next steps (`/sprint-exec`, `/refine`).
+2. **Phase 6 — Beads Materialization** (only if `beads_mode: true`): After validation passes, invoke the `sprint-to-beads` skill to push epics, stories, and architecture decisions into the beads tracker. This is the terminal phase in beads mode — beads becomes the single source of truth for work items.
+   - Invoke: `/sprint-to-beads --sprint={sprint-NNN}` (pass `--swarm` only if the user requested swarm setup).
+   - The skill is idempotent, so re-running `sprint-plan --continue` or `/refine` followed by `/sprint-to-beads` re-syncs safely.
+   - If `bd` is unavailable or has no database, `sprint-to-beads` halts with guidance; surface that to the user rather than failing the whole plan.
+   - After materialization, the recommended execution path is `bd ready` / `bd swarm` (bd-native) or `/sprint-exec --beads` (OMC executors synced to bd).
+3. Report sprint number, mode, epic/story counts, decision counts, validation status, readiness report path, and next steps. In beads mode, report the bead counts and `bd ready` / `/sprint-exec --beads` as next steps instead of the `docs/sprints/` paths.
 
 ---
 

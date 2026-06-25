@@ -2,7 +2,7 @@
 name: sprint-exec
 description: Execute validated sprint stories by dispatching to OMC execution primitives. Default: next epic. Use --full-auto for all remaining epics, --next-story for one story at a time.
 user-invocable: true
-argument-hint: "[--epic=N] [--story=N.M] [--next-story] [--full-auto] [--dry-run] [--concurrency=N] [--sprint=ID]"
+argument-hint: "[--epic=N] [--story=N.M] [--next-story] [--full-auto] [--dry-run] [--concurrency=N] [--sprint=ID] [--beads]"
 ---
 
 # sprint-exec: Thin OMC Dispatcher
@@ -48,6 +48,7 @@ Read `STATE_DIR/phase-state.json`. Extract `sprint_number` and epic count from `
 | `--stop-at=LEVEL` | `high` | Decision severity threshold. Values: `critical`, `high`, `medium`, `all` |
 | `--dry-run` | off | Show execution plan without dispatching |
 | `--concurrency=N` | unlimited | Max parallel stories within an epic |
+| `--beads` | auto-detect | Read the work list from beads (`bd`) instead of story files, and write status back to beads as stories execute. Auto-enabled when `phase-state.json` has `beads_mode: true`. See Section 8. |
 
 **Default scope**: next incomplete epic (first epic whose `epic_status` is not `"done"`).
 
@@ -398,3 +399,66 @@ After all in-scope epics are processed:
 - **Re-execution**: Requires explicit `--story=N.M`. Will not overwrite `done` stories by default.
 - **Blocked stories**: Always skipped. To unblock, manually set `status: ready-for-dev` and re-run.
 - **OMC dependency**: Epic and all-epics modes use OMC executor agents. Single-story mode works without OMC team infrastructure.
+
+---
+
+## 8. Beads-Sourced Execution (`--beads`)
+
+When the sprint was materialized to beads (`sprint-plan --beads`, or `/sprint-to-beads`), the work items
+live in `bd`, not in `docs/sprints/.../stories/*.md`. In this mode beads is the source of truth for both
+the **work list** and **status** — sprint-exec reads from `bd` and writes status back to `bd`.
+
+`--beads` is **auto-enabled** when `STATE_DIR/phase-state.json` has `beads_mode: true`; the flag forces it
+on explicitly. This section overrides Sections 3 (manifest building) and the status-writeback in Section 5;
+the dispatch mechanics in Section 4 (OMC executors) are unchanged — only the source and sink differ.
+
+This is the **OMC-executor** option for beads execution. The **bd-native** option is to skip sprint-exec
+entirely and use `bd swarm` / `bd ready` with your own coordinator. Both are supported; pick per task.
+
+### 8a. Resolve the bead graph
+
+1. Read `STATE_DIR/beads-map.json` if present (fast path: maps morphist ids → bead ids). If absent,
+   rebuild the map from `bd list --json` by filtering `external_ref` against `morphist:{sprint}:*`.
+2. Verify `bd status` succeeds. If `bd` is unavailable, halt: "Beads mode requires the `bd` binary."
+
+### 8b. Build the manifest from `bd ready`
+
+Replace Section 3's file-based manifest with a beads query:
+1. Run `bd ready --json` to get the set of **unblocked** work items (beads computes this from the
+   dependency DAG — no manual epic/story ordering needed).
+2. Filter to this sprint's beads (label `{sprint}` or external-ref prefix) and to `task`-type beads
+   (skip `epic`/`decision` beads — they are containers/context, not executable units).
+3. Apply `--epic` / `--story` / `--next-story` scope by matching the bead's external-ref
+   (`morphist:{sprint}:{epic}.{story}`) or parent epic.
+4. For each ready bead, read its full content with `bd show {id} --json` to get `acceptance_criteria`,
+   `design`, `labels` (→ `tier:*`, `complexity:*`), and linked `related` decision beads (→ read those for
+   architecture context). This replaces reading the story `.md` file in the executor prompt.
+
+### 8c. Dispatch (unchanged mechanics, bead-sourced content)
+
+Use the same OMC executor dispatch as Section 4, but build the prompt from bead fields instead of a story
+file. In the executor prompt, replace "Read the story file at {path}" with the bead's
+description / acceptance / design text inline (the bead *is* the spec), and pass `bd show {id}` as the
+authoritative reference.
+
+### 8d. Status writeback (replaces the story-file Dev Agent Record)
+
+Beads is the status sink. As each story executes:
+- **On start**: `bd update {id} --status in_progress` (or `bd set-state {id} in_progress`).
+- **On success**: `bd close {id} --reason "{1-line completion note}"`. Append substantive completion
+  notes with `bd note {id} "..."` (File List, problems encountered) — this is the bead-native equivalent
+  of the Dev Agent Record.
+- **On blocker**: leave open, `bd label {id} blocked` and `bd note {id} "Blocker: {type} — {detail}"`.
+  Blocked beads naturally drop out of `bd ready`.
+
+Do **not** write Dev Agent Records into `docs/sprints/` story files in beads mode — that would create a
+second status record. The bead is the record.
+
+### 8e. Post-epic hooks in beads mode
+
+Section 5 hooks adapt:
+- **Epic completion** is derived from beads: `bd epic status {epic-id}` (or `bd children {epic-id}`) —
+  epic is done when all child task beads are closed. No `epics.md` writeback.
+- `/verify`, `/sprint-review`, and the inter-epic huddle still run, but read completion state from
+  `bd` rather than story frontmatter. The huddle's learnings persist to `phase-state.json` as before.
+- `bd ready` is re-queried after each epic to pick up newly-unblocked work.
