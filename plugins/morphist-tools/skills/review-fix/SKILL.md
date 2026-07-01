@@ -145,6 +145,8 @@ Return structured output:
   "decision_context": null | "Two valid approaches: httpOnly cookie vs server-side session. Cookie is simpler but session aligns with D-003 more strictly."
 }
 ```
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```
@@ -281,6 +283,8 @@ Test location: {directory_convention}
 ## Output
 - Write test files following project conventions
 - Return a list of test files created and which findings each covers
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```
@@ -337,6 +341,8 @@ Report which tests now pass and which still fail.
 {/if}
 
 After applying, list each fix and whether it was applied successfully.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

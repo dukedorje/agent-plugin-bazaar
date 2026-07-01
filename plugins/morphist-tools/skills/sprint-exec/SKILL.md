@@ -274,6 +274,8 @@ Instructions:
 7. Do not modify any section of the story file above the Dev Agent Record.
 8. IMPORTANT: If you encounter a fundamental blocker, set the Blocker Type and Detail clearly — do NOT silently work around it.
 9. If the story frontmatter contains a `tdd_tests` field, run those tests regardless of test_tier. Report results in Completion Notes.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

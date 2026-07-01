@@ -344,6 +344,8 @@ Also append entries to .omc/sprint-plan/decisions/decision-log.md and update .om
 
 After writing, check: do any decisions invalidate, constrain, or create new requirements not in requirements.md?
 If yes, list the conflicts at the end of the file under ## Requirements Conflicts.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```
@@ -388,6 +390,8 @@ Write your review to SPEC_DIR/architecture-decisions.md, updating each decision 
 Flag any requirements conflicts not caught by the planner.
 
 Mark each decision: [ARCHITECT: APPROVED], [ARCHITECT: MODIFIED], or [ARCHITECT: REJECTED with alternative].
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```
@@ -433,6 +437,8 @@ For each decision, add: [CRITIC: VALIDATED] or [CRITIC: ISSUE — {description}]
 
 If all decisions validated, add a summary: ## Consensus: REACHED (iteration {N}).
 If issues remain, add: ## Consensus: NOT REACHED — issues listed above.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

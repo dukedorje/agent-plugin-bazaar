@@ -38,6 +38,8 @@ Also read:
 
 Dispatch a writer agent (haiku) to synthesize a 2-3 sentence changelog-style summary from all story Dev Agent Records. The summary should describe **what was built** in concrete terms, not just "stories were completed."
 
+> **Note**: This skill's dispatch prompts are composed ad hoc. When composing them, always end with the final-message contract: the agent's final message IS its return value — the complete output must be in it, never a bare sign-off (see CLAUDE.md Conventions).
+
 ```
 ═══════════════════════════════════════════════════
   EPIC {N} COMPLETE: {epic_title}

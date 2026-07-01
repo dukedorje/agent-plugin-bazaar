@@ -120,6 +120,8 @@ Return a JSON object:
     }
   ]
 }
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```
@@ -168,6 +170,8 @@ In the "Previous Story Intelligence" section, populate based on the shared conte
 - Problems Encountered → "N/A" (not yet executed)
 
 {story_file_schema}
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```
@@ -195,6 +199,8 @@ Apply these optimizations:
 6. Do NOT remove any section — optimize content within sections only
 
 Return the optimized story file in full.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```
@@ -260,6 +266,8 @@ Check for:
     }
   ]
 }
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```

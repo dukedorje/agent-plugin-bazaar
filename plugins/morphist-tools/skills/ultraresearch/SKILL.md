@@ -83,6 +83,8 @@ Agent(
 
   Decompose this question into ranked hypotheses following your protocol.
   Write the output as a single markdown document — I will save it to the output directory.
+
+  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
   """
 )
 ```
@@ -122,6 +124,8 @@ Agent(
   you whether to focus on web search, codebase exploration, analysis, or a hybrid.
 
   Write your output as a single markdown document — I will save it.
+
+  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
   """
 )
 ```
@@ -163,6 +167,8 @@ Agent(
   5. Write TWO files:
      - synthesis.md (narrative output with per-hypothesis spike metadata + verification section)
      - summary.json (machine-readable summary with the hypotheses array)
+
+  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
   """
 )
 ```
@@ -327,6 +333,8 @@ Follow the ultra-research workflow exactly as defined in the skill.
 The skill uses morphist-tools:decomposer, morphist-tools:investigator, and
 morphist-tools:synthesizer agents. Orchestrate them as described.
 Write all output to the specified OUTPUT_DIR.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 

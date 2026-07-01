@@ -210,6 +210,8 @@ Your task:
 
 Use the output format specified in the Analyst Output section of the Phase 1 instructions.
 Return your complete structured output. Do not write any files — the orchestrator will merge outputs.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 
@@ -231,6 +233,8 @@ Your task:
 
 Use the output format specified in the Architect Output section of the Phase 1 instructions.
 Return your complete structured output. Do not write any files — the orchestrator will merge outputs.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 
@@ -257,6 +261,8 @@ If the codebase is minimal, note that and keep the output brief.
 
 Use the output format specified in the Explore Output section of the Phase 1 instructions.
 Return your complete structured output. Do not write any files — the orchestrator will merge outputs.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
     )
 ```

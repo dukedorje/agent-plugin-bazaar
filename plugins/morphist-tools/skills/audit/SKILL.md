@@ -193,6 +193,8 @@ Return structured output:
   ]
 }
 ```
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```
@@ -317,6 +319,8 @@ Test location: {directory_convention}
 ## Output
 - Write test files to the appropriate location following project conventions
 - Return a list of test files created and which ACs each covers
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

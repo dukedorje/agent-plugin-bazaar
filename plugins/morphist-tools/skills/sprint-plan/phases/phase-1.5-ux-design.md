@@ -158,6 +158,8 @@ Document recurring interaction patterns:
 ---
 
 Return your complete structured output. Do not write any files — the orchestrator will write the output.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```

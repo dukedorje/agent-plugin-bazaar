@@ -81,6 +81,8 @@ Tasks:
    - Files changed count (total and per story if attributable)
    - Any commits that could not be attributed to a story
    - Commit velocity: commits per day (total_commits / sprint_days)
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### Agent 2: Story Execution Analysis (analyst, opus)
@@ -121,6 +123,8 @@ Tasks:
    e. Velocity metrics:
       - Total stories planned vs completed vs failed vs blocked
       - Stories by complexity if complexity data is present in story frontmatter
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### Agent 3: Architecture Decision Review (critic, opus)
@@ -161,6 +165,8 @@ Tasks:
    - Decision impact ranking: decisions ordered by number of dependent stories (from graph)
    - Replan analysis: what broke, why, and how to prevent it next sprint
    - New patterns that emerged during execution that should become architecture decisions in the next sprint
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 Wait for all three agents to complete before proceeding.
@@ -309,6 +315,8 @@ Ordered list of debt items with the recommended sprint to address each:
 1. [Item] — Sprint N+1 (High priority: {reason})
 2. [Item] — Sprint N+2 (Medium priority: {reason})
 ...
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 ```
 
 Write the completed retrospective to `SPEC_DIR/retrospective.md`.

@@ -108,6 +108,8 @@ Your task:
 4. Flag any existing implementations that overlap with the PRD scope (potential duplication or extension points)
 
 Keep findings brief and concrete — file paths, module names, and 1-line descriptions. No prose padding.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### B.2. FR Extraction + Risk Analysis (analyst, opus)
@@ -153,6 +155,8 @@ FR2. [Growth] The system shall ...
 - [Missing] ...
 - [Ambiguous] ...
 - [Technical] ...
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### B.3. Merge Research
@@ -257,6 +261,8 @@ NFR2. [category] ...
 
 ## Existing System Context
 [If applicable: relevant existing code, patterns, or architecture from the codebase scan. If greenfield: "No existing system — greenfield implementation."]
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### C.2. Scope Tier Decision (GUIDED mode only)
@@ -365,6 +371,8 @@ Format findings as:
 - Auto-fix: {count}
 - Warnings: {count}
 - Blockers: {count}
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### D.2. Auto-Fix Loop (max 1 iteration)
@@ -387,6 +395,8 @@ Auto-fix findings to apply:
 ---
 
 Apply ONLY the auto-fix findings. Do not change anything else. Return the complete updated PRD.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 Write the updated PRD back to the save path.

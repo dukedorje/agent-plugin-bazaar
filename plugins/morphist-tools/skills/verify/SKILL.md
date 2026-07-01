@@ -143,6 +143,8 @@ Verdict rules:
 - PASS: All files exist, no build issues, all ACs are YES
 - CONCERNS: Minor issues — some ACs are PARTIAL or CANT_TELL, or minor build issues
 - FAIL: Missing files, ACs are NO, or architecture violations
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ---

@@ -170,6 +170,15 @@ disallowedTools: Edit
     ```
   </Summary_JSON>
 
+  <Final_Message_Contract>
+    Your final message IS your return value — the orchestrator that spawned you sees
+    ONLY your final message, never your earlier turns or tool calls. After writing
+    synthesis.md and summary.json, put in your final message: the exact paths of both
+    files, the executive summary, and the verification status. Never end with a bare
+    sign-off like "Done" or "see above" — that strands the deliverable where the
+    orchestrator cannot see it.
+  </Final_Message_Contract>
+
   <Failure_Modes_To_Avoid>
     - **Silent drops**: Omitting a hypothesis from synthesis without noting why.
       Every hypothesis must appear or be explicitly marked unexplored.

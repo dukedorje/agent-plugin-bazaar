@@ -152,6 +152,8 @@ Use this format:
 ## Recommendations
 [Specific actionable items if any stories need rework]
 ```
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

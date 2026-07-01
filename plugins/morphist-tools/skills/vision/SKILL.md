@@ -199,6 +199,8 @@ Write a vision document following this structure:
 ---
 
 Write in the voice of someone who deeply understands the problem. Be specific and concrete — not corporate-speak. The vision should feel like a conversation with a smart person who cares, not a committee document.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### 4e. Save and Report
@@ -270,6 +272,8 @@ Instructions:
 > **Major revision ({date})**: {1-sentence summary of what pivoted}
 
 Keep the same voice and style as the original. Don't rewrite sections that haven't changed.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### 5e. Drift Check
@@ -369,6 +373,8 @@ Format:
 
 ## Recommendations
 {actionable next steps, ordered by priority}
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### 6c. Present Results

@@ -94,6 +94,7 @@ PRDs save to `docs/prd-{slug}.md`. Project-level architecture lives in `docs/arc
 - Skill SKILL.md files use YAML frontmatter with `name`, `description`, and optional `user-invocable`, `argument-hint`, `model`
 - Skills use `SPEC_DIR` for committed spec artifacts and `STATE_DIR` for ephemeral operational state — never `SPRINT_DIR`
 - OMC agent types (e.g., `oh-my-claudecode:executor`) are acceptable dependencies. Make OMC infrastructure calls (state_write, etc.) graceful — skip if unavailable.
+- **Final-message contract**: a subagent's final message is the ONLY thing returned to the orchestrator that spawned it — mid-run turns and tool calls are invisible to the caller. Every dispatch prompt must therefore end by instructing the agent to put the complete deliverable in its final message (or, for agents whose work product is files on disk, the exact file paths plus a status summary) — never a bare sign-off like "Done" or "see above".
 
 ## Skills Reference
 

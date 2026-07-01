@@ -83,6 +83,8 @@ Return a JSON array of story stubs:
     "technical_notes": "Brief technical guidance from architecture decisions"
   }
 ]
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```
@@ -133,6 +135,8 @@ Return a JSON array of acceptance criteria:
     "type": "happy|edge|error"
   }
 ]
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```
@@ -183,6 +187,8 @@ Check for:
     }
   ]
 }
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """
 )
 ```

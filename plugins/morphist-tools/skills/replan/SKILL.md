@@ -195,6 +195,8 @@ Write the revised decision text. Include:
 3. Revision history entry
 
 Return ONLY the revised decision text (from the decision heading through the end of that decision section).
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```
@@ -250,6 +252,8 @@ Update this story file to reflect the new architecture decision. Specifically:
 6. Do NOT change the story number, title, or epic assignment
 
 Return the complete updated story file.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```

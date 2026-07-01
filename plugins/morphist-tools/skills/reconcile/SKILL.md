@@ -161,6 +161,8 @@ For each inconsistency found, output:
 If NO inconsistencies are found in a category, omit it from the output.
 
 Return only the JSON array of inconsistencies found. If none at all, return an empty array.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```
@@ -237,6 +239,8 @@ Files to update: {file list}
 
 Make ONLY the specific style change described. Do not refactor, restructure,
 or make any other changes. This is a cosmetic reconciliation pass.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```
@@ -361,6 +365,8 @@ Update this story file to reflect the revised decision:
 6. Do NOT change the story number, title, or epic assignment
 
 Return the complete updated story file.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```

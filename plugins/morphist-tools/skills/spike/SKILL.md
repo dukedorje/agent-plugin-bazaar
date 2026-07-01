@@ -193,6 +193,8 @@ Other skills invoke `/spike` by spawning an agent with these parameters in the p
 - CALLER: <skill name — sprint-exec, replan, etc.>
 
 Follow the spike skill workflow. Return structured output per the schema above.
+
+IMPORTANT — final message contract: Your final message IS your return value. The caller sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the verdict, the paths of the files you wrote under OUT_DIR, and a concise evidence summary — ending with the machine-readable `VERDICT:` line. Do not end with a bare sign-off like "Done".
 ```
 
 ### Output Contract

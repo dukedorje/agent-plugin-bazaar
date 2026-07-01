@@ -247,6 +247,8 @@ Include:
 3. Epic List summary table
 4. Detailed epic sections with all required fields
 5. Placeholder sections for Stories and Epic Health Metrics (filled by Phase 3)
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```

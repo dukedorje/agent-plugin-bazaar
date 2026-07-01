@@ -173,6 +173,8 @@ For each proposed improvement, provide:
 - What the improved version should say or contain
 
 Do not rewrite the entire artifact. Propose targeted, discrete improvements only.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### 5b. Architect Pass
@@ -203,6 +205,8 @@ For each proposed improvement, argue the strongest case AGAINST making it. Ident
 Be adversarial but fair. Your goal is to prevent unnecessary changes, not to reject everything.
 
 For each improvement, verdict: OPPOSE (state your strongest objection) or CONCEDE (you cannot argue against it).
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ### 5c. Critic Pass
@@ -240,6 +244,8 @@ After issuing all verdicts, produce a consolidated list of:
 3. All REJECT changes (with brief reason)
 
 If there are no APPLY or MODIFY changes, state: "No changes recommended. The artifact is already at high quality for this iteration."
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
 ---
@@ -483,6 +489,8 @@ Review this story and add concrete implementation guidance:
 
 Do NOT modify acceptance criteria or change the story's scope.
 Return ONLY the enrichment content for a ## Prep Notes section.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 """,
 )
 ```

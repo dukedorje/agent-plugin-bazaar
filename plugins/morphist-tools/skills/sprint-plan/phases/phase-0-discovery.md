@@ -235,6 +235,8 @@ Follow the Phase 0 instructions in full:
 
 Execute all 8 steps in order. Write output to SPEC_DIR/discovery.md.
 Do not ask for confirmation. Complete the phase and return when done.
+
+IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
 """,
 )
 ```
