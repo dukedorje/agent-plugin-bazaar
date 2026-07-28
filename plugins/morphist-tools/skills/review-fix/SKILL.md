@@ -7,7 +7,7 @@ argument-hint: "[review-file-path] [--auto] [--tdd] [--dry-run] [--sprint=ID]"
 
 # Review Fix: Validate & Fix Review Findings
 
-Takes a review artifact (from `/sprint-review`, `/reconcile`, or any review file) and processes each finding: validates it against the actual code, discards false positives, fixes real issues, and escalates contested or high-impact decisions via elicitation.
+Takes a review artifact (from a `code-reviewer` agent, `/code-review`, or any review file) and processes each finding: validates it against the actual code, discards false positives, fixes real issues, and escalates contested or high-impact decisions via elicitation.
 
 ---
 
@@ -407,6 +407,35 @@ Write the review-fix report to `STATE_DIR/reviews/{source}-fixes.md` (e.g., `epi
 ```
 
 ---
+
+## 7b. Append to LEARNINGS.md
+
+Before reporting, capture anything the fix pass taught that a future agent could not
+derive from reading the code.
+
+Read `docs/LEARNINGS.md` (create it if absent). For each fix that involved a **surprise**
+— a non-obvious encoding, an API that behaves against its docs, a deliberate-looking
+oddity that is actually load-bearing, a constraint discovered only by breaking it —
+append one dated line with a file reference:
+
+```markdown
+- 2026-07-28 — stored publicKey is standard base64, not base64url; convert with
+  `Buffer.from(s, 'base64')` before verifying. (src/lib/passkey/verify-registration.ts)
+```
+
+Rules:
+
+- **Append only.** Never rewrite or reorder existing lines.
+- **Skip the routine.** A typo fix teaches nothing. Only write what cost someone time.
+- **Be specific enough to act on.** "Be careful with encodings" is useless; name the
+  field, the encoding, and the file.
+- **Deliberate-looking oddities are the highest-value entries.** If you were tempted to
+  "clean up" something and discovered it was load-bearing, that is exactly the line that
+  stops the next agent breaking it.
+
+Zero entries is a valid outcome — say so rather than manufacturing one.
+
+See `CONVENTIONS.md` for why this artifact exists.
 
 ## 8. Report to User
 

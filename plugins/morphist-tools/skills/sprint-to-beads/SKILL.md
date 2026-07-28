@@ -32,7 +32,7 @@ already-planned sprint.
 - **Automatically** — `sprint-plan --beads` calls this skill as its terminal phase.
 - **On-demand** — materialize an existing sprint that was planned without `--beads`:
   `/sprint-to-beads --sprint=sprint-003`
-- **Re-sync** — after `/refine` or `/replan` changes a sprint, re-run to update the beads (idempotent).
+- **Re-sync** — after a sprint's plan changes, re-run to update the beads (idempotent).
 
 Do **not** use this skill to:
 - Plan a sprint (that's `/sprint-plan`)
@@ -164,7 +164,7 @@ Before creating any bead, load the existing map: run `bd list --json` (with `--d
 - **ref exists** → `bd update <id> ...` with the current fields (content may have changed since last sync)
 - **ref absent** → `bd create ...`, capture the new bead id, add it to the in-memory map
 
-This makes the skill safe to run repeatedly (e.g. after `/refine`).
+This makes the skill safe to run repeatedly.
 
 ### Field Mapping
 
@@ -294,7 +294,7 @@ Next:
 ## 7. Known Limitations
 
 - **One-way push.** This skill writes plan → beads. It does not read bead status back into sprint
-  artifacts (that's `/sprint-exec --beads`'s and `/status --beads`'s job). Editing a bead's content in
+  artifacts (that's `/sprint-exec --beads`'s job). Editing a bead's content in
   `bd` and then re-running this skill will **overwrite** that field from the plan — beads is downstream of
   the plan for content, source-of-truth for *status*.
 - **Stub fidelity.** Materializing from story stubs (Phase 4 skipped) yields thinner `--acceptance`/

@@ -206,7 +206,7 @@ When the user chooses `[spike]`:
 1. Invoke the `/spike` skill with the hypothesis prompt (extracted from the synthesis's `spike-prompt` field, or constructed from the claim if absent).
 2. `/spike` produces `docs/spikes/{H-id}/finding.md` with a go/no-go verdict and an evidence artifact (code, screenshot, log excerpt, test result).
 3. If the spike returns **go**: update the synthesis.md to set `spike-artifact: docs/spikes/{H-id}/finding.md` and bump `confidence: high` + `verification: empirically-tested`. Resume dispatch.
-4. If the spike returns **no-go**: halt + invoke `/replan --decision={D-NNN} --reason="spike disproved H-id"`. The replan flow will revise the decision and re-trigger sprint-exec.
+4. If the spike returns **no-go**: halt, reopen the decision bead (`bd update {id} --status open --notes "spike disproved H-id"`), and surface it to the user. Re-run sprint-exec once the decision is revised.
 
 When the user chooses `[override]`:
 1. Append a spike-override entry to `phase-state.json → execution_log`:
@@ -345,11 +345,10 @@ Write `resume_point` to `phase-state.json`:
 
 ### 5d. Blocker Triage
 
-If any stories have architectural blockers:
-- `--full-auto`: `/blocker-triage --epic={N} --auto-accept`
-- Otherwise: `/blocker-triage --epic={N}`
-
-If triage halts execution, stop here.
+If any stories have architectural blockers, record each one on its bead
+(`bd update {id} --status blocked --notes "..."`) and, unless `--full-auto`,
+stop and surface them to the user. Under `--full-auto`, log and skip the blocked
+stories rather than halting the whole run.
 
 ### 5e. Verification
 
@@ -359,7 +358,7 @@ If the epic had completed stories and scope is not `--next-story`:
 
 ### 5f. Background Review
 
-If epic had completed stories: dispatch `/sprint-review --epic={N}` with `run_in_background=True`.
+If epic had completed stories: dispatch a background `code-reviewer` agent over the epic's diff, then feed its findings to `/review-fix`.
 
 ### 5g. Inter-Epic Huddle
 
@@ -461,6 +460,6 @@ second status record. The bead is the record.
 Section 5 hooks adapt:
 - **Epic completion** is derived from beads: `bd epic status {epic-id}` (or `bd children {epic-id}`) —
   epic is done when all child task beads are closed. No `epics.md` writeback.
-- `/verify`, `/sprint-review`, and the inter-epic huddle still run, but read completion state from
+- `/verify` and the inter-epic huddle still run, but read completion state from
   `bd` rather than story frontmatter. The huddle's learnings persist to `phase-state.json` as before.
 - `bd ready` is re-queried after each epic to pick up newly-unblocked work.

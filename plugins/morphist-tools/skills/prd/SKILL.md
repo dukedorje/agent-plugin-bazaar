@@ -475,15 +475,6 @@ Resolve these issues manually by editing docs/prd-{slug}.md, then re-run `/prd` 
 
 ---
 
-## /refine prd Support
-
-`prd` is a valid target in the `/refine` skill.
-
-- **Artifact path**: `docs/prd-{slug}.md` or `docs/products/{name}/prd.md` (most recent by mtime if no explicit path given)
-- **RALPLAN-DR pass**: Planner proposes improvements → Architect challenges → Critic arbitrates
-- **Downstream stale marking**: Does NOT mark downstream phases stale (PRD is an upstream artifact; sprint-plan phases are downstream and not tracked in PRD's phase-state)
-
----
 
 ## Usage Examples
 

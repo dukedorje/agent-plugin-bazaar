@@ -21,7 +21,7 @@ Spikes exist to invert the cost curve: a 30-minute isolated test is cheaper than
 
 - **Automatically** — `sprint-exec`'s spike-gate (section 3f) invokes this skill when a story's referenced decision cites an unvalidated hypothesis.
 - **On-demand** — any time a user wants to prove out a claim before committing to it. ("Can we actually animate splats in PC 2.17?" → spike.)
-- **During `/replan`** — when a replan proposes a new approach, spike it before landing.
+- **When an approach changes mid-sprint** — spike the new approach before landing it.
 
 Do **not** use this skill for:
 - Production implementation (that's `sprint-exec` + executors)
@@ -150,7 +150,7 @@ If verdict is **go** AND a source synthesis was provided:
 4. If a matching `summary.json` exists in the synthesis dir, apply the same update to the `hypotheses` array entry.
 5. Append a note under the hypothesis's prose: `Validated by spike {id} on {date}.`
 
-Do NOT update on `no-go` or `inconclusive` — those outcomes should trigger `/replan`, not rubber-stamp the original decision.
+Do NOT update on `no-go` or `inconclusive` — those outcomes should reopen the decision bead, not rubber-stamp the original decision.
 
 ### Stage 5 — Return to Caller
 
@@ -168,7 +168,7 @@ Caller can now proceed with decision {D-NNN}.
 
 {if no-go:}
 Hypothesis disproved. Recommended next step:
-  /replan --decision={D-NNN} --reason="{finding-summary}"
+  bd update {decision-id} --status open --notes "{finding-summary}"
 
 {if inconclusive:}
 Spike could not reach a verdict. See {OUT_DIR/finding.md} § "What Blocked Validation".
@@ -249,7 +249,7 @@ Inspired by the three sprint-004 LoGAvatar spikes (`/spike/splat-anim`, `/spike/
 
 - **`ultraresearch`** — outputs `spike-prompt` field in hypothesis metadata; this skill consumes it.
 - **`sprint-exec`** — section 3f spike-gate invokes this skill automatically; consumes `VERDICT:` line.
-- **`replan`** — on `no-go`, this skill's finding.md feeds `/replan --reason=...`.
+- **decision beads** — on `no-go`, this skill's finding.md is attached to the reopened decision bead.
 - **`sprint-plan`** — Phase 3.5 write-stories gate may suggest spikes for flagged research-backed stories.
 
 ---

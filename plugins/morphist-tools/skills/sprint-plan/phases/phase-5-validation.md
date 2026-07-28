@@ -363,7 +363,7 @@ IMPORTANT — final message contract: Your final message IS your return value. T
 
 After a passing verdict (before state updates), build the decision graph at `current/decision-graph.md`.
 
-This is the initial seed — `/refine` and `/replan` will maintain it going forward.
+This is the initial seed — maintain it by editing the beads directly as the plan evolves.
 
 ### Process
 

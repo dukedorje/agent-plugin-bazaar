@@ -295,7 +295,7 @@ Each hypothesis the synthesis references MUST carry a structured YAML frontmatte
 - `confidence: high` requires BOTH `verification: empirically-tested` AND a cited evidence artifact (log snippet, screenshot, test command and result). If the agent can't produce the evidence, downgrade to `medium`.
 - `version-pinned` is mandatory whenever a claim cites library API behavior. "PlayCanvas 2.13–2.16" ≠ "PlayCanvas 2.17" — do not omit the version and do not paper over a range mismatch.
 - `spike-required` is automatically `true` unless both `confidence == high` AND `verification == empirically-tested`. The synthesizer must not lower this flag without evidence.
-- Downstream consumers (sprint-exec's spike-gate, `/replan`) enforce this metadata. Outputs without it will be treated as `confidence: low` by default, forcing a spike.
+- Downstream consumers (sprint-exec's spike-gate) enforce this metadata. Outputs without it will be treated as `confidence: low` by default, forcing a spike.
 
 ### Why this exists (from sprint-004 retro)
 

@@ -175,7 +175,7 @@ Report any `bd` failures with the failing command; continue with independent ite
    `SPEC_DIR` (`docs/sprints/{NNN}-{slug}/`). At `lean`, there may be none.
 2. Initialize a `STATE_DIR` (`.omc/sprint-plan/sprint-{NNN}/`) with a `phase-state.json` describing the
    migrated sprint (`ceremony`, `beads_mode: true`, `source: "sprint-from-beads"`, `spec_dir`), so the
-   normal `/status`, `/sprint-exec --beads`, `/refine` flows can pick it up.
+   normal `bd ready` / `/sprint-exec --beads` flows can pick it up.
 3. Write `STATE_DIR/beads-map.json` (the ephemeral id-map, regenerable from `external_ref`).
 
 ### Final Report
@@ -193,7 +193,7 @@ Beads → Sprint {NNN}  (ceremony: {level})
 
 Next:
   bd ready                 # unblocked work, now structured
-  /status --sprint={NNN}   # sprint dashboard over the migrated beads
+  bd list --status open    # dashboard over the migrated beads
   /sprint-exec --beads     # execute, synced to bd
 ```
 
@@ -205,7 +205,7 @@ Next:
   the corpus — review them. The approval gate covers rewrites; for additive inference, the `--dry-run`
   preview is your checkpoint.
 - **Existing structure is respected, not re-litigated.** Existing epics, parents, and dependency edges are
-  kept as-is. To restructure aggressively, edit in `bd` first or use a forward `/refine` pass after.
+  kept as-is. To restructure aggressively, edit in `bd` first.
 - **Idempotent, additive re-runs.** Re-running enriches further (fills newly-empty gaps, picks up new
   orphans) without duplicating — external-ref keys dedupe. It will not undo a prior migration.
 - **Requires `bd`.** No corpus, nothing to do.

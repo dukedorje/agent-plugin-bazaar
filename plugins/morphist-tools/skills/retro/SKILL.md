@@ -177,7 +177,7 @@ Wait for all three agents to complete before proceeding.
 
 Before generating the retrospective, run a full-sprint code style reconciliation. This detects cross-epic inconsistencies introduced by parallel agent execution.
 
-Equivalent to dispatching `/reconcile --all`. This runs in **GUIDED mode** — contentious choices (high severity) are presented to the user as elicitations, similar to Decision Steering in sprint-plan.
+This runs in **GUIDED mode** — contentious choices (high severity) are presented to the user as elicitations, similar to Decision Steering in sprint-plan.
 
 After reconciliation completes, read the report at `STATE_DIR/reviews/reconciliation-full-sprint.md` and pass it as additional input to the retrospective writer (section 5). The findings should appear in the retrospective's "Patterns Discovered" section.
 
@@ -373,4 +373,4 @@ No additional wiring is needed.
 
 ## 9. RAL Support
 
-The `/refine retro` command targets this artifact at `SPEC_DIR/retrospective.md`. The `retro` phase is terminal — refining it does NOT mark any downstream phases stale.
+The `retro` phase is terminal — revising it does NOT mark any downstream phases stale.

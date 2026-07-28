@@ -251,7 +251,7 @@ The **Ceremony** column shows the lowest level at which the phase runs as a full
 
 **Pause modes**: Default pauses at decision points (Phases 1, 1B, 2A, 5). `--step` pauses after every phase. `--auto`/`--fast` never pause (only Decision Steering elicitations in GUIDED mode can pause).
 
-When pausing, show: phase name, artifact path, 2-4 bullet summary of outputs, key decisions made, 1-3 "things to consider" (high-significance decisions, open questions, health flags), and options (continue, review, edit, `/refine`, `--restart-from`).
+When pausing, show: phase name, artifact path, 2-4 bullet summary of outputs, key decisions made, 1-3 "things to consider" (high-significance decisions, open questions, health flags), and options (continue, review, edit, `--restart-from`).
 
 Wait for user input before proceeding.
 
@@ -302,7 +302,7 @@ At completion:
 1. **Deactivate auto-continuation**: Delete the ralph state file written in step 2c (or set `active: false`). This prevents the Stop hook from blocking after planning is done.
 2. **Phase 6 — Beads Materialization** (only if `beads_mode: true`): After validation passes, invoke the `sprint-to-beads` skill to push epics, stories, and architecture decisions into the beads tracker. This is the terminal phase in beads mode — beads becomes the single source of truth for work items.
    - Invoke: `/sprint-to-beads --sprint={sprint-NNN}` (pass `--swarm` only if the user requested swarm setup).
-   - The skill is idempotent, so re-running `sprint-plan --continue` or `/refine` followed by `/sprint-to-beads` re-syncs safely.
+   - The skill is idempotent, so re-running `sprint-plan --continue` followed by `/sprint-to-beads` re-syncs safely.
    - If `bd` is unavailable or has no database, `sprint-to-beads` halts with guidance; surface that to the user rather than failing the whole plan.
    - After materialization, the recommended execution path is `bd ready` / `bd swarm` (bd-native) or `/sprint-exec --beads` (OMC executors synced to bd).
 3. Report sprint number, mode, epic/story counts, decision counts, validation status, readiness report path, and next steps. In beads mode, report the bead counts and `bd ready` / `/sprint-exec --beads` as next steps instead of the `docs/sprints/` paths.
@@ -320,7 +320,4 @@ At completion:
 
 ## 8. Refine Interface
 
-The `/refine` skill handles RALPLAN-DR refinement. Orchestrator supports it by:
-- Tracking `refine_passes` per phase/scope in `phase-state.json` (max 2 before diminishing-returns warning; `--force` overrides)
-- Marking downstream phases stale after refinement modifies an artifact
-- When `--propagate` is used and ADRs change: auto-run reconcile
+Refinement is now done by editing the plan artifacts or the beads directly; the orchestrator tracks phase state in `phase-state.json` so a re-run picks up the change.
