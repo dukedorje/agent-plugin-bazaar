@@ -572,10 +572,10 @@ I0  this document (commander’s intent)
  │     weave: shared references + four dispatchers
  │     landed: openspec/specs/verbs · plugins/intention/references/
  │
- ├── H1  harness touch-ins                       [brief]
+ ├── H1  harness touch-ins                       [brief · folded 2026-08-15]
  │     fan-out: Grok · Claude · Codex · Hermes · Prime
- │     reduce: compatibility matrix
- │     depends on S1–S4
+ │     reduce: plugins/intention/references/harness.md
+ │     landed: openspec/specs/harness
  │
  ├── G1  hygiene script                          [instrument]
  │     banners, fold-debt, journey present, checkboxes honest

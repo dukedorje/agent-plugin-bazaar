@@ -16,6 +16,7 @@ disagree, the contract wins.
 | What is built | `openspec/specs/*/spec.md` |
 | Learnings | `docs/LEARNINGS.md` |
 | Why it is shaped this way | `ARCHITECTURE.md` |
+| Harness matrix | `plugins/intention/references/harness.md` |
 
 ## Verb boundaries
 

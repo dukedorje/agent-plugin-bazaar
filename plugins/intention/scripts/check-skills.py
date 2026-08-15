@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -18,6 +20,7 @@ REQUIRED_REFS = (
     "change-templates.md",
     "act-io.md",
     "fold-steps.md",
+    "harness.md",
 )
 
 FM = re.compile(r"^---\n(.*?)\n---", re.S)
@@ -57,6 +60,18 @@ def main() -> int:
                 f".agents/skills/{verb} -> {link.resolve()} "
                 f"!= {skill.parent.resolve()}"
             )
+    cli = shutil.which("skills")
+    if cli:
+        listed = subprocess.run(
+            [cli, "add", str(SKILLS.parent), "--list", "-y"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        text = listed.stdout + listed.stderr
+        for verb in VERBS:
+            if not re.search(rf"(?:^|[^A-Za-z0-9_-]){re.escape(verb)}(?:[^A-Za-z0-9_-]|$)", text):
+                errors.append(f"skills add --list missed {verb}")
     if errors:
         for e in errors:
             print(e)
