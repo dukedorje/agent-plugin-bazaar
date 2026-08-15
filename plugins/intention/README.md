@@ -18,7 +18,7 @@ Other repos (Vercel `skills` CLI):
 ```bash
 skills add ./plugins/intention \
   --skill intend --skill change --skill act --skill fold --skill brief \
-  --agent claude-code --agent codex -y
+  --agent claude-code --agent codex --agent grok --agent hermes-agent -y
 ```
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs: `openspec/specs/`.
