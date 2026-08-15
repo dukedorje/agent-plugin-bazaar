@@ -159,6 +159,15 @@ for PLUGIN_DIR in "${PLUGIN_DIRS[@]}"; do
     echo ""
 done
 
+# 7. OpenSpec hygiene (G1) — banners, fold-debt, journey, honest checkboxes
+echo "--- openspec hygiene ---"
+if bash "$REPO_ROOT/scripts/test-hygiene.sh"; then
+    ok "openspec hygiene fixtures + live tree"
+else
+    error "openspec hygiene failed"
+fi
+echo ""
+
 # Summary
 echo "=== Summary ==="
 if [[ $ERRORS -gt 0 ]]; then
