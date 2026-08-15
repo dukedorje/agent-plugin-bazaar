@@ -11,39 +11,31 @@ argument-hint: "<change-id or description>"
 
 # change
 
+Load `../../references/shared.md` and `../../references/change-templates.md`.
 Read `openspec/AGENTS.md` and `openspec/specs/living-specs/spec.md`.
 Do not invent a second layout.
 
 ## Skip
 
-No change directory for: restore intended behavior, typo, formatting,
-comment, non-breaking pin, test for already-specced behavior. Edit the
-file. Stop.
+If `shared.md` says direct fix: edit the file, stop, do not scaffold.
 
 ## Procedure
 
-1. Search `openspec/specs/` and `openspec/changes/` (not `archive/`). Prefer
-   modifying an existing capability.
-2. Verb-led `change-id` (`add-`, `update-`, `remove-`, `refactor-`).
-3. Scaffold:
+1. Search `openspec/specs/` and in-flight `openspec/changes/` (not
+   `archive/`). Prefer modifying an existing capability.
+2. Verb-led `change-id`. If `intend` already named one, use that id.
+3. Scaffold `openspec/changes/<id>/` using the templates. `design.md`
+   only when the templates say so.
+4. Banner is `> **PENDING**` unless the human already said activate
+   (then `> **ACTIVE BUILD**`).
+5. Journey section is mandatory: real surfaces, or
+   `No new UI because <reason>`.
+6. Deltas: `ADDED` / `MODIFIED` / `REMOVED`, each with a `#### Scenario:`.
+   MODIFIED pastes the entire living requirement.
+7. Checkboxes = owed work. Out-of-scope = bullets.
+8. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
+   already granted). Do not fold. Handoff: `act` after activation,
+   `fold` after act has landed.
 
-```
-openspec/changes/<id>/
-  proposal.md
-  tasks.md
-  design.md                 # only if cross-cutting
-  specs/<capability>/spec.md
-```
-
-4. `proposal.md` starts with `> **PENDING**` unless the human already
-   activated this id (then `> **ACTIVE BUILD**`). Include
-   `## User journey & surfaces` or `No new UI because <reason>` naming
-   the real surface.
-5. Deltas: `ADDED` / `MODIFIED` / `REMOVED`. Each requirement has at least
-   one `#### Scenario:`. MODIFIED pastes the **entire** living requirement.
-6. Checkboxes are work this change owes. Out-of-scope is bullets.
-7. Do not implement until ACTIVE BUILD (or vibe/brief with write already
-   granted). Do not fold. That is `fold`.
-
-Capability id = directory name under `openspec/specs/`. Packets for this
-change set `capability` and `change_id`.
+Packets for this change set `capability` (spec directory name) and
+`change_id`.

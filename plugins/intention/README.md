@@ -14,3 +14,4 @@ Codex / Hermes / Prime: Agent Skills standard. Invoke by name, never as a
 Claude slash command.
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs: `openspec/specs/`.
+Verb bodies: `references/` (shared vocabulary; skills do not fork the surface).

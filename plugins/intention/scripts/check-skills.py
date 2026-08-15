@@ -9,8 +9,16 @@ from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parents[1]
 SKILLS = PLUGIN / "skills"
+REFS = PLUGIN / "references"
 AGENTS = PLUGIN.parents[1] / ".agents" / "skills"
 VERBS = ("intend", "change", "act", "fold", "brief")
+REQUIRED_REFS = (
+    "shared.md",
+    "intend-dag.md",
+    "change-templates.md",
+    "act-io.md",
+    "fold-steps.md",
+)
 
 FM = re.compile(r"^---\n(.*?)\n---", re.S)
 
@@ -27,6 +35,9 @@ def name_from(text: str) -> str | None:
 
 def main() -> int:
     errors: list[str] = []
+    for ref in REQUIRED_REFS:
+        if not (REFS / ref).is_file():
+            errors.append(f"missing references/{ref}")
     for verb in VERBS:
         skill = SKILLS / verb / "SKILL.md"
         if not skill.is_file():

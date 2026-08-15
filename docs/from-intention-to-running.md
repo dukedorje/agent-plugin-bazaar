@@ -565,12 +565,12 @@ I0  this document (commander’s intent)
  │     Path B (MetaDev fork) PARKED — revive in ADR-003
  │     landed: ADR-003 · openspec/specs/packaging
  │
- ├── S1  intend                                  [change]
- ├── S2  change                                  [change]
- ├── S3  act                                     [change]
- ├── S4  fold                                    [change]
- │     weave S1–S4 against C1+C2; brief already exists (S0)
- │     depends on C1, C2, and the winner of F1
+ ├── S1  intend                                  [change · folded 2026-08-15]
+ ├── S2  change                                  [change · folded 2026-08-15]
+ ├── S3  act                                     [change · folded 2026-08-15]
+ ├── S4  fold                                    [change · folded 2026-08-15]
+ │     weave: shared references + four dispatchers
+ │     landed: openspec/specs/verbs · plugins/intention/references/
  │
  ├── H1  harness touch-ins                       [brief]
  │     fan-out: Grok · Claude · Codex · Hermes · Prime
@@ -609,7 +609,7 @@ Complementary, not duplicate: C1’s three members write different faces of one 
 
 The methodology has begun to exist when all of these are true:
 
-- [ ] A stranger can read this file and assign a node without a call
+- [x] A stranger can read this file and assign a node without a call — founding doc + intend-dag, 2026-08-15
 - [x] `intend` produces a DAG of named change-ids, not a sprint folder — dispatcher landed F1; S1 deepens
 - [x] `change` writes a PENDING delta with a journey or an explicit “no new UI because…” — dispatcher landed F1; S2 deepens
 - [x] `act` gives a foreign harness a packet, never a slash command — dispatcher landed F1; S3 deepens

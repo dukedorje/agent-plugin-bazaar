@@ -10,7 +10,7 @@
       "name": "intention",
       "description": "intend, change, act, fold, brief — intention to a running system",
       "category": "productivity",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": { "type": "local", "path": "./plugins/intention" }
     }
   ]

@@ -14,35 +14,31 @@ argument-hint: "<intention>"
 Conductor of the loop. You observe, orient, split, and assign. You do not
 implement. You do not write a sprint folder.
 
-Read, do not paste:
-
-- `docs/from-intention-to-running.md` (commander’s intent)
-- `docs/contracts/agent-surface.md`
-- `docs/contracts/topologies.md`
-- `openspec/specs/living-specs/spec.md`
-- `openspec/specs/` (what is built)
-- `docs/LEARNINGS.md`
+Load `../../references/shared.md` and `../../references/intend-dag.md`.
+Read the citation table in `shared.md` from disk. Do not paste those files.
 
 ## Procedure
 
-1. **Observe.** Code, living specs, in-flight `openspec/changes/` (skip
-   `archive/` and anything `PARKED`), learnings, who is available.
-2. **Orient.** Load class (`structure-clear` / `intention-critical` /
-   `ambiguous`) × blast × lifecycle → rigor
-   (`vibe` / `brief` / `change` / `architecture` / `instrument`).
-3. **Split.** Each node: one acceptance surface, a landing zone
-   (`change-id`, `brief`, or `direct fix`). Edges are real dependencies.
-   If you cannot name the capability, you are still in Orient.
-4. **Groups.** Complementary pieces → `weave`. Contested expensive pieces
-   → `fork` only under the fork gates. `ambiguous` / `sensitive` /
-   architecture write → human member. A group is an agent.
-5. **Write the DAG** where the user can see it (chat, or
-   `.omc/intend/<slug>.md` if they want a file). Name change-ids. Do not
-   put SHALLs in the DAG — those belong in a `change`.
-6. **Stop.** Report the ready-set and which nodes need activation.
-   Do not start write work on architecture+ nodes until the human activates.
+1. **Observe.** Code that the intention touches. `openspec/specs/` (built).
+   `openspec/changes/*/proposal.md` excluding `archive/` and `PARKED`.
+   `docs/LEARNINGS.md`. Who is available (human, which harnesses).
+2. **Orient.** Load class × blast × lifecycle → rigor for the *highest*
+   node. If you cannot name the capability, stay here.
+3. **Skip?** Restore / typo / pin / comment / test-for-existing → print
+   `direct fix` and stop. No DAG, no change.
+4. **Split.** One acceptance surface per node. Landing is `add-<id>`,
+   `brief`, or `direct fix`. Edges are real dependencies (B cannot start
+   until A committed a usable artifact).
+5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
+   only under the gates in `shared.md`. `ambiguous` / `sensitive` /
+   architecture write → `human-gate`. Members are agents (or groups).
+6. **Write** the DAG in the shape in `intend-dag.md`. Chat is enough;
+   `.omc/intend/<slug>.md` if they want a file. No SHALLs in the DAG.
+7. **Stop.** Report ready-set and what needs activation. Handoff:
+   - change nodes → `change`
+   - brief nodes → `brief`
+   - ready + activated writes → `act`
+   - never `fold` from here
 
-Restore-only / typo / pin → say `direct fix` and stop. Do not open a change.
-
-Packets you emit for later `act` must satisfy `docs/contracts/`. At
-`change` rigor and above, set `capability`.
+Do not start write work on architecture or instrument nodes until the
+human activates them.

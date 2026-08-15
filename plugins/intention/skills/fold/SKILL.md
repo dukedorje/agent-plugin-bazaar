@@ -11,25 +11,18 @@ argument-hint: "<change-id>"
 
 # fold
 
-Read `openspec/specs/living-specs/spec.md`. Done is fold plus archive, not
-"the commit landed."
+Load `../../references/shared.md` and `../../references/fold-steps.md`.
+Done is fold plus archive, not “the commit landed.”
 
 ## Procedure
 
-1. Take `openspec/changes/<id>/` (must be `ACTIVE BUILD`, not PARKED).
-2. Apply deltas to `openspec/specs/<capability>/spec.md`:
-   - ADDED: append the requirement
-   - MODIFIED: replace the whole named requirement with the pasted block
-   - REMOVED: delete that requirement
-3. Every task checkbox this change owed is checked, or left unchecked with
-   a note. Handoffs are bullets.
-4. Move the change directory to
-   `openspec/changes/archive/YYYY-MM-DD-<id>/`.
-5. If the shape of the system changed, **amend** `ARCHITECTURE.md`. Do not
-   delete the previous ADR text.
-6. Surprises → one line in `docs/LEARNINGS.md`.
-7. A `SHALL` left only in the archive is not living truth. Confirm the
-   living spec carries it.
+Follow `fold-steps.md` in order. Refuse PENDING and PARKED. Do not
+implement leftover tasks — send them back to `act`.
 
-Do not fold PENDING or PARKED. Do not leave a fully-checked change in
-`openspec/changes/<id>/`.
+After archive, confirm `openspec/changes/<id>/` no longer exists and
+`openspec/specs/<capability>/spec.md` carries every SHALL this change
+claimed.
+
+Handoff: report living spec paths and the archive path. If the shape
+changed, the ADR amendment is part of the deliverable. Surprises go to
+`docs/LEARNINGS.md`, one dated line each.

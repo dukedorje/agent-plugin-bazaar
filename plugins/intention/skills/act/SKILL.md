@@ -10,30 +10,30 @@ argument-hint: "<node-id or packet path>"
 
 # act
 
-Read `docs/contracts/agent-surface.md` and `docs/contracts/topologies.md`.
-The packet is the only interface.
+Load `../../references/shared.md` and `../../references/act-io.md`.
+The packet is the only interface. Schema:
+`docs/contracts/agent-surface.schema.json`.
 
 ## Procedure
 
-1. Confirm the node is ready (inbound deps have committed artifacts) and,
-   if rigor is `change` / `architecture` / `instrument` for a write, that
-   it is activated.
-2. Assign by shape × load class × permission. Complementary → weave.
-   Foreign harness → packet, never `/intend` or `/meta-execute`.
-3. Write a task packet (JSON matching
-   `docs/contracts/agent-surface.schema.json` `$defs.taskPacket`). At
-   `change`+ rigor, `capability` is required. Anchors, not file bodies.
-4. Do the work on declared `constraints.paths` only.
-5. **Commit-on-red.** If you edited, stage those exact paths and commit
-   before returning, including on red. Never `git add -A`. Verification
-   gates done, not persistence. Do not push unless you are the conductor
-   and the user expects it.
-6. Run **only** the packet's focused acceptance. Classify:
-   `pass` · `task-red` · `baseline-red` · `infra-red` · `blocked` · `parked`.
-7. Write a signed result (stand-in: `content_hash` + who). Groups include
-   `topology`, `members`, `member_results`. `commit` is null only if
-   `artifacts` is empty.
-8. Self-check is not promotion. Do not mark a change folded. That is `fold`.
+1. **Admit.** Node is ready (inbound artifacts committed). If rigor is
+   `change` / `architecture` / `instrument` and this is a write, the
+   change banner is `ACTIVE BUILD` (or the human just activated it).
+2. **Assign.** Shape × load class × permission. Complementary → weave.
+   Foreign harness → packet file, never a slash command.
+3. **Write the packet** to the path in `act-io.md`. Validate with
+   `python3 docs/contracts/validate.py` if you added an example, or by
+   eye against `$defs.taskPacket`. `capability` required at change+.
+   Anchors, not file bodies.
+4. **Do the work** only on `constraints.paths`.
+5. **Commit-on-red** as in `act-io.md`. Persistence ≠ acceptance.
+6. **Focused verify** once. Classify with the closed set. `baseline-red`
+   completes; do not fix the baseline.
+7. **Write the result.** Groups: `topology`, `members`, `member_results`.
+   Hash: `python3 plugins/intention/scripts/content-hash.py <result>`.
+8. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
+   when the change's owed work has landed; `intend` if surprise splits
+   a new node.
 
-If the packet contradicts these laws, report both instructions. Do not
-silently keep the narrower one.
+If the packet contradicts the laws in `docs/contracts/agent-surface.md`,
+quote both instructions. Do not silently keep the narrower one.
