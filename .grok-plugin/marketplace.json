@@ -1,0 +1,17 @@
+{
+  "name": "agent-plugin-bazaar",
+  "description": "Skills and plugins for Grok, including the intention work algebra",
+  "owner": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "plugins": [
+    {
+      "name": "intention",
+      "description": "intend, change, act, fold, brief — intention to a running system",
+      "category": "productivity",
+      "version": "0.1.0",
+      "source": { "type": "local", "path": "./plugins/intention" }
+    }
+  ]
+}

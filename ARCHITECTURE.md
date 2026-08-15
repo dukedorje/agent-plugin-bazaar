@@ -34,9 +34,7 @@ so a result can be addressed and attested without changing schema.
 - `/sprint-plan` is not the agent surface. It is parked relative to this ADR
   until D1 says otherwise.
 
-**Not decided here.** Packaging (new skill tree vs MetaDev fork) is F1.
-Living-spec directory layout is C2. Both cite this surface; neither may
-redefine it.
+**Not decided here (superseded).** Packaging was F1 — see ADR-003.
 
 **Normative contract:** [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md)
 
@@ -73,4 +71,43 @@ that produced them. G1 will enforce the few rules this spec names.
 - Done is fold + archive in the same breath as “the work shipped.” A fully
   checked change still sitting in `changes/` is a lie.
 
-**Not decided here.** Hygiene automation is G1. Skill verbs are S1–S4.
+**Not decided here.** Hygiene automation is G1. Skill *depth* is S1–S4;
+hosting is ADR-003.
+
+---
+
+### ADR-003: Skills-first packaging; MetaDev fork parked ✅
+
+**Status:** Accepted 2026-08-14 (F1 activated). Path A won. Path B parked.
+**Blast:** how verbs reach Grok, Claude, Codex, Hermes, Prime.
+
+**Decision.** Canonical verbs are Agent Skills. Files live in
+`plugins/intention/skills/<verb>/SKILL.md`. `.agents/skills/<verb>` is a
+symlink to the same directory so Grok / Hermes / Prime load them in-repo
+with no install. Claude and Grok marketplaces list plugin `intention`.
+Codex invokes by skill name, never as a Claude slash command.
+
+**Path B (fork/extend MetaDev) is parked.** Revive when we need MetaDev’s
+planctl / headless runners *and* Phong wants an overlay. The overlay MUST
+consume these skills’ packets. It MUST NOT become a second skill tree.
+
+**Why (discriminating).** Shared acceptance was: five verbs runnable on
+Grok and Claude.
+
+- Path A: Grok scans `.agents/skills/` natively. This session loaded
+  `intend`, `change`, `act`, `fold`, `brief` from those paths. Claude
+  installs `intention` from the marketplace / `--plugin-dir`.
+- Path B: MetaDev’s Grok surface is `grok-headless-exec` — a *worker*,
+  not a skill host. Its user-invocable verbs are Claude slash commands
+  and Codex `$meta-dev:*`. Making `/intend` native on Grok under Path B
+  requires adding an Agent Skills tree — which is Path A inside MetaDev.
+
+The two observations cannot be the same. Path B fails the Grok half of
+the acceptance without becoming Path A.
+
+**Consequences.**
+
+- Do not add Claude-only commands as the source of truth.
+- Do not vendor MetaDev’s dashboard / inbox / 40-command surface.
+- S1–S4 deepen these five dispatchers. They do not move the files.
+- H1 adds harness notes; it does not fork the tree.

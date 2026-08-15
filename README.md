@@ -26,6 +26,7 @@ Or install directly:
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
+| [intention](plugins/intention/) | intend, change, act, fold, brief — intention to a running system | productivity |
 | [sprint-plan](plugins/sprint-plan/) | Multi-phase sprint planning workflow with Decision Steering and RALPLAN-DR consensus | productivity |
 
 ## Creating a Plugin

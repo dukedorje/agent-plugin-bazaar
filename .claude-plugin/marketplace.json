@@ -18,6 +18,15 @@
       "category": "productivity",
       "keywords": ["sprint", "planning", "prd", "research", "multi-agent", "architecture", "agile", "hypothesis", "synthesis", "beads"],
       "license": "MIT"
+    },
+    {
+      "name": "intention",
+      "source": "./plugins/intention",
+      "description": "intend, change, act, fold, brief — intention to a running system",
+      "version": "0.1.0",
+      "category": "productivity",
+      "keywords": ["intention", "ooda", "openspec", "agent-surface", "groups"],
+      "license": "MIT"
     }
   ]
 }

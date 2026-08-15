@@ -560,11 +560,10 @@ I0  this document (commander’s intent)
  │     depends on C1 (packets cite capabilities)
  │     landed: openspec/specs/living-specs · ADR-002 · archive/2026-08-14-add-living-spec-layout
  │
- ├── F1  packaging Fork                          [architecture, fork]
- │     A: new .agents/skills tree
- │     B: fork/extend MetaDev, merge back if Phong wants it
- │     same acceptance: five verbs runnable on Grok and Claude
- │     depends on C1
+ ├── F1  packaging Fork                          [architecture · folded 2026-08-14]
+ │     winner: Path A (plugins/intention + .agents/skills)
+ │     Path B (MetaDev fork) PARKED — revive in ADR-003
+ │     landed: ADR-003 · openspec/specs/packaging
  │
  ├── S1  intend                                  [change]
  ├── S2  change                                  [change]
@@ -611,9 +610,9 @@ Complementary, not duplicate: C1’s three members write different faces of one 
 The methodology has begun to exist when all of these are true:
 
 - [ ] A stranger can read this file and assign a node without a call
-- [ ] `intend` produces a DAG of named change-ids, not a sprint folder
-- [ ] `change` writes a PENDING delta with a journey or an explicit “no new UI because…”
-- [ ] `act` gives a foreign harness a packet, never a slash command
+- [x] `intend` produces a DAG of named change-ids, not a sprint folder — dispatcher landed F1; S1 deepens
+- [x] `change` writes a PENDING delta with a journey or an explicit “no new UI because…” — dispatcher landed F1; S2 deepens
+- [x] `act` gives a foreign harness a packet, never a slash command — dispatcher landed F1; S3 deepens
 - [x] A group can be Solo, Weave, or Fork, and signs one result — C1 examples + schema, 2026-08-14
 - [x] `fold` moves truth into living specs and leaves an amendment trail — C2, 2026-08-14
 - [x] Restore-only work still skips the ritual — specced in living-specs; G1 will enforce
