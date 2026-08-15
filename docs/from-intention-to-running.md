@@ -495,7 +495,8 @@ Hooks stay host-specific and non-load-bearing. If the hook is down, the loop sti
 - Dual Claude/Codex packaging as the core
 - Mandatory SCIP / ladybug / operad mining
 - Sprint numbers, epic novels, readiness-report theater
-- `taskmaster.dev`, `intentional.agency`, or Mjolnir hosting — named so the surface stays compatible; not in the first ready-set
+- `intentional.agency` or Mjolnir hosting — named so the surface stays compatible; not in the first ready-set
+- `taskmaster.dev` was in that list; unparked 2026-08-15 (T1). Not built yet.
 
 Forking MetaDev is an open Fork (see the build graph). Phong would likely take merge requests. We do not decide that by vibe after writing skills that assume one answer.
 
@@ -529,7 +530,8 @@ This section is the first Act. The rest of the file was Observe, Orient, and Dec
 - MetaDev’s plan IR, `planctl`, work ladder, execute charter, Grok/Codex headless runners
 - MetaCoding’s graph, intention harvest, load classes, port briefs
 - Harness skill loading: Grok, Claude, Codex, Hermes, Prime
-- Delivery surfaces not yet in this ready-set: Tatastu app, `taskmaster.dev`, `intentional.agency`, Mjolnir VMs
+- Delivery surfaces not yet in this ready-set: Tatastu app, `intentional.agency`, Mjolnir VMs
+- `taskmaster.dev` unparked 2026-08-15 — ready-set as a product; see T1
 
 ### Orient
 
@@ -586,10 +588,14 @@ I0  this document (commander’s intent)
  │     park-sprint-plan — default loop is intend
  │     landed: openspec/specs/default-loop
  │
+ ├── T1  taskmaster.dev                          [unparked 2026-08-15]
+ │     ready-set as a product — nodes, assignments, evidence
+ │     next: intend; not built
+ │
  └── P1  park, do not build                      [parked]
-       Tatastu shipping, taskmaster.dev,
-       intentional.agency, Mjolnir VM hosting
-       revive: D1 has folded once on a real change
+       Tatastu shipping, intentional.agency,
+       Mjolnir VM hosting
+       revive: Duke unparks a remaining host
 ```
 
 ### Groups for this build
@@ -620,7 +626,7 @@ The methodology has begun to exist when all of these are true:
 - [x] G1 would fail if a change claimed done without fold or with eternal checkboxes — check-hygiene.py, 2026-08-15. Residual: a bland open `- [ ] verify` still greens; that is human/review debt, not a silent all-[x] lie.
 - [x] D1 has used the loop on a real change in this repo — `park-sprint-plan`
 
-Out of scope for the first fold (tracked as P1): hosting, billing, VM attestation, public agency directory, Tatastu product-run integration beyond “this markdown can be a brief that materializes a change.”
+Out of scope for the first fold (tracked as P1): Tatastu shipping, intentional.agency, Mjolnir, billing, VM attestation, public agency directory. `taskmaster.dev` is T1 (unparked, not built).
 
 ### Inherited
 

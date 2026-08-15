@@ -9,3 +9,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — Parking a skill is an in-file banner plus `disable-model-invocation`, not a delete. Revive stays one explicit ask. (`plugins/morphist-tools/skills/sprint-plan/SKILL.md`)
 - 2026-08-15 — A skills table that lists deleted names is a lie with the same voice as a live spec. Catalogs follow the directories; dropped names stay in CONVENTIONS only. (`CLAUDE.md`)
 - 2026-08-15 — Ready-set is a query over banners + `openspec/parked.md`, not a second tracker. Beads `bd ready` is not used here. (`scripts/ready.py`)
+- 2026-08-15 — Unparking a P1 host is a register edit plus intend, not a verb. Remaining hosts stay parked. (`openspec/parked.md`)
