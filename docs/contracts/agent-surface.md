@@ -76,7 +76,7 @@ The only thing an assignee is given.
 | `schema_version` | yes | `1.0` |
 | `id` | yes | `pkt-…` |
 | `node_id` | yes | Work-graph node this packet is for (`C1`, a bead id, …) |
-| `capability` | no in v1 | Living-spec id. C2 will require it at `change` rigor and above |
+| `capability` | **yes** at `change` · `architecture` · `instrument` | Living-spec id (`openspec/specs/<id>/`). Must name an existing spec or a change that ADDs it. Optional at `vibe` / `brief`. |
 | `change_id` | no | In-flight change this node belongs to |
 | `requester` | yes | Identity. Who asked, so the result can be addressed |
 | `assignee` | yes | Identity. May be a group |
@@ -198,7 +198,7 @@ without a bump if old readers can ignore them. Removing or reinterpreting a
 required field is an architecture amendment (new ADR, this file updated, old
 text kept as trail).
 
-C2 may require `capability` at certain rigors. That is additive.
+C2 requires `capability` at `change` · `architecture` · `instrument`. Additive. The id is the directory name under `openspec/specs/`.
 
 ---
 

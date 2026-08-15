@@ -39,3 +39,38 @@ Living-spec directory layout is C2. Both cite this surface; neither may
 redefine it.
 
 **Normative contract:** [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md)
+
+---
+
+### ADR-002: Living specs live under `openspec/` ✅
+
+**Status:** Accepted 2026-08-14 (C2 activated).
+**Blast:** process memory. Skills and later Tatastu shipping read this tree.
+
+**Decision.** Two-layer truth uses the OpenSpec directory names, under
+`openspec/`:
+
+- `openspec/specs/<capability>/spec.md` — what **is** built
+- `openspec/changes/<id>/` — what **should** change (deltas + disposition)
+- `openspec/changes/archive/YYYY-MM-DD-<id>/` — folded deltas, frozen
+- `openspec/project.md` — project conventions, not requirements
+- `docs/` and this file — reasoning and ADRs. They name change-ids. They
+  never carry a `SHALL`.
+
+**Why.** Tatastu already speaks this layout; the founding doc stole the
+two-layer model from OpenSpec. Using the same names means a Tatastu Product
+Run can materialize a change here without a translator. We do **not** require
+the `openspec` CLI. We do **not** copy Tatastu’s disposition encyclopedia,
+icebox taxonomy, or `check:docs` allowlists. Those wait for the failure modes
+that produced them. G1 will enforce the few rules this spec names.
+
+**Consequences.**
+
+- Capability ids are directory names. Packets at `change` rigor and above
+  MUST set `capability` to one of those ids (or to an id a change is ADDing).
+- C1’s normative schema stays in `docs/contracts/`. The living spec
+  `agent-surface` points at it. Do not fork the schema into markdown SHALLs.
+- Done is fold + archive in the same breath as “the work shipped.” A fully
+  checked change still sitting in `changes/` is a lie.
+
+**Not decided here.** Hygiene automation is G1. Skill verbs are S1–S4.

@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-invalid-no-cap",
+  "node_id": "example",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-solo",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-solo" }
+  },
+  "goal": "Should fail validation: architecture rigor without capability.",
+  "anchors": [],
+  "acceptance": { "kind": "none" },
+  "out_of_scope": [],
+  "constraints": { "permission": "read", "paths": [], "do_not": [] },
+  "load_class": "intention-critical",
+  "rigor": "architecture"
+}

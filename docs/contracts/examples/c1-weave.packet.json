@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "id": "pkt-c1-surface",
   "node_id": "C1",
+  "capability": "agent-surface",
   "requester": {
     "id": "agt-duke",
     "kind": "human",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused verify for C1: examples validate against agent-surface.schema.json.
+"""Focused verify for the agent surface: examples validate; invalid fixtures reject.
 
 Also enforces two laws the schema cannot say:
 - artifacts non-empty ⇒ commit is an object
@@ -22,6 +22,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent
 SCHEMA_PATH = ROOT / "agent-surface.schema.json"
 EXAMPLES = ROOT / "examples"
+INVALID = ROOT / "fixtures" / "invalid"
 
 DEFS = {
     "packet": "taskPacket",
@@ -70,6 +71,26 @@ def main() -> int:
         if kind == "result":
             check_result_laws(data, path, errors)
         checked += 1
+
+    if INVALID.is_dir():
+        for path in sorted(INVALID.glob("*.json")):
+            name = path.name
+            kind = next((k for k in DEFS if f".{k}." in name), None)
+            if kind is None:
+                errors.append(f"invalid/{name}: filename must contain .packet. / .result. / .agent.")
+                continue
+            data = load(path)
+            target = {
+                "$ref": f"#/$defs/{DEFS[kind]}",
+                "$defs": schema["$defs"],
+            }
+            try:
+                jsonschema.validate(instance=data, schema=target)
+            except jsonschema.ValidationError:
+                checked += 1
+                continue
+            errors.append(f"invalid/{name}: expected schema rejection, accepted")
+            checked += 1
 
     if errors:
         for e in errors:

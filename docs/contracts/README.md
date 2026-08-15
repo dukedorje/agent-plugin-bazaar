@@ -10,6 +10,7 @@ Machine and human shape of the agent surface (C1). A group is an agent.
 | [agent-surface.schema.json](agent-surface.schema.json) | JSON Schema 1.0 (`$defs`) |
 | [validate.py](validate.py) | Focused verify: `python3 docs/contracts/validate.py` |
 | [examples/](examples/) | Solo, weave, fork, key-mode fixtures |
+| [fixtures/invalid/](fixtures/invalid/) | Must fail validation (C2: capability required at change+) |
 
 If prose and schema disagree, schema wins for structure; `agent-surface.md` wins for laws the schema cannot say.
 

@@ -172,8 +172,8 @@ These are the only object kinds the system needs. Documents are how some of them
 | Object | Meaning | Carrier |
 |---|---|---|
 | **Intention** | An outcome that should become true, plus non-goals | A short statement; later, a signed intent on a project |
-| **Capability** | What **is** built | `specs/<capability>.md` (or the same idea under another root) |
-| **Change** | What **should** change | `changes/<id>/` with disposition in the file |
+| **Capability** | What **is** built | `openspec/specs/<capability>/spec.md` |
+| **Change** | What **should** change | `openspec/changes/<id>/` with disposition in the file |
 | **Work node** | A ready or blocked unit with one acceptance surface | A bead, or a checkbox that *is* a bead |
 | **Agent** | Something that can accept a task packet and return a signed result | Human, model, group, or later a VM |
 | **Evidence** | A check that would look different if the claim were false | A focused command, a journey, a contrast pair |
@@ -556,8 +556,9 @@ I0  this document (commander’s intent)
  │     weave: schema · topologies · identity
  │     landed: ARCHITECTURE.md ADR-001 · docs/contracts/
  │
- ├── C2  living-spec layout (OpenSpec-lite)      [change]
+ ├── C2  living-spec layout (OpenSpec-lite)      [change · folded 2026-08-14]
  │     depends on C1 (packets cite capabilities)
+ │     landed: openspec/specs/living-specs · ADR-002 · archive/2026-08-14-add-living-spec-layout
  │
  ├── F1  packaging Fork                          [architecture, fork]
  │     A: new .agents/skills tree
@@ -614,8 +615,8 @@ The methodology has begun to exist when all of these are true:
 - [ ] `change` writes a PENDING delta with a journey or an explicit “no new UI because…”
 - [ ] `act` gives a foreign harness a packet, never a slash command
 - [x] A group can be Solo, Weave, or Fork, and signs one result — C1 examples + schema, 2026-08-14
-- [ ] `fold` moves truth into living specs and leaves an amendment trail
-- [ ] Restore-only work still skips the ritual
+- [x] `fold` moves truth into living specs and leaves an amendment trail — C2, 2026-08-14
+- [x] Restore-only work still skips the ritual — specced in living-specs; G1 will enforce
 - [ ] `/sprint-plan` is parked or demoted, with a revive condition
 - [ ] G1 would fail if a change claimed done without fold or with eternal checkboxes
 - [ ] D1 has used the loop on a real change in this repo
