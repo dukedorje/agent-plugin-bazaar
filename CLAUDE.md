@@ -10,7 +10,7 @@ plugins/
   morphist-tools/                 # Consolidated toolkit: sprint planning, PRD, research
     .claude-plugin/plugin.json
     agents/                       # Auto-discovered agent definitions
-    skills/                       # All skills (sprint-plan, prd, ultra-research, etc.)
+    skills/                       # Skills that exist on disk (see Skills Reference)
     templates/                    # Shared templates for sprint planning
 validate.sh                       # Pre-flight validation script
 ```
@@ -64,7 +64,7 @@ Skills should be **small, single-purpose, and focused**. Avoid monolithic skill 
 - **Thin dispatchers over monoliths**: Orchestration skills should read state, determine what to do next, and delegate to agents — not embed full agent prompts inline. Each agent runs in its own context window.
 - **Pass file paths, not file contents**: When dispatching agents, pass the path to read rather than injecting the full content into the prompt. Agents can read files themselves. This saves thousands of tokens from the orchestrator's context.
 - **Extract reusable concerns into separate skills**: If a skill contains an inline sub-workflow (verification, blocker triage, review), extract it into its own skill that can be invoked independently. This enables progressive disclosure — users see only the skills they need.
-- **Lean on OMC for execution infrastructure**: Don't reimplement parallelism, persistence loops, or verification pipelines. Use OMC's executor agents, ralph/ultrawork for persistence, and team for multi-agent coordination. Morphist-tools' value is in *planning* (sprint-plan, PRD, architecture decisions, story specs), not in being its own execution engine.
+- **Lean on OMC for execution infrastructure**: Don't reimplement parallelism, persistence loops, or verification pipelines. Use OMC's executor agents, ralph/ultrawork for persistence, and team for multi-agent coordination. Morphist-tools' remaining value is PRD, vision, research, beads bridges, and parked batch planning — not a second execution engine. Default loop is `intend`.
 - **Default to autonomy**: Elicitation gates should default to `high` severity threshold, not `all`. Most decisions are low-severity and should auto-resolve. Users who want maximum control can opt in with `--stop-at=all`.
 - **Context checkpointing**: Long-running skills should checkpoint progress after each major unit of work so that resume is seamless if the context window is exhausted.
 
@@ -98,34 +98,33 @@ PRDs save to `docs/prd-{slug}.md`. Project-level architecture lives in `docs/arc
 
 ## Skills Reference
 
+Only skills that exist on disk. Dropped 2026-07-28 names are in
+`plugins/morphist-tools/CONVENTIONS.md`, not here.
+
+### intention (default loop)
+
 | Skill | Description |
 |-------|-------------|
-| `vision` | Strategic product vision — create, evolve, align product dimensions |
-| `intend` / `change` / `act` / `fold` / `brief` | Default loop (plugin `intention`) |
-| `sprint-plan` | **PARKED** — 10-phase factory. Revive only for explicit multi-week / `--thorough` batch. Default is `intend`. |
+| `intend` | Observe, orient, split a DAG of change-ids |
+| `change` | OpenSpec-lite proposal + deltas |
+| `act` | Packet, focused verify, commit-on-red |
+| `fold` | Living spec + archive |
+| `brief` | Disposable one-pager (also shipped in morphist-tools) |
+
+### morphist-tools
+
+| Skill | Description |
+|-------|-------------|
+| `sprint-plan` | **PARKED** — 10-phase factory. Revive: explicit multi-week / `--thorough`. Default is `intend`. |
 | `prd` | Interactive PRD workshop |
-| `sprint-exec` | Execute validated sprint stories (thin dispatcher) |
-| `sprint-to-beads` | Materialize a planned sprint (epics, stories, ADRs) into the beads tracker (`bd`) as single source of truth |
-| `sprint-from-beads` | Reverse-migrate an existing beads corpus into a structured sprint — cluster orphans into epics, infer ADRs/PRD, backfill ACs (additive; rewrites gated) |
-| `done-validate` | Post-execution validation — checks file existence, Dev Agent Record, AC coverage |
-| `blocker-triage` | Architectural blocker analysis, downstream impact, resolution options |
-| `exec-report` | Epic/sprint progress report generation (internal) |
-| `scope` | Sprint scope negotiation — IN/STRETCH/DEFER split, standalone or as Phase 1B |
-| `sprint-validate` | Full adversarial validation of sprint artifacts — produces readiness report |
-| `refine` | Refine any artifact with consensus, or deep-dive into an epic before execution |
-| `retro` | Sprint retrospective generation |
+| `vision` | Strategic product vision |
 | `ultraresearch` | Multi-agent research swarm |
-| `sprint-review` | Review epic implementations against specs and architecture |
-| `reconcile` | Cross-story/epic code style reconciliation |
-| `review-fix` | Validate and fix issues from reviews and reconciliation |
-| `status` | Quick sprint overview: phase, artifacts, statuses (alias for update-status --show) |
-| `update-status` | Manually view/update epic and story statuses |
-| `replan` | Scoped mid-sprint replanning for broken assumptions |
-| `post-mortem` | Incident post-mortem — documents root cause and lessons in story docs for future agents |
-| `verify` | Quick independent epic completion check (auto-runs between epics) |
-| `audit` | Deep story investigation — gap analysis, fix plans, what's broken and how to fix it (--tdd for test gates) |
-| `backlog` | Persistent cross-sprint backlog for follow-ups, tech debt, ideas, and deferred work |
-| `log` | Work log annotations with auto-detected sprint/epic/story context |
-| `doc` | Create permanent documentation in docs/ from sprint artifacts or topics |
-| `release` | Orchestrate releases — version bump, notes, validation, tagging, GitHub release |
-| `help` | Sprint-plan usage guide |
+| `spike` | Smallest empirical test of a hypothesis |
+| `sprint-exec` | Execute validated stories via OMC |
+| `sprint-to-beads` | Materialize a planned sprint into `bd` |
+| `sprint-from-beads` | Reverse-migrate a beads corpus into a sprint |
+| `verify` | Independent epic completion check |
+| `done-validate` | File existence, Dev Agent Record, AC coverage |
+| `review-fix` | Validate and fix review findings |
+| `retro` | Sprint retrospective |
+| `release` | Version bump, notes, tag, GitHub release |

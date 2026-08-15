@@ -311,7 +311,7 @@ Process all remaining epics sequentially, with each epic's stories running in pa
 For each incomplete epic (in order):
 1. Run **Epic Mode** (4b) for the current epic
 2. Run **Post-Epic Hooks** (section 5)
-3. If blocker-triage halted execution, stop
+3. If architectural blockers halted execution (section 5d), stop
 4. If all stories failed and stop threshold met, present options or auto-proceed
 5. Write context checkpoint, advance to next epic
 
@@ -362,7 +362,7 @@ If epic had completed stories: dispatch a background `code-reviewer` agent over 
 
 ### 5g. Inter-Epic Huddle
 
-Generate the huddle via the `exec-report` skill (internal). This produces:
+Generate the huddle inline (the `exec-report` skill was removed). Produce:
 1. Epic narrative summary (what was built)
 2. Per-story results with cross-story reconciliation
 3. Learnings for the next epic (extracted from Dev Agent Records)
@@ -390,7 +390,7 @@ If OMC notifications configured, send epic completion notification (non-blocking
 After all in-scope epics are processed:
 
 1. Update `phase-state.json`: `execution_status: "complete"`
-2. Generate sprint completion report via `exec-report`
+2. Write a short completion summary (epic/story counts, blockers). Do not invoke a missing `exec-report` skill.
 
 ---
 

@@ -14,7 +14,7 @@
       "name": "morphist-tools",
       "source": "./plugins/morphist-tools",
       "description": "PRD, vision, research, beads. /sprint-plan is parked — default loop is intention (intend/change/act/fold).",
-      "version": "1.18.1",
+      "version": "2.0.0",
       "category": "productivity",
       "keywords": ["sprint", "planning", "prd", "research", "multi-agent", "architecture", "agile", "hypothesis", "synthesis", "beads"],
       "license": "MIT"

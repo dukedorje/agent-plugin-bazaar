@@ -1,7 +1,7 @@
 {
   "name": "morphist-tools",
   "version": "2.0.0",
-  "description": "Beads-native sprint planning, PRD generation, and multi-agent research",
+  "description": "PRD, vision, research, beads. /sprint-plan is parked — default loop is intend/change/act/fold.",
   "author": {
     "name": "Duke Jones",
     "url": "https://github.com/dukejones"

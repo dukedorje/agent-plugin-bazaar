@@ -41,3 +41,21 @@ Revive when the user explicitly asks for the 10-phase factory or
 - GIVEN the user asks for `/sprint-plan --thorough` or “the 10-phase factory”
 - WHEN the skill runs
 - THEN the parked banner does not prevent following the body below it
+
+### Requirement: Catalogs list only skills that exist
+
+`CLAUDE.md` Skills Reference and marketplace plugin versions SHALL match
+the skill directories on disk and `plugin.json` versions. Dropped skill
+names SHALL NOT appear as if they were invocable.
+
+#### Scenario: Stranger reads CLAUDE.md
+
+- GIVEN the Skills Reference
+- WHEN they look for `backlog` or `status`
+- THEN those names are absent (they live only in CONVENTIONS as dropped)
+
+#### Scenario: validate.sh versions
+
+- GIVEN `./validate.sh`
+- WHEN it checks morphist-tools
+- THEN marketplace.json version equals plugin.json version
