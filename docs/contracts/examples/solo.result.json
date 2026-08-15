@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "id": "res-example-solo",
+  "packet_id": "pkt-example-solo",
+  "signer": {
+    "id": "agt-grok-solo",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-solo" }
+  },
+  "artifacts": [
+    { "path": "README.md", "role": "edit" }
+  ],
+  "evidence": {
+    "kind": "none",
+    "note": "vibe rigor, acceptance.kind none; typo restore"
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "bbbbbbbb",
+    "paths": ["README.md"]
+  },
+  "summary": "Corrected the marketplace install line.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-solo",
+    "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "identity": {
+    "id": "grp-c1-weave",
+    "kind": "group",
+    "display_name": "C1 agent-surface weave",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "grp-c1-weave" }
+  },
+  "topology": "weave",
+  "members": [
+    {
+      "id": "agt-c1-schema",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-schema" }
+    },
+    {
+      "id": "agt-c1-topologies",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-topologies" }
+    },
+    {
+      "id": "agt-c1-identity",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-identity" }
+    }
+  ],
+  "reduce": "One contract: a group is an agent. All three faces exist and cite each other; agent-surface.md is the reduce."
+}

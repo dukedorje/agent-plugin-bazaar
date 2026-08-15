@@ -552,8 +552,9 @@ Dependencies flow down. Ready-set = nodes with all inbound done.
 ```
 I0  this document (commander’s intent)
  │
- ├── C1  agent surface + group contract          [architecture]
+ ├── C1  agent surface + group contract          [architecture · folded 2026-08-14]
  │     weave: schema · topologies · identity
+ │     landed: ARCHITECTURE.md ADR-001 · docs/contracts/
  │
  ├── C2  living-spec layout (OpenSpec-lite)      [change]
  │     depends on C1 (packets cite capabilities)
@@ -612,7 +613,7 @@ The methodology has begun to exist when all of these are true:
 - [ ] `intend` produces a DAG of named change-ids, not a sprint folder
 - [ ] `change` writes a PENDING delta with a journey or an explicit “no new UI because…”
 - [ ] `act` gives a foreign harness a packet, never a slash command
-- [ ] A group can be Solo, Weave, or Fork, and signs one result
+- [x] A group can be Solo, Weave, or Fork, and signs one result — C1 examples + schema, 2026-08-14
 - [ ] `fold` moves truth into living specs and leaves an amendment trail
 - [ ] Restore-only work still skips the ritual
 - [ ] `/sprint-plan` is parked or demoted, with a revive condition

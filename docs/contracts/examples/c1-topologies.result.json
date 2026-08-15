@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "id": "res-c1-topologies",
+  "packet_id": "pkt-c1-surface",
+  "signer": {
+    "id": "agt-c1-topologies",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-topologies" }
+  },
+  "artifacts": [
+    { "path": "docs/contracts/topologies.md", "role": "catalog" }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "Each topology has members, write-set, packet split, reduce, disposition, promote",
+    "if_false": "Topologies are named without wiring (ceremony labels)",
+    "observed": "Nine wirings in the same table shape, including weave as default complementary form"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "aaaaaaaa",
+    "paths": ["docs/contracts/topologies.md"]
+  },
+  "summary": "Nine topologies with implementable reduce rules. Weave is default. Fork is gated. A group that cannot reduce to one signed result is not a topology.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-c1-topologies",
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "identity": {
+    "id": "grp-f1-packaging",
+    "kind": "group",
+    "display_name": "F1 packaging fork (not activated)",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "grp-f1-packaging" }
+  },
+  "topology": "fork",
+  "members": [
+    {
+      "id": "agt-f1-skills-tree",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-f1-skills-tree" }
+    },
+    {
+      "id": "agt-f1-metadev",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-f1-metadev" }
+    }
+  ],
+  "reduce": "Same acceptance: five verbs runnable on Grok and Claude. Pick by evidence; park the loser.",
+  "parameters": {
+    "acceptance_shared": true,
+    "open_when": "at least two fork gates"
+  }
+}

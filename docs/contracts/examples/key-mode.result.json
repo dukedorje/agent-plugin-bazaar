@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "id": "res-example-key",
+  "packet_id": "pkt-example-solo",
+  "signer": {
+    "id": "agt-vm-later",
+    "kind": "vm",
+    "harness": "none",
+    "signing": {
+      "mode": "key",
+      "public_key": "00",
+      "algorithm": "ed25519"
+    }
+  },
+  "artifacts": [],
+  "evidence": {
+    "kind": "none",
+    "note": "Fixture only: key mode requires public_key, algorithm, and bytes on the same signature object. No write-set."
+  },
+  "disposition": "blocked",
+  "promoted": false,
+  "commit": null,
+  "summary": "Schema fixture for key mode. Not a live VM.",
+  "signature": {
+    "mode": "key",
+    "public_key": "00",
+    "algorithm": "ed25519",
+    "bytes": "00",
+    "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}

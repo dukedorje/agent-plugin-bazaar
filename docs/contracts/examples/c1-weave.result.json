@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "id": "res-c1-weave",
+  "packet_id": "pkt-c1-surface",
+  "signer": {
+    "id": "grp-c1-weave",
+    "kind": "group",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "grp-c1-weave" }
+  },
+  "topology": "weave",
+  "members": [
+    {
+      "id": "agt-c1-schema",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-schema" }
+    },
+    {
+      "id": "agt-c1-topologies",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-topologies" }
+    },
+    {
+      "id": "agt-c1-identity",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-identity" }
+    }
+  ],
+  "member_results": ["res-c1-schema", "res-c1-topologies", "res-c1-identity"],
+  "artifacts": [
+    { "path": "ARCHITECTURE.md", "role": "adr" },
+    { "path": "docs/contracts/agent-surface.md", "role": "reduce" },
+    { "path": "docs/contracts/agent-surface.schema.json", "role": "schema" },
+    { "path": "docs/contracts/topologies.md", "role": "catalog" },
+    { "path": "docs/contracts/identity.md", "role": "identity" },
+    { "path": "docs/contracts/validate.py", "role": "focused-verify" }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py",
+    "exit_code": 0,
+    "output_tail": "pass 11 file(s)"
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "activation": true,
+  "commit": {
+    "sha": "aaaaaaaa",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/contracts/agent-surface.md",
+      "docs/contracts/agent-surface.schema.json",
+      "docs/contracts/topologies.md",
+      "docs/contracts/identity.md",
+      "docs/contracts/validate.py"
+    ]
+  },
+  "summary": "C1 folded. Packet, result, and agent record are one surface. A group is an agent whose interior is a topology. Identity is a stand-in hash now and a key later, same fields.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "grp-c1-weave",
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}

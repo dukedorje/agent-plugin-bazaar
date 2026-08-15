@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-example-solo",
+  "node_id": "example-solo",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-solo",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-solo" }
+  },
+  "goal": "Fix a typo in README.md.",
+  "anchors": [
+    { "symbol": "README.md", "invariant": "Marketplace install instructions stay accurate" }
+  ],
+  "acceptance": { "kind": "none" },
+  "out_of_scope": [
+    { "item": "Rewrite the README", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["README.md"],
+    "do_not": ["deploy"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "vibe"
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-c1-surface",
+  "node_id": "C1",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "grp-c1-weave",
+    "kind": "group",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "grp-c1-weave" }
+  },
+  "goal": "A group is an agent: packet in, signed result out, topologies as wiring, identity stand-in now and key later without a schema break.",
+  "non_goals": [
+    "Living-spec layout (C2)",
+    "Packaging fork (F1)",
+    "The five skills (S1-S4)",
+    "Real cryptography or VMs (P1)"
+  ],
+  "anchors": [
+    {
+      "symbol": "docs/from-intention-to-running.md",
+      "invariant": "C1 weave faces are schema, topologies, identity; reduce is one contract"
+    },
+    {
+      "symbol": "agent surface",
+      "invariant": "task packet in → signed result out; a group is not a new type"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py",
+    "criteria": [
+      "Schemas accept solo, weave, and fork examples",
+      "A group result carries topology, members, and one signature",
+      "Stand-in and key modes share the same field set"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "OpenSpec-lite directory tree", "tracked_as": "C2" },
+    { "item": "New skill tree vs MetaDev", "tracked_as": "F1" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/contracts/",
+      "docs/from-intention-to-running.md"
+    ],
+    "do_not": ["deploy", "push"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "inherited": [
+    "Briefs are disposable; architecture is amended, not deleted.",
+    "Foreign harnesses get tasks, never commands.",
+    "Self-verify is not load-bearing."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "id": "res-c1-schema",
+  "packet_id": "pkt-c1-surface",
+  "signer": {
+    "id": "agt-c1-schema",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-schema" }
+  },
+  "artifacts": [
+    { "path": "docs/contracts/agent-surface.schema.json", "role": "schema" },
+    { "path": "docs/contracts/validate.py", "role": "focused-verify" }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py",
+    "exit_code": 0,
+    "output_tail": "run after examples land"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "aaaaaaaa",
+    "paths": [
+      "docs/contracts/agent-surface.schema.json",
+      "docs/contracts/validate.py"
+    ]
+  },
+  "summary": "Packet, result, and agent-record shapes as JSON Schema 1.0. A group result requires topology, members, and member_results.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-c1-schema",
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "identity": {
+    "id": "agt-grok-solo",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-solo" }
+  },
+  "topology": "solo",
+  "members": [
+    {
+      "id": "agt-grok-solo",
+      "kind": "model",
+      "harness": "grok",
+      "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-solo" }
+    }
+  ],
+  "reduce": "The member result is the group result."
+}

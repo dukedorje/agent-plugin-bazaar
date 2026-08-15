@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "id": "res-c1-identity",
+  "packet_id": "pkt-c1-surface",
+  "signer": {
+    "id": "agt-c1-identity",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-c1-identity" }
+  },
+  "artifacts": [
+    { "path": "docs/contracts/identity.md", "role": "identity" }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "key mode fills public_key, algorithm, bytes on the same object",
+    "if_false": "a second unsigned-result type appears for today",
+    "observed": "stand-in and key share signature fields; content_hash is required now"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "aaaaaaaa",
+    "paths": ["docs/contracts/identity.md"]
+  },
+  "summary": "Identity is kind + harness + signing. Stand-in today is content hash plus who claims it. Key mode later does not add a parallel type.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-c1-identity",
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "signed_at": "2026-08-14T00:00:00Z"
+  }
+}
