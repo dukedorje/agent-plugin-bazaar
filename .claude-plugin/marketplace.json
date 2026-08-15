@@ -22,8 +22,8 @@
     {
       "name": "intention",
       "source": "./plugins/intention",
-      "description": "intend, change, act, fold, brief — intention to a running system",
-      "version": "0.2.0",
+      "description": "intend, change, act, fold, ready, brief — intention to a running system",
+      "version": "0.3.0",
       "category": "productivity",
       "keywords": ["intention", "ooda", "openspec", "agent-surface", "groups"],
       "license": "MIT"

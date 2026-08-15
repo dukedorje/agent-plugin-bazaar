@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `change`, `act`, and `fold`. None of them restates
+Loaded by `intend`, `change`, `act`, `fold`, and `ready`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -26,6 +26,7 @@ disagree, the contract wins.
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas | Implement (until ACTIVE), fold, archive |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
 | `fold` | Living spec updated + change archived | Implement leftover tasks, fold PENDING/PARKED |
+| `ready` | Ready-set + parked list | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
 
 ## Skip a change

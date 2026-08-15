@@ -8,3 +8,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — Fold-debt that only fires when every `- [x]` is checked misses lie-by-omission (no tasks.md). ACTIVE BUILD with no open owed box is fold-debt. A bland `- [ ] verify` still greens; do not pretend the stick kills every stall. (`scripts/check-hygiene.py`)
 - 2026-08-15 — Parking a skill is an in-file banner plus `disable-model-invocation`, not a delete. Revive stays one explicit ask. (`plugins/morphist-tools/skills/sprint-plan/SKILL.md`)
 - 2026-08-15 — A skills table that lists deleted names is a lie with the same voice as a live spec. Catalogs follow the directories; dropped names stay in CONVENTIONS only. (`CLAUDE.md`)
+- 2026-08-15 — Ready-set is a query over banners + `openspec/parked.md`, not a second tracker. Beads `bd ready` is not used here. (`scripts/ready.py`)

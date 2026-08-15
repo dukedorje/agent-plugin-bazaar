@@ -166,6 +166,11 @@ if bash "$REPO_ROOT/scripts/test-hygiene.sh"; then
 else
     error "openspec hygiene failed"
 fi
+if bash "$REPO_ROOT/scripts/test-ready.sh"; then
+    ok "ready-set list"
+else
+    error "ready-set list failed"
+fi
 echo ""
 
 # Summary

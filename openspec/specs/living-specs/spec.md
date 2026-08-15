@@ -171,3 +171,15 @@ requirement. If they imply work, they SHALL name the landing change-id (or
 - WHEN C2 is activated
 - THEN the landing zone is `add-living-spec-layout`, not new SHALLs in that
   founding file
+
+### Requirement: Ready-set is queryable
+
+`python3 scripts/ready.py` SHALL list ACTIVE BUILD changes with open owed
+work as ready, PENDING as needs-activation, and PARKED (in-flight banners
+plus `openspec/parked.md`) as parked.
+
+#### Scenario: Ask what is ready
+
+- GIVEN one ACTIVE BUILD change with an open owed checkbox
+- WHEN `scripts/ready.py --json` runs
+- THEN that change-id is in `ready` and not in `parked`

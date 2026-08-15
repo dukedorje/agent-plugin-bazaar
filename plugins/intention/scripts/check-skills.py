@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused verify for F1: five verbs exist, frontmatter matches, Grok links resolve."""
+"""Focused verify: six verbs exist, frontmatter matches, Grok links resolve."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ PLUGIN = Path(__file__).resolve().parents[1]
 SKILLS = PLUGIN / "skills"
 REFS = PLUGIN / "references"
 AGENTS = PLUGIN.parents[1] / ".agents" / "skills"
-VERBS = ("intend", "change", "act", "fold", "brief")
+VERBS = ("intend", "change", "act", "fold", "brief", "ready")
 REQUIRED_REFS = (
     "shared.md",
     "intend-dag.md",

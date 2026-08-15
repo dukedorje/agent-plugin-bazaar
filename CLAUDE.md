@@ -109,6 +109,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `change` | OpenSpec-lite proposal + deltas |
 | `act` | Packet, focused verify, commit-on-red |
 | `fold` | Living spec + archive |
+| `ready` | List ready/unblocked work and everything parked |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 
 ### morphist-tools

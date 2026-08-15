@@ -1,7 +1,7 @@
 {
   "name": "intention",
-  "version": "0.2.0",
-  "description": "Intention-to-running work algebra: intend, change, act, fold, brief. A group is an agent.",
+  "version": "0.3.0",
+  "description": "Intention-to-running work algebra: intend, change, act, fold, ready, brief. A group is an agent.",
   "author": {
     "name": "Duke Jones",
     "url": "https://github.com/dukejones"
