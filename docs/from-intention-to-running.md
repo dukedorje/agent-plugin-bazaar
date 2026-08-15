@@ -582,9 +582,9 @@ I0  this document (commander’s intent)
  │     review pair: reader FAIL → builder fixed omission + fixture gate
  │     landed: scripts/check-hygiene.py · openspec/specs/hygiene
  │
- ├── D1  dogfood                                 [change]
- │     run intend on a real unit in this repo (park or shrink sprint-plan)
- │     depends on S1–S4, G1
+ ├── D1  dogfood                                 [change · folded 2026-08-15]
+ │     park-sprint-plan — default loop is intend
+ │     landed: openspec/specs/default-loop
  │
  └── P1  park, do not build                      [parked]
        Tatastu shipping, taskmaster.dev,
@@ -616,9 +616,9 @@ The methodology has begun to exist when all of these are true:
 - [x] A group can be Solo, Weave, or Fork, and signs one result — C1 examples + schema, 2026-08-14
 - [x] `fold` moves truth into living specs and leaves an amendment trail — C2, 2026-08-14
 - [x] Restore-only work still skips the ritual — specced in living-specs; G1 will enforce
-- [ ] `/sprint-plan` is parked or demoted, with a revive condition
+- [x] `/sprint-plan` is parked or demoted, with a revive condition — D1, 2026-08-15
 - [x] G1 would fail if a change claimed done without fold or with eternal checkboxes — check-hygiene.py, 2026-08-15. Residual: a bland open `- [ ] verify` still greens; that is human/review debt, not a silent all-[x] lie.
-- [ ] D1 has used the loop on a real change in this repo
+- [x] D1 has used the loop on a real change in this repo — `park-sprint-plan`
 
 Out of scope for the first fold (tracked as P1): hosting, billing, VM attestation, public agency directory, Tatastu product-run integration beyond “this markdown can be a brief that materializes a change.”
 

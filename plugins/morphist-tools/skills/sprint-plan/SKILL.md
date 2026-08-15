@@ -1,11 +1,22 @@
 ---
 name: sprint-plan
-description: Multi-phase sprint planning workflow that transforms product ideas into implementation-ready user stories with architecture decisions, requirements expansion, and adversarial validation
+description: >
+  PARKED (D1, 2026-08-15). Default planning is /intend (then change, act, fold).
+  Do not auto-invoke. Revive only when the user explicitly asks for the
+  multi-week 10-phase factory or --thorough batch planning.
 user-invocable: true
+disable-model-invocation: true
 argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--write-stories] [--skip-stories] [--continue[=phase]] [--restart-from=phase] [--sprint=ID] [--product=<name>] [--beads]"
 ---
 
+> **PARKED** — revive when the user explicitly wants the 10-phase /
+> `--thorough` factory (multi-week batch plan). Default is `intend`.
+
 # Sprint Plan — Thin Orchestrator
+
+**Parked.** If the user did not explicitly ask for this factory, stop and
+run `intend` instead. Do not start Phase 0. The body below is the revive
+path only.
 
 Coordinates a multi-phase planning workflow. Each phase is defined in its own file under `${CLAUDE_SKILL_DIR}/phases/`. This orchestrator handles argument parsing, initialization, phase routing, state management, and inter-phase pauses. Phase files are authoritative for agent prompts and dispatch logic.
 

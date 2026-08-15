@@ -19,15 +19,17 @@ Then browse and install plugins:
 Or install directly:
 
 ```
-/plugin install sprint-plan@agent-plugin-bazaar
+/plugin install intention@agent-plugin-bazaar
 ```
+
+Default verbs: `intend`, `change`, `act`, `fold`, `brief`.
 
 ## Available Plugins
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
 | [intention](plugins/intention/) | intend, change, act, fold, brief — intention to a running system | productivity |
-| [sprint-plan](plugins/sprint-plan/) | Multi-phase sprint planning workflow with Decision Steering and RALPLAN-DR consensus | productivity |
+| [morphist-tools](plugins/morphist-tools/) | PRD, vision, research, beads bridges. `/sprint-plan` is **parked** (revive: explicit multi-week factory) | productivity |
 
 ## Creating a Plugin
 

@@ -125,9 +125,12 @@ Removed from morphist-tools 2026-07-28 (recoverable from git history):
 | `refine`, `replan`, `audit`, `reconcile`, `post-mortem` | Drift-repair tooling. With beads as the source of truth and smaller units of work, drift is cheaper to just fix than to orchestrate a repair pass over. |
 | `doc`, `blocker-triage`, `help` | Absorbed into the surviving skills, or obsolete once the skill count is small enough to read. |
 
-Kept: `sprint-plan`, `sprint-exec`, `sprint-to-beads`, `sprint-from-beads`, `prd`,
+Kept: `sprint-exec`, `sprint-to-beads`, `sprint-from-beads`, `prd`,
 `vision`, `ultraresearch`, `retro`, `review-fix`, `verify`, `done-validate`, `spike`,
 `release`, and `brief`.
+
+`sprint-plan` is **parked** (D1, 2026-08-15). Default planning is `intend`.
+Revive when someone explicitly wants the 10-phase / `--thorough` factory.
 
 The kept set preserves the thing that actually earned its keep: **a long planning session
 you can start, walk away from, and come back to** — plus the quality gates that stop an

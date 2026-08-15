@@ -13,7 +13,7 @@
     {
       "name": "morphist-tools",
       "source": "./plugins/morphist-tools",
-      "description": "Sprint planning, PRD generation, and multi-agent research — a complete product development toolkit",
+      "description": "PRD, vision, research, beads. /sprint-plan is parked — default loop is intention (intend/change/act/fold).",
       "version": "1.18.1",
       "category": "productivity",
       "keywords": ["sprint", "planning", "prd", "research", "multi-agent", "architecture", "agile", "hypothesis", "synthesis", "beads"],

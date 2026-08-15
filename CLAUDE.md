@@ -101,7 +101,8 @@ PRDs save to `docs/prd-{slug}.md`. Project-level architecture lives in `docs/arc
 | Skill | Description |
 |-------|-------------|
 | `vision` | Strategic product vision — create, evolve, align product dimensions |
-| `sprint-plan` | Multi-phase sprint planning workflow |
+| `intend` / `change` / `act` / `fold` / `brief` | Default loop (plugin `intention`) |
+| `sprint-plan` | **PARKED** — 10-phase factory. Revive only for explicit multi-week / `--thorough` batch. Default is `intend`. |
 | `prd` | Interactive PRD workshop |
 | `sprint-exec` | Execute validated sprint stories (thin dispatcher) |
 | `sprint-to-beads` | Materialize a planned sprint (epics, stories, ADRs) into the beads tracker (`bd`) as single source of truth |
