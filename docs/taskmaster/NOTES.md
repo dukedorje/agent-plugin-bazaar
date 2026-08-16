@@ -22,3 +22,11 @@ date-stamp when it dies.
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.
+- **Storybook vs browser** — `sv create` died on Storybook:
+  `Unable to find a usable package manager within NPM, PNPM, Yarn and Yarn 2`
+  (`create-storybook` does not see bun). Scaffold at `/taskmaster-web` is
+  partial: Kit + Tailwind + adapter-node + Vitest/Playwright landed;
+  drizzle, libsql, better-auth, Storybook did not. Skip Storybook for
+  now. Vitest already pulled Playwright — that is the agent-facing
+  surface. Storybook is a human component workshop; add later from a
+  machine that has npm, or not at all. 512 MiB will not hold Chromium.

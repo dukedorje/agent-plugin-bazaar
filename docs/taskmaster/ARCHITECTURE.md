@@ -14,6 +14,8 @@ becomes kernel truth. Amend in place when a decision flips.
 | Scale-out via **Mjolnir instances** | Traffic → more boxes. SQLite sync is a storage-layer problem, not “bigger VM” |
 | Login via **IdentiKey** | Same identity fabric as Mjolnir. Do not invent a second IdP |
 | Objects = node, assignment, evidence | Founding host table. Groups assign and split. Resources attach to nodes |
+| **Actions run on a Mjolnir VM** | An agent of a given type can do whatever that guest can do. The box is the action surface, not a slash command. |
+| **See the UI from inside the guest** | Headless browser (Playwright / Chromium) on the same VM as the app. Journeys and visual checks are VM actions. |
 
 ## Open (need a spike or a human)
 
