@@ -2,12 +2,8 @@
 
 ## Where files go
 
-Solo:
-
-```
-.omc/act/<node-id>.packet.json
-.omc/act/<node-id>.result.json
-```
+Solo: put the packet and result on the bead (`bd note`) or in chat.
+Do not write `.omc/`.
 
 Group:
 
@@ -55,7 +51,7 @@ Suites, project-wide typecheck, and builds are not task gates.
 ## Stand-in hash
 
 ```bash
-python3 plugins/intention/scripts/content-hash.py .omc/act/<node-id>.result.json
+python3 plugins/intention/scripts/content-hash.py <result.json>
 ```
 
 Writes `signature.content_hash` (`sha256:` + hex) over the result with

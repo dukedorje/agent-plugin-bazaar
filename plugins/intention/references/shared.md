@@ -39,7 +39,7 @@ formatting, comment, non-breaking pin, test for already-specced behavior.
 | Rigor | Landing | Activation |
 |---|---|---|
 | `vibe` | direct fix or bead | none |
-| `brief` | `.omc/briefs/<id>.md` | none |
+| `brief` | bead description + acceptance, or chat | none |
 | `change` | `openspec/changes/<id>/` | human unless already granted write |
 | `architecture` | change + ADR | human-gate |
 | `instrument` | change + property-red | human-gate + independent reader |

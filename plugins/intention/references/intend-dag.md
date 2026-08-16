@@ -1,7 +1,7 @@
 # intend output
 
 Write this when the user wants a file. Otherwise print the same shape in
-chat. Path: `.omc/intend/<slug>.md`. Disposable. SHALLs do not live here.
+chat. Durable copy is beads. Do not write `.omc/`. SHALLs do not live here.
 
 ```markdown
 # <one-line intention>

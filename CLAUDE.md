@@ -78,21 +78,18 @@ Morphist-tools depends on OMC for execution infrastructure. The integration boun
 
 ## Sprint Artifact Layout
 
-Sprint planning produces artifacts in two locations:
+`/sprint-plan` is **PARKED**. Do not create `.omc/sprint-plan/` or
+`docs/sprints/`. Default loop is `intend` → beads → `openspec/changes/`.
 
-- **`SPEC_DIR`** = `docs/sprints/{NNN}-{slug}/` — committed specs (requirements, architecture decisions, epics, stories, discovery, retrospective). These represent intent and are version-controlled.
-- **`STATE_DIR`** = `.omc/sprint-plan/sprint-{NNN}/` — ephemeral state (phase-state.json, work-log, reviews). Gitignored.
-
-`STATE_DIR/phase-state.json` contains a `spec_dir` field that bridges state → specs. The sprint resolution protocol (in `templates/sprint-resolution.md`) resolves `STATE_DIR` first, then reads `spec_dir` to find `SPEC_DIR`.
-
-PRDs save to `docs/prd-{slug}.md`. Project-level architecture lives in `docs/architecture.md` and `docs/decisions/`.
+`.omc/` is disabled in this repo (Claude and Grok). Do not write briefs,
+intends, packets, or project memory there. Use `bd` and `docs/`.
 
 ## Conventions
 
 - Skills dispatch plugin agents via `subagent_type="morphist-tools:<agent-name>"`
 - Agent .md files use YAML frontmatter with `name`, `description`, `model`, and optional `disallowedTools`
 - Skill SKILL.md files use YAML frontmatter with `name`, `description`, and optional `user-invocable`, `argument-hint`, `model`
-- Skills use `SPEC_DIR` for committed spec artifacts and `STATE_DIR` for ephemeral operational state — never `SPRINT_DIR`
+- Do not create `STATE_DIR` / `.omc/`. Sprint-plan is parked.
 - OMC agent types (e.g., `oh-my-claudecode:executor`) are acceptable dependencies. Make OMC infrastructure calls (state_write, etc.) graceful — skip if unavailable.
 - **Final-message contract**: a subagent's final message is the ONLY thing returned to the orchestrator that spawned it — mid-run turns and tool calls are invisible to the caller. Every dispatch prompt must therefore end by instructing the agent to put the complete deliverable in its final message (or, for agents whose work product is files on disk, the exact file paths plus a status summary) — never a bare sign-off like "Done" or "see above".
 

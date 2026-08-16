@@ -43,17 +43,18 @@ skip scaffolding for restore-only work. It SHALL NOT fold.
 
 ### Requirement: act uses packets
 
-`act` SHALL write a task packet and a signed result (solo under
-`.omc/act/`, groups under `groups/<id>/`). Foreign harnesses SHALL
-receive that packet, never a slash command. Edits SHALL commit-on-red
-on exact paths. Focused verify SHALL be the only task gate.
+`act` SHALL write a task packet and a signed result (solo on the bead
+or in chat; groups under `groups/<id>/`). It SHALL NOT write `.omc/`.
+Foreign harnesses SHALL receive that packet, never a slash command.
+Edits SHALL commit-on-red on exact paths. Focused verify SHALL be the
+only task gate.
 
 #### Scenario: Codex is assigned a node
 
 - GIVEN `act` routes a node to Codex
 - WHEN it dispatches
-- THEN Codex is given `.omc/act/<node>.packet.json` or
-  `groups/<id>/packet.json`, not `/act`
+- THEN Codex is given the packet (bead note, chat, or
+  `groups/<id>/packet.json`), not `/act`
 
 ### Requirement: fold archives
 

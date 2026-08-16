@@ -41,9 +41,11 @@ in the work graph. Do not write it.
    contract and gotchas sections are worthless if written from imagination.
 2. **Look up every external API** the work calls into. Paste real signatures. If you
    cannot verify a signature, say so explicitly in the brief rather than guessing.
-3. **Read `docs/LEARNINGS.md`** (or `.omc/notepad.md`) and carry forward anything that
-   touches these files or this subsystem.
-4. **Write the brief** to `--out`, or `.omc/briefs/<id>.md` by default.
+3. **Read `docs/LEARNINGS.md`** and carry forward anything that
+   touches these files or this subsystem. Do not read `.omc/`.
+4. **Write the brief onto the bead** (`bd update <id> --description` /
+   `--acceptance`). Chat is enough if there is no bead yet; then offer
+   to create one. `--out` only if the user named a path. Never `.omc/`.
 5. **State what you are NOT doing.** This is the section that most reliably prevents
    scope creep, and the one most often omitted.
 
