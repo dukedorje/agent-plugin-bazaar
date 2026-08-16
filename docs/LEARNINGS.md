@@ -19,3 +19,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — Mutex is `take` (in_progress + lease + write-set). Fan-out cap is `max_inflight` / `ACT_MAX_INFLIGHT`. Live workers are `claude -p`. (`conductor.py` · `spawn.py`)
 - 2026-08-16 — `conductor.py release` sets the bead back to `open`. Do not release after `bd close` — it undoes the close. (`bazaar-zmq`)
 - 2026-08-16 — Fold of `add-taskmaster-host` is what creates `openspec/specs/taskmaster/`. An accepted ADR is not a living capability. (`openspec/specs/taskmaster/spec.md`)
+- 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
