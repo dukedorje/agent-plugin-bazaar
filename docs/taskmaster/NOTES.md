@@ -18,9 +18,10 @@ date-stamp when it dies.
   (nodes + assignments + evidence), not a generic ticket tracker.
 - **Playground** — live site VM is `8a878070-2da0-4f8a-8dc0-776f3e1cf7db`
   (2048 MiB, snapshot `taskmaster-web-predev`). `vite dev` on `:5173`,
-  tmux `taskmaster`. 512 MiB box `0a0fa094-…` SIGKILL’d vite; still
-  running unless killed. Web:
-  `https://k4csoemcqo1b6s3ho1qm3qfn9jezh34k9rz7iingsm9i1iq9b8qo.vm.worldtree.network`
+  tmux `taskmaster`. HTTP `http://taskmaster.dev` is routed (gateway
+  apex + Deploy.Registry app `taskmaster`). HTTPS needs a Cloudflare
+  Origin CA PEM — Mjolnir ACME is worldtree-only. Same pattern as
+  `startupcentral.build`.
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.
