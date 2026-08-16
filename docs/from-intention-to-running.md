@@ -302,12 +302,17 @@ Assignment is `shape × load class × permission`, not who is logged in.
 
 | Shape | Who | Why |
 |---|---|---|
-| Mechanical edits, renames, lint | Cheap / fast model | Abundant, low blast |
-| Multi-step implementation | Grok as default processing worker | Third-family lens, strong, abundant |
-| Long-horizon or a second family | Codex | Independent orientation |
+| Known / mechanical coding | Claude Sonnet 5 | CC high limits; `explicit` packet |
+| Implementation that needs thought | Claude Opus 5 | Strong CC worker; `standard` |
+| Design | Opus 5 low/medium + CC designer skills | Design is not a cheap pass |
+| Planning helper / replan | Fable 5 consult | Plan without taking the write |
+| Real architecture review | Grok reader (Sol if subscribed) | Cross-family; same-family cannot promote |
 | Harness, slash, vision, tight back-and-forth | Native conductor | Foreign harnesses cannot run host commands |
 | `ambiguous`, journey, money, deploy, instrument | Human | Activation and eyes |
 | Complementary or contested work | Group | Topology, not a bigger prompt |
+
+Amended 2026-08-16 (ADR-005). Resolve, do not restate:
+`plugins/intention/references/ladder.json`.
 
 Same-family review of one’s own work cannot **promote**. Self-check is free and not load-bearing. Promotion needs a fresh reader, a live oracle, or a human.
 
@@ -597,6 +602,9 @@ I0  this document (commander’s intent)
  │
  ├── D4  add-act-runners                         [brief · folded 2026-08-16]
  │     unique prompt-file; stall → infra-red; packet-only / cloud spec
+ │
+ ├── D5  update-act-ladder                       [change · folded 2026-08-16]
+ │     CC coding pool; Grok arch reader; ladder.json
  │
  ├── T1  taskmaster.dev                          [unparked 2026-08-15]
  │     ready-set as a product — nodes, assignments, evidence

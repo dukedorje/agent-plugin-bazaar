@@ -181,6 +181,11 @@ if bash "$REPO_ROOT/scripts/test-spawn.sh"; then
 else
     error "act spawn failed"
 fi
+if bash "$REPO_ROOT/scripts/test-ladder.sh"; then
+    ok "act ladder"
+else
+    error "act ladder failed"
+fi
 echo ""
 
 # Summary

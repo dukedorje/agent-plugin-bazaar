@@ -24,9 +24,11 @@ chat. Durable copy is beads. Do not write `.omc/`. SHALLs do not live here.
 - Depends on: <node-ids or none>
 - Group: solo | weave | fork | human-gate | conductor-workers | …
 - Members / roles: conductor · worker · consultant · reader · human · group
-- Density: lean | standard | explicit   ← inverse of assignee capability; see docs/contracts/dispatch.md
+- Density: lean | standard | explicit   ← from ladder.py; inverse of capability
 - Surface: skill-host | packet-only
-- Consult: default explain+replan to a stronger model; write stays here
+- Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review>`
+- Consult: plan/replan → Fable 5; write stays here
+- Architecture: review-pair, reader = Grok (Sol only if ladder says available)
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 

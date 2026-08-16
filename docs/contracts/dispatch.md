@@ -41,11 +41,21 @@ depth.** A lean packet expects the strongest worker and says the least.
 Prescription a capable model does not need is context that competes
 with the work.
 
-| Density | Expected assignee |
+| Density | Expected assignee (this project) |
 |---|---|
-| `lean` | Opus · Grok 4.6 · Codex Sol · equivalent |
-| `standard` | Sonnet · Codex Terra · equivalent |
-| `explicit` | DeepSeek Flash · Codex Spark · Luna · Haiku · equivalent |
+| `lean` | Fable 5 (plan consult) · Grok 4.6 (arch review) · Sol if subscribed |
+| `standard` | Opus 5 (implementation / design, effort low–medium) |
+| `explicit` | Sonnet 5 (known / mechanical coding) |
+
+Assignment is **not** restated here. Resolve:
+
+```bash
+python3 plugins/intention/scripts/ladder.py assign --shape known
+```
+
+Source: `plugins/intention/references/ladder.json`. Claude Code is the
+coding pool (high limits). Grok is the default architecture reader.
+GPT-5.6 Sol is named but `available: false` until subscribed.
 
 Blast **raises** density and never lowers it: schema/migration, auth,
 crypto, money, cross-service contract → at least `standard`.

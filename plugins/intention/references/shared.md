@@ -20,6 +20,7 @@ disagree, the contract wins.
 | Harness matrix | `plugins/intention/references/harness.md` |
 | Conductor ready-set / persist | `plugins/intention/scripts/conductor.py` |
 | Spawn / prompt-file / stall | `plugins/intention/scripts/spawn.py` |
+| Assignment ladder | `plugins/intention/references/ladder.json` |
 
 ## Verb boundaries
 

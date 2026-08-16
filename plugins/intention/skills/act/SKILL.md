@@ -22,8 +22,9 @@ The packet is the only interface. Schema:
    If rigor is `change` / `architecture` / `instrument` and this is a
    write, the change banner is `ACTIVE BUILD` (or the human just
    activated it).
-2. **Assign.** Shape × load class × permission. Complementary → weave.
-   Foreign harness → packet file, never a slash command.
+2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
+   Complementary → weave. Architecture → review-pair with a Grok
+   reader. Foreign harness → packet file, never a slash command.
 3. **Write the packet** to the path in `act-io.md`. Lint:
    `python3 plugins/intention/scripts/conductor.py lint-packet <packet>`.
    `capability` required at change+. Anchors, not file bodies. Never a

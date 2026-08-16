@@ -30,7 +30,11 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `brief`, or `direct fix`. Edges are real dependencies (B cannot start
    until A committed a usable artifact). Set `density` from
    `docs/contracts/dispatch.md` (capability order is the inverse of
-   depth). Blast raises density, never lowers it.
+   depth). Blast raises density, never lowers it. Assign with
+   `python3 plugins/intention/scripts/ladder.py assign --shape …`
+   (known → Sonnet 5, thinking → Opus 5, plan → Fable 5, design →
+   Opus 5 + designer skills). Real architecture opens a review-pair
+   whose reader is Grok.
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).

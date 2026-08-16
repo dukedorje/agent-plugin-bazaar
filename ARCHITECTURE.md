@@ -146,6 +146,34 @@ runners (`add-act-conductor`, `add-act-runners`).
 
 ---
 
+### ADR-005: Claude Code coding pool; Grok architecture reader ✅
+
+**Status:** Accepted 2026-08-16 (`update-act-ladder` activated).
+**Blast:** assignment. Who gets the packet.
+
+**Decision.** Default coding agents are Claude Code, which holds the
+high usage limits:
+
+| Shape | Assignee |
+|---|---|
+| Known / mechanical | Sonnet 5 · `explicit` |
+| Implementation that needs thought | Opus 5 · `standard` · effort medium |
+| Design | Opus 5 · effort low/medium · CC designer skills |
+| Planning helper / replan consult | Fable 5 · `lean` · no write |
+| Real architecture review | **Grok** reader (required). GPT-5.6 Sol if `available` |
+
+Same-family review still cannot promote. Grok reading an Opus design
+is the cross-family gate. Sol stays in the file with `available:
+false` until there is a Codex subscription. Human pick always wins.
+
+Source of truth: `plugins/intention/references/ladder.json`.
+Resolve: `plugins/intention/scripts/ladder.py assign --shape …`.
+
+**Why.** The previous ladder assumed Grok was the default coder and
+Codex was in the pool. That is not the subscription set.
+
+---
+
 ### Pointer: Taskmaster host (T1, not an ADR yet)
 
 Product intent, stack sketch, and speculative notes live in

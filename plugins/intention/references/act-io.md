@@ -102,15 +102,21 @@ Give them the staged prompt file or packet path. Never `/act`,
 
 ## Work ladder (assign)
 
-Route by **task shape**, not by habit. Explicit human pick always wins.
-Density, surface, consult, and persist: `docs/contracts/dispatch.md`.
+Route by **task shape**. Explicit human pick always wins. Do not
+restate the table — resolve it:
 
-| Shape | Default worker | Default density |
-|---|---|---|
-| Bounded mechanical edits | cheapest pooled backend | `explicit` |
-| Multi-step implementation | Grok when the conductor is Claude; else the host’s strong worker | `standard` |
-| Architecture / instrument / sensitive | human-gate + this harness | `standard` or deeper |
-| Needs vision, slash, or tight back-and-forth | stay native | `lean` if the native model is strong |
+```bash
+python3 plugins/intention/scripts/ladder.py assign --shape known
+python3 plugins/intention/scripts/ladder.py assign --shape thinking
+python3 plugins/intention/scripts/ladder.py assign --shape design
+python3 plugins/intention/scripts/ladder.py assign --shape plan
+python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
+```
+
+Source: `plugins/intention/references/ladder.json`. Known → Sonnet 5.
+Thinking implementation → Opus 5. Design → Opus 5 low/medium +
+designer skills. Plan consult → Fable 5. Real architecture →
+review-pair whose reader is Grok (Sol only if `available`).
 
 A weaker worker may consult a stronger one for `explain` / `replan`.
 That is not a write handoff.

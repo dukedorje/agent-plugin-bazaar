@@ -21,6 +21,7 @@ REQUIRED_REFS = (
     "act-io.md",
     "fold-steps.md",
     "harness.md",
+    "ladder.json",
 )
 
 FM = re.compile(r"^---\n(.*?)\n---", re.S)

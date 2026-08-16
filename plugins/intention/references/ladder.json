@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "subscriptions": ["grok", "claude-code"],
+  "notes": "Claude Code has the high usage limits. Codex Sol is named for when a second-family review is available; it is not subscribed today.",
+  "human_override": "always wins",
+  "routes": [
+    {
+      "id": "sonnet-5",
+      "shapes": ["known", "mechanical", "bounded-edit"],
+      "role": "worker",
+      "harness": "claude",
+      "interface": "sonnet-5",
+      "surface": "skill-host",
+      "density": "explicit",
+      "effort": "low",
+      "available": true
+    },
+    {
+      "id": "opus-5",
+      "shapes": ["implementation", "thinking"],
+      "role": "worker",
+      "harness": "claude",
+      "interface": "opus-5",
+      "surface": "skill-host",
+      "density": "standard",
+      "effort": "medium",
+      "available": true
+    },
+    {
+      "id": "opus-5-design",
+      "shapes": ["design"],
+      "role": "worker",
+      "harness": "claude",
+      "interface": "opus-5",
+      "surface": "skill-host",
+      "density": "standard",
+      "effort": "low",
+      "skills": ["designer"],
+      "available": true,
+      "notes": "Effort low or medium. Use Claude Code designer skills."
+    },
+    {
+      "id": "fable-5-plan",
+      "shapes": ["plan", "replan", "intend-consult"],
+      "role": "consultant",
+      "harness": "claude",
+      "interface": "fable-5",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "notes": "Planning helper. Does not take the write."
+    },
+    {
+      "id": "grok-arch-review",
+      "shapes": ["architecture-review"],
+      "role": "reader",
+      "harness": "grok",
+      "interface": "grok-4.6",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "required_on": ["architecture", "instrument"],
+      "notes": "Default reader for real architecture. Cross-family vs Claude authors."
+    },
+    {
+      "id": "sol-arch-review",
+      "shapes": ["architecture-review"],
+      "role": "reader",
+      "harness": "codex",
+      "interface": "gpt-5.6-sol",
+      "surface": "packet-only",
+      "density": "lean",
+      "effort": "high",
+      "available": false,
+      "notes": "Optional second-family reader. Flip available when subscribed."
+    }
+  ]
+}
