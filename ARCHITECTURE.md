@@ -174,8 +174,56 @@ Codex was in the pool. That is not the subscription set.
 
 ---
 
-### Pointer: Taskmaster host (T1, not an ADR yet)
+### ADR-006: Taskmaster host — a sibling, not a fork ✅
 
-Product intent, stack sketch, and speculative notes live in
-[`docs/taskmaster/`](docs/taskmaster/). They are not accepted architecture.
-`add-taskmaster-host` is the change that would fold a real ADR here.
+**Status:** Accepted 2026-08-16 (`add-taskmaster-host` activated).
+**Blast:** product boundary. Where a running SaaS is allowed to sit
+relative to this kernel, and what it is allowed to redefine.
+
+**Decision.** `taskmaster.dev` is a **sibling host**. This repo stays
+packets, skills, and specs; Taskmaster is an application that *hosts*
+that surface, the way Claude, Grok, and Codex host the verbs.
+
+- It **consumes ADR-001**. Node, assignment, and evidence are a
+  projection of task-packet-in / signed-result-out — not a second
+  object model. If the SaaS needs a different object model, amend
+  [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md);
+  do not grow a parallel kernel next to it.
+- **Ready is derived, never stored.** The ready set is `open ∧ all deps
+  landed`, computed from edges. That invariant travels with the surface
+  into any host, so a `ready` column is a defect wherever it appears.
+- **Stack is not kernel truth.** Framework, adapter, database driver,
+  look tokens, one-VM/one-process/one-SQLite-file, Mjolnir managed
+  secrets — all recorded in
+  [`docs/taskmaster/ARCHITECTURE.md`](docs/taskmaster/ARCHITECTURE.md)
+  and amended there. They may flip without touching this file.
+- **The living capability `taskmaster` is created by fold, not by this
+  ADR.** Until `add-taskmaster-host` folds, `openspec/specs/` gains no
+  Taskmaster requirement. No framework choice of a site that is not
+  running ever becomes a `SHALL` in this repo's living specs.
+
+**Why.** Two failures were live at once. First, the recurring question
+of whether the SaaS belongs inside the marketplace: naming it a sibling
+host in an accepted ADR closes it, and keeps the kernel from acquiring
+a web tier it would then have to carry. Second, the sketch in
+`docs/taskmaster/` reads like decided architecture but had no accepted
+status — so either it stays advisory forever, or its volatile parts
+leak into living specs. Those parts are the *most* volatile things we
+own: the dev-server exception to Mjolnir's snapshot discipline exists
+precisely because that pipeline has never completed an end-to-end run.
+A living spec that names it would lie the week it changes. Hosting is a
+kernel decision; the stack under the host is not.
+
+**Consequences.**
+
+- `docs/taskmaster/` is the sketch of record. Amend in place; it is
+  reasoning, so it never carries a `SHALL` (ADR-002).
+- The `taskmaster` delta spec is stack-neutral. A reader looking for
+  SvelteKit in `openspec/` should find nothing, now or after fold.
+- Taskmaster does not absorb MetaDev or MetaCoding. They are peers in
+  the same weave ([`docs/taskmaster/RELATED.md`](docs/taskmaster/RELATED.md));
+  the MetaDev overlay stays parked under ADR-003.
+
+**Not decided here.** IdentiKey login, snapshot deploy, guest port and
+DNS (`bazaar-lgr.1` / `bazaar-lgr.2`), the MetaDev copy (`bazaar-zmq`),
+and the node/edge table itself.

@@ -1,13 +1,21 @@
 # Taskmaster — architecture sketch
 
-Not an accepted ADR. Activate `add-taskmaster-host` before any of this
-becomes kernel truth. Amend in place when a decision flips.
+**Hosting is decided; the stack is not kernel truth.** ADR-006
+(accepted 2026-08-16, `add-taskmaster-host`) names Taskmaster a sibling
+host of the agent surface and sends the stack here on purpose — a
+framework or adapter that flips should not move a living spec.
+
+So this file is the sketch of record, not a second kernel. Amend in
+place when a decision flips; nothing here carries a `SHALL`, and no row
+below belongs in `openspec/specs/`. The rows that *are* kernel — the
+surface it consumes, ready-derived-never-stored — live in ADR-006 and
+the `taskmaster` delta.
 
 ## Decided now (2026-08-16)
 
 | Decision | Why |
 |---|---|
-| Sibling app, not this marketplace | Kernel stays packets + skills; the SaaS is a host |
+| Sibling app, not this marketplace — **now ADR-006** | Kernel stays packets + skills; the SaaS is a host |
 | **One VM, one process, one SQLite file** | First site. Backup / sync / multi-instance are later |
 | **SvelteKit + adapter-node, dev mode** | Logged-in SaaS needs a server. SSG is off the table for v0. Dev server is an explicit exception to Mjolnir’s “deploy is a snapshot” discipline |
 | **Daemon on a guest port → taskmaster.dev** | Hand-route the playground box (same honesty as Zine today). Snapshot cutover when we have a build |
@@ -22,7 +30,7 @@ becomes kernel truth. Amend in place when a decision flips.
 | **Look is a cookie, resolved server-side** | Read in `hooks.server.ts`, stamped onto `<html>` during SSR. localStorage cannot do this without a flash of the wrong look. The switch is a real form POST that works with JS off; JS just skips the round trip |
 | **Design system: "Terminal Graphite"** (2026-08-16) | One ground `#0c0c0d`, one paper `#f4f1ea`, one signal `#c8ff2f`. The signal means READY and nothing else — lime on anything not startable is a bug. Space Grotesk + JetBrains Mono, self-hosted variable (no CDN, no CLS). Tokens live in `src/routes/layout.css` |
 | **The ready set is the page** | `/` is the ready set, not a marketing hero. Load choreography *is* the computation: all nodes arrive lit, then blocked/landed recede and only what is startable keeps the signal |
-| **Ready is derived, never stored** | `src/lib/graph.ts` computes ready from edges (`open ∧ all deps landed`). That invariant is the seam the node/edge schema inherits — do not add a `ready` column |
+| **Ready is derived, never stored** — **kernel, ADR-006** | `src/lib/graph.ts` computes ready from edges (`open ∧ all deps landed`). That invariant is the seam the node/edge schema inherits — do not add a `ready` column |
 | **Related intentions are a weave** | MetaCoding + Phong’s MetaDev + this kernel are peers. [RELATED.md](RELATED.md) |
 
 ## Later (not this landing)

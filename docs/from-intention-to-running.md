@@ -501,7 +501,7 @@ Hooks stay host-specific and non-load-bearing. If the hook is down, the loop sti
 - Mandatory SCIP / ladybug / operad mining
 - Sprint numbers, epic novels, readiness-report theater
 - `intentional.agency` or Mjolnir hosting — named so the surface stays compatible; not in the first ready-set
-- `taskmaster.dev` was in that list; unparked 2026-08-15 (T1). Not built yet.
+- `taskmaster.dev` was in that list; unparked 2026-08-15 (T1). Hosting decided 2026-08-16 (ADR-006: sibling host). Not built yet.
 
 Forking MetaDev is an open Fork (see the build graph). Phong would likely take merge requests. We do not decide that by vibe after writing skills that assume one answer.
 
@@ -536,7 +536,7 @@ This section is the first Act. The rest of the file was Observe, Orient, and Dec
 - MetaCoding’s graph, intention harvest, load classes, port briefs
 - Harness skill loading: Grok, Claude, Codex, Hermes, Prime
 - Delivery surfaces not yet in this ready-set: Tatastu app, `intentional.agency`, Mjolnir VMs
-- `taskmaster.dev` unparked 2026-08-15 — ready-set as a product; see T1
+- `taskmaster.dev` unparked 2026-08-15 — ready-set as a product; see T1. A **host** of this surface (ADR-006), not a second kernel.
 
 ### Orient
 
@@ -609,10 +609,12 @@ I0  this document (commander’s intent)
  ├── D6  add-claude-spawn                        [change · folded 2026-08-16]
  │     live claude -p; take mutex; max_inflight
  │
- ├── T1  taskmaster.dev                          [unparked 2026-08-15]
+ ├── T1  taskmaster.dev              [host decided 2026-08-16 · not built]
  │     ready-set as a product — nodes, assignments, evidence
+ │     ADR-006: sibling host of the agent surface, not a fork.
+ │     Stack lives in docs/taskmaster/, never in openspec/specs/.
  │     notes: docs/taskmaster/ (intent · architecture · related weave · speculative)
- │     next: activate add-taskmaster-host; not built
+ │     next: build the site; capability `taskmaster` lands at fold
  │
  └── P1  park, do not build                      [parked]
        Tatastu shipping, intentional.agency,
