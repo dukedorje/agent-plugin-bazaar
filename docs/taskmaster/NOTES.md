@@ -48,6 +48,10 @@ date-stamp when it dies.
   - `known_hosts` is **pinned** to the host key read off the server
     (`SHA256:jrKhuXPC+bdbvV7Pico35yzPBN8ViNF50+UKwVyQ7HA`), so pushes
     run with `StrictHostKeyChecking=yes` rather than TOFU.
+  - **Superseded 2026-08-16 (same day):** the key is no longer on the
+    rootfs at all — see *Managed secrets* below. Deploy key id 2 was
+    revoked; id 3 (`SHA256:DvXykS8VTJ5RxtraVy4q0FKjnZmZMBe4EHVzPuAWK2c`)
+    is the live one and exists only inside managed secrets.
   - Adding a deploy key needs an admin API token; mint with
     `forgejo admin user generate-access-token -u duke --raw`, POST to
     `/api/v1/repos/{owner}/{repo}/keys`, then delete the row from
@@ -55,6 +59,50 @@ date-stamp when it dies.
     Do not leave the token behind.
 - **`$lib` is gone** in this SvelteKit (next). It errors at import
   analysis: use `#lib` (the `imports` map in `package.json`).
+- **Managed secrets, live 2026-08-16.** Taskmaster now runs on VM
+  `00473745-46d6-46fa-86c7-8b6fb688c46b` (`10.204.71.168`), spawned with
+  `secrets_mode: :managed`. Six secrets (the five old `.env` vars plus
+  the deploy key) live in a LUKS volume; `/run/mjolnir/secrets.env`
+  (tmpfs, 0600) is rendered at boot and auto-sourced into every `exec`.
+  **No plaintext secret is on the rootfs, so no snapshot can capture
+  one.** Verified across two reboots. The predecessor VM `8a878070` is
+  orphaned but still running — it still has the old `.env` on its
+  rootfs, so destroy it rather than snapshot it.
+  - `mj spawn` has **no** secrets flags. Use `POST /api/vms` with
+    `{"secrets_mode":"managed","secrets":{...}}`; the Elixir-rpc dance
+    in Mjolnir's Zine runbook is unnecessary.
+  - Cutover is `Mjolnir.Deploy.Registry.put/2` over `mjolnir rpc` —
+    there is no HTTP route that repoints an app at a different VM.
+    `sudo` strips the sourced release env, so source `/etc/mjolnir/env`
+    *inside* the privileged shell or rpc fails `:noconnection`.
+
+### Three Mjolnir bugs found doing this (worth filing upstream)
+
+1. **Managed secrets cannot work from `base_image: ubuntu-24.04`.**
+   That image carries a **2026-06-23** agent with no `inject_secrets`
+   handler, so the host's request fails to deserialize, the guest
+   answers nothing, and the unlock dies as a bare 60s `:timeout`. The
+   comment at `vm.ex:2075` already describes this happening to VM
+   `2da0e442` — whose orphaned escrow entry is still on the host. Root
+   cause: `MJOLNIR_GUEST_AGENT_BIN` is **commented out** in
+   `/etc/mjolnir/env` *and* the path it names
+   (`/opt/mjolnir/native/target/x86_64-unknown-linux-musl/release/mjolnir-agent`)
+   does not exist, so `inject_guest_agent/1` silently no-ops on every
+   spawn. **Workaround used:** spawn from snapshot
+   `taskmaster-web-predev`, which carries a good Aug-16 agent
+   (md5 `070e5c6af7743dbb51c04754dafd565e`). **Real fix:** put a current
+   agent at that path and uncomment the var, or all future VMs stay
+   stuck on a June agent.
+2. **Secrets silently truncate at the first newline.** The store is
+   line-based (`format!("{}={}", k, v)` joined by `\n`), so a PEM
+   arrives as just `-----BEGIN OPENSSH PRIVATE KEY-----` (35 chars) with
+   no error anywhere. Store multi-line values base64-encoded. This will
+   bite anyone putting a TLS key or PEM in managed secrets.
+3. **`mjolnir-secrets.target` activates ~3s before `secrets.env`
+   exists.** The target tracks the LUKS *mount*, not the env render, so
+   `After=`/`Requires=` on it is not enough — observed 07:23:52 target
+   active, 07:23:53 unit ran and failed, 07:23:55.99 file appeared.
+   Gate on the file with a systemd `.path` unit instead.
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.

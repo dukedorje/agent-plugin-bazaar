@@ -16,6 +16,8 @@ becomes kernel truth. Amend in place when a decision flips.
 | Objects = node, assignment, evidence | Founding host table. Groups assign and split |
 | **Actions run on the Mjolnir guest** | An agent of a given type can do whatever that guest can do |
 | **See the UI from inside the guest** | Playwright / Chromium on the same VM. Storybook is not the action surface |
+| **Secrets: Mjolnir `secrets_mode: :managed`** (2026-08-16) | The guest holds no plaintext secret at rest. LUKS `secrets.luks` on the rootfs (ciphertext), rendered to `/run/mjolnir/secrets.env` on tmpfs at boot, auto-sourced into every `exec`. Passphrase is host-escrowed by vm_id. **Fixed at spawn — there is no in-place conversion**, so changing it means respawning |
+| **Deploy key lives only in RAM** | The Forgejo key is a base64 secret; a `.path`-triggered unit pipes it into `ssh-agent` at boot. It never becomes a file on any filesystem. `git` reaches it via `core.sshCommand=/usr/local/bin/tm-git-ssh` |
 | **Design system: "Terminal Graphite"** (2026-08-16) | One ground `#0c0c0d`, one paper `#f4f1ea`, one signal `#c8ff2f`. The signal means READY and nothing else — lime on anything not startable is a bug. Space Grotesk + JetBrains Mono, self-hosted variable (no CDN, no CLS). Tokens live in `src/routes/layout.css` |
 | **The ready set is the page** | `/` is the ready set, not a marketing hero. Load choreography *is* the computation: all nodes arrive lit, then blocked/landed recede and only what is startable keeps the signal |
 | **Ready is derived, never stored** | `src/lib/graph.ts` computes ready from edges (`open ∧ all deps landed`). That invariant is the seam the node/edge schema inherits — do not add a `ready` column |
