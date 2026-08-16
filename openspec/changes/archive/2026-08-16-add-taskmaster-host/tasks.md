@@ -7,4 +7,4 @@
 - [x] Founding doc T1 node reflects the accepted host decision
 - [x] `python3 scripts/check-hygiene.py` green with this change in flight
 - [x] Grok reads ADR-006 (cross-family architecture gate, ADR-005)
-- [ ] Fold: materialize `openspec/specs/taskmaster/spec.md` and archive
+- [x] Fold: materialize `openspec/specs/taskmaster/spec.md` and archive

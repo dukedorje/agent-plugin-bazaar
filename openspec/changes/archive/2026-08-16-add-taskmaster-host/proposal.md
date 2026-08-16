@@ -1,6 +1,6 @@
 # add-taskmaster-host
 
-> **ACTIVE BUILD** — activated 2026-08-16 (T1). ADR-006 accepted.
+> **ACTIVE BUILD** → folded and archived 2026-08-16.
 
 ## Why
 
