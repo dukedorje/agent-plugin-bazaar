@@ -1,12 +1,11 @@
 # working-method
 
-What **is** built: the method is named, and the loop (OODA, rigor
-dial, load class) is living. Folded from `extract-working-method` and
-`add-working-loop` on 2026-08-16.
+What **is** built: the method is named; the loop and the seven objects
+are living. Folded from `extract-working-method`, `add-working-loop`,
+and `add-working-objects` on 2026-08-16.
 
-Objects and split rules still live in
-`docs/from-intention-to-running.md` until `add-working-objects` and
-`add-working-split` fold. Those are not living truth yet (ADR-002).
+Split rules still live in `docs/from-intention-to-running.md` until
+`add-working-split` folds. That is not living truth yet (ADR-002).
 
 ## Purpose
 
@@ -74,3 +73,28 @@ Orient SHALL name `structure-clear`, `intention-critical`, or
 - WHEN the agent orients
 - THEN they stop for a human instead of inventing the rule from a
   call graph
+
+### Requirement: Work objects are the seven kinds
+
+The method SHALL talk in these objects: intention, capability, change,
+work node, agent, evidence, learning. Documents SHALL be how some of
+them are shown, not a parallel store.
+
+#### Scenario: Status in a path
+
+- GIVEN a change directory named as if it were done
+- WHEN an agent decides whether the behavior exists
+- THEN they read the living spec and the in-file banner, not the path
+
+### Requirement: A brief dies after landing
+
+A brief SHALL contain goal, acceptance, contract, inherited, and out
+of scope. After the work lands, the brief SHALL NOT be treated as
+durable truth.
+
+#### Scenario: Brief kept as spec
+
+- GIVEN a 200-line brief after fold
+- WHEN an agent cites it as current behavior
+- THEN that citation is wrong; living spec, ADR, or LEARNINGS.md is
+  the residue
