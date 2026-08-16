@@ -28,6 +28,10 @@ date-stamp when it dies.
   `/root/.local/share/mise/installs/bun/1.3.14/bin/bun`. HTTPS on
   `taskmaster.dev` is in fact answering, so the Origin CA note above
   may be stale — re-check before spending on it.
+  **Re-checked 2026-08-16 (`bazaar-lgr.2` closed):**
+  `mj domain ls` → `10.204.71.168:5173` cert=yes http-01=yes.
+  Public http/https and guest `:5173` are the same 56695-byte page
+  (ETag `m4wxyu`). Origin CA not needed.
 - **`/taskmaster-web` had no version control** until 2026-08-16.
   `git init` + first commit `8a8ee6f`, now pushed. **Resolved same
   day** — the app is no longer single-copy on a dev VM.
