@@ -19,3 +19,6 @@ date-stamp when it dies.
 - **Playground** — first site attempt is on Mjolnir box
   `0a0fa094-252f-47b7-b348-6e4624eac9ef` (512 MiB). Node is not
   installed. May need `--memory 2048` before SvelteKit will install.
+- **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
+  project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
+  Do not invent a fourth store first.
