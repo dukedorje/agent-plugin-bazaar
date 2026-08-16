@@ -26,3 +26,6 @@ __pycache__/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Playwright MCP scratch (screenshots, snapshots)
+.playwright-mcp/
