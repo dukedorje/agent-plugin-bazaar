@@ -21,10 +21,12 @@ categorical overlay: category theory applied to abstract syntax trees
 (`ctkr` in `~/work/WorldTree/MetaCoding`). Taskmaster’s tasks are about
 that work, not a generic ticket tracker.
 
-**Fong’s Meta Env (our copy)** is a related intention we still owe:
-finish that copy. It is not a Taskmaster feature. It is a peer landing
-in the same weave — see [RELATED.md](RELATED.md). Do not drop it
-because the SaaS is louder.
+**Phong’s MetaDev (our copy)** is a related intention we still owe:
+finish the work in `~/work/Projects/AI/meta-dev`. It is not a
+Taskmaster feature. It is a peer landing in the same weave — see
+[RELATED.md](RELATED.md). Path B (fork/overlay) stays parked until
+Phong wants an overlay that consumes our packets (ADR-003). Do not
+drop it because the SaaS is louder.
 
 ## Non-goals (now)
 

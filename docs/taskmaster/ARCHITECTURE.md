@@ -16,7 +16,7 @@ becomes kernel truth. Amend in place when a decision flips.
 | Objects = node, assignment, evidence | Founding host table. Groups assign and split |
 | **Actions run on the Mjolnir guest** | An agent of a given type can do whatever that guest can do |
 | **See the UI from inside the guest** | Playwright / Chromium on the same VM. Storybook is not the action surface |
-| **Related intentions are a weave** | MetaCoding + Fong Meta Env + this kernel are peers. [RELATED.md](RELATED.md) |
+| **Related intentions are a weave** | MetaCoding + Phong’s MetaDev + this kernel are peers. [RELATED.md](RELATED.md) |
 
 ## Later (not this landing)
 
@@ -30,7 +30,7 @@ becomes kernel truth. Amend in place when a decision flips.
 
 1. **Guest port** — Mjolnir’s SvelteKit plan defaults to `3000`. Confirm when the daemon starts.
 2. **DNS / gateway** — who cuts `taskmaster.dev` (or a subdomain) to this VM’s route. Host-side; not a guest edit.
-3. **Fong Meta Env path** — our copy is not on disk under a name I could find. Bead `bazaar-zmq`. Put the path in RELATED.md when you remember it.
+3. **Phong’s MetaDev** — checkout is `~/work/Projects/AI/meta-dev` (`ansonphong/meta-dev` plus local planctl/grok-execute work). Bead `bazaar-zmq`. Overlay still parked.
 4. **IdentiKey login** — hop when auth blocks.
 
 ## Shape we are not deciding here

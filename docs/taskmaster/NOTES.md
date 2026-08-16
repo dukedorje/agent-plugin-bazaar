@@ -31,5 +31,6 @@ date-stamp when it dies.
   now. Vitest already pulled Playwright — that is the agent-facing
   surface. Storybook is a human component workshop; add later from a
   machine that has npm, or not at all. 512 MiB will not hold Chromium.
-- **Fong Meta Env** — our copy’s path is not on this machine under a
-  name I could find. Bead `bazaar-zmq`. Paste the path into RELATED.md.
+- **Phong / MetaDev** — voice was “Phong,” not Fong. Copy is
+  `~/work/Projects/AI/meta-dev`. Bead `bazaar-zmq`. F1-path-b stays
+  parked until Phong wants an overlay that consumes our packets.
