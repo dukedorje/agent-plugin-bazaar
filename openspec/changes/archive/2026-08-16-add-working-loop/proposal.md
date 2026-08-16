@@ -1,6 +1,6 @@
 # add-working-loop
 
-> **ACTIVE BUILD**
+> **ACTIVE BUILD** → folded and archived 2026-08-16.
 
 Depends on: `extract-working-method` (names this id).
 
