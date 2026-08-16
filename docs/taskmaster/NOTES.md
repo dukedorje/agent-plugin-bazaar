@@ -76,6 +76,16 @@ date-stamp when it dies.
     `sudo` strips the sourced release env, so source `/etc/mjolnir/env`
     *inside* the privileged shell or rpc fails `:noconnection`.
 
+- **Cutting an app over to a new VM takes TWO steps.**
+  `Mjolnir.Deploy.Registry.put/2` updates the record and `mj domain ls`
+  will happily show the new backend, but the gateway keeps serving the
+  old one until `Mjolnir.Gateway.RouteReconciler.trigger()` runs. Worse,
+  browsers that already hold an HTTP/2 connection stay pinned to the old
+  upstream even after that — `cache: 'reload'` does not help, only a new
+  connection does. Verify a cutover from a **fresh** connection, and
+  ideally with content that differs between the two VMs; identical pages
+  will show green while the route is still wrong.
+
 ### Three Mjolnir bugs found doing this (worth filing upstream)
 
 1. **Managed secrets cannot work from `base_image: ubuntu-24.04`.**
