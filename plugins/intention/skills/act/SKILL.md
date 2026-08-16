@@ -1,9 +1,10 @@
 ---
 name: act
 description: >
-  Execute a ready work node: assign, emit a task packet, run focused verify,
-  commit-on-red. Foreign harnesses get a packet, never a slash command. Use
-  when implementing an activated change, a brief, or a ready-set node.
+  Execute a ready work node: assign, emit a task packet, spawn a unique
+  prompt, focused verify. Foreign harnesses get a packet, never a slash
+  command. Use when implementing an activated change, a brief, or a
+  ready-set node.
 user-invocable: true
 argument-hint: "<node-id or packet path>"
 ---
@@ -30,19 +31,24 @@ The packet is the only interface. Schema:
 4. **Isolate** if the worker should not share the main tree:
    `conductor.py isolate --node <id>`. Optional. Disjoint nodes may
    stay on HEAD.
-5. **Do the work** only on `constraints.paths` (in the worktree if
+5. **Stage** a unique prompt: `spawn.py stage --packet <packet>`.
+   Empty/missing prompt is a hard fail. Packet-only / cloud: never a
+   slash command. Launch with `spawn.py run --spec <spec>` (or hand
+   the prompt file to a native skill-host). Stall → `infra-red`.
+6. **Do the work** only on `constraints.paths` (in the worktree if
    isolated). Workers edit and stop.
-6. **Persist** as conductor: `conductor.py persist --paths … -m …`
+7. **Persist** as conductor: `conductor.py persist --paths … -m …`
    (`--worktree` when isolated). Persistence ≠ acceptance.
-7. **Focused verify** once. Distill. Classify with
+8. **Focused verify** once. Distill. Classify with
    `conductor.py classify <result>`. `repair` parks the implicated
    branch (`conductor.py implicated --node <id>`) and keeps unrelated
-   dispatchable nodes moving. `baseline-red` completes.
-8. **Write the result** after persist. Hash + distill. Conductor reads
+   dispatchable nodes moving. `baseline-red` completes. Spawn stall
+   is already `infra-red` — retry once, then report.
+9. **Write the result** after persist. Hash + distill. Conductor reads
    the face; `raw_ref` keeps the full report.
-9. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
-   when the change's owed work has landed; `intend` if surprise splits
-   a new node.
+10. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
+    when the change's owed work has landed; `intend` if surprise splits
+    a new node.
 
 If the packet contradicts the laws in `docs/contracts/agent-surface.md`,
 quote both instructions. Do not silently keep the narrower one.

@@ -143,5 +143,6 @@ Promotion still needs a fresh reader, a live oracle, or a human.
 ## What this file is not
 
 Not the scheduler. Ready-set, disjoint write-sets, isolate, persist,
-and classify are `plugins/intention/scripts/conductor.py` (`act`).
-Spawn, prompt-file staging, and stall are `add-act-runners`.
+and classify are `plugins/intention/scripts/conductor.py`. Unique
+prompt-file, stall → infra-red, and surface-aware launch are
+`plugins/intention/scripts/spawn.py`.

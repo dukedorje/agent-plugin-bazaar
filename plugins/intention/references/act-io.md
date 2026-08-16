@@ -75,10 +75,30 @@ python3 plugins/intention/scripts/content-hash.py <result.json>
 Writes `signature.content_hash` (`sha256:` + hex) over the result with
 `signature.content_hash` and `signature.bytes` removed.
 
+## Spawn
+
+```bash
+python3 plugins/intention/scripts/spawn.py stage --packet <packet.json>
+python3 plugins/intention/scripts/spawn.py run --spec <spec.json>
+```
+
+`stage` writes a unique `.spawns/<node>-<id>/` with `packet.json`,
+`prompt.md`, and `spec.json`. Two stages never share a path. Missing
+or empty prompt hard-fails before any adapter starts.
+
+`surface` comes from the packet (`skill-host` / `packet-only`). Cloud
+hosts keep `packet-only` and set `assignee.interface`. The exec
+adapter is for tests and local commands. Live Codex/Grok/Claude CLIs
+are not vendored — the spec is the handoff.
+
+`run` with no adapter prints `infra-red` / `adapter-none` and does
+not pretend a worker ran. Timeout kills the process group and
+classifies `stall` as `infra-red`.
+
 ## Foreign harness
 
-Give them the packet path or inline JSON. Never `/act`, `/intend`, or
-`/meta-execute`.
+Give them the staged prompt file or packet path. Never `/act`,
+`/intend`, or `/meta-execute`.
 
 ## Work ladder (assign)
 

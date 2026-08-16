@@ -176,6 +176,11 @@ if bash "$REPO_ROOT/scripts/test-conductor.sh"; then
 else
     error "act conductor failed"
 fi
+if bash "$REPO_ROOT/scripts/test-spawn.sh"; then
+    ok "act spawn"
+else
+    error "act spawn failed"
+fi
 echo ""
 
 # Summary

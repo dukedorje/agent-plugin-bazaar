@@ -32,3 +32,6 @@ __pycache__/
 
 # act isolation worktrees (conductor.py isolate)
 .worktrees/
+
+# act spawn scratch (spawn.py stage)
+.spawns/

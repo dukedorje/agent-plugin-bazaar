@@ -14,3 +14,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — `.omc/` is disabled here (Claude and Grok). March–July contents were parked sprint-plan and OMC session junk. Tracker is beads. (`AGENTS.md`)
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)
 - 2026-08-16 — `bd list` hides closed issues, so a closed blocker looks missing and the child stays blocked. Conductor live ready uses `bd list --all`. (`plugins/intention/scripts/conductor.py`)
+- 2026-08-16 — Shared scratchpads and empty prompts fail closed: unique `.spawns/` dir, atomic write, hard-fail before Popen. Stall is infra-red, not task-red. (`plugins/intention/scripts/spawn.py`)

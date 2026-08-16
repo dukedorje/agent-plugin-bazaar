@@ -19,6 +19,7 @@ disagree, the contract wins.
 | Why it is shaped this way | `ARCHITECTURE.md` |
 | Harness matrix | `plugins/intention/references/harness.md` |
 | Conductor ready-set / persist | `plugins/intention/scripts/conductor.py` |
+| Spawn / prompt-file / stall | `plugins/intention/scripts/spawn.py` |
 
 ## Verb boundaries
 
