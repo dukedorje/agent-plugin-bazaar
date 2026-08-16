@@ -10,3 +10,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — A skills table that lists deleted names is a lie with the same voice as a live spec. Catalogs follow the directories; dropped names stay in CONVENTIONS only. (`CLAUDE.md`)
 - 2026-08-15 — Ready-set is a query over banners + `openspec/parked.md`, not a second tracker. Beads `bd ready` is not used here. (`scripts/ready.py`)
 - 2026-08-15 — Unparking a P1 host is a register edit plus intend, not a verb. Remaining hosts stay parked. (`openspec/parked.md`)
+- 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (`docs/taskmaster/`)

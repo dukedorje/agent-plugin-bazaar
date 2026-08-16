@@ -111,3 +111,11 @@ the acceptance without becoming Path A.
 - Do not vendor MetaDev’s dashboard / inbox / 40-command surface.
 - S1–S4 deepen these five dispatchers. They do not move the files.
 - H1 adds harness notes; it does not fork the tree.
+
+---
+
+### Pointer: Taskmaster host (T1, not an ADR yet)
+
+Product intent, stack sketch, and speculative notes live in
+[`docs/taskmaster/`](docs/taskmaster/). They are not accepted architecture.
+`add-taskmaster-host` is the change that would fold a real ADR here.
