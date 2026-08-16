@@ -34,3 +34,16 @@ work. They SHALL NOT become a second requirements store.
   were required
 - WHEN that rule is not in `openspec/specs/`
 - THEN it is not living truth until a named change folds it
+
+### Requirement: Checkboxes are owed work
+
+A checkbox SHALL be work **this** node or change owes. Handoffs,
+findings, and out-of-scope SHALL be bullets. A checkbox that can
+never close SHALL NOT appear in the ready-set.
+
+#### Scenario: Handoff as a checkbox
+
+- GIVEN a tasks.md box that says "tell Duke" or "fold later"
+- WHEN hygiene or `ready` runs
+- THEN that box is not owed work and must be a bullet, or the change
+  is not honest
