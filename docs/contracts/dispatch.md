@@ -142,6 +142,6 @@ Promotion still needs a fresh reader, a live oracle, or a human.
 
 ## What this file is not
 
-Not a scheduler. Ready-set, disjoint write-sets, spawn, and stall
-are `add-act-conductor` / `add-act-runners`. This file is the
-measuring stick those changes consume.
+Not the scheduler. Ready-set, disjoint write-sets, isolate, persist,
+and classify are `plugins/intention/scripts/conductor.py` (`act`).
+Spawn, prompt-file staging, and stall are `add-act-runners`.

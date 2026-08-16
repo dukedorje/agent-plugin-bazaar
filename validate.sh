@@ -171,6 +171,11 @@ if bash "$REPO_ROOT/scripts/test-ready.sh"; then
 else
     error "ready-set list failed"
 fi
+if bash "$REPO_ROOT/scripts/test-conductor.sh"; then
+    ok "act conductor"
+else
+    error "act conductor failed"
+fi
 echo ""
 
 # Summary

@@ -29,3 +29,6 @@ __pycache__/
 
 # Playwright MCP scratch (screenshots, snapshots)
 .playwright-mcp/
+
+# act isolation worktrees (conductor.py isolate)
+.worktrees/

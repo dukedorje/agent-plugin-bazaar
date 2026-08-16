@@ -16,25 +16,31 @@ The packet is the only interface. Schema:
 
 ## Procedure
 
-1. **Admit.** Node is ready (inbound artifacts committed). If rigor is
-   `change` / `architecture` / `instrument` and this is a write, the
-   change banner is `ACTIVE BUILD` (or the human just activated it).
+1. **Admit.** `python3 plugins/intention/scripts/conductor.py ready`.
+   Dispatch only a `dispatchable` id. Overlap is deferred, not a stop.
+   If rigor is `change` / `architecture` / `instrument` and this is a
+   write, the change banner is `ACTIVE BUILD` (or the human just
+   activated it).
 2. **Assign.** Shape × load class × permission. Complementary → weave.
    Foreign harness → packet file, never a slash command.
-3. **Write the packet** to the path in `act-io.md`. Validate with
-   `python3 docs/contracts/validate.py` if you added an example, or by
-   eye against `$defs.taskPacket`. `capability` required at change+.
-   Anchors, not file bodies.
-4. **Do the work** only on `constraints.paths`.
-5. **Commit-on-red** as in `act-io.md`. Persistence ≠ acceptance.
-6. **Focused verify** once. Classify with the closed set. `baseline-red`
-   completes; do not fix the baseline.
-7. **Write the result.** Groups: `topology`, `members`, `member_results`.
-   Hash: `python3 plugins/intention/scripts/content-hash.py <result>`.
-   Distill: `python3 plugins/intention/scripts/distill-result.py <result>`
-   — conductor reads that face; `raw_ref` keeps the full report.
-   Persist at the isolation boundary (`docs/contracts/dispatch.md`).
-8. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
+3. **Write the packet** to the path in `act-io.md`. Lint:
+   `python3 plugins/intention/scripts/conductor.py lint-packet <packet>`.
+   `capability` required at change+. Anchors, not file bodies. Never a
+   commit exemption.
+4. **Isolate** if the worker should not share the main tree:
+   `conductor.py isolate --node <id>`. Optional. Disjoint nodes may
+   stay on HEAD.
+5. **Do the work** only on `constraints.paths` (in the worktree if
+   isolated). Workers edit and stop.
+6. **Persist** as conductor: `conductor.py persist --paths … -m …`
+   (`--worktree` when isolated). Persistence ≠ acceptance.
+7. **Focused verify** once. Distill. Classify with
+   `conductor.py classify <result>`. `repair` parks the implicated
+   branch (`conductor.py implicated --node <id>`) and keeps unrelated
+   dispatchable nodes moving. `baseline-red` completes.
+8. **Write the result** after persist. Hash + distill. Conductor reads
+   the face; `raw_ref` keeps the full report.
+9. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
    when the change's owed work has landed; `intend` if surprise splits
    a new node.
 

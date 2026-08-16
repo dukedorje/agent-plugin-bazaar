@@ -591,7 +591,10 @@ I0  this document (commander’s intent)
  ├── D2  add-dispatch-density                    [instrument · folded 2026-08-15]
  │     density · surface · consult · distilled
  │     six-role tree; persist-at-boundary
- │     next: add-act-conductor → add-act-runners
+ │
+ ├── D3  add-act-conductor                       [change · folded 2026-08-16]
+ │     disjoint ready-set; isolate; conductor persist; classify
+ │     next: add-act-runners (bazaar-aw7)
  │
  ├── T1  taskmaster.dev                          [unparked 2026-08-15]
  │     ready-set as a product — nodes, assignments, evidence

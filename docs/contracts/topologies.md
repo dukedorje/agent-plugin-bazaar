@@ -134,7 +134,7 @@ This is PENDING → ACTIVE. The human is a member, not an external exception.
 |---|---|
 | Members | 1 `conductor` + 1+ `worker` |
 | Parallel | workers yes, on the ready-set the conductor exposes |
-| Write-set | workers: declared paths only, commit-on-red, never `git add -A`. Conductor: the graph write door (checkboxes, beads, reduce), never workers' source paths |
+| Write-set | workers: declared paths only, never `git add -A`. Conductor persists and owns the graph write door (beads, reduce), never workers' source paths |
 | Packet | workers receive an **inlined** packet (goal, anchors, acceptance, paths, density, surface). Never “go read the plan.” Conductor receives the group packet |
 | Reduce | conductor signs after persist + distilled faces + the graph update |
 | Disposition | conductor's classification of **distilled** worker results (same failure classes). Open `raw_ref` only to investigate |

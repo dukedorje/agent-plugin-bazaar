@@ -18,6 +18,7 @@ disagree, the contract wins.
 | Learnings | `docs/LEARNINGS.md` |
 | Why it is shaped this way | `ARCHITECTURE.md` |
 | Harness matrix | `plugins/intention/references/harness.md` |
+| Conductor ready-set / persist | `plugins/intention/scripts/conductor.py` |
 
 ## Verb boundaries
 

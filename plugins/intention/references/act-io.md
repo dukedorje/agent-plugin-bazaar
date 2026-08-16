@@ -17,20 +17,38 @@ groups/<id>/reduced.json
 JSON must validate against `docs/contracts/agent-surface.schema.json`.
 Examples live in `docs/contracts/examples/`.
 
-## Commit-on-red
-
-If you edited, before every return (green, red, blocked):
+## Conductor
 
 ```bash
-git add -- <only the paths in constraints.paths that you touched>
-git commit --only -m "<conventional message>" -- <those same paths>
+python3 plugins/intention/scripts/conductor.py ready
+python3 plugins/intention/scripts/conductor.py lint-packet <packet.json>
+python3 plugins/intention/scripts/conductor.py isolate --node <id>
+python3 plugins/intention/scripts/conductor.py persist --paths <p> [<p> ...] -m "<msg>"
+python3 plugins/intention/scripts/conductor.py classify <result.json>
+python3 plugins/intention/scripts/conductor.py implicated --node <id>
+```
+
+`ready` is beads (or `--inventory`) minus closed/parked, minus nodes
+whose paths overlap an `in_progress` write-set. Overlap → `deferred`.
+Independent ready nodes stay `dispatchable`.
+
+## Persist
+
+The conductor of the isolation boundary commits. Workers edit
+`constraints.paths` and stop.
+
+```bash
+python3 plugins/intention/scripts/conductor.py persist --paths <only touched declared paths> -m "<conventional message>"
+# isolated:
+python3 plugins/intention/scripts/conductor.py persist --worktree .worktrees/<id> --paths … -m "…"
 ```
 
 Never `git add -A`, `.`, or a directory. Never `commit -a`.
 `commit` in the result is `{sha, paths}` or `null` (null only if
-`artifacts` is empty).
+`artifacts` is empty). Signed result is written after persist.
 
 Do not push unless you are the conductor and the user expects it.
+Do not put “do not commit” in the packet. `do_not: ["push"]` is fine.
 
 ## Focused verify
 
@@ -89,13 +107,6 @@ python3 plugins/intention/scripts/distill-result.py <result.json>
 ```
 
 Full report stays at `raw_ref`. Open it only to investigate.
-
-## Persist
-
-Isolation MAY be a worktree. Inside it, **this conductor commits**.
-Workers edit `constraints.paths` and stop. Do not put “do not commit”
-in the packet. A cloud/VM worker that is the top of its own tree
-persists itself. Signed result is written after persist.
 
 ## Claim is advisory
 
