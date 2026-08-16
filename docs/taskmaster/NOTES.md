@@ -76,6 +76,19 @@ date-stamp when it dies.
     `sudo` strips the sourced release env, so source `/etc/mjolnir/env`
     *inside* the privileged shell or rpc fails `:noconnection`.
 
+- **`graph.ts` went stale within hours and the site lied.** On 2026-08-16
+  it still showed `bazaar-lgr.3` as open after it was closed, so the page
+  put finished work at the top of READY in signal colour and hid
+  `bazaar-lgr.4` — genuinely startable — under WAITING. Corrected by
+  hand, which is exactly the problem. **The one job is "what can I
+  start"; a hand-synced graph cannot do that job.** Wire it to `bd` or
+  drop the footer claim that it is this project's real work.
+- **Dev-mode CSS goes stale under HMR.** A pushed `.css`/`<style>` change
+  can be live in the SSR HTML and in the source while the browser still
+  computes the old values — reloading, cache-busting and `cache:'reload'`
+  all fail to fix it. `systemctl restart taskmaster-dev` does. Verify
+  visual changes after a restart, not just a reload, or you will chase a
+  cascade bug that does not exist.
 - **Cutting an app over to a new VM takes TWO steps.**
   `Mjolnir.Deploy.Registry.put/2` updates the record and `mj domain ls`
   will happily show the new backend, but the gateway keeps serving the
