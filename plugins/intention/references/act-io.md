@@ -61,3 +61,31 @@ Writes `signature.content_hash` (`sha256:` + hex) over the result with
 
 Give them the packet path or inline JSON. Never `/act`, `/intend`, or
 `/meta-execute`.
+
+## Work ladder (assign)
+
+Route by **task shape**, not by habit. Explicit human pick always wins.
+
+| Shape | Default worker |
+|---|---|
+| Bounded mechanical edits | cheapest pooled backend |
+| Multi-step implementation | Grok when the conductor is Claude; else the host’s strong worker |
+| Architecture / instrument / sensitive | human-gate + this harness |
+| Needs vision, slash, or tight back-and-forth | stay native |
+
+Foreign harnesses get a **packet**, never a slash command. Do not vendor
+MetaDev’s 40-command surface or `planctl/`.
+
+## Claim is advisory
+
+`bd assign` / `bd update --status in_progress` records who has the node.
+A claim **never** blocks dispatch. Two writers collide on
+`constraints.paths`, not on a second tracker.
+
+Do not copy `planctl` (markdown plans + `~/.cache` SQLite). Beads are
+the graph. `.omc/` is off.
+
+## Verify before close
+
+Focused `acceptance.command` must run **before** `bd close` or flipping
+an owed checkbox. Self-check does not promote.
