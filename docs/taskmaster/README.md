@@ -12,6 +12,7 @@ agent surface.
 |---|---|---|
 | [INTENT.md](INTENT.md) | Commander’s intent | Outcome, non-goals, constraints change |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Decisions + open questions | A choice survived Orient |
+| [RELATED.md](RELATED.md) | Weave of peer intentions | A cross-repo landing appears or dies |
 | [NOTES.md](NOTES.md) | Speculative | Doubts, hops, “we’ll probably…” |
 
 **Do not** put speculation in `LEARNINGS.md` (that file is hard-won fact).

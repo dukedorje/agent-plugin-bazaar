@@ -590,7 +590,7 @@ I0  this document (commander’s intent)
  │
  ├── T1  taskmaster.dev                          [unparked 2026-08-15]
  │     ready-set as a product — nodes, assignments, evidence
- │     notes: docs/taskmaster/ (intent · architecture · speculative)
+ │     notes: docs/taskmaster/ (intent · architecture · related weave · speculative)
  │     next: activate add-taskmaster-host; not built
  │
  └── P1  park, do not build                      [parked]

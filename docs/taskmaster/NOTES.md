@@ -16,9 +16,10 @@ date-stamp when it dies.
 - **Dogfood the methodology** — splitting Taskmaster’s own work should
   look like using Taskmaster. First useful slice is a hosted ready-set
   (nodes + assignments + evidence), not a generic ticket tracker.
-- **Playground** — first site attempt is on Mjolnir box
-  `0a0fa094-252f-47b7-b348-6e4624eac9ef` (512 MiB). Node is not
-  installed. May need `--memory 2048` before SvelteKit will install.
+- **Playground** — first site is Mjolnir box
+  `0a0fa094-252f-47b7-b348-6e4624eac9ef` (512 MiB), **dev server**,
+  one SQLite file. Snapshot deploy later. May need `--memory 2048`
+  before `bun install` / Playwright.
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.
@@ -30,3 +31,5 @@ date-stamp when it dies.
   now. Vitest already pulled Playwright — that is the agent-facing
   surface. Storybook is a human component workshop; add later from a
   machine that has npm, or not at all. 512 MiB will not hold Chromium.
+- **Fong Meta Env** — our copy’s path is not on this machine under a
+  name I could find. Bead `bazaar-zmq`. Paste the path into RELATED.md.
