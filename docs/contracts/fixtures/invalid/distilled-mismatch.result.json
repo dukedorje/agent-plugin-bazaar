@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "id": "res-distilled-mismatch",
+  "packet_id": "pkt-density-lean",
+  "signer": {
+    "id": "agt-grok-lean",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-lean" }
+  },
+  "artifacts": [
+    { "path": "docs/contracts/dispatch.md", "role": "vocabulary" }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py",
+    "exit_code": 0
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "ddddddd",
+    "paths": ["docs/contracts/dispatch.md"]
+  },
+  "summary": "This result lies: distilled says task-red.",
+  "distilled": {
+    "disposition": "task-red",
+    "summary": "This result lies: distilled says task-red.",
+    "verify_command": "python3 docs/contracts/validate.py",
+    "verify_exit": 1,
+    "commit_sha": "ddddddd",
+    "changed_files": ["docs/contracts/dispatch.md"],
+    "blockers": ["mismatch"],
+    "raw_ref": "docs/contracts/fixtures/invalid/distilled-mismatch.result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-lean",
+    "content_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "signed_at": "2026-08-15T00:00:00Z"
+  }
+}

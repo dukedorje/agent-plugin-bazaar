@@ -23,7 +23,16 @@
       "enum": ["human", "model", "group", "vm"]
     },
     "harness": {
-      "enum": ["grok", "claude", "codex", "hermes", "prime", "human", "none"]
+      "enum": ["grok", "claude", "codex", "hermes", "prime", "human", "none", "other"]
+    },
+    "density": {
+      "enum": ["lean", "standard", "explicit"]
+    },
+    "surface": {
+      "enum": ["skill-host", "packet-only"]
+    },
+    "consultPurpose": {
+      "enum": ["explain", "replan"]
     },
     "loadClass": {
       "enum": ["structure-clear", "intention-critical", "ambiguous"]
@@ -65,6 +74,7 @@
         "kind": { "$ref": "#/$defs/kind" },
         "display_name": { "type": "string", "minLength": 1 },
         "harness": { "$ref": "#/$defs/harness" },
+        "interface": { "type": "string", "minLength": 1, "maxLength": 64 },
         "signing": { "$ref": "#/$defs/signingOnIdentity" }
       }
     },
@@ -201,6 +211,46 @@
         }
       }
     },
+    "consult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed"],
+      "properties": {
+        "allowed": { "type": "boolean" },
+        "purposes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/consultPurpose" }
+        },
+        "ceiling": { "$ref": "#/$defs/density" }
+      }
+    },
+    "distilled": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disposition",
+        "summary",
+        "changed_files",
+        "blockers",
+        "raw_ref"
+      ],
+      "properties": {
+        "disposition": { "$ref": "#/$defs/disposition" },
+        "summary": { "type": "string", "minLength": 1 },
+        "verify_command": { "type": ["string", "null"] },
+        "verify_exit": { "type": ["integer", "null"] },
+        "commit_sha": { "type": ["string", "null"] },
+        "changed_files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "blockers": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "raw_ref": { "type": "string", "minLength": 1 }
+      }
+    },
     "artifact": {
       "type": "object",
       "additionalProperties": false,
@@ -284,6 +334,9 @@
         "constraints": { "$ref": "#/$defs/constraints" },
         "load_class": { "$ref": "#/$defs/loadClass" },
         "rigor": { "$ref": "#/$defs/rigor" },
+        "density": { "$ref": "#/$defs/density" },
+        "surface": { "$ref": "#/$defs/surface" },
+        "consult": { "$ref": "#/$defs/consult" },
         "inherited": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
@@ -345,7 +398,9 @@
           "anyOf": [{ "$ref": "#/$defs/commit" }, { "type": "null" }]
         },
         "summary": { "type": "string", "minLength": 1 },
-        "signature": { "$ref": "#/$defs/signatureOnResult" }
+        "signature": { "$ref": "#/$defs/signatureOnResult" },
+        "distilled": { "$ref": "#/$defs/distilled" },
+        "raw_ref": { "type": "string", "minLength": 1 }
       },
       "allOf": [
         {

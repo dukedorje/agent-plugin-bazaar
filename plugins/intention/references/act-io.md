@@ -65,16 +65,37 @@ Give them the packet path or inline JSON. Never `/act`, `/intend`, or
 ## Work ladder (assign)
 
 Route by **task shape**, not by habit. Explicit human pick always wins.
+Density, surface, consult, and persist: `docs/contracts/dispatch.md`.
 
-| Shape | Default worker |
-|---|---|
-| Bounded mechanical edits | cheapest pooled backend |
-| Multi-step implementation | Grok when the conductor is Claude; else the host’s strong worker |
-| Architecture / instrument / sensitive | human-gate + this harness |
-| Needs vision, slash, or tight back-and-forth | stay native |
+| Shape | Default worker | Default density |
+|---|---|---|
+| Bounded mechanical edits | cheapest pooled backend | `explicit` |
+| Multi-step implementation | Grok when the conductor is Claude; else the host’s strong worker | `standard` |
+| Architecture / instrument / sensitive | human-gate + this harness | `standard` or deeper |
+| Needs vision, slash, or tight back-and-forth | stay native | `lean` if the native model is strong |
+
+A weaker worker may consult a stronger one for `explain` / `replan`.
+That is not a write handoff.
 
 Foreign harnesses get a **packet**, never a slash command. Do not vendor
 MetaDev’s 40-command surface or `planctl/`.
+
+## Distilled face
+
+The conductor reads the distilled face, not the transcript.
+
+```bash
+python3 plugins/intention/scripts/distill-result.py <result.json>
+```
+
+Full report stays at `raw_ref`. Open it only to investigate.
+
+## Persist
+
+Isolation MAY be a worktree. Inside it, **this conductor commits**.
+Workers edit `constraints.paths` and stop. Do not put “do not commit”
+in the packet. A cloud/VM worker that is the top of its own tree
+persists itself. Signed result is written after persist.
 
 ## Claim is advisory
 

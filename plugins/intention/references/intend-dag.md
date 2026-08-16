@@ -22,8 +22,11 @@ chat. Durable copy is beads. Do not write `.omc/`. SHALLs do not live here.
 - Capability: <kebab> | (omit at vibe/brief)
 - Rigor: …
 - Depends on: <node-ids or none>
-- Group: solo | weave | fork | human-gate | …
-- Members / roles: …
+- Group: solo | weave | fork | human-gate | conductor-workers | …
+- Members / roles: conductor · worker · consultant · reader · human · group
+- Density: lean | standard | explicit   ← inverse of assignee capability; see docs/contracts/dispatch.md
+- Surface: skill-host | packet-only
+- Consult: default explain+replan to a stronger model; write stays here
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 

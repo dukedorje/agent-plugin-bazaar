@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "id": "res-density-lean",
+  "packet_id": "pkt-density-lean",
+  "signer": {
+    "id": "agt-grok-lean",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-lean" }
+  },
+  "artifacts": [
+    { "path": "docs/contracts/dispatch.md", "role": "vocabulary" }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py",
+    "exit_code": 0,
+    "output_tail": "pass"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "ccccccc",
+    "paths": ["docs/contracts/dispatch.md"]
+  },
+  "summary": "Dispatch vocabulary landed. Conductor reads distilled.",
+  "raw_ref": "docs/contracts/examples/density-lean.result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Dispatch vocabulary landed. Conductor reads distilled.",
+    "verify_command": "python3 docs/contracts/validate.py",
+    "verify_exit": 0,
+    "commit_sha": "ccccccc",
+    "changed_files": ["docs/contracts/dispatch.md"],
+    "blockers": [],
+    "raw_ref": "docs/contracts/examples/density-lean.result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-lean",
+    "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "signed_at": "2026-08-15T00:00:00Z"
+  }
+}

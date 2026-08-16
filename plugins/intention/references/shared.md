@@ -10,6 +10,7 @@ disagree, the contract wins.
 |---|---|
 | Laws, packet, result | `docs/contracts/agent-surface.md` |
 | Schema | `docs/contracts/agent-surface.schema.json` |
+| Density, roles, persist, distilled | `docs/contracts/dispatch.md` |
 | Identity / signing | `docs/contracts/identity.md` |
 | Topologies | `docs/contracts/topologies.md` |
 | Living-spec rules | `openspec/specs/living-specs/spec.md` |

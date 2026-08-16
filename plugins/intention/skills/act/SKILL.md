@@ -31,6 +31,9 @@ The packet is the only interface. Schema:
    completes; do not fix the baseline.
 7. **Write the result.** Groups: `topology`, `members`, `member_results`.
    Hash: `python3 plugins/intention/scripts/content-hash.py <result>`.
+   Distill: `python3 plugins/intention/scripts/distill-result.py <result>`
+   — conductor reads that face; `raw_ref` keeps the full report.
+   Persist at the isolation boundary (`docs/contracts/dispatch.md`).
 8. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
    when the change's owed work has landed; `intend` if surprise splits
    a new node.

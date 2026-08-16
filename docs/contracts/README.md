@@ -5,6 +5,7 @@ Machine and human shape of the agent surface (C1). A group is an agent.
 | File | Face |
 |---|---|
 | [agent-surface.md](agent-surface.md) | The reduce — laws, packet, result, agent record |
+| [dispatch.md](dispatch.md) | Conductor tree: six roles, density, surface, consult, persist, distilled |
 | [identity.md](identity.md) | Who signs; stand-in now, key later |
 | [topologies.md](topologies.md) | Wirings, not ceremonies |
 | [agent-surface.schema.json](agent-surface.schema.json) | JSON Schema 1.0 (`$defs`) |

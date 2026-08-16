@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Focused verify for the agent surface: examples validate; invalid fixtures reject.
 
-Also enforces two laws the schema cannot say:
+Also enforces laws the schema cannot say:
 - artifacts non-empty ⇒ commit is an object
 - pass + evidence.kind none ⇒ packet acceptance must be none (checked when
   a sibling *.packet.json exists for the same stem)
+- distilled.disposition, if present, matches result.disposition
 """
 
 from __future__ import annotations
@@ -42,6 +43,15 @@ def check_result_laws(data: dict, path: Path, errors: list[str]) -> None:
         errors.append(f"{path.name}: artifacts present but commit is null")
     if not artifacts and commit is not None:
         errors.append(f"{path.name}: commit set but artifacts empty")
+    distilled = data.get("distilled")
+    if isinstance(distilled, dict):
+        if distilled.get("disposition") != data.get("disposition"):
+            errors.append(
+                f"{path.name}: distilled.disposition "
+                f"{distilled.get('disposition')!r} != {data.get('disposition')!r}"
+            )
+        if not distilled.get("raw_ref"):
+            errors.append(f"{path.name}: distilled.raw_ref missing")
 
 
 def main() -> int:
@@ -89,7 +99,13 @@ def main() -> int:
             except jsonschema.ValidationError:
                 checked += 1
                 continue
-            errors.append(f"invalid/{name}: expected schema rejection, accepted")
+            law_errors: list[str] = []
+            if kind == "result":
+                check_result_laws(data, path, law_errors)
+            if law_errors:
+                checked += 1
+                continue
+            errors.append(f"invalid/{name}: expected schema or law rejection, accepted")
             checked += 1
 
     if errors:

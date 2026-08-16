@@ -45,10 +45,14 @@ validates.
    implementation detail of that agent.
 3. **Anchors, not bodies.** Packets name symbols and invariants. Workers
    re-anchor on live HEAD. Pasted file bodies go stale mid-flight.
-4. **Commit-on-red.** An agent that edits and returns without committing the
-   exact paths it touched has created unowned state. Verification gates
-   *done*, not persistence. No backend exemption in the packet; fix the
-   executor or route elsewhere.
+4. **Persist at the isolation boundary.** Edits must be committed before
+   that boundary returns. The top-level agent of the boundary persists
+   (conductor of a worktree; a cloud/VM agent of its own tree). Workers
+   inside `conductor-workers` edit declared paths and stop when the
+   conductor can commit. The signed result is written after persist.
+   `artifacts` + `commit: null` is still invalid. Never put “do not
+   commit” in a packet — fix the executor or route. See
+   [`dispatch.md`](dispatch.md).
 5. **Focused verify is the acceptance surface.** The packet names one
    command, one journey, or one contrast. Suites are not task gates.
 6. **Failure classes are closed.** `pass` · `task-red` · `baseline-red` ·
@@ -90,7 +94,10 @@ The only thing an assignee is given.
 | `rigor` | yes | `vibe` · `brief` · `change` · `architecture` · `instrument` |
 | `inherited` | no | Facts from LEARNINGS.md that touch this node |
 | `input_result_id` | no | Prior member result (pipeline, review-pair reader, some weaves) |
-| `role` | no | Member role inside a group (`builder`, `reader`, `conductor`, …) |
+| `role` | no | Member role inside a group (`builder`, `reader`, `conductor`, `worker`, `consultant`, …) |
+| `density` | no | `lean` · `standard` · `explicit`. Absent = `standard`. Inverse of assignee capability. [`dispatch.md`](dispatch.md) |
+| `surface` | no | `skill-host` · `packet-only`. Absent = unspecified; `act` sets it on new packets |
+| `consult` | no | Weaker assignee may call a stronger model for `explain` / `replan`. Not a write handoff |
 
 ### Acceptance
 
@@ -137,6 +144,8 @@ Exactly one `kind`:
 | `commit` | yes | `{sha, paths}` or `null` |
 | `summary` | yes | One short paragraph. The deliverable, not “done” |
 | `signature` | yes | See identity.md |
+| `distilled` | no | Conductor-facing face. Same disposition as this result |
+| `raw_ref` | no | Path or URI of the full report. Distiller fills this |
 
 `commit` is `null` **only** when `artifacts` is empty (pure read, or blocked
 before edit). Any non-empty write-set requires a sha and the exact paths.
@@ -178,9 +187,9 @@ is one operation.
 
 ## Assignment (who gets the packet)
 
-A function of `shape × load class × permission`, not who is logged in.
-The work ladder (cheap model / Grok / Codex / native / human / group) lives
-with `act`. This contract only requires:
+A function of `shape × load class × permission × density`, not who is
+logged in. Roles, density, surface, consult, and persist-at-boundary
+live in [`dispatch.md`](dispatch.md). This contract only requires:
 
 - `ambiguous` → a human is in the assignee group
 - `sensitive` → a human is in the assignee group
@@ -199,6 +208,8 @@ required field is an architecture amendment (new ADR, this file updated, old
 text kept as trail).
 
 C2 requires `capability` at `change` · `architecture` · `instrument`. Additive. The id is the directory name under `openspec/specs/`.
+
+D2 (`add-dispatch-density`) adds optional `density`, `surface`, `consult` on the packet; optional `distilled` / `raw_ref` on the result; optional `interface` on identity; `harness: other`. Additive. Absent fields stay valid.
 
 ---
 

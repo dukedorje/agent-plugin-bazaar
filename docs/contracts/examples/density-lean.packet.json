@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-density-lean",
+  "node_id": "nod-density-lean",
+  "capability": "agent-surface",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-lean",
+    "kind": "model",
+    "harness": "grok",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-lean" }
+  },
+  "goal": "A stranger can assign a node using density and a distilled face.",
+  "anchors": [
+    {
+      "symbol": "docs/contracts/dispatch.md",
+      "invariant": "Capability order is the inverse of density"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 docs/contracts/validate.py"
+  },
+  "out_of_scope": [
+    { "item": "Conductor scheduler", "tracked_as": "add-act-conductor" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["docs/contracts/"],
+    "do_not": ["deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "instrument",
+  "density": "lean",
+  "surface": "skill-host",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain", "replan"],
+    "ceiling": "lean"
+  }
+}

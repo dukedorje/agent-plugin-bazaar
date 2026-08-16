@@ -13,7 +13,8 @@ without a schema break.
 | `id` | yes | Stable kebab-case id. Unique within the project. Never recycled. |
 | `kind` | yes | `human` · `model` · `group` · `vm` |
 | `display_name` | no | For humans. Not used in hashes. |
-| `harness` | yes | `grok` · `claude` · `codex` · `hermes` · `prime` · `human` · `none` |
+| `harness` | yes | `grok` · `claude` · `codex` · `hermes` · `prime` · `human` · `none` · `other` |
+| `interface` | no | Forward label for a host not in `harness` (`cursor-cloud`, `devin`, `mjolnir-vm`, …) |
 | `signing` | yes | See below |
 
 `kind: group` means this identity *is* an agent whose interior is a topology.
@@ -21,7 +22,9 @@ There is no separate “group id” type.
 
 `kind: vm` is reserved for Mjolnir. Do not emit it until a VM is the signer.
 `harness: none` is for groups (the group has no harness; members do) and for
-purely on-disk stand-ins.
+purely on-disk stand-ins. `harness: other` plus `interface` is how a
+cloud or future host appears without a schema bump. Do not add a `kind`
+per vendor.
 
 ### Id prefixes (convention, not enforced)
 

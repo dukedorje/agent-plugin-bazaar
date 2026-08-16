@@ -588,6 +588,11 @@ I0  this document (commander’s intent)
  │     park-sprint-plan — default loop is intend
  │     landed: openspec/specs/default-loop
  │
+ ├── D2  add-dispatch-density                    [instrument · folded 2026-08-15]
+ │     density · surface · consult · distilled
+ │     six-role tree; persist-at-boundary
+ │     next: add-act-conductor → add-act-runners
+ │
  ├── T1  taskmaster.dev                          [unparked 2026-08-15]
  │     ready-set as a product — nodes, assignments, evidence
  │     notes: docs/taskmaster/ (intent · architecture · related weave · speculative)

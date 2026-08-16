@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-density-explicit",
+  "node_id": "nod-density-explicit",
+  "capability": "agent-surface",
+  "requester": {
+    "id": "agt-conductor",
+    "kind": "group",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-conductor" }
+  },
+  "assignee": {
+    "id": "agt-flash",
+    "kind": "model",
+    "harness": "other",
+    "interface": "deepseek-flash",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-flash" }
+  },
+  "goal": "Rename the helper and keep the public signature.",
+  "anchors": [
+    {
+      "symbol": "plugins/intention/scripts/distill-result.py:from_result",
+      "invariant": "Public function names stay stable"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/distill-result.py docs/contracts/examples/density-lean.result.json"
+  },
+  "out_of_scope": [
+    { "item": "Rewrite the distiller", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["plugins/intention/scripts/distill-result.py"],
+    "do_not": ["deploy", "push"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "explicit",
+  "surface": "packet-only",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain"],
+    "ceiling": "lean"
+  }
+}

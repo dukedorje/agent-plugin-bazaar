@@ -114,6 +114,38 @@ the acceptance without becoming Path A.
 
 ---
 
+### ADR-004: Dispatch density, distilled face, persist-at-boundary ✅
+
+**Status:** Accepted 2026-08-15 (`add-dispatch-density` activated).
+**Blast:** instrument. Changes what a packet says and what a conductor
+is allowed to look at.
+
+**Decision.** Packets carry optional `density` (`lean` · `standard` ·
+`explicit`), `surface` (`skill-host` · `packet-only`), and `consult`.
+Results may carry a `distilled` face and `raw_ref`. Identity may carry
+`interface` for hosts not in the closed `harness` enum (`harness: other`).
+
+Capability order is the **inverse** of density: strongest workers get
+the leanest packets. A weaker assignee may consult a stronger model for
+`explain` / `replan`; that is not a write handoff.
+
+Edits persist at the **isolation boundary**. Worktrees are allowed.
+Inside one, the conductor commits; workers edit and stop. A cloud/VM
+agent that is the top of its tree persists itself. Never put “do not
+commit” in a packet.
+
+The conductor reads distilled, not the transcript. Vocabulary:
+[`docs/contracts/dispatch.md`](docs/contracts/dispatch.md).
+
+**Why.** Fan-out dies when the main thread absorbs six novels, when a
+Flash worker is given a lean packet with no warning, or when a
+git-exemption in prose is pasted onto the wrong backend.
+
+**Not decided here.** Ready-set scheduling, worktree creation, spawn
+runners (`add-act-conductor`, `add-act-runners`).
+
+---
+
 ### Pointer: Taskmaster host (T1, not an ADR yet)
 
 Product intent, stack sketch, and speculative notes live in

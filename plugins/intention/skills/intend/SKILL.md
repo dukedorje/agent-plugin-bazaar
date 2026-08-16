@@ -28,7 +28,9 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `direct fix` and stop. No DAG, no change.
 4. **Split.** One acceptance surface per node. Landing is `add-<id>`,
    `brief`, or `direct fix`. Edges are real dependencies (B cannot start
-   until A committed a usable artifact).
+   until A committed a usable artifact). Set `density` from
+   `docs/contracts/dispatch.md` (capability order is the inverse of
+   depth). Blast raises density, never lowers it.
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).
