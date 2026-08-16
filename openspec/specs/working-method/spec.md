@@ -1,11 +1,12 @@
 # working-method
 
-What **is** built: the method is named; the loop and the seven objects
-are living. Folded from `extract-working-method`, `add-working-loop`,
-and `add-working-objects` on 2026-08-16.
+What **is** built: the method is named; loop, objects, and split
+rules are living. Folded from `extract-working-method`,
+`add-working-loop`, `add-working-objects`, and `add-working-split`
+on 2026-08-16.
 
-Split rules still live in `docs/from-intention-to-running.md` until
-`add-working-split` folds. That is not living truth yet (ADR-002).
+The founding novel is still the long explainer until
+`update-founding-doc-pointer` folds.
 
 ## Purpose
 
@@ -98,3 +99,51 @@ durable truth.
 - WHEN an agent cites it as current behavior
 - THEN that citation is wrong; living spec, ADR, or LEARNINGS.md is
   the residue
+
+### Requirement: A node has one acceptance surface
+
+A work node SHALL have one acceptance surface. If a scenario cannot
+fail today and pass after, it SHALL NOT be a change.
+
+#### Scenario: No failing scenario
+
+- GIVEN a proposed change with no scenario that fails today
+- WHEN `change` runs
+- THEN it is refused or rewritten as a document, spike, or vibe-fix
+
+### Requirement: Edges are real dependencies
+
+B SHALL NOT start until A has committed a usable artifact with the
+evidence its contract requires. Readiness SHALL come from artifacts.
+Ceremony SHALL record that fact, not create it.
+
+#### Scenario: Checkbox without artifact
+
+- GIVEN A's checkbox is marked done and no commit exists
+- WHEN B asks if it is ready
+- THEN B is not ready
+
+### Requirement: Governing prose names landings
+
+Reasoning documents SHALL name verb-led change-ids when they imply
+work. They SHALL NOT become a second requirements store.
+
+#### Scenario: Novel implies a SHALL
+
+- GIVEN `docs/from-intention-to-running.md` states a rule as if it
+  were required
+- WHEN that rule is not in `openspec/specs/`
+- THEN it is not living truth until a named change folds it
+
+### Requirement: Checkboxes are owed work
+
+A checkbox SHALL be work **this** node or change owes. Handoffs,
+findings, and out-of-scope SHALL be bullets. A checkbox that can
+never close SHALL NOT appear in the ready-set.
+
+#### Scenario: Handoff as a checkbox
+
+- GIVEN a tasks.md box that says "tell Duke" or "fold later"
+- WHEN hygiene or `ready` runs
+- THEN that box is not owed work and must be a bullet, or the change
+  is not honest
