@@ -12,7 +12,7 @@ keep the bead.
 | Taskmaster SaaS | Mjolnir guest `/taskmaster-web`; notes in this folder | Public ready-set: nodes, assignments, evidence | epic `bazaar-lgr` |
 | Intention kernel | `~/work/Projects/AI/agent-plugin-bazaar` | Packets, verbs, living specs. App consumes, does not fork | living `openspec/specs/` |
 | MetaCoding | `~/work/WorldTree/MetaCoding` | Code graph + **category theory on ASTs** (`ctkr`). Ingestion source | `bazaar-ja7` |
-| Phong’s MetaDev (our copy) | `~/work/Projects/AI/meta-dev` | Finish our local work. Steal into `act`: ladder + advisory claim + verify-before-close. Do **not** copy `planctl/`. Overlay parked (ADR-003) | `bazaar-zmq` · `bazaar-act` |
+| Phong’s MetaDev (our copy) | `~/work/Projects/AI/meta-dev` | **Bazaar-side steal landed 2026-08-16** (`bazaar-act`, then take/mutex + `claude -p`). Do **not** copy `planctl/`. Overlay still parked (ADR-003 / F1-path-b). Remaining MetaDev work is *there*, not here | `bazaar-zmq` closed · `bazaar-act` closed |
 | Mjolnir | `~/work/IdentiKey/mjolnir` | Boxes, PTY, later snapshot deploys. Action surface | P1 still parked as a *product*; we *use* the fabric |
 | IdentiKey login | IdentiKey team | Auth UI. Hop when it blocks; do not fake an IdP | note in ARCHITECTURE |
 | Dreamballs / G Brain | see `bazaar-ja7` | Ingestion candidates with MetaCoding | `bazaar-ja7` |
