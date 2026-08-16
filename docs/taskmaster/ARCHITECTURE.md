@@ -31,10 +31,10 @@ becomes kernel truth. Amend in place when a decision flips.
 
 ## Open
 
-1. **Guest port** — Mjolnir’s SvelteKit plan defaults to `3000`. Confirm when the daemon starts.
-2. **DNS / gateway** — who cuts `taskmaster.dev` (or a subdomain) to this VM’s route. Host-side; not a guest edit.
-3. **Phong’s MetaDev** — checkout is `~/work/Projects/AI/meta-dev` (`ansonphong/meta-dev` plus local planctl/grok-execute work). Bead `bazaar-zmq`. Overlay still parked.
-4. **IdentiKey login** — hop when auth blocks.
+1. **Phong’s MetaDev** — checkout is `~/work/Projects/AI/meta-dev`. Bead `bazaar-zmq`. Overlay still parked.
+2. **IdentiKey login** — hop when auth blocks.
+3. **Live graph** — `graph.ts` is seeded. Promote to a bead when the node/edge table lands.
+4. **Guest port / DNS** — settled 2026-08-16: `:5173`, `taskmaster.dev` routed + LE cert. `bazaar-lgr.2` note is stale.
 
 ## Shape we are not deciding here
 

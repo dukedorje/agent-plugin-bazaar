@@ -17,5 +17,7 @@ keep the bead.
 | IdentiKey login | IdentiKey team | Auth UI. Hop when it blocks; do not fake an IdP | note in ARCHITECTURE |
 | Dreamballs / G Brain | see `bazaar-ja7` | Ingestion candidates with MetaCoding | `bazaar-ja7` |
 
+High-level DAG (ghosts + beads): [GHOST.md](GHOST.md).
+
 Do not invent a fourth knowledge store before sitting on `bazaar-ja7`.
 Do not let the SaaS absorb MetaDev — link it here, work it there.
