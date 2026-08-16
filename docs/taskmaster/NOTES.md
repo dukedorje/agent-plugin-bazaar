@@ -21,7 +21,19 @@ date-stamp when it dies.
   tmux `taskmaster`. HTTP `http://taskmaster.dev` is routed (gateway
   apex + Deploy.Registry app `taskmaster`). HTTPS needs a Cloudflare
   Origin CA PEM — Mjolnir ACME is worldtree-only. Same pattern as
-  `startupcentral.build`.
+  `startupcentral.build`. Corrections 2026-08-16: `vite dev` is
+  systemd unit `taskmaster-dev.service` (logs via `journalctl -u`),
+  **not** tmux — no tmux server is running. `bun` is not on PATH for
+  `mj exec`; it lives at
+  `/root/.local/share/mise/installs/bun/1.3.14/bin/bun`. HTTPS on
+  `taskmaster.dev` is in fact answering, so the Origin CA note above
+  may be stale — re-check before spending on it.
+- **`/taskmaster-web` had no version control** until 2026-08-16;
+  `git init` + first commit `8a8ee6f` now exist **on the guest only**.
+  There is no remote. Until one is named, the sole copy of the app
+  lives on a dev VM — snapshot or push before trusting it.
+- **`$lib` is gone** in this SvelteKit (next). It errors at import
+  analysis: use `#lib` (the `imports` map in `package.json`).
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.

@@ -16,6 +16,9 @@ becomes kernel truth. Amend in place when a decision flips.
 | Objects = node, assignment, evidence | Founding host table. Groups assign and split |
 | **Actions run on the Mjolnir guest** | An agent of a given type can do whatever that guest can do |
 | **See the UI from inside the guest** | Playwright / Chromium on the same VM. Storybook is not the action surface |
+| **Design system: "Terminal Graphite"** (2026-08-16) | One ground `#0c0c0d`, one paper `#f4f1ea`, one signal `#c8ff2f`. The signal means READY and nothing else — lime on anything not startable is a bug. Space Grotesk + JetBrains Mono, self-hosted variable (no CDN, no CLS). Tokens live in `src/routes/layout.css` |
+| **The ready set is the page** | `/` is the ready set, not a marketing hero. Load choreography *is* the computation: all nodes arrive lit, then blocked/landed recede and only what is startable keeps the signal |
+| **Ready is derived, never stored** | `src/lib/graph.ts` computes ready from edges (`open ∧ all deps landed`). That invariant is the seam the node/edge schema inherits — do not add a `ready` column |
 | **Related intentions are a weave** | MetaCoding + Phong’s MetaDev + this kernel are peers. [RELATED.md](RELATED.md) |
 
 ## Later (not this landing)
