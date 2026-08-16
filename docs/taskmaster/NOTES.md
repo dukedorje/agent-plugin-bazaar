@@ -28,10 +28,31 @@ date-stamp when it dies.
   `/root/.local/share/mise/installs/bun/1.3.14/bin/bun`. HTTPS on
   `taskmaster.dev` is in fact answering, so the Origin CA note above
   may be stale — re-check before spending on it.
-- **`/taskmaster-web` had no version control** until 2026-08-16;
-  `git init` + first commit `8a8ee6f` now exist **on the guest only**.
-  There is no remote. Until one is named, the sole copy of the app
-  lives on a dev VM — snapshot or push before trusting it.
+- **`/taskmaster-web` had no version control** until 2026-08-16.
+  `git init` + first commit `8a8ee6f`, now pushed. **Resolved same
+  day** — the app is no longer single-copy on a dev VM.
+- **Forgejo remote (2026-08-16)** — `mimir.worldtree.network` is a
+  Forgejo 15.0.0 co-located on the Mjolnir host (same box: public IP
+  `45.76.77.97`, `forgejo web` on `:3000` behind the gateway).
+  Remote is
+  `ssh://git@mimir.worldtree.network/Taskmaster/taskmaster-web.git`,
+  default branch `main`, repo **private**.
+  - Forgejo has `START_SSH_SERVER = false`, so git-over-SSH rides the
+    **host's own sshd on :22** as user `git`. Nothing special to open;
+    the guest already had DNS + TCP 22 out.
+  - The guest authenticates with a **repo-scoped deploy key** (write),
+    not a key on Duke's account: `/root/.ssh/id_ed25519`, fingerprint
+    `SHA256:xIpz3h4zqoabOnqzvL5/zv3xuChcg+1DmFAn1Nlw7DA`. Revoke by
+    deleting deploy key id 2 on the repo; that severs this one guest
+    and nothing else.
+  - `known_hosts` is **pinned** to the host key read off the server
+    (`SHA256:jrKhuXPC+bdbvV7Pico35yzPBN8ViNF50+UKwVyQ7HA`), so pushes
+    run with `StrictHostKeyChecking=yes` rather than TOFU.
+  - Adding a deploy key needs an admin API token; mint with
+    `forgejo admin user generate-access-token -u duke --raw`, POST to
+    `/api/v1/repos/{owner}/{repo}/keys`, then delete the row from
+    `access_token` in `/var/lib/forgejo/data/forgejo.db` (sqlite3).
+    Do not leave the token behind.
 - **`$lib` is gone** in this SvelteKit (next). It errors at import
   analysis: use `#lib` (the `imports` map in `package.json`).
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
