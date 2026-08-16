@@ -5,6 +5,8 @@ Ready-set = inbound deps closed AND write-set disjoint from in-flight.
 Isolation MAY be a worktree; this process persists. Workers edit.
 
   python3 plugins/intention/scripts/conductor.py ready [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py take --node ID [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py release --node ID [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py lint-packet FILE
   python3 plugins/intention/scripts/conductor.py isolate --node ID
   python3 plugins/intention/scripts/conductor.py persist --paths P [P ...] -m MSG
@@ -16,12 +18,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import posixpath
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+LADDER_PATH = Path(__file__).resolve().parents[1] / "references" / "ladder.json"
 
 CLOSED = {"closed", "done"}
 IN_FLIGHT = {"in_progress"}
@@ -96,7 +102,24 @@ def ready_ids(nodes: list[dict]) -> tuple[list[str], list[str]]:
     return ready, blocked
 
 
-def dispatch(nodes: list[dict]) -> dict[str, list[dict]]:
+def resolve_max_inflight(cli: int | None = None, ladder: Path | None = None) -> int:
+    if cli is not None:
+        return max(0, int(cli))
+    env = os.environ.get("ACT_MAX_INFLIGHT")
+    if env:
+        return max(0, int(env))
+    path = ladder or LADDER_PATH
+    if path.is_file():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            data = {}
+        if isinstance(data, dict) and data.get("max_inflight") is not None:
+            return max(0, int(data["max_inflight"]))
+    return 2
+
+
+def dispatch(nodes: list[dict], max_inflight: int | None = None) -> dict[str, Any]:
     by_id = index_nodes(nodes)
     ready, blocked = ready_ids(nodes)
     flying_paths: list[str] = []
@@ -110,23 +133,33 @@ def dispatch(nodes: list[dict]) -> dict[str, list[dict]]:
         elif st in PARKED:
             parked.append({"id": nid, "reason": st})
 
+    cap = resolve_max_inflight(max_inflight)
+    free = max(0, cap - len(in_flight_ids))
+    remaining = free
     dispatchable: list[dict] = []
     deferred: list[dict] = []
+    capped: list[dict] = []
     for nid in ready:
         hits = paths_overlap(_paths(by_id[nid]), flying_paths)
         row = {"id": nid, "paths": _paths(by_id[nid])}
         if hits:
             row["reason"] = "paths overlap in-flight: " + ", ".join(hits)
             deferred.append(row)
+        elif remaining <= 0:
+            row["reason"] = f"max_inflight {cap} reached"
+            capped.append(row)
         else:
             dispatchable.append(row)
+            remaining -= 1
 
     return {
         "dispatchable": dispatchable,
         "deferred": deferred,
+        "capped": capped,
         "blocked": [{"id": i} for i in blocked],
-        "in_flight": [{"id": i} for i in in_flight_ids],
+        "in_flight": [{"id": i, "holder": by_id[i].get("holder")} for i in in_flight_ids],
         "parked": parked,
+        "slots": {"max": cap, "in_flight": len(in_flight_ids), "free": free},
     }
 
 
@@ -224,6 +257,7 @@ def beads_to_nodes(issues: list[dict], repo: Path) -> list[dict]:
                 "status": str(issue.get("status") or "open"),
                 "deps": deps,
                 "paths": load_packet_paths(repo, nid),
+                "holder": issue.get("assignee") or issue.get("owner"),
             }
         )
     return nodes
@@ -256,14 +290,111 @@ def safe_node(node_id: str) -> str:
     return cleaned or "node"
 
 
+def write_inventory(path: Path, nodes: list[dict]) -> None:
+    path.write_text(json.dumps({"nodes": nodes}, indent=2) + "\n", encoding="utf-8")
+
+
+def lease_path(repo: Path, node_id: str) -> Path:
+    return repo / ".spawns" / "leases" / f"{safe_node(node_id)}.json"
+
+
+def write_lease(repo: Path, node: dict, holder: str) -> Path:
+    dest = lease_path(repo, str(node["id"]))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "node_id": node["id"],
+        "holder": holder,
+        "paths": _paths(node),
+        "taken_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "status": "held",
+    }
+    dest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return dest
+
+
+def take_node(nodes: list[dict], node_id: str, holder: str, max_inflight: int | None = None) -> dict:
+    state = dispatch(nodes, max_inflight=max_inflight)
+    by_id = index_nodes(nodes)
+    node = by_id.get(node_id)
+    if node is None:
+        raise SystemExit(f"unknown node {node_id}")
+    if _status(node) in IN_FLIGHT:
+        raise SystemExit(f"already taken: {node_id} holder={node.get('holder')}")
+    if node_id not in {r["id"] for r in state["dispatchable"]}:
+        raise SystemExit(f"not dispatchable: {node_id}")
+    node["status"] = "in_progress"
+    node["holder"] = holder
+    return node
+
+
+def release_node(nodes: list[dict], node_id: str) -> dict:
+    by_id = index_nodes(nodes)
+    node = by_id.get(node_id)
+    if node is None:
+        raise SystemExit(f"unknown node {node_id}")
+    node["status"] = "open"
+    node["holder"] = None
+    return node
+
+
 def cmd_ready(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if args.inventory:
         nodes = load_inventory(args.inventory)
     else:
         nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-    result = dispatch(nodes)
+    result = dispatch(nodes, max_inflight=args.max_inflight)
     print(json.dumps(result, indent=2))
+    return 0
+
+
+def cmd_take(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    holder = args.holder or os.environ.get("ACT_HOLDER") or "conductor"
+    if args.inventory:
+        nodes = load_inventory(args.inventory)
+        node = take_node(nodes, args.node, holder, max_inflight=args.max_inflight)
+        write_inventory(args.inventory, nodes)
+    else:
+        nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
+        node = take_node(nodes, args.node, holder, max_inflight=args.max_inflight)
+        try:
+            subprocess.check_call(
+                [
+                    "bd",
+                    "update",
+                    args.node,
+                    "--claim",
+                    "-a",
+                    holder,
+                    "-s",
+                    "in_progress",
+                ]
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"bd claim failed: {exc}") from exc
+    lease = write_lease(repo, node, holder)
+    print(json.dumps({"taken": node["id"], "holder": holder, "paths": _paths(node), "lease": str(lease)}, indent=2))
+    return 0
+
+
+def cmd_release(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if args.inventory:
+        nodes = load_inventory(args.inventory)
+        release_node(nodes, args.node)
+        write_inventory(args.inventory, nodes)
+    else:
+        try:
+            subprocess.check_call(["bd", "update", args.node, "-s", "open", "-a", ""])
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise SystemExit(f"bd release failed: {exc}") from exc
+    lease = lease_path(repo, args.node)
+    if lease.is_file():
+        data = json.loads(lease.read_text(encoding="utf-8"))
+        data["status"] = "released"
+        lease.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"released": args.node}, indent=2))
     return 0
 
 
@@ -357,7 +488,20 @@ def main() -> int:
 
     ready = sub.add_parser("ready", help="dispatchable ready-set")
     ready.add_argument("--inventory", type=Path)
+    ready.add_argument("--max-inflight", type=int)
     ready.set_defaults(func=cmd_ready)
+
+    take = sub.add_parser("take", help="mutex: mark node in_progress")
+    take.add_argument("--node", required=True)
+    take.add_argument("--holder")
+    take.add_argument("--inventory", type=Path)
+    take.add_argument("--max-inflight", type=int)
+    take.set_defaults(func=cmd_take)
+
+    rel = sub.add_parser("release", help="drop the node mutex")
+    rel.add_argument("--node", required=True)
+    rel.add_argument("--inventory", type=Path)
+    rel.set_defaults(func=cmd_release)
 
     lint = sub.add_parser("lint-packet", help="reject commit exemptions")
     lint.add_argument("packet", type=Path)

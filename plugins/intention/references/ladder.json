@@ -3,6 +3,7 @@
   "subscriptions": ["grok", "claude-code"],
   "notes": "Claude Code has the high usage limits. Codex Sol is named for when a second-family review is available; it is not subscribed today.",
   "human_override": "always wins",
+  "max_inflight": 2,
   "routes": [
     {
       "id": "sonnet-5",

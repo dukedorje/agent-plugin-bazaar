@@ -42,7 +42,7 @@ def test_ready() -> None:
     with tempfile.TemporaryDirectory() as td:
         path = Path(td) / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        proc = run(["ready", "--inventory", str(path)])
+        proc = run(["ready", "--inventory", str(path), "--max-inflight", "8"])
         expect(proc.returncode == 0, proc.stderr)
         data = json.loads(proc.stdout)
         disp = {row["id"] for row in data["dispatchable"]}
@@ -136,6 +136,75 @@ def git(repo: Path, extra: list[str]) -> str:
     return subprocess.check_output(["git", "-C", str(repo), *extra], text=True)
 
 
+def test_cap_and_take() -> None:
+    inv = {
+        "nodes": [
+            {"id": "hold", "status": "in_progress", "deps": [], "paths": ["src/hold.py"], "holder": "a"},
+            {"id": "x", "status": "open", "deps": [], "paths": ["docs/x.md"]},
+            {"id": "y", "status": "open", "deps": [], "paths": ["docs/y.md"]},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        path = root / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        capped = run(
+            ["--repo", str(root), "ready", "--inventory", str(path), "--max-inflight", "1"]
+        )
+        expect(capped.returncode == 0, capped.stderr)
+        data = json.loads(capped.stdout)
+        expect(data["dispatchable"] == [], data)
+        expect({r["id"] for r in data["capped"]} == {"x", "y"}, data)
+        expect(data["slots"]["free"] == 0, data)
+
+        room = run(
+            ["--repo", str(root), "ready", "--inventory", str(path), "--max-inflight", "3"]
+        )
+        expect({r["id"] for r in json.loads(room.stdout)["dispatchable"]} == {"x", "y"}, room.stdout)
+
+        first = run(
+            [
+                "--repo",
+                str(root),
+                "take",
+                "--node",
+                "x",
+                "--holder",
+                "sonnet-5",
+                "--inventory",
+                str(path),
+                "--max-inflight",
+                "3",
+            ]
+        )
+        expect(first.returncode == 0, first.stderr)
+        taken = json.loads(first.stdout)
+        expect(taken["taken"] == "x", taken)
+        expect(Path(taken["lease"]).is_file(), taken)
+        again = run(
+            [
+                "--repo",
+                str(root),
+                "take",
+                "--node",
+                "x",
+                "--holder",
+                "opus-5",
+                "--inventory",
+                str(path),
+                "--max-inflight",
+                "3",
+            ]
+        )
+        expect(again.returncode != 0, "second take should fail")
+        expect("already taken" in again.stderr, again.stderr)
+        rel = run(["--repo", str(root), "release", "--node", "x", "--inventory", str(path)])
+        expect(rel.returncode == 0, rel.stderr)
+        after = json.loads(path.read_text(encoding="utf-8"))
+        node = next(n for n in after["nodes"] if n["id"] == "x")
+        expect(node["status"] == "open", node)
+
+
 def test_isolate_persist() -> None:
     with tempfile.TemporaryDirectory() as td:
         repo = Path(td) / "repo"
@@ -185,6 +254,7 @@ def main() -> int:
         test_implicated,
         test_lint,
         test_classify,
+        test_cap_and_take,
         test_isolate_persist,
     ]
     failed = 0

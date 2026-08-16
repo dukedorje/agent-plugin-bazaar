@@ -606,6 +606,9 @@ I0  this document (commander’s intent)
  ├── D5  update-act-ladder                       [change · folded 2026-08-16]
  │     CC coding pool; Grok arch reader; ladder.json
  │
+ ├── D6  add-claude-spawn                        [change · folded 2026-08-16]
+ │     live claude -p; take mutex; max_inflight
+ │
  ├── T1  taskmaster.dev                          [unparked 2026-08-15]
  │     ready-set as a product — nodes, assignments, evidence
  │     notes: docs/taskmaster/ (intent · architecture · related weave · speculative)

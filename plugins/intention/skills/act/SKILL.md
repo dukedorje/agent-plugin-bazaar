@@ -18,36 +18,40 @@ The packet is the only interface. Schema:
 ## Procedure
 
 1. **Admit.** `python3 plugins/intention/scripts/conductor.py ready`.
-   Dispatch only a `dispatchable` id. Overlap is deferred, not a stop.
-   If rigor is `change` / `architecture` / `instrument` and this is a
-   write, the change banner is `ACTIVE BUILD` (or the human just
-   activated it).
+   Dispatch only a `dispatchable` id. Overlap is deferred. `capped`
+   means `max_inflight` is full (`ACT_MAX_INFLIGHT` or
+   `ladder.json`). If rigor is `change` / `architecture` /
+   `instrument` and this is a write, the change banner is
+   `ACTIVE BUILD` (or the human just activated it).
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
    Complementary → weave. Architecture → review-pair with a Grok
    reader. Foreign harness → packet file, never a slash command.
-3. **Write the packet** to the path in `act-io.md`. Lint:
+3. **Take.** `conductor.py take --node <id> --holder <route-id>`.
+   That is the mutex: `in_progress` + lease + write-set. A second
+   take fails. Do not spawn without a take.
+4. **Write the packet** to the path in `act-io.md`. Lint:
    `python3 plugins/intention/scripts/conductor.py lint-packet <packet>`.
    `capability` required at change+. Anchors, not file bodies. Never a
    commit exemption.
-4. **Isolate** if the worker should not share the main tree:
+5. **Isolate** if the worker should not share the main tree:
    `conductor.py isolate --node <id>`. Optional. Disjoint nodes may
    stay on HEAD.
-5. **Stage** a unique prompt: `spawn.py stage --packet <packet>`.
-   Empty/missing prompt is a hard fail. Packet-only / cloud: never a
-   slash command. Launch with `spawn.py run --spec <spec>` (or hand
-   the prompt file to a native skill-host). Stall → `infra-red`.
-6. **Do the work** only on `constraints.paths` (in the worktree if
+6. **Stage** a unique prompt: `spawn.py stage --packet <packet>`.
+   Empty/missing prompt is a hard fail. Launch Claude Code with
+   `spawn.py run --adapter claude` (live `claude -p`). Stall →
+   `infra-red`. On infra-red / park, `release` the node.
+7. **Do the work** only on `constraints.paths` (in the worktree if
    isolated). Workers edit and stop.
-7. **Persist** as conductor: `conductor.py persist --paths … -m …`
+8. **Persist** as conductor: `conductor.py persist --paths … -m …`
    (`--worktree` when isolated). Persistence ≠ acceptance.
-8. **Focused verify** once. Distill. Classify with
+9. **Focused verify** once. Distill. Classify with
    `conductor.py classify <result>`. `repair` parks the implicated
    branch (`conductor.py implicated --node <id>`) and keeps unrelated
    dispatchable nodes moving. `baseline-red` completes. Spawn stall
    is already `infra-red` — retry once, then report.
-9. **Write the result** after persist. Hash + distill. Conductor reads
-   the face; `raw_ref` keeps the full report.
-10. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
+10. **Write the result** after persist. Hash + distill. Conductor reads
+    the face; `raw_ref` keeps the full report.
+11. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
     when the change's owed work has landed; `intend` if surprise splits
     a new node.
 

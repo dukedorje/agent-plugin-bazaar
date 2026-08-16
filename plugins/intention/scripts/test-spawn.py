@@ -116,6 +116,41 @@ def test_stall_infra_red() -> None:
         expect("stall" in face["blockers"], face)
 
 
+def test_claude_adapter_argv() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        staged = run(["stage", "--packet", str(PACKET), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr)
+        spec_path = json.loads(staged.stdout)["spec_file"]
+        spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
+        spec["interface"] = "sonnet-5"
+        spec["surface"] = "packet-only"
+        Path(spec_path).write_text(json.dumps(spec), encoding="utf-8")
+        fake = root / "fake-claude"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump(sys.argv, open({str(argv_log)!r},'w'))\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec_path, "--adapter", "claude"],
+            text=True,
+            capture_output=True,
+            env={**dict(**subprocess.os.environ), "CLAUDE_BIN": str(fake)},
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        argv = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect("-p" in argv, argv)
+        expect("--model" in argv and "claude-sonnet-5" in argv, argv)
+        expect("--effort" in argv and "low" in argv, argv)
+        expect("--disable-slash-commands" in argv, argv)
+        face = json.loads(env_run.stdout)
+        expect(face["disposition"] == "pass", face)
+
+
 def test_empty_packet_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         empty = Path(td) / "empty.json"
@@ -130,6 +165,7 @@ def main() -> int:
         test_empty_prompt_fails,
         test_missing_prompt_fails,
         test_stall_infra_red,
+        test_claude_adapter_argv,
         test_empty_packet_fails,
     ]
     failed = 0

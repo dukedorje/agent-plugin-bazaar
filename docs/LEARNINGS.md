@@ -16,3 +16,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — `bd list` hides closed issues, so a closed blocker looks missing and the child stays blocked. Conductor live ready uses `bd list --all`. (`plugins/intention/scripts/conductor.py`)
 - 2026-08-16 — Shared scratchpads and empty prompts fail closed: unique `.spawns/` dir, atomic write, hard-fail before Popen. Stall is infra-red, not task-red. (`plugins/intention/scripts/spawn.py`)
 - 2026-08-16 — Assignment is `ladder.json`, not a second table in act-io. CC is the coding pool; Grok is the architecture reader; Sol stays `available: false` until subscribed. (`plugins/intention/references/ladder.json`)
+- 2026-08-16 — Mutex is `take` (in_progress + lease + write-set). Fan-out cap is `max_inflight` / `ACT_MAX_INFLIGHT`. Live workers are `claude -p`. (`conductor.py` · `spawn.py`)

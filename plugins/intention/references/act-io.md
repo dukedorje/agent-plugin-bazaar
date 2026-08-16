@@ -21,6 +21,8 @@ Examples live in `docs/contracts/examples/`.
 
 ```bash
 python3 plugins/intention/scripts/conductor.py ready
+python3 plugins/intention/scripts/conductor.py take --node <id> --holder sonnet-5
+python3 plugins/intention/scripts/conductor.py release --node <id>
 python3 plugins/intention/scripts/conductor.py lint-packet <packet.json>
 python3 plugins/intention/scripts/conductor.py isolate --node <id>
 python3 plugins/intention/scripts/conductor.py persist --paths <p> [<p> ...] -m "<msg>"
@@ -91,6 +93,11 @@ hosts keep `packet-only` and set `assignee.interface`. The exec
 adapter is for tests and local commands. Live Codex/Grok/Claude CLIs
 are not vendored — the spec is the handoff.
 
+`run --adapter claude` is live `claude -p`. Model/effort come from
+the spec interface (`sonnet-5` → `claude-sonnet-5` / low,
+`opus-5` / medium, `fable-5` / high). Packet-only adds
+`--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
+
 `run` with no adapter prints `infra-red` / `adapter-none` and does
 not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
@@ -134,14 +141,26 @@ python3 plugins/intention/scripts/distill-result.py <result.json>
 
 Full report stays at `raw_ref`. Open it only to investigate.
 
-## Claim is advisory
+## Mutex (take)
 
-`bd assign` / `bd update --status in_progress` records who has the node.
-A claim **never** blocks dispatch. Two writers collide on
-`constraints.paths`, not on a second tracker.
+`take` is how a worker gets the node. It is a **write-set mutex**,
+not a second tracker:
 
-Do not copy `planctl` (markdown plans + `~/.cache` SQLite). Beads are
-the graph. `.omc/` is off.
+1. Node must be `dispatchable` (deps closed, paths not overlapping
+   in-flight, a free slot).
+2. Status becomes `in_progress`. Holder is recorded.
+3. A lease is written to `.spawns/leases/<node>.json`.
+4. Live beads: `bd update --claim`.
+5. A second take of the same node fails.
+6. Overlapping paths on other nodes become `deferred`.
+7. `release` returns the node to `open` and frees the slot.
+
+How many background workers: `ladder.json` `max_inflight` (default
+2). Override with `ACT_MAX_INFLIGHT=4` or
+`conductor.py ready --max-inflight 4`. When full, extra ready nodes
+are `capped`.
+
+Do not copy `planctl`. Beads are the graph. `.omc/` is off.
 
 ## Verify before close
 

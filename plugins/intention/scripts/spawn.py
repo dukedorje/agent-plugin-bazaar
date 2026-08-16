@@ -22,13 +22,30 @@ from typing import Any
 
 SLASH = ("/act", "/intend", "/meta-execute")
 
+CLAUDE_MODELS = {
+    "sonnet-5": "claude-sonnet-5",
+    "opus-5": "claude-opus-5",
+    "fable-5": "claude-fable-5",
+    "claude-sonnet-5": "claude-sonnet-5",
+    "claude-opus-5": "claude-opus-5",
+    "claude-fable-5": "claude-fable-5",
+}
 
-def atomic_write(path: Path, text: str) -> None:
+CLAUDE_EFFORT = {
+    "sonnet-5": "low",
+    "opus-5": "medium",
+    "fable-5": "high",
+}
+
+
+def atomic_write(path: Path, text: str, allow_empty: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text, encoding="utf-8")
     os.replace(tmp, path)
-    if not path.is_file() or path.stat().st_size == 0:
+    if not path.is_file():
+        raise SystemExit(f"write failed: {path}")
+    if not allow_empty and path.stat().st_size == 0:
         raise SystemExit(f"prompt write failed or empty: {path}")
 
 
@@ -124,21 +141,49 @@ def cmd_stage(args: argparse.Namespace) -> int:
     body = prompt_body(packet, packet_copy, surface)
     assert_prompt_ok(body, surface)
     atomic_write(prompt, body)
+    harness = harness_of(packet)
     spec = {
         "node_id": node,
         "surface": surface,
         "interface": interface_of(packet),
-        "harness": harness_of(packet),
+        "harness": harness,
         "packet_file": str(packet_copy),
         "prompt_file": str(prompt),
         "timeout_sec": args.timeout,
-        "adapter": "none",
+        "adapter": "claude" if harness == "claude" else "none",
         "argv": [],
     }
     spec_path = dest / "spec.json"
     atomic_write(spec_path, json.dumps(spec, indent=2) + "\n")
     print(json.dumps({**spec, "dir": str(dest), "spec_file": str(spec_path)}, indent=2))
     return 0
+
+
+def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
+    interface = str(spec.get("interface") or "sonnet-5")
+    model = CLAUDE_MODELS.get(interface, interface)
+    effort = str(spec.get("effort") or CLAUDE_EFFORT.get(interface) or "medium")
+    prompt = read_prompt(prompt_file)
+    binary = os.environ.get("CLAUDE_BIN", "claude")
+    argv = [
+        binary,
+        "-p",
+        prompt,
+        "--model",
+        model,
+        "--effort",
+        effort,
+        "--output-format",
+        "json",
+        "--permission-mode",
+        "bypassPermissions",
+        "--allowedTools",
+        "Read,Write,Edit,Bash,Grep,Glob",
+        "--no-session-persistence",
+    ]
+    if spec.get("surface") != "skill-host":
+        argv.append("--disable-slash-commands")
+    return argv
 
 
 def read_prompt(path: Path) -> str:
@@ -172,22 +217,24 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     adapter = args.adapter or spec.get("adapter") or "none"
     argv = list(args.argv or spec.get("argv") or [])
+    if adapter == "claude":
+        argv = claude_argv(spec, prompt_file)
     if adapter == "none" and not argv:
         face = infra_face(
             "No adapter configured. Spec is ready for a packet-only host.",
             "adapter-none",
             str(raw_path),
         )
-        atomic_write(raw_path, "not launched\n")
+        atomic_write(raw_path, "not launched\n", allow_empty=True)
         atomic_write(face_path, json.dumps(face, indent=2) + "\n")
         print(json.dumps(face, indent=2))
         return 0
 
-    if adapter not in {"exec", "none"}:
+    if adapter not in {"exec", "claude", "none"}:
         print(f"unknown adapter: {adapter}", file=sys.stderr)
         return 2
     if not argv:
-        print("exec adapter requires argv", file=sys.stderr)
+        print("adapter requires argv", file=sys.stderr)
         return 2
 
     env = os.environ.copy()
@@ -229,7 +276,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                 proc.kill()
             out, _ = proc.communicate()
         raw = (out or "") + "\n[stall: timeout_sec={timeout}]\n".format(timeout=timeout_sec)
-        atomic_write(raw_path, raw)
+        atomic_write(raw_path, raw, allow_empty=True)
         face = infra_face(
             f"Worker stalled after {timeout_sec}s. Not a code failure.",
             "stall",
@@ -239,7 +286,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(face, indent=2))
         return 0
 
-    atomic_write(raw_path, out or "")
+    atomic_write(raw_path, out or "", allow_empty=True)
     face = {
         "disposition": "pass" if proc.returncode == 0 else "infra-red",
         "summary": "adapter exited",
