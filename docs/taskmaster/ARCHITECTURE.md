@@ -1,56 +1,10 @@
-# Taskmaster — architecture sketch
+# Moved
 
-**Hosting is decided; the stack is not kernel truth.** ADR-006
-(accepted 2026-08-16, `add-taskmaster-host`) names Taskmaster a sibling
-host of the agent surface and sends the stack here on purpose — a
-framework or adapter that flips should not move a living spec.
+The Taskmaster architecture sketch lives in the sibling app:
 
-So this file is the sketch of record, not a second kernel. Amend in
-place when a decision flips; nothing here carries a `SHALL`, and no row
-below belongs in `openspec/specs/`. The rows that *are* kernel — the
-surface it consumes, ready-derived-never-stored — live in ADR-006 and
-the `taskmaster` delta.
+`~/work/Taskmaster/taskmaster-web/docs/ARCHITECTURE.md`
 
-## Decided now (2026-08-16)
+This marketplace file is a hop so ADR-006 and the `taskmaster` living
+spec still resolve in one step. Amend the sketch there, not here.
 
-| Decision | Why |
-|---|---|
-| Sibling app, not this marketplace — **now ADR-006** | Kernel stays packets + skills; the SaaS is a host |
-| **One VM, one process, one SQLite file** | First site. Backup / sync / multi-instance are later |
-| **SvelteKit + adapter-node, dev mode** | Logged-in SaaS needs a server. SSG is off the table for v0. Dev server is an explicit exception to Mjolnir’s “deploy is a snapshot” discipline |
-| **Daemon on a guest port → taskmaster.dev** | Hand-route the playground box (same honesty as Zine today). Snapshot cutover when we have a build |
-| SQLite through **libsql**, local file | No write pool yet. One writer is the process |
-| Login via **IdentiKey** | Same identity fabric. Do not invent a second IdP |
-| Objects = node, assignment, evidence | Founding host table. Groups assign and split |
-| **Actions run on the Mjolnir guest** | An agent of a given type can do whatever that guest can do |
-| **See the UI from inside the guest** | Playwright / Chromium on the same VM. Storybook is not the action surface |
-| **Secrets: Mjolnir `secrets_mode: :managed`** (2026-08-16) | The guest holds no plaintext secret at rest. LUKS `secrets.luks` on the rootfs (ciphertext), rendered to `/run/mjolnir/secrets.env` on tmpfs at boot, auto-sourced into every `exec`. Passphrase is host-escrowed by vm_id. **Fixed at spawn — there is no in-place conversion**, so changing it means respawning |
-| **Deploy key lives only in RAM** | The Forgejo key is a base64 secret; a `.path`-triggered unit pipes it into `ssh-agent` at boot. It never becomes a file on any filesystem. `git` reaches it via `core.sshCommand=/usr/local/bin/tm-git-ssh` |
-| **Taskmaster is Paper; Graphite is earned** (2026-08-16) | Paper is the identity and the default for everyone. Graphite is the *operator's view*, unlocked by landing a node — a progression, not a preference. The lock is enforced in `resolveLook()`, so a forged `look=graphite` cookie renders Paper. `earnsGraphite()` is one line, ready for a per-viewer evidence count; until identity lands nobody earns it and `/look/unlock` is a plainly-labelled dev hatch to delete |
-| **Two looks, one design** (2026-08-16) | A look is a token swap on `<html data-look>` — layout, markup and choreography are shared. `graphite` (dark, Space Grotesk, lime) and `paper` (cream, Instrument Serif, oxidized orange). Contrast ramps and display metrics are **per-look**: Graphite's tertiary alpha over cream fails AA, and a serif at a grotesk's tracking is an accident. Adding a third look means adding one token block |
-| **Look is a cookie, resolved server-side** | Read in `hooks.server.ts`, stamped onto `<html>` during SSR. localStorage cannot do this without a flash of the wrong look. The switch is a real form POST that works with JS off; JS just skips the round trip |
-| **Design system: "Terminal Graphite"** (2026-08-16) | One ground `#0c0c0d`, one paper `#f4f1ea`, one signal `#c8ff2f`. The signal means READY and nothing else — lime on anything not startable is a bug. Space Grotesk + JetBrains Mono, self-hosted variable (no CDN, no CLS). Tokens live in `src/routes/layout.css` |
-| **The ready set is the page** | `/` is the ready set, not a marketing hero. Load choreography *is* the computation: all nodes arrive lit, then blocked/landed recede and only what is startable keeps the signal |
-| **Ready is derived, never stored** — **kernel, ADR-006** | `src/lib/graph.ts` computes ready from edges (`open ∧ all deps landed`). That invariant is the seam the node/edge schema inherits — do not add a `ready` column |
-| **Related intentions are a weave** | MetaCoding + Phong’s MetaDev + this kernel are peers. [RELATED.md](RELATED.md) |
-
-## Later (not this landing)
-
-- libsql adapter onto Mjolnir storage / LUKS volumes
-- Serialized write pool and cross-instance SQLite
-- Immutable release snapshots (`Deploy.Runtime` / `mj deploy`)
-- Storybook
-- More than 512 MiB / a browser snapshot (needed before Chromium)
-
-## Open
-
-1. **Phong’s MetaDev** — checkout is `~/work/Projects/AI/meta-dev`. Bead `bazaar-zmq`. Overlay still parked.
-2. **IdentiKey login** — hop when auth blocks.
-3. **Live graph** — `graph.ts` is seeded. Promote to a bead when the node/edge table lands.
-4. **Guest port / DNS** — settled 2026-08-16: `:5173`, `taskmaster.dev` routed + LE cert. `bazaar-lgr.2` note is stale.
-
-## Shape we are not deciding here
-
-Packet schema, topologies, fold rules — already ADR-001 / living specs.
-Taskmaster **consumes** those. If the SaaS needs a different object
-model, change the founding doc, do not grow a parallel kernel.
+Folder index: [README.md](README.md).

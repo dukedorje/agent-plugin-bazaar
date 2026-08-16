@@ -194,8 +194,9 @@ that surface, the way Claude, Grok, and Codex host the verbs.
   into any host, so a `ready` column is a defect wherever it appears.
 - **Stack is not kernel truth.** Framework, adapter, database driver,
   look tokens, one-VM/one-process/one-SQLite-file, Mjolnir managed
-  secrets — all recorded in
-  [`docs/taskmaster/ARCHITECTURE.md`](docs/taskmaster/ARCHITECTURE.md)
+  secrets — all recorded in the sibling app
+  (`~/work/Taskmaster/taskmaster-web/docs/ARCHITECTURE.md`; hop:
+  [`docs/taskmaster/ARCHITECTURE.md`](docs/taskmaster/ARCHITECTURE.md))
   and amended there. They may flip without touching this file.
 - **The living capability `taskmaster` is created by fold, not by this
   ADR.** Until `add-taskmaster-host` folds, `openspec/specs/` gains no
@@ -216,12 +217,13 @@ kernel decision; the stack under the host is not.
 
 **Consequences.**
 
-- `docs/taskmaster/` is the sketch of record. Amend in place; it is
-  reasoning, so it never carries a `SHALL` (ADR-002).
-- The `taskmaster` delta spec is stack-neutral. A reader looking for
+- The sketch of record is `~/work/Taskmaster/taskmaster-web/docs/`.
+  Amend in place; it is reasoning, so it never carries a `SHALL`
+  (ADR-002). This repo keeps a hop at `docs/taskmaster/`.
+- The `taskmaster` living spec is stack-neutral. A reader looking for
   SvelteKit in `openspec/` should find nothing, now or after fold.
 - Taskmaster does not absorb MetaDev or MetaCoding. They are peers in
-  the same weave ([`docs/taskmaster/RELATED.md`](docs/taskmaster/RELATED.md));
+  the same weave (`~/work/Taskmaster/taskmaster-web/docs/RELATED.md`);
   the MetaDev overlay stays parked under ADR-003.
 
 **Not decided here.** IdentiKey login, snapshot deploy, guest port and

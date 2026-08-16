@@ -609,12 +609,12 @@ I0  this document (commander’s intent)
  ├── D6  add-claude-spawn                        [change · folded 2026-08-16]
  │     live claude -p; take mutex; max_inflight
  │
- ├── T1  taskmaster.dev              [host decided 2026-08-16 · not built]
+ ├── T1  taskmaster.dev              [host decided 2026-08-16 · site live]
  │     ready-set as a product — nodes, assignments, evidence
  │     ADR-006: sibling host of the agent surface, not a fork.
- │     Stack lives in docs/taskmaster/, never in openspec/specs/.
- │     notes: docs/taskmaster/ (intent · architecture · related weave · speculative)
- │     next: build the site; capability `taskmaster` lands at fold
+ │     Stack lives in ~/work/Taskmaster/taskmaster-web/docs/, never in openspec/specs/.
+ │     hop: docs/taskmaster/ (this repo)
+ │     next: live graph (T1b); capability `taskmaster` already folded
  │
  └── P1  park, do not build                      [parked]
        Tatastu shipping, intentional.agency,

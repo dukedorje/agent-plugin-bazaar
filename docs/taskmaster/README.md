@@ -1,24 +1,21 @@
-# Taskmaster — how to read these files
+# Taskmaster notes moved
 
-Product notes for `taskmaster.dev`. This folder is **not** living truth.
-Nothing here is a `SHALL`. Living specs stay under `openspec/specs/` after
-a change folds.
+Product notes live in the sibling app (ADR-006), not this marketplace.
 
-These files move with the sibling app repo when that repo exists. Until
-then they live next to the kernel so the host cannot drift from the
-agent surface.
+- Laptop: [`~/work/Taskmaster/taskmaster-web/docs/`](../../../Taskmaster/taskmaster-web/docs/README.md)
+- Guest: `/taskmaster-web/docs/`
+- Remote: `ssh://git@mimir.worldtree.network/Taskmaster/taskmaster-web.git`
 
-| File | Kind | Write when |
-|---|---|---|
-| [INTENT.md](INTENT.md) | Commander’s intent | Outcome, non-goals, constraints change |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Decisions + open questions | A choice survived Orient |
-| [RELATED.md](RELATED.md) | Weave of peer intentions | A cross-repo landing appears or dies |
-| [NOTES.md](NOTES.md) | Speculative | Doubts, hops, “we’ll probably…” |
+| Moved file | New home |
+|---|---|
+| INTENT | `~/work/Taskmaster/taskmaster-web/docs/INTENT.md` |
+| ARCHITECTURE | `~/work/Taskmaster/taskmaster-web/docs/ARCHITECTURE.md` |
+| RELATED | `~/work/Taskmaster/taskmaster-web/docs/RELATED.md` |
+| NOTES | `~/work/Taskmaster/taskmaster-web/docs/NOTES.md` |
+| GHOST | `~/work/Taskmaster/taskmaster-web/docs/GHOST.md` |
 
-**Do not** put speculation in `LEARNINGS.md` (that file is hard-won fact).
-**Do not** put stack choices in this repo’s living specs.
-**Do** amend ARCHITECTURE.md rather than delete when reality diverges.
-**Do** open `add-taskmaster-host` before any kernel SHALL.
+Kernel SHALLs stay here: [ADR-006](../../ARCHITECTURE.md) and
+[`openspec/specs/taskmaster/`](../../openspec/specs/taskmaster/spec.md).
 
-Playground VM (2026-08-15): `0a0fa094-252f-47b7-b348-6e4624eac9ef`,
-shared guest tmux session `taskmaster`.
+The [ARCHITECTURE.md](ARCHITECTURE.md) file in this folder is a hop,
+not the sketch.

@@ -10,7 +10,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — A skills table that lists deleted names is a lie with the same voice as a live spec. Catalogs follow the directories; dropped names stay in CONVENTIONS only. (`CLAUDE.md`)
 - 2026-08-15 — Ready-set is a query over banners + `openspec/parked.md`, not a second tracker. Beads `bd ready` is not used here. (`scripts/ready.py`)
 - 2026-08-15 — Unparking a P1 host is a register edit plus intend, not a verb. Remaining hosts stay parked. (`openspec/parked.md`)
-- 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (`docs/taskmaster/`)
+- 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (moved 2026-08-16 to `~/work/Taskmaster/taskmaster-web/docs/`; hop `docs/taskmaster/`)
 - 2026-08-16 — `.omc/` is disabled here (Claude and Grok). March–July contents were parked sprint-plan and OMC session junk. Tracker is beads. (`AGENTS.md`)
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)
 - 2026-08-16 — `bd list` hides closed issues, so a closed blocker looks missing and the child stays blocked. Conductor live ready uses `bd list --all`. (`plugins/intention/scripts/conductor.py`)

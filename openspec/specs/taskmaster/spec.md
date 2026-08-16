@@ -4,8 +4,9 @@ What **is** built: Taskmaster is a sibling host of the agent surface
 (ADR-006). Folded from `add-taskmaster-host` on 2026-08-16.
 
 This spec is stack-neutral. Framework, adapter, database, process
-topology, and look tokens live in
-[`docs/taskmaster/ARCHITECTURE.md`](../../../docs/taskmaster/ARCHITECTURE.md)
+topology, and look tokens live in the sibling app
+(`~/work/Taskmaster/taskmaster-web/docs/ARCHITECTURE.md`; hop:
+[`docs/taskmaster/ARCHITECTURE.md`](../../../docs/taskmaster/ARCHITECTURE.md))
 and are not requirements here.
 
 ## Purpose
@@ -64,22 +65,25 @@ ready-set as the source of truth.
 Living specs under `openspec/specs/` SHALL NOT contain requirements
 naming Taskmaster's web framework, server adapter, database driver,
 process topology, deployment mode, or visual tokens. Those decisions
-SHALL live in `docs/taskmaster/ARCHITECTURE.md`, which is reasoning and
-therefore carries no `SHALL` (ADR-002). Changing the stack SHALL NOT
-require a living-spec edit.
+SHALL live in the sibling app's architecture sketch
+(`~/work/Taskmaster/taskmaster-web/docs/ARCHITECTURE.md`), which is
+reasoning and therefore carries no `SHALL` (ADR-002). This marketplace
+SHALL keep a hop at `docs/taskmaster/ARCHITECTURE.md`. Changing the
+stack SHALL NOT require a living-spec edit.
 
 #### Scenario: Framework is swapped
 
 - GIVEN Taskmaster changes web framework or server adapter
 - WHEN the change lands
-- THEN `docs/taskmaster/ARCHITECTURE.md` is amended in place
+- THEN the sibling app's `docs/ARCHITECTURE.md` is amended in place
 - AND no file under `openspec/specs/` changes for that reason
 
 #### Scenario: Reader greps the living specs for a framework
 
 - GIVEN a reader searching `openspec/` for Taskmaster's stack
 - WHEN they find nothing
-- THEN they follow ADR-006 to `docs/taskmaster/ARCHITECTURE.md` in one hop
+- THEN they follow ADR-006 to `docs/taskmaster/ARCHITECTURE.md` and
+  from there to the sibling sketch in one hop
 
 ### Requirement: The capability is materialized by fold
 
