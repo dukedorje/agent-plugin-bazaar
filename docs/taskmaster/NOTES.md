@@ -16,10 +16,11 @@ date-stamp when it dies.
 - **Dogfood the methodology** — splitting Taskmaster’s own work should
   look like using Taskmaster. First useful slice is a hosted ready-set
   (nodes + assignments + evidence), not a generic ticket tracker.
-- **Playground** — first site is Mjolnir box
-  `0a0fa094-252f-47b7-b348-6e4624eac9ef` (512 MiB), **dev server**,
-  one SQLite file. Snapshot deploy later. May need `--memory 2048`
-  before `bun install` / Playwright.
+- **Playground** — live site VM is `8a878070-2da0-4f8a-8dc0-776f3e1cf7db`
+  (2048 MiB, snapshot `taskmaster-web-predev`). `vite dev` on `:5173`,
+  tmux `taskmaster`. 512 MiB box `0a0fa094-…` SIGKILL’d vite; still
+  running unless killed. Web:
+  `https://k4csoemcqo1b6s3ho1qm3qfn9jezh34k9rz7iingsm9i1iq9b8qo.vm.worldtree.network`
 - **Information ingestion** — bead `bazaar-ja7`. Sit down on how this
   project ingests knowledge: G Brain, MetaCoding, and/or Dreamballs.
   Do not invent a fourth store first.
