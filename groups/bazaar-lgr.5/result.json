@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-lgr-5",
+  "packet_id": "pkt-bazaar-lgr-5",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "src/lib/graph.ts",
+      "role": "edit"
+    },
+    {
+      "path": "src/lib/graph.snapshot.json",
+      "role": "vendor"
+    },
+    {
+      "path": "src/lib/graph.spec.ts",
+      "role": "test"
+    },
+    {
+      "path": "src/routes/+page.server.ts",
+      "role": "edit"
+    },
+    {
+      "path": "src/routes/+page.svelte",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "cd /Users/dukejones/work/Taskmaster/taskmaster-web && bun run test -- src/lib/graph.spec.ts",
+    "exit_code": 0,
+    "output_tail": "\u2713 |server| src/lib/graph.spec.ts (5 tests) 4ms"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "bb64adb",
+    "paths": [
+      "src/lib/graph.ts",
+      "src/lib/graph.snapshot.json",
+      "src/lib/graph.spec.ts",
+      "src/routes/+page.server.ts",
+      "src/routes/+page.svelte"
+    ]
+  },
+  "summary": "Ready set derives from the dated export. lgr.3 is landed. Age is stated. Bad snapshot paints empty.",
+  "raw_ref": "groups/bazaar-lgr.5/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Ready set derives from the dated export. lgr.3 is landed. Age is stated. Bad snapshot paints empty.",
+    "verify_command": "cd /Users/dukejones/work/Taskmaster/taskmaster-web && bun run test -- src/lib/graph.spec.ts",
+    "verify_exit": 0,
+    "commit_sha": "bb64adb",
+    "changed_files": [
+      "src/lib/graph.ts",
+      "src/lib/graph.snapshot.json",
+      "src/lib/graph.spec.ts",
+      "src/routes/+page.server.ts",
+      "src/routes/+page.svelte"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-lgr.5/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:dd6ae8b413f450c082528a62ccedfe38f953f3d083ca1b23689fc5ac80aef1f7",
+    "signed_at": "2026-08-17T01:08:00Z"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-5",
+  "node_id": "bazaar-lgr.5",
+  "capability": "taskmaster",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "taskmaster.dev derives the ready set from the dated export at src/lib/graph.snapshot.json. generated_at is stated. A bad snapshot paints empty and says why. No GRAPH seed.",
+  "non_goals": [
+    "Footer humility copy",
+    "Eyebrow 'nodes resolved' wording",
+    "Live kernel endpoint or bd on the guest",
+    "Changing export-graph.py",
+    "New drizzle tables"
+  ],
+  "anchors": [
+    {
+      "symbol": "src/lib/graph.ts",
+      "invariant": "readySet derives open ∧ all needs landed; no default seed"
+    },
+    {
+      "symbol": "openspec/changes/archive/2026-08-16-add-taskmaster-edge-source/design.md",
+      "invariant": "Snapshot shape: generated_at required, no ready field, needs ⊆ nodes"
+    },
+    {
+      "symbol": "docs/taskmaster/graph.json",
+      "invariant": "Producer output the host vendors at deploy"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "cd /Users/dukejones/work/Taskmaster/taskmaster-web && bun run test -- src/lib/graph.spec.ts",
+    "criteria": [
+      "Page data comes from the vendored snapshot, not GRAPH",
+      "closed beads are landed after re-export",
+      "readySet still derives from edges",
+      "Age is stated; missing/unparseable/undated snapshot is empty + reason"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Footer humility copy", "tracked_as": "bazaar-lgr.12" },
+    { "item": "Eyebrow '6 nodes resolved'", "tracked_as": "bazaar-lgr.10" },
+    { "item": "Live endpoint / bd replica", "tracked_as": "bazaar-lgr.11" },
+    { "item": "Scaffold / favicon / 404", "tracked_as": "bazaar-lgr.6" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "src/lib/graph.ts",
+      "src/lib/graph.snapshot.json",
+      "src/lib/graph.spec.ts",
+      "src/routes/+page.server.ts",
+      "src/routes/+page.svelte"
+    ],
+    "do_not": ["deploy", "fold", "push"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "brief",
+  "density": "explicit",
+  "surface": "skill-host",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain"],
+    "ceiling": "lean"
+  },
+  "inherited": [
+    "Hand-synced GRAPH already lied (lgr.3 stayed on READY).",
+    "Ready is derived, never stored (ADR-006).",
+    "Transport is export-at-deploy (lgr.11).",
+    "#lib not $lib.",
+    "Guest git needs core.sshCommand=/usr/local/bin/tm-git-ssh."
+  ],
+  "role": "builder"
+}
