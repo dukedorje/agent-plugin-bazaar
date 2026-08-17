@@ -186,6 +186,11 @@ if bash "$REPO_ROOT/scripts/test-ladder.sh"; then
 else
     error "act ladder failed"
 fi
+if python3 "$REPO_ROOT/scripts/test-export-graph.py"; then
+    ok "taskmaster graph export"
+else
+    error "taskmaster graph export failed"
+fi
 echo ""
 
 # Summary

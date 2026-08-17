@@ -17,5 +17,15 @@ Product notes live in the sibling app (ADR-006), not this marketplace.
 Kernel SHALLs stay here: [ADR-006](../../ARCHITECTURE.md) and
 [`openspec/specs/taskmaster/`](../../openspec/specs/taskmaster/spec.md).
 
+Snapshot the app vendors at deploy:
+
+```bash
+python3 scripts/export-graph.py
+# writes docs/taskmaster/graph.json
+```
+
+`generated_at` is required. There is no `ready` field. Copy that file
+into the sibling app (`bazaar-lgr.5`).
+
 The [ARCHITECTURE.md](ARCHITECTURE.md) file in this folder is a hop,
 not the sketch.
