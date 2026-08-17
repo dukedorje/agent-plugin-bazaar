@@ -1,6 +1,6 @@
 # add-taskmaster-live-graph
 
-> **ACTIVE BUILD**
+> **ACTIVE BUILD** → folded and archived 2026-08-16.
 
 ## Why
 
