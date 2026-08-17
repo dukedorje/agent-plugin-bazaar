@@ -1,5 +1,5 @@
 # Tasks
 
-- [ ] Three children folded first (loop, objects, split)
-- [ ] Founding doc is a pointer + first-DAG trail
-- [ ] No leftover SHALLs in the novel
+- [x] Three children folded first (loop, objects, split)
+- [x] Founding doc is a pointer + first-DAG trail
+- [x] No leftover SHALLs in the novel
