@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-6",
+  "node_id": "bazaar-lgr.6",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-executor-6",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "sonnet-5",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-executor-6" }
+  },
+  "goal": "Delete the public SvelteKit demo tree and leftover scaffold tests. /demo 404s. No working-looking auth control on the public site.",
+  "anchors": [
+    { "symbol": "src/routes/demo/", "invariant": "Not reachable on taskmaster.dev" },
+    { "symbol": "src/lib/vitest-examples/", "invariant": "Gone with Welcome/greet specs" }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "test ! -d src/routes/demo && test ! -d src/lib/vitest-examples && bun run test -- src/lib/graph.spec.ts",
+    "criteria": [
+      "/demo and children 404",
+      "vitest-examples gone",
+      "debug-storybook.log gone if present",
+      "remaining tests pass",
+      "no public auth control that cannot work"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Redesign login / IdentiKey", "tracked_as": "A0" },
+    { "item": "Remove better-auth from hooks", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "src/routes/demo/",
+      "src/lib/vitest-examples/",
+      "debug-storybook.log"
+    ],
+    "do_not": ["push", "deploy", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "brief",
+  "density": "explicit",
+  "surface": "packet-only",
+  "role": "builder"
+}

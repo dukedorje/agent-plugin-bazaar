@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-10",
+  "node_id": "bazaar-lgr.10",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-executor-10",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "sonnet-5",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-executor-10" }
+  },
+  "goal": "Eyebrow states something true and checkable. If a number stays, it matches the ledger. Works when ready is empty. Keep the as-of timestamp.",
+  "anchors": [
+    {
+      "symbol": "src/routes/+page.svelte",
+      "invariant": "Eyebrow currently: intention bazaar-lgr · {nodes.length} nodes · as of <time>. 'resolved' is gone already; the remaining job is a checkable quantity"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "rg -n 'eyebrow' -A6 src/routes/+page.svelte",
+    "criteria": [
+      "Eyebrow is true and checkable",
+      "Any number matches the ledger below",
+      "Reads correctly when ready set is empty",
+      "as of <generated_at> remains"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Footer copy", "tracked_as": "bazaar-lgr.12" },
+    { "item": "Changing derivation", "tracked_as": "bazaar-lgr.5" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["src/routes/+page.svelte"],
+    "do_not": ["push", "deploy", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "brief",
+  "density": "explicit",
+  "surface": "packet-only",
+  "role": "builder"
+}

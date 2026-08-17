@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-7",
+  "node_id": "bazaar-lgr.7",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-executor-7",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "sonnet-5",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-executor-7" }
+  },
+  "goal": "Replace the Svelte logo favicon with Taskmaster's ready pip: one filled signal-colour (#c8ff2f) dot, legible at 16px on both Paper cream and Graphite near-black.",
+  "anchors": [
+    { "symbol": "src/lib/assets/favicon.svg", "invariant": "No svelte-logo; one asset, both grounds" },
+    { "symbol": "src/routes/+layout.svelte", "invariant": "theme-color meta stays per-look" }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "rg -n 'svelte-logo|#ff3e00' src/lib/assets/favicon.svg; test $? -eq 1 && test -f src/lib/assets/favicon.svg",
+    "criteria": [
+      "No Svelte logo in the repo favicon",
+      "SVG, 16px-legible, works on both grounds",
+      "theme-color meta unchanged"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Wordmark favicon", "tracked_as": "none" },
+    { "item": "Per-look favicon files", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["src/lib/assets/favicon.svg"],
+    "do_not": ["push", "deploy", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "brief",
+  "density": "explicit",
+  "surface": "packet-only",
+  "role": "builder"
+}

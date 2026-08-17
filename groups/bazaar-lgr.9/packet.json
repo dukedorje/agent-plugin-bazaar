@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-9",
+  "node_id": "bazaar-lgr.9",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-executor-9",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "sonnet-5",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-executor-9" }
+  },
+  "goal": "Zero console HMR websocket errors on a cold load of https://taskmaster.dev. HMR still works locally. Stay in vite dev — do not smuggle a production build.",
+  "anchors": [
+    {
+      "symbol": "vite.config.ts",
+      "invariant": "server.allowedHosts already lists .vm.worldtree.network and taskmaster.dev; add HMR client config or disable HMR for non-local hosts"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "rg -n 'hmr' vite.config.ts",
+    "criteria": [
+      "Zero console errors on cold load of https://taskmaster.dev",
+      "HMR still works for local / guest LAN dev",
+      "Still vite dev; no adapter/build change"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Production build / snapshot deploy", "tracked_as": "ARCHITECTURE later" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": ["vite.config.ts"],
+    "do_not": ["push", "deploy", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "brief",
+  "density": "explicit",
+  "surface": "packet-only",
+  "inherited": [
+    "App runs in dev mode on purpose. 'Just build it' is a different decision."
+  ],
+  "role": "builder"
+}
