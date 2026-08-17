@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-17T01:06:21Z",
+  "generated_at": "2026-08-17T01:42:16Z",
   "source": "bazaar",
   "nodes": [
     {
       "id": "bazaar-lgr.12",
       "title": "nod-stale-claim: stop claiming the seeded graph is real work",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": []
     },
     {
@@ -20,7 +20,7 @@
       "id": "bazaar-lgr.5",
       "title": "nod-live-graph: the ready set reads real state, not a hand-synced file",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": [
         "bazaar-lgr.11"
       ]
@@ -45,28 +45,35 @@
       "id": "bazaar-lgr",
       "title": "Make taskmaster.dev in /taskmaster-web on the Mjolnir VM",
       "kind": "intention",
-      "state": "open",
+      "state": "landed",
+      "needs": []
+    },
+    {
+      "id": "bazaar-q2l",
+      "title": "Draft advise verb (change \u2192 advise \u2192 act)",
+      "kind": "node",
+      "state": "landed",
       "needs": []
     },
     {
       "id": "bazaar-lgr.8",
       "title": "nod-error-pages: 404 and error states held to the hero standard",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": []
     },
     {
       "id": "bazaar-lgr.7",
       "title": "nod-own-favicon: the browser tab flies the Svelte logo",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": []
     },
     {
       "id": "bazaar-lgr.6",
       "title": "nod-cut-scaffold: delete the SvelteKit demo tree from the public site",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": []
     },
     {
@@ -133,7 +140,7 @@
       "id": "bazaar-lgr.10",
       "title": "nod-eyebrow-copy: '6 nodes resolved' is the wrong word and the wrong number",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": [
         "bazaar-lgr.5"
       ]
@@ -142,7 +149,7 @@
       "id": "bazaar-lgr.9",
       "title": "nod-dev-noise: vite HMR errors on the public domain",
       "kind": "node",
-      "state": "open",
+      "state": "landed",
       "needs": []
     },
     {
