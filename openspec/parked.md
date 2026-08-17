@@ -6,6 +6,8 @@
 
 | id | kind | revive | where |
 |---|---|---|---|
-| P1 | host | Duke unparks Tatastu, intentional.agency, or Mjolnir | docs/from-intention-to-running.md |
+| P1 | host | Duke unparks intentional.agency or Mjolnir-the-product | docs/from-intention-to-running.md |
 | sprint-plan | skill | user explicitly wants the 10-phase / --thorough factory | plugins/morphist-tools/skills/sprint-plan/SKILL.md |
 | F1-path-b | fork | need MetaDev planctl/headless and an overlay that consumes packets (ADR-003) | ARCHITECTURE.md |
+
+Tatastu unparked 2026-08-17. Tracker: epic `bazaar-tvm`. Remaining P1 hosts stay parked.

@@ -45,8 +45,11 @@ I0  this document (commander’s intent)
  ├── D2–D6  density, conductor, spawn, ladder    [folded 2026-08-15/16]
  ├── extract-working-method + loop/objects/split [folded 2026-08-16]
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
- │     next: live graph (T1b / bazaar-lgr.5)
- └── P1  Tatastu / intentional.agency / Mjolnir-the-product
+ │     epic bazaar-lgr closed 2026-08-17
+ ├── U0  Tatastu                                 [unparked 2026-08-17]
+ │     loop with humans in the room; sibling host
+ │     checkout: ~/work/ClientProjects/BetMe/tatastu
+ └── P1  intentional.agency / Mjolnir-the-product
        [parked — Duke unparks]
 ```
 
@@ -61,10 +64,10 @@ Named so the surface stays stable. Not a promise to build them here.
 
 | Host | In this vocabulary |
 |---|---|
-| **taskmaster.dev** | Ready-set as a product. Sibling host (ADR-006). |
-| **Tatastu** | Loop with humans in the room. |
-| **intentional.agency** | Intentions with a public address. |
-| **Mjolnir VMs** | Agents with real keys. Same surface. |
+| **taskmaster.dev** | Ready-set as a product. Sibling host (ADR-006). Live. |
+| **Tatastu** | Loop with humans in the room. Unparked 2026-08-17. Existing Electron app (`~/work/ClientProjects/BetMe/tatastu`). |
+| **intentional.agency** | Intentions with a public address. Still parked. |
+| **Mjolnir VMs** | Agents with real keys. Fabric in use; *product* still parked. |
 
 If a host needs a different object model, amend
 `docs/contracts/agent-surface.md`. Do not grow a parallel kernel.
