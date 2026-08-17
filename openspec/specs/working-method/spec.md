@@ -1,12 +1,9 @@
 # working-method
 
 What **is** built: the method is named; loop, objects, and split
-rules are living. Folded from `extract-working-method`,
-`add-working-loop`, `add-working-objects`, and `add-working-split`
-on 2026-08-16.
-
-The founding novel is still the long explainer until
-`update-founding-doc-pointer` folds.
+are living; the founding doc is a pointer. Folded from
+`extract-working-method`, `add-working-loop`, `add-working-objects`,
+`add-working-split`, and `update-founding-doc-pointer` on 2026-08-16.
 
 ## Purpose
 
@@ -147,3 +144,15 @@ never close SHALL NOT appear in the ready-set.
 - WHEN hygiene or `ready` runs
 - THEN that box is not owed work and must be a bullet, or the change
   is not honest
+
+### Requirement: Founding doc is a pointer after extract
+
+After `update-founding-doc-pointer` folds, `docs/from-intention-to-running.md`
+SHALL be reasoning that points at `openspec/specs/working-method/` and
+SHALL NOT be the only copy of a method rule.
+
+#### Scenario: Stranger opens the founding doc
+
+- GIVEN the pointer change has folded
+- WHEN they want the rigor dial or split rules
+- THEN the doc names the living spec and does not restate the SHALL

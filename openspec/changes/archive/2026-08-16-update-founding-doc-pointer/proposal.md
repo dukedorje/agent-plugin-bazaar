@@ -1,6 +1,6 @@
 # update-founding-doc-pointer
 
-> **ACTIVE BUILD**
+> **ACTIVE BUILD** → folded and archived 2026-08-16.
 
 Depends on: `add-working-loop`, `add-working-objects`,
 `add-working-split` folded.
