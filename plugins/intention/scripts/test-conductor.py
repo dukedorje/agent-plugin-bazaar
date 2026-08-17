@@ -248,6 +248,68 @@ def test_isolate_persist() -> None:
         expect(json.loads(reuse.stdout)["reused"] is True, reuse.stdout)
 
 
+def test_advise_gate() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td)
+        change = repo / "openspec" / "changes" / "add-arch"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-arch\n\n> **ACTIVE BUILD**\n\n**Rigor:** architecture\n",
+            encoding="utf-8",
+        )
+        (change / "design.md").write_text("# design\n", encoding="utf-8")
+        inv = {
+            "nodes": [
+                {
+                    "id": "impl",
+                    "status": "open",
+                    "deps": [],
+                    "paths": ["src/x.py"],
+                    "change_id": "add-arch",
+                    "permission": "write",
+                },
+                {
+                    "id": "reader",
+                    "status": "open",
+                    "deps": [],
+                    "paths": ["openspec/changes/add-arch/reviews/"],
+                    "change_id": "add-arch",
+                    "kind": "advise",
+                    "permission": "read",
+                },
+            ]
+        }
+        path = repo / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        blocked = run(
+            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
+        )
+        expect(blocked.returncode == 0, blocked.stderr)
+        data = json.loads(blocked.stdout)
+        disp = {r["id"] for r in data["dispatchable"]}
+        deferred = {r["id"] for r in data["deferred"]}
+        expect(disp == {"reader"}, f"dispatchable={disp} {data}")
+        expect(deferred == {"impl"}, f"deferred={deferred} {data}")
+        expect(
+            any("needs-advise" in r.get("reason", "") for r in data["deferred"]),
+            data["deferred"],
+        )
+
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-08-16-advise.md").write_text(
+            "# advise\n\n> **ADVISE:** accept\n",
+            encoding="utf-8",
+        )
+        accepted = run(
+            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
+        )
+        expect(accepted.returncode == 0, accepted.stderr)
+        after = json.loads(accepted.stdout)
+        expect({r["id"] for r in after["dispatchable"]} == {"impl", "reader"}, after)
+        expect(after["deferred"] == [], after)
+
+
 def main() -> int:
     tests = [
         test_ready,
@@ -256,6 +318,7 @@ def main() -> int:
         test_classify,
         test_cap_and_take,
         test_isolate_persist,
+        test_advise_gate,
     ]
     failed = 0
     for fn in tests:

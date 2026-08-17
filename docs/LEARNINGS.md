@@ -2,6 +2,7 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-08-17 — The hole between `change` and `act` is `advise` (read-only review-pair). Hygiene treats any checkbox containing "handoff" as not-owed — do not put that word in a real task line. (`plugins/intention/skills/advise/SKILL.md`, `scripts/check-hygiene.py`)
 - 2026-08-14 — Validating a JSON Schema `$defs` slice: build a tiny schema `{ "$ref": "#/$defs/Name", "$defs": schema["$defs"] }`. A bare `$ref` into the parent file needs a registry. (`docs/contracts/validate.py`)
 - 2026-08-14 — MetaDev’s Grok path is a headless *worker*, not a skill host. A “fork MetaDev so Grok can run our verbs” plan still needs an Agent Skills tree — Path A inside Path B. (`ARCHITECTURE.md` ADR-003)
 - 2026-08-15 — Vercel `skills` 1.4.8 had no `--agent grok` / `hermes-agent`. **1.5.22 added both** (`grok` → `.grok/skills/`, `hermes-agent` → `.hermes/skills/`). Prime is still only `--agent pi`. Do not `skills add` inside this repo. (`plugins/intention/references/harness.md`)

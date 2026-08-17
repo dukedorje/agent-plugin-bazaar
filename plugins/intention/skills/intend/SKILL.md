@@ -42,8 +42,9 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    beads (`bd create`) if they want a tracker. No `.omc/`. No SHALLs in the DAG.
 7. **Stop.** Report ready-set and what needs activation. Handoff:
    - change nodes → `change`
+   - architecture / instrument after `change` → `advise`
    - brief nodes → `brief`
-   - ready + activated writes → `act`
+   - ready + activated writes (advise accept, or no advise required) → `act`
    - never `fold` from here
 
 Do not start write work on architecture or instrument nodes until the

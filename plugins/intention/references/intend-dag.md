@@ -40,9 +40,10 @@ Architecture / instrument / sensitive writes still PENDING.
 
 ## Next
 - `change <id>` for each activated (or just-drafted) change node
+- `advise <id>` after architecture / instrument `change`
 - `brief` for brief nodes
 - `direct fix` for vibe
-- `act` only after activation where required
+- `act` only after activation, and after advise accept when required
 ```
 
 Node ids: `nod-<kebab>`. Change ids: verb-led (`add-`, `update-`, `remove-`,

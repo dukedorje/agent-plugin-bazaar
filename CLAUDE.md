@@ -104,6 +104,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 |-------|-------------|
 | `intend` | Observe, orient, split a DAG of change-ids |
 | `change` | OpenSpec-lite proposal + deltas |
+| `advise` | Read-only review-pair; accept / accept-with-nits / send-back |
 | `act` | Packet, focused verify, commit-on-red |
 | `fold` | Living spec + archive |
 | `ready` | List ready/unblocked work and everything parked |

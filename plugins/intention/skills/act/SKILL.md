@@ -3,8 +3,8 @@ name: act
 description: >
   Execute a ready work node: assign, emit a task packet, spawn a unique
   prompt, focused verify. Foreign harnesses get a packet, never a slash
-  command. Use when implementing an activated change, a brief, or a
-  ready-set node.
+  command. Use when implementing an activated change (after advise
+  accept when required), a brief, or a ready-set node.
 user-invocable: true
 argument-hint: "<node-id or packet path>"
 ---
@@ -22,7 +22,9 @@ The packet is the only interface. Schema:
    means `max_inflight` is full (`ACT_MAX_INFLIGHT` or
    `ladder.json`). If rigor is `change` / `architecture` /
    `instrument` and this is a write, the change banner is
-   `ACTIVE BUILD` (or the human just activated it).
+   `ACTIVE BUILD` (or the human just activated it). Architecture and
+   instrument writes are not `dispatchable` while that change is in
+   `needs_advise`.
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
    Complementary → weave. Architecture → review-pair with a Grok
    reader. Foreign harness → packet file, never a slash command.

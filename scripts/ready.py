@@ -21,6 +21,11 @@ import re
 import sys
 from pathlib import Path
 
+_INTENTION_SCRIPTS = Path(__file__).resolve().parents[1] / "plugins" / "intention" / "scripts"
+if str(_INTENTION_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_INTENTION_SCRIPTS))
+from advise_status import last_advise_verdict, needs_advise  # noqa: E402
+
 # Keep in lockstep with check-hygiene.py (same banner and owed-work rules).
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
@@ -126,8 +131,13 @@ def register(openspec: Path) -> list[dict]:
 
 
 def classify(openspec: Path) -> dict[str, list[dict]]:
-    ready, waiting, parked = [], [], []
+    ready, waiting, parked, needs = [], [], [], []
+    changes = openspec / "changes"
     for row in inflight(openspec):
+        change_dir = changes / row["id"]
+        if needs_advise(change_dir):
+            row["advise"] = last_advise_verdict(change_dir) or "missing"
+            needs.append(row)
         if row["banner"] == "ACTIVE BUILD" and row["open"]:
             ready.append(row)
         elif row["banner"] == "PENDING":
@@ -135,7 +145,12 @@ def classify(openspec: Path) -> dict[str, list[dict]]:
         elif row["banner"] == "PARKED":
             parked.append(row)
     parked.extend(register(openspec))
-    return {"ready": ready, "waiting": waiting, "parked": parked}
+    return {
+        "ready": ready,
+        "waiting": waiting,
+        "parked": parked,
+        "needs_advise": needs,
+    }
 
 
 def fmt(row: dict) -> str:
@@ -161,7 +176,16 @@ def main() -> int:
         if args.parked and not args.ready:
             print(json.dumps({"parked": data["parked"]}, indent=2))
         elif args.ready and not args.parked:
-            print(json.dumps({"ready": data["ready"], "waiting": data["waiting"]}, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "ready": data["ready"],
+                        "waiting": data["waiting"],
+                        "needs_advise": data["needs_advise"],
+                    },
+                    indent=2,
+                )
+            )
         else:
             print(json.dumps(data, indent=2))
         return 0
@@ -179,6 +203,12 @@ def main() -> int:
         if data["waiting"]:
             for row in data["waiting"]:
                 print("  " + fmt(row))
+        else:
+            print("  (none)")
+        print("NEEDS ADVISE (ACTIVE BUILD, architecture/instrument)")
+        if data["needs_advise"]:
+            for row in data["needs_advise"]:
+                print("  " + fmt(row) + f"  advise: {row.get('advise', 'missing')}")
         else:
             print("  (none)")
     if show_parked:

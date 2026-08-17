@@ -20,6 +20,8 @@ Print the command output. That is the report.
 
 - **READY** — `ACTIVE BUILD` changes with open owed checkboxes (unblocked).
 - **NEEDS ACTIVATION** — `PENDING` drafts. Not ready until a human activates.
+- **NEEDS ADVISE** — `ACTIVE BUILD` architecture/instrument with no
+  accepting `reviews/*-advise.md` (or last verdict `send-back`).
 - **PARKED** — in-flight `PARKED` banners plus `openspec/parked.md`.
 
 Do not implement. Do not unpark. If they want to start something, hand

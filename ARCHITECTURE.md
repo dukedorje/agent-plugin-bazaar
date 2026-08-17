@@ -25,7 +25,7 @@ so a result can be addressed and attested without changing schema.
 
 **Consequences.**
 
-- Skills (`intend`, `change`, `act`, `fold`) dispatch packets. They never
+- Skills (`intend`, `change`, `advise`, `act`, `fold`) dispatch packets. They never
   invent a second RPC. Foreign harnesses receive a packet, never a slash command.
 - On-disk layout and JSON schemas live under `docs/contracts/`. The normative
   prose is `docs/contracts/agent-surface.md`.
@@ -91,8 +91,9 @@ Codex invokes by skill name, never as a Claude slash command.
 planctl / headless runners *and* Phong wants an overlay. The overlay MUST
 consume these skills’ packets. It MUST NOT become a second skill tree.
 
-**Why (discriminating).** Shared acceptance was: five verbs runnable on
-Grok and Claude.
+**Why (discriminating).** Shared acceptance was: the default-loop verbs
+runnable on Grok and Claude. `advise` joined that set on 2026-08-17
+(`add-advise-verb`).
 
 - Path A: Grok scans `.agents/skills/` natively. This session loaded
   `intend`, `change`, `act`, `fold`, `brief` from those paths. Claude

@@ -10,9 +10,10 @@ out = subprocess.check_output(
     text=True,
 )
 data = json.loads(out)
-assert {r["id"] for r in data["ready"]} == {"go-now"}, data["ready"]
+assert {r["id"] for r in data["ready"]} == {"advised-ok", "go-now", "needs-read"}, data["ready"]
 assert {r["id"] for r in data["waiting"]} == {"wait-up"}, data["waiting"]
 assert {r["id"] for r in data["parked"]} == {"on-ice", "fixture-host"}, data["parked"]
+assert {r["id"] for r in data["needs_advise"]} == {"needs-read"}, data["needs_advise"]
 print("pass ready fixture classify")
 PY
 python3 "$ROOT/ready.py" --json >/dev/null

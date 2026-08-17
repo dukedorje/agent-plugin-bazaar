@@ -27,6 +27,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from advise_status import needs_advise_ids, write_node_blocked
+
 LADDER_PATH = Path(__file__).resolve().parents[1] / "references" / "ladder.json"
 
 CLOSED = {"closed", "done"}
@@ -119,7 +121,11 @@ def resolve_max_inflight(cli: int | None = None, ladder: Path | None = None) -> 
     return 2
 
 
-def dispatch(nodes: list[dict], max_inflight: int | None = None) -> dict[str, Any]:
+def dispatch(
+    nodes: list[dict],
+    max_inflight: int | None = None,
+    openspec: Path | None = None,
+) -> dict[str, Any]:
     by_id = index_nodes(nodes)
     ready, blocked = ready_ids(nodes)
     flying_paths: list[str] = []
@@ -133,6 +139,8 @@ def dispatch(nodes: list[dict], max_inflight: int | None = None) -> dict[str, An
         elif st in PARKED:
             parked.append({"id": nid, "reason": st})
 
+    advise_block = set(needs_advise_ids(openspec)) if openspec is not None else set()
+
     cap = resolve_max_inflight(max_inflight)
     free = max(0, cap - len(in_flight_ids))
     remaining = free
@@ -144,6 +152,9 @@ def dispatch(nodes: list[dict], max_inflight: int | None = None) -> dict[str, An
         row = {"id": nid, "paths": _paths(by_id[nid])}
         if hits:
             row["reason"] = "paths overlap in-flight: " + ", ".join(hits)
+            deferred.append(row)
+        elif write_node_blocked(by_id[nid], advise_block):
+            row["reason"] = f"needs-advise: {by_id[nid].get('change_id')}"
             deferred.append(row)
         elif remaining <= 0:
             row["reason"] = f"max_inflight {cap} reached"
@@ -251,6 +262,21 @@ def beads_to_nodes(issues: list[dict], repo: Path) -> list[dict]:
             if edge.get("type") in {None, "blocks"} and edge.get("depends_on_id"):
                 if edge.get("issue_id", nid) == nid:
                     deps.append(str(edge["depends_on_id"]))
+        packet = repo / "groups" / nid / "packet.json"
+        extra: dict = {}
+        if packet.is_file():
+            try:
+                pdata = json.loads(packet.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                pdata = {}
+            if isinstance(pdata, dict):
+                if pdata.get("change_id"):
+                    extra["change_id"] = pdata["change_id"]
+                constraints = pdata.get("constraints") if isinstance(pdata.get("constraints"), dict) else {}
+                if constraints.get("permission"):
+                    extra["permission"] = constraints["permission"]
+                if pdata.get("kind"):
+                    extra["kind"] = pdata["kind"]
         nodes.append(
             {
                 "id": nid,
@@ -258,6 +284,7 @@ def beads_to_nodes(issues: list[dict], repo: Path) -> list[dict]:
                 "deps": deps,
                 "paths": load_packet_paths(repo, nid),
                 "holder": issue.get("assignee") or issue.get("owner"),
+                **extra,
             }
         )
     return nodes
@@ -312,8 +339,14 @@ def write_lease(repo: Path, node: dict, holder: str) -> Path:
     return dest
 
 
-def take_node(nodes: list[dict], node_id: str, holder: str, max_inflight: int | None = None) -> dict:
-    state = dispatch(nodes, max_inflight=max_inflight)
+def take_node(
+    nodes: list[dict],
+    node_id: str,
+    holder: str,
+    max_inflight: int | None = None,
+    openspec: Path | None = None,
+) -> dict:
+    state = dispatch(nodes, max_inflight=max_inflight, openspec=openspec)
     by_id = index_nodes(nodes)
     node = by_id.get(node_id)
     if node is None:
@@ -343,7 +376,8 @@ def cmd_ready(args: argparse.Namespace) -> int:
         nodes = load_inventory(args.inventory)
     else:
         nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-    result = dispatch(nodes, max_inflight=args.max_inflight)
+    openspec = repo / "openspec"
+    result = dispatch(nodes, max_inflight=args.max_inflight, openspec=openspec)
     print(json.dumps(result, indent=2))
     return 0
 
@@ -351,13 +385,18 @@ def cmd_ready(args: argparse.Namespace) -> int:
 def cmd_take(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     holder = args.holder or os.environ.get("ACT_HOLDER") or "conductor"
+    openspec = repo / "openspec"
     if args.inventory:
         nodes = load_inventory(args.inventory)
-        node = take_node(nodes, args.node, holder, max_inflight=args.max_inflight)
+        node = take_node(
+            nodes, args.node, holder, max_inflight=args.max_inflight, openspec=openspec
+        )
         write_inventory(args.inventory, nodes)
     else:
         nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-        node = take_node(nodes, args.node, holder, max_inflight=args.max_inflight)
+        node = take_node(
+            nodes, args.node, holder, max_inflight=args.max_inflight, openspec=openspec
+        )
         try:
             subprocess.check_call(
                 [

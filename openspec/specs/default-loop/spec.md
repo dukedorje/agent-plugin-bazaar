@@ -5,21 +5,25 @@ What a stranger is offered first. Folded from `park-sprint-plan` on
 
 ## Purpose
 
-The default path from intention to running software is the five verbs.
+The default path from intention to running software is the loop
+`intend` → `change` → `advise` → `act` → `fold` (plus `brief`).
 The 10-phase factory exists but is not available work.
 
 ## ADDED Requirements
 
 ### Requirement: Default verbs
 
-The marketplace and repo orientation SHALL present `intend`, `change`,
-`act`, `fold`, and `brief` as the default planning loop.
+The marketplace and repo orientation SHALL present `intend`,
+`change`, `advise`, `act`, `fold`, and `brief` as the default
+planning loop.
 
 #### Scenario: README install
 
 - GIVEN the root README
 - WHEN a stranger copies the install line
-- THEN they install `intention@agent-plugin-bazaar`, not `sprint-plan@…`
+- THEN they install `intention@agent-plugin-bazaar`, not
+  `sprint-plan@…`
+- AND the listed skills include `advise`
 
 ### Requirement: sprint-plan is parked
 

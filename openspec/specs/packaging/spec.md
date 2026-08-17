@@ -1,12 +1,13 @@
 # packaging
 
-How the five verbs are hosted. Folded from `add-skills-packaging` on
-2026-08-14 (F1). Path A won. Path B is parked — see ADR-003.
+How the default-loop verbs are hosted. Folded from `add-skills-packaging` on
+2026-08-14 (F1) and `add-advise-verb` on 2026-08-17. Path A won. Path B is
+parked — see ADR-003.
 
 ## Purpose
 
-`intend`, `change`, `act`, `fold`, and `brief` load on Grok and Claude
-from one set of files.
+`intend`, `change`, `advise`, `act`, `fold`, and `brief` load on Grok
+and Claude from one set of files.
 
 ## ADDED Requirements
 
@@ -14,19 +15,20 @@ from one set of files.
 
 The system SHALL keep canonical skill files at
 `plugins/intention/skills/<verb>/SKILL.md` for
-`intend`, `change`, `act`, `fold`, and `brief`. Each `SKILL.md` SHALL
-have YAML frontmatter whose `name` matches the directory.
+`intend`, `change`, `advise`, `act`, `fold`, and `brief`. Each
+`SKILL.md` SHALL have YAML frontmatter whose `name` matches the
+directory.
 
-`.agents/skills/<verb>` SHALL resolve to that same directory (symlink in
-this repo) so Grok, Hermes, and Prime load the files without a plugin
-install.
+`.agents/skills/<verb>` SHALL resolve to that same directory (symlink
+in this repo) so Grok, Hermes, and Prime load the files without a
+plugin install.
 
 #### Scenario: Grok sees the verbs in-repo
 
 - GIVEN a clone of this repo
 - WHEN Grok starts in the repo root
-- THEN it discovers `intend`, `change`, `act`, `fold`, and `brief` from
-  `.agents/skills/`
+- THEN it discovers `intend`, `change`, `advise`, `act`, `fold`, and
+  `brief` from `.agents/skills/`
 
 #### Scenario: Claude installs the same files
 

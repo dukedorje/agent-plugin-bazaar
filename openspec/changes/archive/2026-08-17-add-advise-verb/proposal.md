@@ -1,6 +1,8 @@
 # add-advise-verb
 
-> **PENDING**
+> **ACTIVE BUILD**
+
+**Rigor:** change
 
 ## Why
 
