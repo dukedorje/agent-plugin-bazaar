@@ -5,8 +5,10 @@ self-description and citations. Project is the named graph, not a
 kind. Values are named preferences, not ready-set rows. Intentions
 emerge from a dossier with provenance; the gathering is not consumed.
 A sectioned paste is a face of those objects: mixed paste cites;
-a lone task list invents no dossier. Folded from `add-dossier-objects`
-on 2026-08-17 (ADR-007) and `add-paste-objects` on 2026-08-18 (ADR-008).
+a lone task list invents no dossier. The parse is deterministic; the
+fixture lives in the Taskmaster sibling app. Folded from
+`add-dossier-objects` (ADR-007), `add-paste-objects` (ADR-008), and
+`add-paste-grammar` on 2026-08-18.
 
 This spec is stack-neutral. Framework, TUI toolkit, language, driver,
 and look tokens are not requirements here.
@@ -243,6 +245,34 @@ be recorded as emerged from a dossier.
 - GIVEN a paste that is only a task section
 - WHEN a change records a new dossier for it
 - THEN it is rejected against this requirement
+
+### Requirement: Paste parse is deterministic
+
+Parsing the same sectioned paste SHALL produce the same records.
+An item with a missing title SHALL fail the parse. The command and
+fixtures that witness this SHALL live in the Taskmaster sibling
+app’s tree, not as a framework `SHALL` in this marketplace.
+
+#### Scenario: Mixed fixture is stable
+
+- GIVEN the mixed gathering + intend-dag fixture
+- WHEN the focused parse command runs twice
+- THEN both runs emit the same intentions
+- AND those intentions cite the dossier from the gathering
+
+#### Scenario: Lone task fixture invents no dossier
+
+- GIVEN the lone-task fixture
+- WHEN the focused parse command runs
+- THEN work nodes are present
+- AND no dossier record is produced
+
+#### Scenario: Empty title fails
+
+- GIVEN a paste whose item heading is empty
+- WHEN it is parsed
+- THEN the parse fails
+- AND no records are accepted
 
 ### Requirement: Attributes and bytes are different persistences
 
