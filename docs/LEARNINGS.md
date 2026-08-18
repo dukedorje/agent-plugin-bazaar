@@ -2,6 +2,7 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-08-17 — 1:1 “dossier becomes a Project” failed advise. Intentions emerge from a dossier over time and cite it; the gathering is not consumed. (`openspec/specs/dossier/spec.md`, ADR-007)
 - 2026-08-17 — The hole between `change` and `act` is `advise` (read-only review-pair). Hygiene treats any checkbox containing "handoff" as not-owed — do not put that word in a real task line. (`plugins/intention/skills/advise/SKILL.md`, `scripts/check-hygiene.py`)
 - 2026-08-14 — Validating a JSON Schema `$defs` slice: build a tiny schema `{ "$ref": "#/$defs/Name", "$defs": schema["$defs"] }`. A bare `$ref` into the parent file needs a registry. (`docs/contracts/validate.py`)
 - 2026-08-14 — MetaDev’s Grok path is a headless *worker*, not a skill host. A “fork MetaDev so Grok can run our verbs” plan still needs an Agent Skills tree — Path A inside Path B. (`ARCHITECTURE.md` ADR-003)
@@ -12,6 +13,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — Ready-set is a query over banners + `openspec/parked.md`, not a second tracker. Beads `bd ready` is not used here. (`scripts/ready.py`)
 - 2026-08-15 — Unparking a P1 host is a register edit plus intend, not a verb. Remaining hosts stay parked. (`openspec/parked.md`)
 - 2026-08-17 — Tatastu unparked alone. intentional.agency and Mjolnir-the-product stay on P1. Existing app is `~/work/ClientProjects/BetMe/tatastu`, not a greenfield. (`openspec/parked.md`)
+- 2026-08-17 — F1-path-b unparked for automation. Path A stays the verb home. Overlay consumes packets; do not copy `planctl/` or MetaDev commands as the surface. (`openspec/parked.md` · ADR-003)
 - 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (moved 2026-08-16 to `~/work/Taskmaster/taskmaster-web/docs/`; hop `docs/taskmaster/`)
 - 2026-08-16 — `.omc/` is disabled here (Claude and Grok). March–July contents were parked sprint-plan and OMC session junk. Tracker is beads. (`AGENTS.md`)
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)

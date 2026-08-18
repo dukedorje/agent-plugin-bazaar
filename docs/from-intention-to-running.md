@@ -10,7 +10,7 @@ The method of working lives in
 |---|---|
 | Loop, rigor dial, load class | `working-method` |
 | Objects and the brief | `working-method` |
-| Dossier, Project, Values | ADR-007 · `dossier` after fold · `working-method` kinds |
+| Dossier, Project, Values | [`dossier`](../openspec/specs/dossier/spec.md) · `working-method` kinds · ADR-007 |
 | Split rules, owed checkboxes | `working-method` |
 | Packet in, result out | [`openspec/specs/agent-surface`](../openspec/specs/agent-surface/spec.md) · [`docs/contracts/`](contracts/) |
 | Two-layer specs / changes | [`openspec/specs/living-specs`](../openspec/specs/living-specs/spec.md) |
@@ -38,15 +38,15 @@ I0  this document (commander’s intent)
  ├── C1  agent surface + group contract          [folded 2026-08-14]
  ├── C2  living-spec layout                      [folded 2026-08-14]
  ├── F1  packaging Fork — Path A won             [folded 2026-08-14]
- │     Path B PARKED — ADR-003
+ │     Path B overlay unparked 2026-08-17 (automation; not a second skill tree)
  ├── S1–S4  intend / change / act / fold         [folded 2026-08-15]
  ├── H1  harness touch-ins                       [folded 2026-08-15]
  ├── G1  hygiene                                 [folded 2026-08-15]
  ├── D1  park-sprint-plan                        [folded 2026-08-15]
  ├── D2–D6  density, conductor, spawn, ladder    [folded 2026-08-15/16]
  ├── extract-working-method + loop/objects/split [folded 2026-08-16]
- ├── add-dossier-objects                         [ACTIVE BUILD · ADR-007]
- │     well, not 1:1 consume; fold creates dossier
+ ├── add-dossier-objects                         [folded 2026-08-17 · ADR-007]
+ │     well, not 1:1 consume; living `dossier`
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
  │     epic bazaar-lgr closed 2026-08-17
  ├── U0  Tatastu                                 [unparked 2026-08-17]

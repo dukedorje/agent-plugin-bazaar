@@ -8,6 +8,7 @@
 |---|---|---|---|
 | P1 | host | Duke unparks intentional.agency or Mjolnir-the-product | docs/from-intention-to-running.md |
 | sprint-plan | skill | user explicitly wants the 10-phase / --thorough factory | plugins/morphist-tools/skills/sprint-plan/SKILL.md |
-| F1-path-b | fork | need MetaDev planctl/headless and an overlay that consumes packets (ADR-003) | ARCHITECTURE.md |
 
-Tatastu unparked 2026-08-17. Tracker: epic `bazaar-tvm`. Remaining P1 hosts stay parked.
+Tatastu unparked 2026-08-17 (`bazaar-tvm`). Remaining P1 hosts stay parked.
+
+F1-path-b unparked 2026-08-17. Tracker: epic `bazaar-crj`. Path A remains the verb home (ADR-003). The overlay consumes packets. It does not grow a second skill tree. Do not vendor `planctl/` or MetaDev’s 40-command surface.
