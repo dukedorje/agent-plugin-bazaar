@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-RUN = HERE / "run.py"
+RUN = HERE.parents[0] / "skills" / "run" / "scripts" / "run.py"
 
 
 def run(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -47,6 +47,20 @@ def test_empty_ready_no_worker() -> None:
         expect("workers 0" in text.stdout, text.stdout)
 
 
+def test_missing_ready_py_is_no_ready() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        proc = subprocess.run(
+            [sys.executable, str(RUN), "--json"],
+            text=True,
+            capture_output=True,
+            cwd=td,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "no-ready", face)
+        expect(face["workers_launched"] == 0, face)
+
+
 def test_until_advise() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = Path(td) / "adv.json"
@@ -69,7 +83,7 @@ def test_until_advise() -> None:
 
 
 def main() -> int:
-    tests = [test_empty_ready_no_worker, test_until_advise]
+    tests = [test_empty_ready_no_worker, test_until_advise, test_missing_ready_py_is_no_ready]
     failed = 0
     for fn in tests:
         try:
