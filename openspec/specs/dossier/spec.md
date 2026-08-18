@@ -7,8 +7,8 @@ emerge from a dossier with provenance; the gathering is not consumed.
 A sectioned paste is a face of those objects: mixed paste cites;
 a lone task list invents no dossier. The parse is deterministic; the
 fixture lives in the Taskmaster sibling app. Folded from
-`add-dossier-objects` (ADR-007), `add-paste-objects` (ADR-008), and
-`add-paste-grammar` on 2026-08-18.
+`add-dossier-objects` (ADR-007), `add-paste-objects` (ADR-008),
+`add-paste-grammar`, and `add-paste-tui` on 2026-08-18.
 
 This spec is stack-neutral. Framework, TUI toolkit, language, driver,
 and look tokens are not requirements here.
@@ -331,3 +331,17 @@ overlay.
 - GIVEN a change names the paste TUI as a host of the agent surface
 - WHEN it is reviewed
 - THEN it is rejected against this requirement
+
+### Requirement: A sibling TUI may submit a paste
+
+A sibling paste TUI MAY send sectioned text to the host’s parse and
+persist surface and show the resulting records. It SHALL NOT be the
+authoritative store. It SHALL remain a client of this face.
+
+#### Scenario: A fixture is piped with save
+
+- GIVEN a valid intend-DAG or sectioned fixture on stdin
+- WHEN the TUI runs with save
+- THEN it shows the parsed records
+- AND the host stores a projection id
+- AND the TUI does not keep a second database of those records
