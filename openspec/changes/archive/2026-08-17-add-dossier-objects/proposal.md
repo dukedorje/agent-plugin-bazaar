@@ -1,6 +1,6 @@
 # add-dossier-objects
 
-> **ACTIVE BUILD**
+> **ACTIVE BUILD** → folded and archived 2026-08-17.
 
 **Rigor:** architecture
 

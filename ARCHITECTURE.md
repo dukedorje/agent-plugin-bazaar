@@ -236,14 +236,14 @@ and the node/edge table itself.
 ### ADR-007: Dossier is a work object; Project is the named graph ✅
 
 **Status:** Accepted 2026-08-17 (`add-dossier-objects` activated;
-advise accept-with-nits after the emerge amend).
+advise accept-with-nits after the emerge amend). Folded 2026-08-17.
 **Blast:** work objects and method. What sits before an intention,
 and what a Project / Value is allowed to be.
 
 **Decision.** Dossier is an eighth work object and a `dossier`
 capability. It is a gathering: a self-description plus citations.
 It is not an agent. Packet and result stay ADR-001. The living
-capability is created by fold, not by this ADR.
+capability is `openspec/specs/dossier/` (created by this fold).
 
 - **Project is not a ninth kind.** It is an intention and its work
   nodes with a public address — the named graph Taskmaster already
@@ -284,11 +284,11 @@ graph we already have. Values as work nodes would lie about READY.
 
 **Consequences.**
 
-- `working-method` kinds become intention, capability, change, work
-  node, agent, evidence, learning, dossier. Fold of
-  `add-dossier-objects` materializes `openspec/specs/dossier/`.
+- `working-method` kinds are intention, capability, change, work
+  node, agent, evidence, learning, dossier.
+  `openspec/specs/dossier/` is living.
 - `add-paste-objects` is the parse face of these objects. It
-  MODIFIES `dossier` after this parent folds.
+  MODIFIES the living `dossier` spec.
 - Gather, emerge implementation, and host projection stay later
   landings (`add-dossier-gather`, `add-dossier-promote`,
   `add-dossier-host`).
