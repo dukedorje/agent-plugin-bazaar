@@ -1,105 +1,25 @@
-"""Parse whether an OpenSpec change still needs advise.
-
-Machine markers (first match in the newest reviews/*-advise.md):
-
-    > **ADVISE:** accept
-    > **ADVISE:** accept-with-nits
-    > **ADVISE:** send-back
-
-Rigor (proposal.md):
-
-    **Rigor:** architecture | instrument | change | brief | vibe
-
-If rigor is missing: design.md plus an ADR mention → architecture.
-"""
+"""Loader — canonical module is skills/ready/scripts/advise_status.py."""
 
 from __future__ import annotations
 
-import re
+import importlib.util
 from pathlib import Path
 
-ADVISE_RE = re.compile(
-    r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
-    re.I,
+_SRC = (
+    Path(__file__).resolve().parents[1]
+    / "skills"
+    / "ready"
+    / "scripts"
+    / "advise_status.py"
 )
-RIGOR_RE = re.compile(
-    r"\*\*Rigor:\*\*\s*(architecture|instrument|change|brief|vibe)\b",
-    re.I,
-)
-ACCEPTING = {"accept", "accept-with-nits"}
-NEEDS_RIGOR = {"architecture", "instrument"}
+_spec = importlib.util.spec_from_file_location("ready_advise_status", _SRC)
+if _spec is None or _spec.loader is None:
+    raise ImportError(f"missing {_SRC}")
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
 
-
-def change_rigor(change_dir: Path) -> str | None:
-    proposal = change_dir / "proposal.md"
-    if not proposal.is_file():
-        return None
-    text = proposal.read_text(encoding="utf-8")
-    m = RIGOR_RE.search(text)
-    if m:
-        return m.group(1).lower()
-    if (change_dir / "design.md").is_file() and re.search(r"\bADR", text, re.I):
-        return "architecture"
-    return None
-
-
-def last_advise_verdict(change_dir: Path) -> str | None:
-    reviews = change_dir / "reviews"
-    if not reviews.is_dir():
-        return None
-    files = sorted(
-        p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")
-    )
-    if not files:
-        return None
-    text = files[-1].read_text(encoding="utf-8")
-    for line in text.splitlines()[:40]:
-        m = ADVISE_RE.match(line.strip())
-        if m:
-            return m.group(1).lower()
-    return None
-
-
-def needs_advise(change_dir: Path) -> bool:
-    proposal = change_dir / "proposal.md"
-    if not proposal.is_file():
-        return False
-    banner = None
-    for i, line in enumerate(proposal.read_text(encoding="utf-8").splitlines()):
-        if i >= 40:
-            break
-        m = re.match(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b", line.strip())
-        if m:
-            banner = m.group(1)
-            break
-    if banner != "ACTIVE BUILD":
-        return False
-    rigor = change_rigor(change_dir)
-    if rigor not in NEEDS_RIGOR:
-        return False
-    return last_advise_verdict(change_dir) not in ACCEPTING
-
-
-def needs_advise_ids(openspec: Path) -> list[str]:
-    changes = openspec / "changes"
-    if not changes.is_dir():
-        return []
-    ids: list[str] = []
-    for child in sorted(changes.iterdir()):
-        if not child.is_dir() or child.name == "archive":
-            continue
-        if needs_advise(child):
-            ids.append(child.name)
-    return ids
-
-
-def write_node_blocked(node: dict, blocked_ids: set[str]) -> bool:
-    """True if this is a write/implement node of a change that needs advise."""
-    cid = node.get("change_id")
-    if not cid or str(cid) not in blocked_ids:
-        return False
-    if str(node.get("kind") or "").lower() == "advise":
-        return False
-    if str(node.get("permission") or "write").lower() == "read":
-        return False
-    return True
+change_rigor = _mod.change_rigor
+last_advise_verdict = _mod.last_advise_verdict
+needs_advise = _mod.needs_advise
+needs_advise_ids = _mod.needs_advise_ids
+write_node_blocked = _mod.write_node_blocked

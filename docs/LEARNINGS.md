@@ -16,6 +16,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-17 — F1-path-b unparked for automation. Path A stays the verb home. Overlay consumes packets; do not copy `planctl/` or MetaDev commands as the surface. (`openspec/parked.md` · ADR-003)
 - 2026-08-17 — `/run` is a campaign verb. `run.py` observes and never launches a worker. Stage bodies are re-read per wave (attention), not inlined. (`openspec/specs/verbs/spec.md`)
 - 2026-08-18 — A skill that calls `plugins/intention/scripts/…` from cwd only works in this clone. Scripts that other repos must run live next to SKILL.md (`skills/run/scripts/run.py`). (`plugins/intention/skills/run/SKILL.md`)
+- 2026-08-18 — Same for `/ready`: `scripts/ready.py` is not in every repo. The observe script lives at `skills/ready/scripts/ready.py` and finds `openspec/` from cwd. Do not re-grep banners. (`plugins/intention/skills/ready/SKILL.md`)
 - 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (moved 2026-08-16 to `~/work/Taskmaster/taskmaster-web/docs/`; hop `docs/taskmaster/`)
 - 2026-08-16 — `.omc/` is disabled here (Claude and Grok). March–July contents were parked sprint-plan and OMC session junk. Tracker is beads. (`AGENTS.md`)
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)

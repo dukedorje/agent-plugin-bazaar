@@ -2,7 +2,8 @@
 """Campaign observe + stop predicate. Does not spawn workers.
 
 Lives next to the run skill so a global `skills add` carries it.
-Looks for scripts/ready.py in the *current project*, not this file's repo.
+Uses the sibling ready skill's script against the current project's
+openspec/. Does not require the project to vendor ready.py.
 
   python3 <skill-dir>/scripts/run.py
   python3 <skill-dir>/scripts/run.py --until advise --ready-json FILE
@@ -20,7 +21,26 @@ from typing import Any
 STOPS = ("empty", "advise", "activation", "ask", "fold")
 
 
+def sibling_ready_py() -> Path | None:
+    cand = Path(__file__).resolve().parents[2] / "ready" / "scripts" / "ready.py"
+    return cand if cand.is_file() else None
+
+
+def find_openspec() -> Path | None:
+    here = Path.cwd()
+    for root in [here, *here.parents]:
+        cand = root / "openspec"
+        if cand.is_dir():
+            return cand
+        if (root / ".git").exists():
+            return cand if cand.is_dir() else None
+    return None
+
+
 def find_ready_py() -> Path | None:
+    sib = sibling_ready_py()
+    if sib:
+        return sib
     here = Path.cwd()
     for root in [here, *here.parents]:
         cand = root / "scripts" / "ready.py"
@@ -46,12 +66,16 @@ def load_ready(path: Path | None) -> dict[str, Any]:
             "ask": [],
             "missing": "ready.py",
         }
+    argv = [sys.executable, str(ready_py), "--json"]
+    openspec = find_openspec()
+    if openspec is not None:
+        argv.extend(["--root", str(openspec)])
     proc = subprocess.run(
-        [sys.executable, str(ready_py), "--json"],
+        argv,
         check=False,
         capture_output=True,
         text=True,
-        cwd=str(ready_py.resolve().parents[1]),
+        cwd=str(Path.cwd()),
     )
     if proc.returncode != 0:
         raise SystemExit(proc.stderr or "ready.py failed")
@@ -71,7 +95,7 @@ def ids(rows: Any) -> list[str]:
 
 
 def decide(data: dict[str, Any], until: str, pause_before: str | None) -> dict[str, Any]:
-    if data.get("missing") == "ready.py":
+    if data.get("missing"):
         return {
             "stop": "no-ready",
             "next": None,

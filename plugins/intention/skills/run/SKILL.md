@@ -22,10 +22,11 @@ repo; that file only exists in the bazaar clone.
 python3 <this-skill-dir>/scripts/run.py [--until …] [--autonomous]
 ```
 
-It observes the *current project* (`scripts/ready.py` walking up from
-cwd). It never launches a worker. `stop: no-ready` means this project
-has no ready.py — do not invent a ready-set. If `stop` is set, print
-the card and halt.
+It observes the *current project* via the sibling ready skill
+(`../ready/scripts/ready.py` + that project's `openspec/`). It never
+launches a worker. `stop: no-ready` means the observe script is
+missing — do not invent a ready-set. If `stop` is set, print the
+card and halt.
 
 If `../../references/shared.md` exists next to this plugin, load it.
 Otherwise the Must not section below is enough.
