@@ -3,16 +3,11 @@
 ### Requirement: Sectioned paste is a face of existing objects
 
 A paste of sectioned text SHALL parse into existing work objects. A
-task or intend-dag category SHALL map to work nodes. A gathering
-category SHALL map to a dossier’s self-description and citations. The
-parse SHALL NOT introduce a new document work-object kind.
-
-#### Scenario: A task section is pasted
-
-- GIVEN a paste whose category is a task or intend-dag section
-- WHEN it is parsed
-- THEN each item is a work node (or an attribute on one)
-- AND no new kind is created for “parsed document”
+gathering or description category SHALL map to a dossier’s
+self-description and citations. An intention or intend-dag category
+SHALL mint or select intentions and their work nodes. A task
+category SHALL map to work nodes. The parse SHALL NOT introduce a
+new document work-object kind.
 
 #### Scenario: A gathering section is pasted
 
@@ -20,6 +15,55 @@ parse SHALL NOT introduce a new document work-object kind.
 - WHEN it is parsed
 - THEN it updates a dossier’s self-description or citations
 - AND it does not become a work node solely because it was pasted
+
+#### Scenario: An intend-dag section is pasted with a gathering
+
+- GIVEN a paste that includes a gathering section and an intention
+  or intend-dag section
+- WHEN it is parsed
+- THEN each intend-dag item is an intention and its work nodes
+- AND no new kind is created for “parsed document”
+
+#### Scenario: A lone task section is pasted
+
+- GIVEN a paste whose only category is a task section, with no
+  gathering and no named dossier
+- WHEN it is parsed
+- THEN each item is a work node (or an attribute on one)
+- AND no dossier is created
+- AND no new kind is created for “parsed document”
+
+### Requirement: Mixed paste keeps provenance
+
+When a paste contains a gathering category, or names an existing
+dossier, together with an intention or intend-dag category, those
+intention items SHALL be minted or selected from that dossier and
+SHALL cite it (ADR-007). Work nodes parsed from that section SHALL
+belong to those intentions. A paste that contains only a task
+category SHALL map to work nodes and SHALL NOT invent a dossier.
+Intentions minted with no gathering and no named dossier SHALL NOT
+be recorded as emerged from a dossier.
+
+#### Scenario: Mixed paste of gathering and intend-dag
+
+- GIVEN a paste with a gathering section and an intend-dag section
+- WHEN it is accepted
+- THEN a dossier is updated from the gathering
+- AND each intend-dag intention cites that dossier
+- AND the dossier is not consumed
+
+#### Scenario: Mixed paste drops the cite
+
+- GIVEN a proposal parses a mixed gathering + intend-dag paste into
+  a dossier and work nodes that do not cite it
+- WHEN it is reviewed
+- THEN it is rejected against this requirement
+
+#### Scenario: Lone task section invents a dossier
+
+- GIVEN a paste that is only a task section
+- WHEN a change records a new dossier for it
+- THEN it is rejected against this requirement
 
 ### Requirement: Attributes and bytes are different persistences
 
@@ -29,9 +73,10 @@ named by `bazaar-ja7`. This capability SHALL NOT add a blob store.
 
 #### Scenario: An attribute is parsed
 
-- GIVEN a task section names an attribute the work node already has
+- GIVEN a task or intend-dag section names an attribute the mapped
+  object already has
 - WHEN the paste is accepted
-- THEN that attribute is stored on the work node
+- THEN that attribute is stored on that object
 - AND the raw paste is not kept as a fourth knowledge store
 
 #### Scenario: An image or article is cited
