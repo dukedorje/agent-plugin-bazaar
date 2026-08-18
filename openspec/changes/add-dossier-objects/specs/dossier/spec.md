@@ -32,8 +32,9 @@ SHALL NOT mutate the dossier into a project or drop the gathering.
 ### Requirement: Values are named preferences
 
 Values (including the spoken name “Value Function”) SHALL be named
-preferences a project carries. They SHALL NOT be a work-object kind,
-a score, or a function runtime in this capability.
+preferences a project carries. A project SHALL be breakable into
+intentions together with those values. They SHALL NOT be a
+work-object kind, a score, or a function runtime in this capability.
 
 #### Scenario: A project carries a value
 
@@ -41,6 +42,14 @@ a score, or a function runtime in this capability.
 - WHEN someone names a preference it should hold
 - THEN that name is a value on the project
 - AND no function is evaluated
+
+#### Scenario: A project is broken down
+
+- GIVEN a project that has been addressed from a dossier
+- WHEN it is split
+- THEN the split may name intentions and values
+- AND neither the values nor a “value function” become a new
+  work-object kind
 
 ### Requirement: Self-description is not identity
 
@@ -58,12 +67,20 @@ be its public address.
 ### Requirement: Packet and result stay one surface
 
 Dossier, project, and values SHALL NOT introduce a second task-packet
-or signed-result shape. If a hosted product needs a field the surface
-lacks, the change SHALL amend `docs/contracts/agent-surface.md`.
+or signed-result shape. A dossier SHALL NOT be an agent: it does not
+accept a task packet or sign a result. If a hosted product needs a
+field the surface lacks, the change SHALL amend
+`docs/contracts/agent-surface.md`.
 
 #### Scenario: A host wants a dossier-only packet
 
 - GIVEN a proposal adds a Taskmaster-only or dossier-only packet
+- WHEN it is reviewed
+- THEN it is rejected against this requirement
+
+#### Scenario: Dossier proposed as an agent
+
+- GIVEN a proposal treats a dossier as an agent or a group
 - WHEN it is reviewed
 - THEN it is rejected against this requirement
 

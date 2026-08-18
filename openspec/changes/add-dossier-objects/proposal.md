@@ -22,8 +22,9 @@ invent them in act.
 - ADD capability `dossier` (materialized at fold)
 - MODIFY `working-method` so the kinds list is honest
 - ADR-007 in `ARCHITECTURE.md` (owed; text is in `design.md`)
-- Packet / result stay ADR-001. Project is not a ninth kind. Values
-  are not a function runtime
+- Packet / result stay ADR-001. Dossier is not an agent. Project is
+  not a ninth kind. Values are named preferences on a project split,
+  not a function runtime
 
 ## Impact
 

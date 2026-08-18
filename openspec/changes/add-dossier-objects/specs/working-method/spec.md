@@ -6,8 +6,9 @@ The method SHALL talk in these objects: intention, capability, change,
 work node, agent, evidence, learning, dossier. A project SHALL NOT be
 a separate work-object kind: it is a named graph (an intention and its
 work nodes with a public address). Values SHALL be named preferences a
-project carries, not a work-object kind. Documents SHALL be how some
-of them are shown, not a parallel store.
+project carries, not a work-object kind. A project SHALL be breakable
+into intentions together with those values. Documents SHALL be how
+some of them are shown, not a parallel store.
 
 #### Scenario: Status in a path
 
@@ -33,3 +34,10 @@ of them are shown, not a parallel store.
 - GIVEN a change adds Value or Value Function as a work-object kind
 - WHEN it is reviewed
 - THEN it is rejected against this requirement
+
+#### Scenario: A project is broken down
+
+- GIVEN a project that has been addressed from a dossier
+- WHEN it is split
+- THEN the split may name intentions and values
+- AND those values stay named preferences, not a new kind

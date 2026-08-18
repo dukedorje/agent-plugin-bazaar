@@ -11,7 +11,7 @@ cluster. The kinds list on `working-method` still has to be honest, so
 this change MODIFIES it and ADDs the capability.
 
 Packet / result stay `agent-surface`. Dossier is a work object, not an
-actor.
+actor: it does not accept a packet or sign a result.
 
 ## Settled
 
@@ -23,9 +23,11 @@ actor.
    intention and its work nodes with a public address. Not a ninth
    kind. Promotion addresses that graph and cites the dossier.
 
-3. **Values are named preferences** a project carries. “Value
-   Function” as speech is allowed. A score engine or function runtime
-   is not this change and is not a work-object kind.
+3. **Values are named preferences** a project carries. A project
+   breaks down into intentions *and* those values. “Value Function”
+   as speech is allowed as a synonym for a named preference. A score
+   engine or function runtime is not this change and is not a
+   work-object kind.
 
 4. **Promote by citing, not mutating.** Address (or mint the address
    of) the Project and record the dossier as a citation. The gathering
