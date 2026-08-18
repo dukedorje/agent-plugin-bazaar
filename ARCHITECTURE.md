@@ -25,8 +25,11 @@ so a result can be addressed and attested without changing schema.
 
 **Consequences.**
 
-- Skills (`intend`, `change`, `advise`, `act`, `fold`) dispatch packets. They never
-  invent a second RPC. Foreign harnesses receive a packet, never a slash command.
+- Skills (`intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`,
+  `run`) dispatch packets. They never invent a second RPC. Foreign
+  harnesses receive a packet, never a slash command. `run` is the
+  campaign; it re-reads a stage skill per wave and does not inline those
+  bodies (`add-run-verb`).
 - On-disk layout and JSON schemas live under `docs/contracts/`. The normative
   prose is `docs/contracts/agent-surface.md`.
 - Cryptography may fill in `signature.bytes` later. `content_hash` is required

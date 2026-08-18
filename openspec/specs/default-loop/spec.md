@@ -6,16 +6,18 @@ What a stranger is offered first. Folded from `park-sprint-plan` on
 ## Purpose
 
 The default path from intention to running software is the loop
-`intend` → `change` → `advise` → `act` → `fold` (plus `brief`).
-The 10-phase factory exists but is not available work.
+`intend` → `change` → `advise` → `act` → `fold` (plus `brief` /
+`ready`). `run` is the campaign that walks that loop until a stop
+predicate. The 10-phase factory exists but is not available work.
 
 ## ADDED Requirements
 
 ### Requirement: Default verbs
 
 The marketplace and repo orientation SHALL present `intend`,
-`change`, `advise`, `act`, `fold`, and `brief` as the default
-planning loop.
+`change`, `advise`, `act`, `fold`, `brief`, `ready`, and `run` as
+the default planning loop. `run` is the campaign; the others are
+stages (or observe / disposable decide).
 
 #### Scenario: README install
 
@@ -23,7 +25,14 @@ planning loop.
 - WHEN a stranger copies the install line
 - THEN they install `intention@agent-plugin-bazaar`, not
   `sprint-plan@…`
-- AND the listed skills include `advise`
+- AND the listed skills include `advise` and `run`
+
+#### Scenario: Stranger asks how to chain
+
+- GIVEN the default-loop presentation
+- WHEN they want more than one stage without typing each
+- THEN they are pointed at `run`, not at a second catalog of execute
+  verbs
 
 ### Requirement: sprint-plan is parked
 
