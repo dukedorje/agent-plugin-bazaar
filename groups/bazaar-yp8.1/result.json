@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-yp8-1",
+  "packet_id": "pkt-bazaar-yp8-1",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/intend/SKILL.md",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/references/intend-dag.md",
+      "role": "edit"
+    },
+    {
+      "path": "openspec/changes/add-intend-extract/tasks.md",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/intend/SKILL.md').read_text(); d=Path('plugins/intention/references/intend-dag.md').read_text(); v=Path('openspec/changes/add-intend-extract/specs/verbs/spec.md').read_text(); assert '--extract-from' in s; assert 'extract-from' in s.split('argument-hint',1)[1][:120]; assert 'records of action' in s.lower() or 'action records' in s.lower(); assert 'insight' in s.lower(); assert 'unresolved' in s.lower(); assert 'openspec/specs/' in s and 'LEARNINGS' in s; assert '## Extract' in d; assert 'insight' in d.lower(); assert 'intend extract-from named items' in v; print('ok')\" && python3 plugins/intention/scripts/check-skills.py",
+    "exit_code": 0,
+    "output_tail": "ok\npass 8 verbs"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "af940f8",
+    "paths": [
+      "plugins/intention/skills/intend/SKILL.md",
+      "plugins/intention/references/intend-dag.md",
+      "openspec/changes/add-intend-extract/tasks.md",
+      "groups/bazaar-yp8.1/packet.json"
+    ]
+  },
+  "summary": "intend --extract-from reads named beads/epics first (action records + insight). No flag stays blank-page. Dossier ids still out of scope.",
+  "raw_ref": "groups/bazaar-yp8.1/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "intend --extract-from reads named beads/epics first (action records + insight). No flag stays blank-page.",
+    "verify_command": "python3 plugins/intention/scripts/check-skills.py",
+    "verify_exit": 0,
+    "commit_sha": "af940f8",
+    "changed_files": [
+      "plugins/intention/skills/intend/SKILL.md",
+      "plugins/intention/references/intend-dag.md",
+      "openspec/changes/add-intend-extract/tasks.md",
+      "groups/bazaar-yp8.1/packet.json"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-yp8.1/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:b21fff051c454cc30fc1c14c95d949b13f6f23191acf9c9a1d3c7e2fa2acff3b",
+    "signed_at": "2026-08-18T20:10:00Z"
+  }
+}
