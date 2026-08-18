@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-db8-1",
+  "node_id": "bazaar-db8.1",
+  "capability": "dossier",
+  "change_id": "add-dossier-objects",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4.6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4.6" }
+  },
+  "goal": "ADR-007 is accepted in ARCHITECTURE.md from design.md settlements. The founding doc names add-dossier-objects. Capability dossier exists only after fold.",
+  "non_goals": [
+    "Fold",
+    "Implement gather, host, paste grammar, or UI",
+    "Reopen the seven settlements",
+    "Copy the Project pun from the dossier delta",
+    "Advise or act add-paste-objects"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-dossier-objects/design.md",
+      "invariant": "Seven settlements are the ADR copy source; act does not reopen them"
+    },
+    {
+      "symbol": "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md",
+      "invariant": "Accept-with-nits: copy design.md, not the Project pun; select binds with provenance"
+    },
+    {
+      "symbol": "ARCHITECTURE.md",
+      "invariant": "ADRs are amended in place; this node adds ADR-007"
+    },
+    {
+      "symbol": "docs/from-intention-to-running.md",
+      "invariant": "Reasoning only; names change-ids; no SHALL"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; arch=Path('ARCHITECTURE.md').read_text(); a=arch.split('### ADR-007',1)[1]; assert 'Accepted' in a[:500]; assert 'dossier' in a.lower(); assert 'the named graph an intention already is' not in arch; f=Path('docs/from-intention-to-running.md').read_text(); assert 'add-dossier-objects' in f; assert not any('dossier' in ln.lower() and 'SHALL' in ln for ln in f.splitlines()); assert not Path('openspec/specs/dossier/spec.md').exists(); print('ok')\""
+  },
+  "out_of_scope": [
+    { "item": "Gather / blob store", "tracked_as": "add-dossier-gather" },
+    { "item": "Emerge implementation", "tracked_as": "add-dossier-promote" },
+    { "item": "Host projection", "tracked_as": "add-dossier-host" },
+    { "item": "Parse face", "tracked_as": "add-paste-objects" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/from-intention-to-running.md",
+      "openspec/changes/add-dossier-objects/tasks.md",
+      "groups/bazaar-db8.1/"
+    ],
+    "do_not": ["fold", "deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "role": "worker",
+  "density": "standard",
+  "surface": "skill-host",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain", "replan"],
+    "ceiling": "lean"
+  }
+}

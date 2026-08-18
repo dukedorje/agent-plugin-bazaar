@@ -230,3 +230,69 @@ kernel decision; the stack under the host is not.
 **Not decided here.** IdentiKey login, snapshot deploy, guest port and
 DNS (`bazaar-lgr.1` / `bazaar-lgr.2`), the MetaDev copy (`bazaar-zmq`),
 and the node/edge table itself.
+
+---
+
+### ADR-007: Dossier is a work object; Project is the named graph ✅
+
+**Status:** Accepted 2026-08-17 (`add-dossier-objects` activated;
+advise accept-with-nits after the emerge amend).
+**Blast:** work objects and method. What sits before an intention,
+and what a Project / Value is allowed to be.
+
+**Decision.** Dossier is an eighth work object and a `dossier`
+capability. It is a gathering: a self-description plus citations.
+It is not an agent. Packet and result stay ADR-001. The living
+capability is created by fold, not by this ADR.
+
+- **Project is not a ninth kind.** It is an intention and its work
+  nodes with a public address — the named graph Taskmaster already
+  describes. A dossier is not a project. Each emerged intention may
+  later have such an address; they need not share one.
+- **Values are named preferences** a project carries. A project
+  breaks down into intentions and those values. Values are not a
+  work-object kind, not a work node, and not a ready-set row.
+  “Value Function” as speech is a synonym for a named preference.
+  A score engine is not this change.
+- **Intentions emerge from a dossier; the gathering stays.** Mint a
+  new intention, or **select** — bind an existing intention as
+  emerged from this dossier — under the same cite rules as mint.
+  Select is not a back-dated stamp. The dossier is not that
+  intention and is not consumed. The landing `add-dossier-promote`
+  means this emerge, not “the dossier becomes the project.”
+- **Many intentions, over time.** One dossier may give rise to
+  several intentions as assets compile. The first emerge does not
+  close the well.
+- **Provenance is a citation trail.** Each emerged intention cites
+  the dossier. It may cite specific assets already cited on the
+  dossier. Not a copy of bytes, not a fourth store. Bytes wait on
+  `bazaar-ja7`.
+- **Self-description is not identity.** It may seed a project’s
+  public lede. Each project’s identity is its own public address.
+  The host (Taskmaster) shows that address; this marketplace does
+  not mint URLs. This is not IdentiKey.
+- **No framework SHALLs.** Living specs do not name a web
+  framework, TUI toolkit, language, driver, or look tokens for
+  dossier or project. This ADR does not invent a sketch hop for
+  kinds.
+
+**Why.** Without a kernel name, the host invents a ticket table or
+a fourth store (ADR-006). A 1:1 consume (“dossier becomes a
+Project”) destroys the well later intentions need and drops
+provenance. Project as a new kind is a parallel kernel next to the
+graph we already have. Values as work nodes would lie about READY.
+
+**Consequences.**
+
+- `working-method` kinds become intention, capability, change, work
+  node, agent, evidence, learning, dossier. Fold of
+  `add-dossier-objects` materializes `openspec/specs/dossier/`.
+- `add-paste-objects` is the parse face of these objects. It
+  MODIFIES `dossier` after this parent folds.
+- Gather, emerge implementation, and host projection stay later
+  landings (`add-dossier-gather`, `add-dossier-promote`,
+  `add-dossier-host`).
+
+**Not decided here.** Ingest store (`bazaar-ja7`). Cite encoding.
+Host tables and routes. Paste grammar / TUI / cards. A value-function
+runtime.

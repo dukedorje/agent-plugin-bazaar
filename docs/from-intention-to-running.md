@@ -10,6 +10,7 @@ The method of working lives in
 |---|---|
 | Loop, rigor dial, load class | `working-method` |
 | Objects and the brief | `working-method` |
+| Dossier, Project, Values | ADR-007 · `dossier` after fold · `working-method` kinds |
 | Split rules, owed checkboxes | `working-method` |
 | Packet in, result out | [`openspec/specs/agent-surface`](../openspec/specs/agent-surface/spec.md) · [`docs/contracts/`](contracts/) |
 | Two-layer specs / changes | [`openspec/specs/living-specs`](../openspec/specs/living-specs/spec.md) |
@@ -44,6 +45,8 @@ I0  this document (commander’s intent)
  ├── D1  park-sprint-plan                        [folded 2026-08-15]
  ├── D2–D6  density, conductor, spawn, ladder    [folded 2026-08-15/16]
  ├── extract-working-method + loop/objects/split [folded 2026-08-16]
+ ├── add-dossier-objects                         [ACTIVE BUILD · ADR-007]
+ │     well, not 1:1 consume; fold creates dossier
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
  │     epic bazaar-lgr closed 2026-08-17
  ├── U0  Tatastu                                 [unparked 2026-08-17]
