@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "id": "res-advise-add-dossier-objects-reread",
+  "packet_id": "pkt-advise-add-dossier-objects-reread",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md",
+      "role": "advise"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "Emerge is mint-or-select; many intentions may cite one dossier; values are not ready rows; the gathering is not consumed",
+    "if_false": "1:1 consume is still the story, or promote still does not say what it creates",
+    "observed": "if_true. Nits: do not copy the Project pun into ADR-007; select binds with provenance; no stack hop for kinds."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "ea4849fc5a0bccd5e69d02964c1a6df299020075",
+    "paths": [
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md",
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.packet.json"
+    ]
+  },
+  "summary": "Accept-with-nits add-dossier-objects. Emerge, cardinality, and provenance close the send-back. Act copies design.md, not the Project pun.",
+  "raw_ref": "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Accept-with-nits add-dossier-objects. Emerge, cardinality, and provenance close the send-back. Act copies design.md, not the Project pun.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "ea4849fc5a0bccd5e69d02964c1a6df299020075",
+    "changed_files": [
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md"
+    ],
+    "blockers": [],
+    "raw_ref": "openspec/changes/add-dossier-objects/reviews/2026-08-17-re-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "signed_at": "2026-08-18T02:20:00Z",
+    "content_hash": "sha256:4c8334c7bb87a4280ea91ccc71be53ac9720a78bd638c2690f69cbd88efd58a8"
+  }
+}
