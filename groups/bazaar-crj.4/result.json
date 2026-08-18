@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-crj-4",
+  "packet_id": "pkt-bazaar-crj-4",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/run/SKILL.md",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/scripts/run.py",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/scripts/test-run.py",
+      "role": "test"
+    },
+    {
+      "path": "plugins/intention/scripts/spawn.py",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py && python3 plugins/intention/scripts/test-spawn.py",
+    "exit_code": 0,
+    "output_tail": "pass 2 tests; pass 8 verbs; pass 6 tests"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "9670862",
+    "paths": [
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/run.py"
+    ]
+  },
+  "summary": "Thin /run landed. Empty ready-set prints a card and launches no worker. Packet-only denylist includes /run.",
+  "raw_ref": "groups/bazaar-crj.4/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Thin /run landed. Empty ready-set prints a card and launches no worker.",
+    "verify_command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py && python3 plugins/intention/scripts/test-spawn.py",
+    "verify_exit": 0,
+    "commit_sha": "9670862",
+    "changed_files": [
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/run.py",
+      "plugins/intention/scripts/spawn.py"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-crj.4/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:f3a996a355cc58c4c0fa8da3a1be0e64dc53b694b025709b7b71ca2fa0e864ff",
+    "signed_at": "2026-08-18T03:20:00Z"
+  }
+}
