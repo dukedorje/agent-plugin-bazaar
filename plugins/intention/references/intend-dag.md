@@ -8,6 +8,16 @@ chat. Durable copy is beads. Do not write `.omc/`. SHALLs do not live here.
 
 **Non-goals.** …
 
+## Extract
+Only when `--extract-from` was given. Omit this section if there was
+no flag (blank-page observe still happened).
+
+- From: <bead / epic ids that resolved>
+- Unresolved: <ids that did not, or omit if none>
+- Records of action: descriptions, comments, closes, results, edges
+  (short; not transcripts)
+- Insight into intent: what those records imply about why
+
 ## Orient
 - Load class: structure-clear | intention-critical | ambiguous
 - Blast: …

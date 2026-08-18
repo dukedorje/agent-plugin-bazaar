@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-yp8-1",
+  "node_id": "bazaar-yp8.1",
+  "capability": "verbs",
+  "change_id": "add-intend-extract",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "intend --extract-from reads named beads/epics first and reports action records plus insight before Orient/DAG. No flag stays blank-page observe.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-intend-extract/specs/verbs/spec.md",
+      "invariant": "extract-from beads/epics; missing named unresolved; no flag is today's observe"
+    },
+    {
+      "symbol": "plugins/intention/skills/intend/SKILL.md",
+      "invariant": "Observe still does not implement"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/intend/SKILL.md').read_text(); d=Path('plugins/intention/references/intend-dag.md').read_text(); v=Path('openspec/changes/add-intend-extract/specs/verbs/spec.md').read_text(); assert '--extract-from' in s; assert 'extract-from' in s.split('argument-hint',1)[1][:120]; assert 'records of action' in s.lower() or 'action records' in s.lower(); assert 'insight' in s.lower(); assert 'unresolved' in s.lower(); assert 'openspec/specs/' in s and 'LEARNINGS' in s; assert '## Extract' in d; assert 'insight' in d.lower(); assert 'intend extract-from named items' in v; print('ok')\" && python3 plugins/intention/scripts/check-skills.py",
+    "criteria": [
+      "argument-hint names --extract-from",
+      "observe: action records + insight; missing unresolved",
+      "no flag: living specs / in-flight / LEARNINGS remain",
+      "intend-dag Extract section",
+      "check-skills still greens"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "dossier id as extract-from item", "tracked_as": "bazaar-yp8.2" },
+    { "item": "gather / bytes", "tracked_as": "bazaar-db8.3" },
+    { "item": "promote wording", "tracked_as": "bazaar-db8.4" },
+    { "item": "fold living verbs spec", "tracked_as": "fold" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/intend/SKILL.md",
+      "plugins/intention/references/intend-dag.md",
+      "openspec/changes/add-intend-extract/tasks.md",
+      "groups/bazaar-yp8.1/"
+    ],
+    "do_not": ["push", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "standard",
+  "surface": "skill-host",
+  "role": "builder"
+}

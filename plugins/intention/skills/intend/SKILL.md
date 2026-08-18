@@ -5,8 +5,9 @@ description: >
   lifecycle), and split a DAG of named change-ids. Open groups when work is
   complementary or contested. Use when starting from a goal, "let's build
   this", or when asked to intend / plan work without a sprint factory.
+  --extract-from names beads/epics to read first (action records + insight).
 user-invocable: true
-argument-hint: "<intention>"
+argument-hint: "[--extract-from <items>] <intention>"
 ---
 
 # intend
@@ -19,9 +20,17 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
 
 ## Procedure
 
-1. **Observe.** Code that the intention touches. `openspec/specs/` (built).
+1. **Observe.** If `--extract-from <items>` is set (usual: bead / epic
+   ids, repeatable), read those records first: descriptions, acceptance,
+   comments, close reasons, signed results, blocking edges that resolve.
+   Report **records of action** and **insight into the intent** they
+   imply. Do not dump transcripts. A missing or unreadable item is named
+   **unresolved** — do not invent its trail. Then, with or without the
+   flag: code that the intention touches. `openspec/specs/` (built).
    `openspec/changes/*/proposal.md` excluding `archive/` and `PARKED`.
    `docs/LEARNINGS.md`. Who is available (human, which harnesses).
+   No flag keeps this blank-page observe; the run is not rejected for
+   lacking extract-from. Dossier ids wait on `add-intend-extract-dossier`.
 2. **Orient.** Load class × blast × lifecycle → rigor for the *highest*
    node. If you cannot name the capability, stay here.
 3. **Skip?** Restore / typo / pin / comment / test-for-existing → print
