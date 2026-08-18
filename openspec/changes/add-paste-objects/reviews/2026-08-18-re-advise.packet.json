@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-paste-objects-re-advise",
+  "node_id": "bazaar-db8.6",
+  "capability": "dossier",
+  "change_id": "add-paste-objects",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
+  },
+  "goal": "Re-read add-paste-objects after the mixed-paste amend. Verdict accept, accept-with-nits, or send-back.",
+  "non_goals": [
+    "Write ADR-008 in this packet",
+    "Fold",
+    "Implement a parser"
+  ],
+  "anchors": [
+    {
+      "symbol": "ADR-007",
+      "invariant": "Emerged intentions cite the dossier"
+    },
+    {
+      "symbol": "send-back 2026-08-18",
+      "invariant": "Mixed paste must cite; lone task must not invent a dossier"
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The send-back boxes are named in the deltas: mixed paste cites; lone task invents no dossier.",
+    "if_false": "Category piles are still independent or a lone task list creates a dossier."
+  },
+  "out_of_scope": [
+    { "item": "add-paste-grammar", "tracked_as": "add-paste-grammar" }
+  ],
+  "constraints": {
+    "permission": "read",
+    "paths": [
+      "openspec/changes/add-paste-objects/reviews/"
+    ],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader"
+}
