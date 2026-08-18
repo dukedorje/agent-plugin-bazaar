@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-advise-add-dossier-objects-reread",
+  "node_id": "bazaar-db8.1",
+  "capability": "dossier",
+  "change_id": "add-dossier-objects",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
+  },
+  "goal": "A last advise verdict on the 3b11ce8 amend so act may write ADR-007.",
+  "non_goals": [
+    "Implement ADR-007",
+    "Fold",
+    "Overwrite the send-back review",
+    "Advise add-paste-objects"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-dossier-objects/design.md",
+      "invariant": "Seven settlements after send-back; act copies them"
+    },
+    {
+      "symbol": "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md",
+      "invariant": "Prior verdict send-back; emerge and values-as-ready-rows were the hole"
+    },
+    {
+      "symbol": "openspec/specs/working-method/spec.md",
+      "invariant": "Work objects are the seven kinds until this MODIFIED folds"
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "Emerge is mint-or-select; many intentions may cite one dossier; values are not ready rows; the gathering is not consumed",
+    "if_false": "1:1 consume is still the story, or promote still does not say what it creates"
+  },
+  "out_of_scope": [
+    { "item": "Gather / blob store", "tracked_as": "add-dossier-gather" },
+    { "item": "Emerge implementation", "tracked_as": "add-dossier-promote" },
+    { "item": "Parse face", "tracked_as": "add-paste-objects" }
+  ],
+  "constraints": {
+    "permission": "read",
+    "paths": ["openspec/changes/add-dossier-objects/reviews/"],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "role": "reader",
+  "density": "lean",
+  "surface": "skill-host"
+}
