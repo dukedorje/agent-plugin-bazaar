@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-db8-1",
+  "packet_id": "pkt-bazaar-db8-1",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "ARCHITECTURE.md",
+      "role": "adr"
+    },
+    {
+      "path": "docs/from-intention-to-running.md",
+      "role": "pointer"
+    },
+    {
+      "path": "openspec/changes/add-dossier-objects/tasks.md",
+      "role": "owed"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; arch=Path('ARCHITECTURE.md').read_text(); a=arch.split('### ADR-007',1)[1]; assert 'Accepted' in a[:500]; assert 'dossier' in a.lower(); assert 'the named graph an intention already is' not in arch; f=Path('docs/from-intention-to-running.md').read_text(); assert 'add-dossier-objects' in f; assert not any('dossier' in ln.lower() and 'SHALL' in ln for ln in f.splitlines()); assert not Path('openspec/specs/dossier/spec.md').exists(); print('ok')\"",
+    "exit_code": 0,
+    "output_tail": "ok"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "37787834c3893705afba623f3fbeacf191d07ee5",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/from-intention-to-running.md",
+      "openspec/changes/add-dossier-objects/tasks.md",
+      "groups/bazaar-db8.1/packet.json"
+    ]
+  },
+  "summary": "ADR-007 accepted: Dossier is a work object; Project is the named graph; Values are preferences, not ready rows; intentions emerge with provenance. Founding doc names the landing. Fold still owed.",
+  "raw_ref": "groups/bazaar-db8.1/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "ADR-007 accepted: Dossier is a work object; Project is the named graph; Values are preferences, not ready rows; intentions emerge with provenance. Founding doc names the landing. Fold still owed.",
+    "verify_command": "python3 -c \"from pathlib import Path; arch=Path('ARCHITECTURE.md').read_text(); a=arch.split('### ADR-007',1)[1]; assert 'Accepted' in a[:500]; assert 'dossier' in a.lower(); assert 'the named graph an intention already is' not in arch; f=Path('docs/from-intention-to-running.md').read_text(); assert 'add-dossier-objects' in f; assert not any('dossier' in ln.lower() and 'SHALL' in ln for ln in f.splitlines()); assert not Path('openspec/specs/dossier/spec.md').exists(); print('ok')\"",
+    "verify_exit": 0,
+    "commit_sha": "37787834c3893705afba623f3fbeacf191d07ee5",
+    "changed_files": [
+      "ARCHITECTURE.md",
+      "docs/from-intention-to-running.md",
+      "openspec/changes/add-dossier-objects/tasks.md"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-db8.1/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "signed_at": "2026-08-18T03:00:00Z",
+    "content_hash": "sha256:1aa99c586d3888c46d2d0f003d2ee21592032039443931a16c5048da06253e13"
+  }
+}

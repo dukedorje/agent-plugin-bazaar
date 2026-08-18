@@ -11,11 +11,11 @@
     "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
   },
   "assignee": {
-    "id": "agt-grok-4.6",
+    "id": "agt-grok-reader",
     "kind": "model",
     "harness": "grok",
     "interface": "grok-4.6",
-    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4.6" }
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
   },
   "goal": "ADR-007 is accepted in ARCHITECTURE.md from design.md settlements. The founding doc names add-dossier-objects. Capability dossier exists only after fold.",
   "non_goals": [
