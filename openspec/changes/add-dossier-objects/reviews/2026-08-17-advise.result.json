@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "id": "res-add-dossier-objects-advise",
+  "packet_id": "pkt-add-dossier-objects-advise",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md",
+      "role": "advise"
+    },
+    {
+      "path": "openspec/changes/add-dossier-objects/tasks.md",
+      "role": "send-back"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "A stranger can name Dossier, then Project as the named graph, then Values as named preferences, from this change's deltas.",
+    "if_false": "working-method still has exactly seven kinds and no dossier.",
+    "observed": "Kinds and fences are named. Promote still does not say what it creates. Send-back."
+  },
+  "disposition": "task-red",
+  "promoted": false,
+  "commit": {
+    "sha": "7245e552d8dac23ee3d4ba1cd68defa966c8d825",
+    "paths": [
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md",
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.packet.json",
+      "openspec/changes/add-dossier-objects/tasks.md"
+    ]
+  },
+  "summary": "Send-back add-dossier-objects. Name what promote creates; values at split are not work nodes.",
+  "raw_ref": "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md",
+  "distilled": {
+    "disposition": "task-red",
+    "summary": "Send-back add-dossier-objects. Name what promote creates; values at split are not work nodes.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "7245e552d8dac23ee3d4ba1cd68defa966c8d825",
+    "changed_files": [
+      "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md",
+      "openspec/changes/add-dossier-objects/tasks.md"
+    ],
+    "blockers": [
+      "Promote does not say whether it mints or selects an intention",
+      "Values at split must not become work nodes or ready-set rows"
+    ],
+    "raw_ref": "openspec/changes/add-dossier-objects/reviews/2026-08-17-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "content_hash": "sha256:fec4c31617f8e490d579fa44f184a4e8afd30a1bce97d1b99dfc4b54eaba752c",
+    "signed_at": "2026-08-17T18:45:00Z"
+  }
+}
