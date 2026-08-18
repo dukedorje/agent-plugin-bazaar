@@ -24,3 +24,4 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — `conductor.py release` sets the bead back to `open`. Do not release after `bd close` — it undoes the close. (`bazaar-zmq`)
 - 2026-08-16 — Fold of `add-taskmaster-host` is what creates `openspec/specs/taskmaster/`. An accepted ADR is not a living capability. (`openspec/specs/taskmaster/spec.md`)
 - 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
+- 2026-08-18 — A parse face that maps categories independently drops ADR-007 provenance on a mixed paste. Restate the cite on the face. (`add-paste-objects`)

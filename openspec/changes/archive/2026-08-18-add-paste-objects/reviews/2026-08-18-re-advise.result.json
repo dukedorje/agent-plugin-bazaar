@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "id": "res-add-paste-objects-re-advise",
+  "packet_id": "pkt-add-paste-objects-re-advise",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.md",
+      "role": "advise"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "The send-back boxes are named in the deltas: mixed paste cites; lone task invents no dossier.",
+    "if_false": "Category piles are still independent or a lone task list creates a dossier.",
+    "observed": "Send-back named. Accept-with-nits. Lone intend-dag has a SHALL and no scenario."
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "a77a6be696eef322829ba9d4ff84dc9a7264db59",
+    "paths": [
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.md",
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.packet.json"
+    ]
+  },
+  "summary": "Accept-with-nits add-paste-objects. Mixed paste cites. Act may write ADR-008.",
+  "raw_ref": "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.md",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Accept-with-nits add-paste-objects. Mixed paste cites. Act may write ADR-008.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "a77a6be696eef322829ba9d4ff84dc9a7264db59",
+    "changed_files": [
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.md"
+    ],
+    "blockers": [
+      "Nit: lone intend-dag has a SHALL and no scenario"
+    ],
+    "raw_ref": "openspec/changes/add-paste-objects/reviews/2026-08-18-re-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "content_hash": "sha256:4e0eb3ccdaddb82a7bb5bece7085bbdbac97b915a862d8be43eab62476ec2da6",
+    "signed_at": "2026-08-18T18:00:00Z"
+  }
+}

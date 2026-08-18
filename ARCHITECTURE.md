@@ -296,3 +296,56 @@ graph we already have. Values as work nodes would lie about READY.
 **Not decided here.** Ingest store (`bazaar-ja7`). Cite encoding.
 Host tables and routes. Paste grammar / TUI / cards. A value-function
 runtime.
+
+---
+
+### ADR-008: Sectioned paste is a face of existing objects
+
+**Status:** Accepted 2026-08-18 (`add-paste-objects` activated;
+advise accept-with-nits after the mixed-paste amend). Folded
+2026-08-18.
+**Blast:** parse face of work objects. What a paste becomes, and
+where that truth lives. Not a parser, not a TUI, not cards.
+
+**Decision.** A sectioned paste maps onto objects ADR-007 already
+named. It is not a new document kind and not a fourth store.
+
+- **Gathering** updates a dossier’s self-description and citations.
+- **Intention / intend-dag** mints or selects intentions and their
+  work nodes.
+- **Task** maps to work nodes.
+- **Mixed paste keeps provenance.** Gathering (or a named existing
+  dossier) plus intention / intend-dag in the same paste means those
+  intentions emerge from that dossier and cite it (ADR-007). Their
+  work nodes belong to those intentions.
+- **A lone task section does not invent a dossier.** No gathering
+  and no named dossier means no emerge record.
+- **Authority stays in the kernel tracker** (and the dated export a
+  host consumes) for work nodes. A host may project a dossier. A
+  TUI-local database is not a source of truth.
+- **The leftover `task` table is not this face.**
+- **The TUI is a sibling client**, not an agent host, not Prime or
+  MetaDev unparked.
+- **Cards are a document view.** `/` stays the ready-set. Signal
+  colour still means READY.
+- **Attributes persist with the mapped object.** Bytes and cited
+  artifacts wait on `bazaar-ja7`.
+- **No framework SHALLs.** Ratatui, Rust, SvelteKit, and drizzle
+  live in sibling sketches.
+
+**Why.** Without a named face, `add-paste-grammar` invents the
+mapping and the scaffold `task` table becomes a ticket tracker.
+Independent category piles would drop ADR-007’s cite on the document
+Duke actually pastes (gathering + intend-dag). Inventing a dossier
+from a lone task list is the same ticket table under another name.
+
+**Consequences.**
+
+- Living `dossier` and `taskmaster` gain these requirements at fold.
+- Grammar, host tables, TUI, and cards stay later landings
+  (`add-paste-grammar`, `add-paste-host`, `add-paste-tui`,
+  `nod-paste-cards`).
+
+**Not decided here.** Parser grammar. Cite encoding. Ingest store
+(`bazaar-ja7`). Host schema. Ratatui crate. Card layout.
+

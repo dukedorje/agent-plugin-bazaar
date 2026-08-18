@@ -11,6 +11,7 @@ The method of working lives in
 | Loop, rigor dial, load class | `working-method` |
 | Objects and the brief | `working-method` |
 | Dossier, Project, Values | [`dossier`](../openspec/specs/dossier/spec.md) · `working-method` kinds · ADR-007 |
+| Paste face | [`dossier`](../openspec/specs/dossier/spec.md) · ADR-008 |
 | Split rules, owed checkboxes | `working-method` |
 | Packet in, result out | [`openspec/specs/agent-surface`](../openspec/specs/agent-surface/spec.md) · [`docs/contracts/`](contracts/) |
 | Two-layer specs / changes | [`openspec/specs/living-specs`](../openspec/specs/living-specs/spec.md) |
@@ -47,6 +48,8 @@ I0  this document (commander’s intent)
  ├── extract-working-method + loop/objects/split [folded 2026-08-16]
  ├── add-dossier-objects                         [folded 2026-08-17 · ADR-007]
  │     well, not 1:1 consume; living `dossier`
+ ├── add-paste-objects                           [folded 2026-08-18 · ADR-008]
+ │     mixed paste cites; lone task invents no dossier
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
  │     epic bazaar-lgr closed 2026-08-17
  ├── U0  Tatastu                                 [unparked 2026-08-17]
