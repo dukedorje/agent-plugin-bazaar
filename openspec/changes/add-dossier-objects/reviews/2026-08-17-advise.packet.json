@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-dossier-objects-advise",
+  "node_id": "bazaar-db8.1",
+  "capability": "dossier",
+  "change_id": "add-dossier-objects",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
+  },
+  "goal": "Read add-dossier-objects. Verdict accept, accept-with-nits, or send-back. Do not implement.",
+  "non_goals": [
+    "Write ADR-007",
+    "Fold",
+    "Implement nits"
+  ],
+  "anchors": [
+    {
+      "symbol": "working-method kinds",
+      "invariant": "Documents are a face, not a parallel store"
+    },
+    {
+      "symbol": "ADR-001",
+      "invariant": "If it cannot accept a packet it is not an agent"
+    },
+    {
+      "symbol": "ADR-006",
+      "invariant": "Taskmaster does not invent a second object model"
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "A stranger can name Dossier, then Project as the named graph, then Values as named preferences, from this change's deltas.",
+    "if_false": "working-method still has exactly seven kinds and no dossier."
+  },
+  "out_of_scope": [
+    { "item": "add-paste-objects advise", "tracked_as": "add-paste-objects" },
+    { "item": "bazaar-ja7 sit-down", "tracked_as": "bazaar-ja7" }
+  ],
+  "constraints": {
+    "permission": "read",
+    "paths": [
+      "openspec/changes/add-dossier-objects/reviews/"
+    ],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "skill-host",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain", "replan"],
+    "ceiling": "lean"
+  },
+  "role": "reader"
+}
