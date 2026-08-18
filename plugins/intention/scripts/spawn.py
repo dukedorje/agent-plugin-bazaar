@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-SLASH = ("/act", "/intend", "/meta-execute")
+SLASH = ("/act", "/intend", "/meta-execute", "/run")
 
 CLAUDE_MODELS = {
     "sonnet-5": "claude-sonnet-5",

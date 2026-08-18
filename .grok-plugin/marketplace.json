@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "intention",
-      "description": "intend, change, advise, act, fold, ready, brief — intention to a running system",
+      "description": "intend, change, advise, act, fold, ready, brief, run — intention to a running system",
       "category": "productivity",
       "version": "0.3.0",
       "source": { "type": "local", "path": "./plugins/intention" }

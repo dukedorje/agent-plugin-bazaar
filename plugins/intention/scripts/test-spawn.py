@@ -45,6 +45,7 @@ def test_unique_stage() -> None:
         expect("/act" not in text, text)
         expect("/intend" not in text, text)
         expect("/meta-execute" not in text, text)
+        expect("/run" not in text, text)
         expect("pkt-density-explicit" in text, text)
         expect(str(Path(sa["packet_file"])) in text, text)
 

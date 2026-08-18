@@ -105,7 +105,7 @@ classifies `stall` as `infra-red`.
 ## Foreign harness
 
 Give them the staged prompt file or packet path. Never `/act`,
-`/intend`, or `/meta-execute`.
+`/intend`, `/meta-execute`, or `/run`.
 
 ## Work ladder (assign)
 

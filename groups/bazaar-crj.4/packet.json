@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-crj-4",
+  "node_id": "bazaar-crj.4",
+  "capability": "verbs",
+  "change_id": "add-run-verb",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "Thin /run verb: campaign policy, re-read stage skills, empty ready-set prints a card and launches no worker.",
+  "anchors": [
+    { "symbol": "openspec/changes/add-run-verb/design.md", "invariant": "Thin SKILL; re-read per wave; no @skills" },
+    { "symbol": "plugins/intention/scripts/spawn.py", "invariant": "SLASH denylist includes /run" }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py && python3 plugins/intention/scripts/test-spawn.py",
+    "criteria": [
+      "run/SKILL.md + symlink",
+      "shared.md row",
+      "catalogs list run",
+      "/run on packet-only denylist",
+      "empty ready-set → card, workers_launched 0"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "@skills protocol", "tracked_as": "later" },
+    { "item": "grok/codex adapters", "tracked_as": "bazaar-crj.3" },
+    { "item": "Path B overlay ADR", "tracked_as": "bazaar-crj.1" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/run/SKILL.md",
+      ".agents/skills/run",
+      "plugins/intention/references/shared.md",
+      "plugins/intention/references/harness.md",
+      "plugins/intention/references/act-io.md",
+      "plugins/intention/.claude-plugin/plugin.json",
+      "plugins/intention/README.md",
+      "plugins/intention/scripts/spawn.py",
+      "plugins/intention/scripts/test-spawn.py",
+      "plugins/intention/scripts/check-skills.py",
+      "plugins/intention/scripts/run.py",
+      "plugins/intention/scripts/test-run.py",
+      "README.md",
+      "CLAUDE.md",
+      ".claude-plugin/marketplace.json",
+      ".grok-plugin/marketplace.json",
+      "openspec/changes/add-run-verb/tasks.md"
+    ],
+    "do_not": ["push", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "explicit",
+  "surface": "skill-host",
+  "role": "builder"
+}
