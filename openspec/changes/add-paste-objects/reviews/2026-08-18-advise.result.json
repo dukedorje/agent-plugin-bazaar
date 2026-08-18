@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "id": "res-add-paste-objects-advise",
+  "packet_id": "pkt-add-paste-objects-advise",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.md",
+      "role": "advise"
+    },
+    {
+      "path": "openspec/changes/add-paste-objects/tasks.md",
+      "role": "send-back"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "A stranger finds that a paste maps onto existing objects without a new kind, a leftover task table, or cards on /.",
+    "if_false": "Paste is unspecified or treated as a fourth store.",
+    "observed": "Face and authority are named. Mixed paste drops ADR-007 provenance. Send-back."
+  },
+  "disposition": "task-red",
+  "promoted": false,
+  "commit": {
+    "sha": "f82eed9214dcaae4e5350b9fa12bdb3a3f58f761",
+    "paths": [
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.md",
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.packet.json",
+      "openspec/changes/add-paste-objects/tasks.md"
+    ]
+  },
+  "summary": "Send-back add-paste-objects. Mixed paste must cite the dossier; intend-dag is not only work nodes.",
+  "raw_ref": "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.md",
+  "distilled": {
+    "disposition": "task-red",
+    "summary": "Send-back add-paste-objects. Mixed paste must cite the dossier; intend-dag is not only work nodes.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "f82eed9214dcaae4e5350b9fa12bdb3a3f58f761",
+    "changed_files": [
+      "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.md",
+      "openspec/changes/add-paste-objects/tasks.md"
+    ],
+    "blockers": [
+      "Mixed paste does not keep ADR-007 provenance",
+      "Intend-dag maps only to work nodes, skipping emerge"
+    ],
+    "raw_ref": "openspec/changes/add-paste-objects/reviews/2026-08-18-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "content_hash": "sha256:3179f8bc8ded497dd1fd2adf85b5b5c70fca3507daa0b9a449fe44d820ed71fb",
+    "signed_at": "2026-08-18T12:00:00Z"
+  }
+}
