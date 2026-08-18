@@ -1,6 +1,6 @@
 # add-run-verb
 
-> **PENDING**
+> **ACTIVE BUILD**
 
 **Rigor:** change
 
