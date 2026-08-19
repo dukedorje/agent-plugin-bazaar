@@ -5,8 +5,8 @@ Lives next to the run skill so a global `skills add` carries it.
 Uses the sibling ready skill's script against the current project's
 openspec/. Does not require the project to vendor ready.py.
 
-  python3 <skill-dir>/scripts/run.py
-  python3 <skill-dir>/scripts/run.py --until advise --ready-json FILE
+  python3 <skill-dir>/scripts/run.py [scope] [--until …]
+  python3 <skill-dir>/scripts/run.py add-x --until advise --ready-json FILE
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 STOPS = ("empty", "advise", "activation", "ask", "fold")
+STAGES = ("change", "advise", "act")
 
 
 def sibling_ready_py() -> Path | None:
@@ -48,6 +49,15 @@ def find_ready_py() -> Path | None:
             return cand
         if (root / ".git").exists() or (root / "openspec").is_dir():
             break
+    return None
+
+
+def find_change_dir(openspec: Path | None, change_id: str) -> Path | None:
+    if openspec is None or not change_id:
+        return None
+    cand = openspec / "changes" / change_id
+    if cand.is_dir() and (cand / "proposal.md").is_file():
+        return cand
     return None
 
 
@@ -94,12 +104,18 @@ def ids(rows: Any) -> list[str]:
     return out
 
 
-def decide(data: dict[str, Any], until: str, pause_before: str | None) -> dict[str, Any]:
-    if data.get("missing"):
+def decide(
+    data: dict[str, Any],
+    until: str,
+    pause_before: str | None,
+    scope: str | None,
+    openspec: Path | None,
+) -> dict[str, Any]:
+    if data.get("missing") == "ready.py":
         return {
             "stop": "no-ready",
             "next": None,
-            "focus": None,
+            "focus": scope,
             "until": until,
             "workers_launched": 0,
             "ready": [],
@@ -111,27 +127,68 @@ def decide(data: dict[str, Any], until: str, pause_before: str | None) -> dict[s
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
     asks = ids(data.get("ask"))
-    if pause_before and (pause_before in ready or pause_before in waiting or pause_before in needs_advise):
+    if pause_before and (
+        pause_before in ready
+        or pause_before in waiting
+        or pause_before in needs_advise
+        or pause_before == scope
+    ):
         return face("pause-before", pause_before, until, ready, waiting, needs_advise, asks)
     if until == "ask" and asks:
         return face("ask", asks[0], until, ready, waiting, needs_advise, asks)
     if until == "activation" and waiting:
-        return face("activation", waiting[0], until, ready, waiting, needs_advise, asks)
-    if until == "advise" and needs_advise:
-        return face("advise", needs_advise[0], until, ready, waiting, needs_advise, asks)
-    if not ready:
-        return face("empty", None, until, ready, waiting, needs_advise, asks)
-    return {
-        "stop": None,
-        "next": "act",
-        "focus": ready[0],
-        "until": until,
-        "workers_launched": 0,
-        "ready": ready,
-        "waiting": waiting,
-        "needs_advise": needs_advise,
-        "ask": asks,
-    }
+        focus = scope if scope in waiting else waiting[0]
+        return face("activation", focus, until, ready, waiting, needs_advise, asks)
+    if scope and scope in waiting:
+        return face("activation", scope, until, ready, waiting, needs_advise, asks)
+
+    if scope and scope not in ready and scope not in waiting and scope not in needs_advise:
+        if find_change_dir(openspec, scope) is None:
+            return {
+                "stop": None,
+                "next": "change",
+                "focus": scope,
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        return face("empty", scope, until, ready, waiting, needs_advise, asks)
+
+    advise_ids = [scope] if scope and scope in needs_advise else list(needs_advise)
+    ready_ids = [scope] if scope and scope in ready else list(ready)
+    if scope and scope in needs_advise:
+        ready_ids = [scope] if scope in ready else []
+
+    if advise_ids:
+        return {
+            "stop": None,
+            "next": "advise",
+            "focus": advise_ids[0],
+            "until": until,
+            "workers_launched": 0,
+            "ready": ready,
+            "waiting": waiting,
+            "needs_advise": needs_advise,
+            "ask": asks,
+        }
+    if until == "advise":
+        return face("empty", scope, until, ready, waiting, needs_advise, asks)
+    if ready_ids:
+        return {
+            "stop": None,
+            "next": "act",
+            "focus": ready_ids[0],
+            "until": until,
+            "workers_launched": 0,
+            "ready": ready,
+            "waiting": waiting,
+            "needs_advise": needs_advise,
+            "ask": asks,
+        }
+    return face("empty", scope, until, ready, waiting, needs_advise, asks)
 
 
 def face(
@@ -171,15 +228,15 @@ def card(row: dict[str, Any]) -> str:
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("scope", nargs="?", help="change-id to focus (e.g. add-sheaf-type)")
     p.add_argument("--until", choices=STOPS, default="empty")
     p.add_argument("--autonomous", action="store_true")
     p.add_argument("--pause-before")
     p.add_argument("--ready-json", type=Path)
     p.add_argument("--json", action="store_true")
     args = p.parse_args()
-    until = args.until
     data = load_ready(args.ready_json)
-    row = decide(data, until, args.pause_before)
+    row = decide(data, args.until, args.pause_before, args.scope, find_openspec())
     if args.json:
         print(json.dumps(row, indent=2))
     else:
