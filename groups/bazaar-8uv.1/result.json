@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-8uv-1",
+  "packet_id": "pkt-bazaar-8uv-1",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/run/scripts/run.py",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/skills/run/SKILL.md",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/scripts/test-run.py",
+      "role": "test"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py",
+    "exit_code": 0,
+    "output_tail": "pass 12 tests\npass 8 verbs"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "fe53b94",
+    "paths": [
+      "plugins/intention/skills/run/scripts/run.py",
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/test-run.py",
+      "openspec/changes/update-run-ooda/specs/verbs/spec.md",
+      "openspec/changes/update-run-ooda/tasks.md",
+      "groups/bazaar-8uv.1/packet.json"
+    ]
+  },
+  "summary": "run next may be intend/change/advise/act/fold. Verb-led kebab is a change-id; else intend. Fold legal named. workers_launched 0.",
+  "raw_ref": "groups/bazaar-8uv.1/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "run next may be intend/change/advise/act/fold. Verb-led kebab is a change-id; else intend.",
+    "verify_command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py",
+    "verify_exit": 0,
+    "commit_sha": "fe53b94",
+    "changed_files": [
+      "plugins/intention/skills/run/scripts/run.py",
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/test-run.py"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-8uv.1/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:f4234a8e4cc743b81064d548be8bf20a06ee85d092c05d272cdffa6fa0e96510",
+    "signed_at": "2026-08-18T23:00:00Z"
+  }
+}
