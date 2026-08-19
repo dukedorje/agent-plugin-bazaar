@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-run-gates-advise",
+  "node_id": "bazaar-8uv.2",
+  "capability": "verbs",
+  "change_id": "update-run-gates",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
+  },
+  "goal": "Read update-run-gates. Verdict accept, accept-with-nits, or send-back. Do not implement.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-run-ooda/",
+      "invariant": "ooda owns the next set; gates own when the default walk enters it"
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "Default empty does not fold and does not invent a second goal detector.",
+    "if_false": "Gates re-owns next: fold and invents its own goal test."
+  },
+  "out_of_scope": [
+    { "item": "expand next set", "tracked_as": "bazaar-8uv.1" }
+  ],
+  "constraints": {
+    "permission": "read",
+    "paths": [
+      "openspec/changes/update-run-gates/reviews/",
+      "openspec/changes/update-run-gates/tasks.md"
+    ],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader"
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-run-ooda-advise",
+  "node_id": "bazaar-8uv.1",
+  "capability": "verbs",
+  "change_id": "update-run-ooda",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-reader" }
+  },
+  "goal": "Read update-run-ooda. Verdict accept, accept-with-nits, or send-back. Do not implement.",
+  "anchors": [
+    {
+      "symbol": "openspec/specs/verbs/spec.md",
+      "invariant": "run next is change then advise then act; fold only under --until fold"
+    },
+    {
+      "symbol": "plugins/intention/skills/run/scripts/run.py",
+      "invariant": "unknown scope with no change dir is next: change; workers_launched 0"
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "A stranger can tell which /run scope is intend vs change from the delta, without act inventing a detector.",
+    "if_false": "Goal vs change-id is prose; run.py still treats every unknown scope as a change-id."
+  },
+  "out_of_scope": [
+    { "item": "update-run-gates implement", "tracked_as": "bazaar-8uv.2" },
+    { "item": "flip PENDING", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "read",
+    "paths": [
+      "openspec/changes/update-run-ooda/reviews/",
+      "openspec/changes/update-run-ooda/tasks.md"
+    ],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader"
+}
