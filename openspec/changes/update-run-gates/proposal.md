@@ -1,11 +1,13 @@
 # update-run-gates
 
-> **PENDING**
+> **ACTIVE BUILD**
 
 **Rigor:** change
 
+Activated 2026-08-19 (`/activate update-run-gates`).
+
 Depends on: `update-run-ooda` / `bazaar-8uv.1` (the stage set
-exists). Not activated.
+exists).
 
 ## Why
 
