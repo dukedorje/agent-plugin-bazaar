@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-db8-4",
+  "node_id": "bazaar-db8.4",
+  "capability": "dossier",
+  "change_id": "update-dossier-promote",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "Retitle bazaar-db8.4 and lock the living-delta: add-dossier-promote means emerge-with-provenance, not 1:1 consume. intend --extract-from a dossier uses that rule.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-dossier-promote/specs/dossier/spec.md",
+      "invariant": "promote landing is emerge; consume remains rejected"
+    },
+    {
+      "symbol": "ARCHITECTURE.md ADR-007",
+      "invariant": "add-dossier-promote means emerge, not the dossier becomes the project"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; import json,subprocess; show=subprocess.check_output(['bd','show','bazaar-db8.4','--json'], text=True); d=json.loads(show); rec=d[0] if isinstance(d,list) else d; title=rec.get('title',''); desc=(rec.get('description') or '') + ' ' + (rec.get('acceptance_criteria') or rec.get('acceptance') or ''); blob=(title+' '+desc).lower(); assert 'become' not in title.lower(); assert 'emerge' in title.lower() or 'cite' in title.lower(); assert 'become' not in blob or 'not' in blob; spec=Path('openspec/changes/update-dossier-promote/specs/dossier/spec.md').read_text(); assert 'add-dossier-promote' in spec; assert 'emerge' in spec.lower(); assert 'extract-from' in spec; print('ok')\"",
+    "criteria": [
+      "bead title no longer says becomes a Project",
+      "description/acceptance are emerge-with-cite",
+      "delta names promote as emerge and extract-from as that path"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "implement gather", "tracked_as": "bazaar-db8.3" },
+    { "item": "dossier id on extract-from", "tracked_as": "bazaar-yp8.2" },
+    { "item": "host projection", "tracked_as": "bazaar-db8.2" },
+    { "item": "fold living dossier spec", "tracked_as": "fold" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/update-dossier-promote/tasks.md",
+      "openspec/changes/update-dossier-promote/specs/dossier/spec.md",
+      "groups/bazaar-db8.4/packet.json",
+      ".beads/issues.jsonl"
+    ],
+    "do_not": ["push", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "explicit",
+  "surface": "skill-host",
+  "role": "builder"
+}
