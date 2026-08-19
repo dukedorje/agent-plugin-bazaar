@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-6os-1",
+  "packet_id": "pkt-bazaar-6os-1",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/debrief/SKILL.md",
+      "role": "edit"
+    },
+    {
+      "path": ".agents/skills/debrief",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/intention/scripts/check-skills.py",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/check-skills.py && python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/debrief/SKILL.md').read_text(); assert 'finished' in s.lower() and 'failed' in s.lower(); assert 'intend' in s.lower(); assert 'LEARNINGS' in s; print('ok')\"",
+    "exit_code": 0,
+    "output_tail": "pass 9 verbs\nok"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "3f054b9",
+    "paths": [
+      "plugins/intention/skills/debrief/SKILL.md",
+      ".agents/skills/debrief",
+      "plugins/intention/scripts/check-skills.py"
+    ]
+  },
+  "summary": "debrief verb landed. Finished or failed unit expands to takeaways and next intend. Not a run wave.",
+  "raw_ref": "groups/bazaar-6os.1/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "debrief verb landed. Finished or failed unit expands to takeaways and next intend.",
+    "verify_command": "python3 plugins/intention/scripts/check-skills.py",
+    "verify_exit": 0,
+    "commit_sha": "3f054b9",
+    "changed_files": [
+      "plugins/intention/skills/debrief/SKILL.md",
+      ".agents/skills/debrief",
+      "plugins/intention/scripts/check-skills.py"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-6os.1/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:ff1824a96e1405fecf78b2903a70ee50cc7fc9d3a2d0a28b3b4a0bbce5e3cd1f",
+    "signed_at": "2026-08-19T04:20:00Z"
+  }
+}
