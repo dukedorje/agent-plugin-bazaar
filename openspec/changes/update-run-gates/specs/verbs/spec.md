@@ -4,12 +4,14 @@
 
 `--until empty` SHALL be the default walk: `change` → `advise` →
 `act`. It SHALL stop at PENDING, ASK, and fold. It SHALL NOT emit
-`next: fold`. It SHALL NOT emit `next: intend` unless the scope is
-a goal (not a verb-led change-id).
+`next: fold`. It SHALL NOT emit `next: intend` unless the scope
+fails the verb-led change-id detector named by `update-run-ooda`
+(`^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$`).
 
-`--until fold` SHALL emit `next: fold` after writes when fold is
-legal. `--until advise`, `--until activation`, and `--until ask`
-SHALL keep their existing stop meanings.
+`--until fold` SHALL use that same change's legal-fold predicate
+(ACTIVE BUILD, no open owed checkbox, not PARKED). It SHALL NOT
+define a second fold rule. `--until advise`, `--until activation`,
+and `--until ask` SHALL keep their existing stop meanings.
 
 `--autonomous` SHALL use the same walk as `--until empty`. It SHALL
 NOT flip a PENDING banner or a by-eye box. It SHALL NOT deploy.
@@ -29,11 +31,13 @@ NOT flip a PENDING banner or a by-eye box. It SHALL NOT deploy.
 - WHEN `run.py` observes
 - THEN `next` is not `intend`
 
-#### Scenario: Until fold emits fold when legal
+#### Scenario: Until fold cites ooda's legal-fold predicate
 
-- GIVEN `--until fold` and fold is legal
+- GIVEN `--until fold` and a change that is ACTIVE BUILD, has no
+  open owed checkbox, and is not PARKED
 - WHEN `run.py` observes
-- THEN the card has `next: fold`
+- THEN fold is legal under the predicate `update-run-ooda` named
+- AND this requirement does not invent a second predicate
 
 #### Scenario: Autonomous does not flip PENDING
 

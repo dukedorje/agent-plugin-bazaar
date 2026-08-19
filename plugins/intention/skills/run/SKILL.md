@@ -56,12 +56,12 @@ fold` and fold is legal.
 
 | Token | Means |
 |---|---|
-| `--until empty` | walk change → advise → act until nothing is dispatchable (default) |
+| `--until empty` | default: change → advise → act. Stop at PENDING, ASK, and fold. Do not intend a verb-led change-id. Do not fold. |
 | `--until advise` | dispatch `advise` when a read is owed; do not `act` |
 | `--until activation` | stop on PENDING |
 | `--until ask` | stop at the first ASK |
-| `--until fold` | after writes, fold if legal |
-| `--autonomous` | asleep: until empty, consult-before-ask, EYES punch-list; never deploy; never flip by-eye |
+| `--until fold` | `next: fold` when legal (ACTIVE BUILD, no open owed, not PARKED) |
+| `--autonomous` | same walk as empty; consult-before-ask; EYES punch-list; never deploy; never flip PENDING or by-eye |
 | `--pause-before <id>` | hard stop before that node |
 
 Halting ≠ asking. Park a veto subject; keep unrelated nodes moving

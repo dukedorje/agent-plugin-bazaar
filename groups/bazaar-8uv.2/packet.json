@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-8uv-2",
+  "node_id": "bazaar-8uv.2",
+  "capability": "verbs",
+  "change_id": "update-run-gates",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "Name default gates. empty does not fold or intend a change-id. until fold cites ooda legal-fold. autonomous does not flip PENDING.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-run-ooda/specs/verbs/spec.md",
+      "invariant": "Detector and legal-fold live on ooda; gates cite them"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/run/SKILL.md').read_text(); g=Path('openspec/changes/update-run-gates/specs/verbs/spec.md').read_text(); assert 'Do not fold' in s; assert 'update-run-ooda' in g; assert 'second fold rule' in g or 'second predicate' in g; print('ok')\"",
+    "criteria": [
+      "empty does not emit next fold",
+      "until fold uses ooda predicate",
+      "policy table matches"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "expand next set", "tracked_as": "bazaar-8uv.1" },
+    { "item": "fold living specs", "tracked_as": "fold" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/run/SKILL.md",
+      "openspec/changes/update-run-gates/specs/verbs/spec.md",
+      "openspec/changes/update-run-gates/tasks.md",
+      "groups/bazaar-8uv.2/packet.json"
+    ],
+    "do_not": ["push", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "explicit",
+  "surface": "skill-host",
+  "role": "builder"
+}
