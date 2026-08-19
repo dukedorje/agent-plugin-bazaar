@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-8uv-2",
+  "packet_id": "pkt-bazaar-8uv-2",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/run/SKILL.md",
+      "role": "edit"
+    },
+    {
+      "path": "openspec/changes/update-run-gates/specs/verbs/spec.md",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/run/SKILL.md').read_text(); g=Path('openspec/changes/update-run-gates/specs/verbs/spec.md').read_text(); assert 'Do not fold' in s; assert 'update-run-ooda' in g; assert 'second fold rule' in g or 'second predicate' in g; print('ok')\"",
+    "exit_code": 0,
+    "output_tail": "pass 12 tests\nok"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "df8185c",
+    "paths": [
+      "plugins/intention/skills/run/SKILL.md",
+      "openspec/changes/update-run-gates/specs/verbs/spec.md",
+      "openspec/changes/update-run-gates/tasks.md",
+      "groups/bazaar-8uv.2/packet.json"
+    ]
+  },
+  "summary": "Default empty does not fold. until fold cites ooda legal-fold. Detector cited, not re-owned.",
+  "raw_ref": "groups/bazaar-8uv.2/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Default empty does not fold. until fold cites ooda legal-fold.",
+    "verify_command": "python3 plugins/intention/scripts/test-run.py",
+    "verify_exit": 0,
+    "commit_sha": "df8185c",
+    "changed_files": [
+      "plugins/intention/skills/run/SKILL.md",
+      "openspec/changes/update-run-gates/specs/verbs/spec.md"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-8uv.2/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:5fa5c6522347f5178a998cd22c7d963abe9f417bc1eacdd06d57e612862981ab",
+    "signed_at": "2026-08-18T23:30:00Z"
+  }
+}
