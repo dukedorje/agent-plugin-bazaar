@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-db8-4",
+  "packet_id": "pkt-bazaar-db8-4",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/update-dossier-promote/tasks.md",
+      "role": "edit"
+    },
+    {
+      "path": "openspec/changes/update-dossier-promote/specs/dossier/spec.md",
+      "role": "edit"
+    },
+    {
+      "path": ".beads/issues.jsonl",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; import json,subprocess; show=subprocess.check_output(['bd','show','bazaar-db8.4','--json'], text=True); d=json.loads(show); rec=d[0] if isinstance(d,list) else d; title=rec.get('title',''); desc=(rec.get('description') or '') + ' ' + (rec.get('acceptance_criteria') or rec.get('acceptance') or ''); blob=(title+' '+desc).lower(); assert 'become' not in title.lower(); assert 'emerge' in title.lower() or 'cite' in title.lower(); assert 'become' not in blob or 'not' in blob; spec=Path('openspec/changes/update-dossier-promote/specs/dossier/spec.md').read_text(); assert 'add-dossier-promote' in spec; assert 'emerge' in spec.lower(); assert 'extract-from' in spec; print('ok')\"",
+    "exit_code": 0,
+    "output_tail": "ok"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "9a377da",
+    "paths": [
+      "openspec/changes/update-dossier-promote/tasks.md",
+      "openspec/changes/update-dossier-promote/specs/dossier/spec.md",
+      "groups/bazaar-db8.4/packet.json",
+      ".beads/issues.jsonl"
+    ]
+  },
+  "summary": "bazaar-db8.4 retitled to emerge-with-cite. Promote landing is not 1:1 consume. Extract-from a dossier uses that rule.",
+  "raw_ref": "groups/bazaar-db8.4/result.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "bazaar-db8.4 retitled to emerge-with-cite. Promote landing is not 1:1 consume.",
+    "verify_command": "bd show bazaar-db8.4",
+    "verify_exit": 0,
+    "commit_sha": "9a377da",
+    "changed_files": [
+      "openspec/changes/update-dossier-promote/tasks.md",
+      "openspec/changes/update-dossier-promote/specs/dossier/spec.md",
+      "groups/bazaar-db8.4/packet.json",
+      ".beads/issues.jsonl"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-db8.4/result.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "content_hash": "sha256:dc51c0f6771d0217a46bf62e111a1d2071c7441b0a1864a8ebe4bc1336f83b16",
+    "signed_at": "2026-08-19T00:20:00Z"
+  }
+}
