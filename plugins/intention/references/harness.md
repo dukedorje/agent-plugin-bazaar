@@ -25,7 +25,7 @@ plugin directory so it does not also vacuum morphist-tools:
 
 ```bash
 skills add /path/to/agent-plugin-bazaar/plugins/intention \
-  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill ready --skill run \
+  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill debrief --skill ready --skill run \
   --agent claude-code --agent codex --agent grok --agent hermes-agent \
   -y
 ```
@@ -42,7 +42,7 @@ GitHub, once you are installing from the network:
 
 ```bash
 skills add dukedorje/agent-plugin-bazaar --full-depth \
-  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill ready --skill run \
+  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill debrief --skill ready --skill run \
   --agent claude-code --agent codex --agent grok --agent hermes-agent \
   -y
 ```

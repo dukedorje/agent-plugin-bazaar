@@ -1,7 +1,7 @@
 # intention
 
 Default loop from intention to a running system (`intend` → `change` →
-`advise` → `act` → `fold`, plus `brief` / `ready` / `run`). Canonical skill files live
+`advise` → `act` → `fold`, plus `brief` / `debrief` / `ready` / `run`). Canonical skill files live
 here. In this repo, `.agents/skills/<name>` is a symlink at each skill so
 Grok, Hermes, and Prime load the same files without a plugin install.
 
@@ -18,7 +18,7 @@ Other repos (Vercel `skills` CLI):
 
 ```bash
 skills add ./plugins/intention \
-  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill ready --skill run \
+  --skill intend --skill change --skill advise --skill act --skill fold --skill brief --skill debrief --skill ready --skill run \
   --agent claude-code --agent codex --agent grok --agent hermes-agent -y
 ```
 

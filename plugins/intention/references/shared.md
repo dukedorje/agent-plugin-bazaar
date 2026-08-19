@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, and `run`. None of them restates
+Loaded by `intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `ready`, and `run`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -33,6 +33,7 @@ disagree, the contract wins.
 | `fold` | Living spec updated + change archived | Implement leftover tasks, fold PENDING/PARKED |
 | `ready` | Ready-set + parked list | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
+| `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
 | `run` | Campaign card + waves until a stop predicate | Second packet schema; slash a foreign worker; inline other verb bodies |
 
 ## Skip a change

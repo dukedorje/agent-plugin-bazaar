@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-6os-1",
+  "node_id": "bazaar-6os.1",
+  "capability": "verbs",
+  "change_id": "add-debrief-verb",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "Add debrief verb: expand a finished or failed unit; stop for human; feed next intend. Not a run wave. Catalogs list it.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-debrief-verb/specs/verbs/spec.md",
+      "invariant": "finished or failed input; not durable truth; not a run wave"
+    },
+    {
+      "symbol": "plugins/intention/skills/brief/SKILL.md",
+      "invariant": "Opposite analog: brief compresses before; debrief expands after"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/check-skills.py && python3 -c \"from pathlib import Path; s=Path('plugins/intention/skills/debrief/SKILL.md').read_text(); assert 'finished' in s.lower() and 'failed' in s.lower(); assert 'intend' in s.lower(); assert 'LEARNINGS' in s; print('ok')\"",
+    "criteria": [
+      "check-skills lists debrief",
+      "SKILL names finished-or-failed and next intend",
+      "symlink resolves"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "default run wave", "tracked_as": "later" },
+    { "item": "fold living specs", "tracked_as": "fold" },
+    { "item": "skills add inside bazaar", "tracked_as": "none" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/debrief/SKILL.md",
+      ".agents/skills/debrief",
+      "plugins/intention/references/shared.md",
+      "plugins/intention/references/harness.md",
+      "plugins/intention/scripts/check-skills.py",
+      "plugins/intention/.claude-plugin/plugin.json",
+      "plugins/intention/README.md",
+      "README.md",
+      "CLAUDE.md",
+      ".claude-plugin/marketplace.json",
+      ".grok-plugin/marketplace.json",
+      "openspec/changes/add-debrief-verb/tasks.md",
+      "groups/bazaar-6os.1/packet.json"
+    ],
+    "do_not": ["push", "fold", "deploy"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "standard",
+  "surface": "skill-host",
+  "role": "builder"
+}

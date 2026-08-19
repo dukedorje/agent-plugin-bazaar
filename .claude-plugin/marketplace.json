@@ -22,7 +22,7 @@
     {
       "name": "intention",
       "source": "./plugins/intention",
-      "description": "intend, change, advise, act, fold, ready, brief, run — intention to a running system",
+      "description": "intend, change, advise, act, fold, ready, brief, debrief, run — intention to a running system",
       "version": "0.3.0",
       "category": "productivity",
       "keywords": ["intention", "ooda", "openspec", "agent-surface", "groups"],

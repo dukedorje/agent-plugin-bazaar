@@ -22,13 +22,13 @@ Or install directly:
 /plugin install intention@agent-plugin-bazaar
 ```
 
-Default verbs: `intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, `run`.
+Default verbs: `intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `ready`, `run`.
 
 ## Available Plugins
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
-| [intention](plugins/intention/) | intend, change, advise, act, fold, brief, ready, run — intention to a running system | productivity |
+| [intention](plugins/intention/) | intend, change, advise, act, fold, brief, debrief, ready, run — intention to a running system | productivity |
 | [morphist-tools](plugins/morphist-tools/) | PRD, vision, research, beads bridges. `/sprint-plan` is **parked** (revive: explicit multi-week factory) | productivity |
 
 ## Creating a Plugin
