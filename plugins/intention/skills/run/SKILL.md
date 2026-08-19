@@ -36,15 +36,21 @@ Otherwise the Must not section below is enough.
 
 ## Attention
 
-When the card says `next` is a stage (`change`, `advise`, `act`),
-**Read** that stage's SKILL.md from the **same skills tree as this
-file** (sibling directory, e.g. `../change/SKILL.md`), not from
-`plugins/intention/skills/` in the current repo. Follow that skill
-for one wave. Re-read this skill and re-run the script at the next
-wave.
+When the card says `next` is a stage (`intend`, `change`, `advise`,
+`act`, `fold`), **Read** that stage's SKILL.md from the **same
+skills tree as this file** (sibling directory, e.g.
+`../change/SKILL.md`), not from `plugins/intention/skills/` in the
+current repo. Follow that skill for one wave. Re-read this skill
+and re-run the script at the next wave.
 
-Order is `change` → `advise` → `act`. Do not `act` an
-architecture / instrument change that still `needs_advise`.
+Decision table, not a preference order: a verb-led kebab
+(`add-` / `update-` / `remove-` / `refactor-` + rest) is a
+change-id. Any other scope is a goal → `intend`. Named change-id
+with no directory → `change`. `--until fold` and fold is legal
+(ACTIVE BUILD, no open owed box, not PARKED) → `fold`. Then
+`advise` before `act`. Do not `act` an architecture / instrument
+change that still `needs_advise`. Do not `fold` unless `--until
+fold` and fold is legal.
 
 ## Policy
 

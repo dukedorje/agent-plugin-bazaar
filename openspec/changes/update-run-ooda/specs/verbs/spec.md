@@ -6,18 +6,21 @@
 `--autonomous`, `--pause-before`, `--max-inflight`) and SHALL invoke
 stage verbs by reading `plugins/intention/skills/<stage>/SKILL.md` at
 the wave it enters that stage. It SHALL accept an optional scope.
-It SHALL set `next` to one of `intend`, `change`, `advise`, `act`,
-or `fold`, in that preference order, for the focused id:
+It SHALL set `next` from this decision table (not a preference
+order). A **verb-led change-id** is a kebab matching
+`^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$`. Any
+other scope SHALL be a **goal**.
 
-- `intend` when the scope is a goal, not a verb-led change-id, or
-  when a surprise needs a new Observe
-- `change` when the scope names a verb-led change-id that has no
+- `intend` when the scope is a goal, or when a surprise needs a
+  new Observe
+- `change` when the scope is a verb-led change-id that has no
   `openspec/changes/<id>/` directory
 - `advise` when that change is ACTIVE BUILD architecture/instrument
   with no accepting review
 - `act` when the change is dispatchable write work
 - `fold` when `--until fold` (or equivalent) is set and fold is
-  legal
+  legal: banner `ACTIVE BUILD`, no open owed checkbox, not
+  `PARKED`
 
 `ready` SHALL remain the card's observe, not a `next` stage.
 `brief` SHALL remain disposable and SHALL NOT be a campaign stage.

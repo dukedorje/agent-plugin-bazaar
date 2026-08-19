@@ -13,13 +13,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 STOPS = ("empty", "advise", "activation", "ask", "fold")
-STAGES = ("change", "advise", "act")
+STAGES = ("intend", "change", "advise", "act", "fold")
+CHANGE_ID_RE = re.compile(
+    r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
+)
+BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
+CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
 
 
 def sibling_ready_py() -> Path | None:
@@ -59,6 +65,45 @@ def find_change_dir(openspec: Path | None, change_id: str) -> Path | None:
     if cand.is_dir() and (cand / "proposal.md").is_file():
         return cand
     return None
+
+
+def is_change_id(scope: str | None) -> bool:
+    return bool(scope and CHANGE_ID_RE.match(scope))
+
+
+def first_banner(text: str) -> str | None:
+    for i, line in enumerate(text.splitlines()):
+        if i >= 40:
+            break
+        m = BANNER_RE.match(line.strip())
+        if m:
+            return m.group(1)
+    return None
+
+
+def open_owed(tasks: str) -> list[str]:
+    open_items: list[str] = []
+    for line in tasks.splitlines():
+        m = CHECKBOX_RE.match(line)
+        if not m:
+            continue
+        if m.group(2).lower() != "x":
+            open_items.append(m.group(3).strip())
+    return open_items
+
+
+def fold_legal(openspec: Path | None, change_id: str) -> bool:
+    """ACTIVE BUILD, no open owed box, not PARKED."""
+    dest = find_change_dir(openspec, change_id)
+    if dest is None:
+        return False
+    banner = first_banner((dest / "proposal.md").read_text(encoding="utf-8"))
+    if banner != "ACTIVE BUILD":
+        return False
+    tasks = dest / "tasks.md"
+    if tasks.is_file() and open_owed(tasks.read_text(encoding="utf-8")):
+        return False
+    return True
 
 
 def load_ready(path: Path | None) -> dict[str, Any]:
@@ -142,7 +187,22 @@ def decide(
     if scope and scope in waiting:
         return face("activation", scope, until, ready, waiting, needs_advise, asks)
 
-    if scope and scope not in ready and scope not in waiting and scope not in needs_advise:
+    # Decision table (not a preference order):
+    # verb-led kebab → change-id; anything else with a scope → goal / intend.
+    if scope and not is_change_id(scope):
+        return {
+            "stop": None,
+            "next": "intend",
+            "focus": scope,
+            "until": until,
+            "workers_launched": 0,
+            "ready": ready,
+            "waiting": waiting,
+            "needs_advise": needs_advise,
+            "ask": asks,
+        }
+
+    if scope and is_change_id(scope):
         if find_change_dir(openspec, scope) is None:
             return {
                 "stop": None,
@@ -155,7 +215,18 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        return face("empty", scope, until, ready, waiting, needs_advise, asks)
+        if until == "fold" and fold_legal(openspec, scope):
+            return {
+                "stop": None,
+                "next": "fold",
+                "focus": scope,
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
 
     advise_ids = [scope] if scope and scope in needs_advise else list(needs_advise)
     ready_ids = [scope] if scope and scope in ready else list(ready)

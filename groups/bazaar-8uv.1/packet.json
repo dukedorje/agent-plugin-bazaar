@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-8uv-1",
+  "node_id": "bazaar-8uv.1",
+  "capability": "verbs",
+  "change_id": "update-run-ooda",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "run next may be intend/change/advise/act/fold. Verb-led kebab (add|update|remove|refactor)-* is a change-id; anything else is a goal → intend. Fold legal = ACTIVE BUILD + no open owed + not PARKED. Decision table, not preference order. workers_launched 0.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md",
+      "invariant": "Name the detector; drop preference order; name fold-is-legal"
+    },
+    {
+      "symbol": "plugins/intention/skills/run/scripts/run.py",
+      "invariant": "Unknown verb-led id with no dir stays next: change"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-run.py && python3 plugins/intention/scripts/check-skills.py",
+    "criteria": [
+      "goal prose → next intend",
+      "add-x missing dir → next change",
+      "until fold + legal → next fold",
+      "workers_launched 0"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "update-run-gates", "tracked_as": "bazaar-8uv.2" },
+    { "item": "flip PENDING", "tracked_as": "none" },
+    { "item": "fold living specs", "tracked_as": "fold" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/run/scripts/run.py",
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/test-run.py",
+      "openspec/changes/update-run-ooda/specs/verbs/spec.md",
+      "openspec/changes/update-run-ooda/tasks.md",
+      "groups/bazaar-8uv.1/packet.json"
+    ],
+    "do_not": ["push", "fold"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "change",
+  "density": "standard",
+  "surface": "skill-host",
+  "role": "builder"
+}

@@ -179,6 +179,75 @@ def test_ready_is_act() -> None:
         expect(face["focus"] == "add-x", face)
 
 
+def test_goal_scope_is_intend() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            [
+                "we need extract-from on intend",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "intend", face)
+        expect(face["stop"] is None, face)
+        expect(face["workers_launched"] == 0, face)
+
+
+def test_until_fold_when_legal() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-x\n\n> **ACTIVE BUILD**\n", encoding="utf-8"
+        )
+        (change / "tasks.md").write_text("# Tasks\n\n- [x] done\n", encoding="utf-8")
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            ["add-x", "--until", "fold", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "fold", face)
+        expect(face["focus"] == "add-x", face)
+        expect(face["workers_launched"] == 0, face)
+
+
+def test_empty_does_not_fold_when_legal() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-x\n\n> **ACTIVE BUILD**\n", encoding="utf-8"
+        )
+        (change / "tasks.md").write_text("# Tasks\n\n- [x] done\n", encoding="utf-8")
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            ["add-x", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+
+
 def test_pending_scope_does_not_flip() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -209,6 +278,9 @@ def main() -> int:
         test_advise_before_act,
         test_ready_is_act,
         test_pending_scope_does_not_flip,
+        test_goal_scope_is_intend,
+        test_until_fold_when_legal,
+        test_empty_does_not_fold_when_legal,
     ]
     failed = 0
     for fn in tests:
