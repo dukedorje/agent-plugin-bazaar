@@ -20,6 +20,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-18 — A leftover `openspec/changes/<id>/` after archive is fold-debt, not a second fold. Do not `git mv` onto an existing `archive/YYYY-MM-DD-<id>/`. (`openspec/changes/add-run-verb/`)
 - 2026-08-18 — `/run <scope>` with no `openspec/changes/<id>/` is `next: change`, not `stop: no-ready`. `no-ready` means the observe script is missing. (`openspec/specs/verbs/spec.md`)
 - 2026-08-18 — `conductor.py ready` fills `dispatchable` up to `max_inflight` even with zero `in_progress`. A scoped act still needs `--max-inflight` to take a later bead. (`plugins/intention/scripts/conductor.py`)
+- 2026-08-19 — Unscoped `/run --until fold` stops empty. Fold-legal is only tested when the scope is a verb-led change-id. Name the landing or scan inflight. (`plugins/intention/skills/run/scripts/run.py`)
 - 2026-08-15 — Speculative product talk files as intent / architecture-sketch / notes, not LEARNINGS and not living SHALLs. (moved 2026-08-16 to `~/work/Taskmaster/taskmaster-web/docs/`; hop `docs/taskmaster/`)
 - 2026-08-16 — `.omc/` is disabled here (Claude and Grok). March–July contents were parked sprint-plan and OMC session junk. Tracker is beads. (`AGENTS.md`)
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)

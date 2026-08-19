@@ -2,7 +2,8 @@
 
 What each dispatcher must produce. Folded from `deepen-verbs` on
 2026-08-15 (S1–S4), later `add-intend-extract` and
-`update-run-stages` on 2026-08-18. Hosting is `packaging`. The
+`update-run-stages` on 2026-08-18, `update-run-ooda` and
+`update-run-gates` on 2026-08-19. Hosting is `packaging`. The
 agent surface is `docs/contracts/`. This spec does not duplicate
 either.
 
@@ -118,24 +119,37 @@ tenth law to a skill body instead of `docs/contracts/` is a defect.
 `run` SHALL walk the ready-set under a stop policy (`--until`,
 `--autonomous`, `--pause-before`, `--max-inflight`) and SHALL invoke
 stage verbs by reading `plugins/intention/skills/<stage>/SKILL.md` at
-the wave it enters that stage. It SHALL accept an optional scope id.
-It SHALL set `next` to `change`, then `advise`, then `act`, in that
-order, for the focused id:
+the wave it enters that stage. It SHALL accept an optional scope.
+It SHALL set `next` from this decision table (not a preference
+order). A **verb-led change-id** is a kebab matching
+`^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$`. Any
+other scope SHALL be a **goal**.
 
-- `change` when the scope names a verb-led change-id that has no
+- `intend` when the scope is a goal, or when a surprise needs a
+  new Observe
+- `change` when the scope is a verb-led change-id that has no
   `openspec/changes/<id>/` directory
 - `advise` when that change is ACTIVE BUILD architecture/instrument
   with no accepting review
 - `act` when the change is dispatchable write work
+- `fold` when `--until fold` (or equivalent) is set and fold is
+  legal: banner `ACTIVE BUILD`, no open owed checkbox, not
+  `PARKED`
+
+`ready` SHALL remain the card's observe, not a `next` stage.
+`brief` SHALL remain disposable and SHALL NOT be a campaign stage.
 
 It SHALL NOT inline those skill bodies into `run/SKILL.md`. It SHALL
 NOT implement a node except by dispatching `act`. It SHALL NOT fold
 except when `--until fold` (or equivalent) is set and fold is legal.
 It SHALL NOT flip a PENDING banner. Foreign harnesses SHALL receive
-a task packet and SHALL NOT receive `/run`.
+a task packet and SHALL NOT receive `/run`. `workers_launched` SHALL
+stay 0.
 
 `stop: no-ready` SHALL mean the observe script is missing. A missing
-`openspec/` tree with a named scope SHALL be `next: change`, not
+`openspec/` tree with a named verb-led change-id SHALL be
+`next: change`, not `no-ready`. A missing `openspec/` tree with a
+goal that is not a change-id SHALL be `next: intend`, not
 `no-ready`.
 
 `--until advise` SHALL dispatch `next: advise` when a read is owed
@@ -155,6 +169,22 @@ and SHALL NOT stop unrelated dispatchable nodes unless `--until ask`.
 - WHEN `run.py` observes
 - THEN the card has `next: change` and `focus: add-sheaf-type`
 - AND `stop` is not `no-ready`
+
+#### Scenario: Goal is not a change-id
+
+- GIVEN `/run we need extract-from on intend` and that string is
+  not a verb-led change-id
+- WHEN `run.py` observes
+- THEN the card has `next: intend`
+- AND `workers_launched` is 0
+
+#### Scenario: Until fold when fold is legal
+
+- GIVEN `--until fold` and an ACTIVE BUILD change whose owed boxes
+  are checked
+- WHEN `run.py` observes
+- THEN the card has `next: fold`
+- AND no worker is launched
 
 #### Scenario: Architecture owes a read before a write
 
@@ -389,3 +419,49 @@ today’s observe (living specs, in-flight changes, learnings).
 - WHEN `intend` observes
 - THEN that id is reported unresolved
 - AND no invented trail is presented as fact
+
+### Requirement: run gate defaults
+
+`--until empty` SHALL be the default walk: `change` → `advise` →
+`act`. It SHALL stop at PENDING, ASK, and fold. It SHALL NOT emit
+`next: fold`. It SHALL NOT emit `next: intend` unless the scope
+fails the verb-led change-id detector named by `update-run-ooda`
+(`^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$`).
+
+`--until fold` SHALL use that same change's legal-fold predicate
+(ACTIVE BUILD, no open owed checkbox, not PARKED). It SHALL NOT
+define a second fold rule. `--until advise`, `--until activation`,
+and `--until ask` SHALL keep their existing stop meanings.
+
+`--autonomous` SHALL use the same walk as `--until empty`. It SHALL
+NOT flip a PENDING banner or a by-eye box. It SHALL NOT deploy.
+
+#### Scenario: Empty does not fold
+
+- GIVEN `--until empty` and an ACTIVE BUILD change whose owed boxes
+  are checked
+- WHEN `run.py` observes
+- THEN `next` is not `fold`
+- AND the card stops empty if nothing else is dispatchable
+
+#### Scenario: Empty does not intend a change-id
+
+- GIVEN `--until empty` and scope `add-x` which is a verb-led
+  change-id
+- WHEN `run.py` observes
+- THEN `next` is not `intend`
+
+#### Scenario: Until fold cites ooda's legal-fold predicate
+
+- GIVEN `--until fold` and a change that is ACTIVE BUILD, has no
+  open owed checkbox, and is not PARKED
+- WHEN `run.py` observes
+- THEN fold is legal under the predicate `update-run-ooda` named
+- AND this requirement does not invent a second predicate
+
+#### Scenario: Autonomous does not flip PENDING
+
+- GIVEN `--autonomous` and a PENDING change
+- WHEN `run` would next owe activation
+- THEN the banner stays PENDING
+- AND `next` is not `act`

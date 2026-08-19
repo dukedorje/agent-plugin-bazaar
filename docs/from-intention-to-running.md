@@ -56,6 +56,10 @@ I0  this document (commander’s intent)
  │     promote = emerge-with-cite, not 1:1 consume
  ├── update-run-stages                           [folded 2026-08-18]
  │     /run <id> emits change → advise → act
+ ├── update-run-ooda                             [folded 2026-08-19]
+ │     next intend/change/advise/act/fold; verb-led kebab
+ ├── update-run-gates                            [folded 2026-08-19]
+ │     empty does not fold; until fold cites legal-fold
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
  │     epic bazaar-lgr closed 2026-08-17
  ├── U0  Tatastu                                 [unparked 2026-08-17]
