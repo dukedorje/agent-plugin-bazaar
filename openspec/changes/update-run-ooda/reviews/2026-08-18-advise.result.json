@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "id": "res-update-run-ooda-advise",
+  "packet_id": "pkt-update-run-ooda-advise",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md",
+      "role": "advise"
+    },
+    {
+      "path": "openspec/changes/update-run-ooda/tasks.md",
+      "role": "send-back"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "A stranger can tell which /run scope is intend vs change from the delta, without act inventing a detector.",
+    "if_false": "Goal vs change-id is prose; run.py still treats every unknown scope as a change-id.",
+    "observed": "Stage set is right. Detector and preference-order are unset. Send-back."
+  },
+  "disposition": "task-red",
+  "promoted": false,
+  "commit": {
+    "sha": "098b8d8",
+    "paths": [
+      "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md",
+      "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.packet.json",
+      "openspec/changes/update-run-ooda/tasks.md"
+    ]
+  },
+  "summary": "Send-back update-run-ooda. Name the goal vs change-id detector; replace preference order with a decision table.",
+  "raw_ref": "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md",
+  "distilled": {
+    "disposition": "task-red",
+    "summary": "Send-back update-run-ooda. Name the goal vs change-id detector; replace preference order with a decision table.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "098b8d8",
+    "changed_files": [
+      "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md",
+      "openspec/changes/update-run-ooda/tasks.md"
+    ],
+    "blockers": [
+      "Goal vs verb-led change-id detector is unnamed",
+      "Preference order fights the empty walk"
+    ],
+    "raw_ref": "openspec/changes/update-run-ooda/reviews/2026-08-18-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "content_hash": "sha256:7d2115c1a052d23538665d4a009fa0d2b5527badb48d7ed7faafc94b32fdeeb6",
+    "signed_at": "2026-08-18T22:00:00Z"
+  }
+}

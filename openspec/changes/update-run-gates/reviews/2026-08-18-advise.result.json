@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "id": "res-update-run-gates-advise",
+  "packet_id": "pkt-update-run-gates-advise",
+  "signer": {
+    "id": "agt-grok-reader",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-reader"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/changes/update-run-gates/reviews/2026-08-18-advise.md",
+      "role": "advise"
+    },
+    {
+      "path": "openspec/changes/update-run-gates/tasks.md",
+      "role": "send-back"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "Default empty does not fold and does not invent a second goal detector.",
+    "if_false": "Gates re-owns next: fold and invents its own goal test.",
+    "observed": "Default walk is the right fence. Re-owns fold and the detector. Send-back."
+  },
+  "disposition": "task-red",
+  "promoted": false,
+  "commit": {
+    "sha": "098b8d8",
+    "paths": [
+      "openspec/changes/update-run-gates/reviews/2026-08-18-advise.md",
+      "openspec/changes/update-run-gates/reviews/2026-08-18-advise.packet.json",
+      "openspec/changes/update-run-gates/tasks.md"
+    ]
+  },
+  "summary": "Send-back update-run-gates. Cite ooda's detector and legal-fold predicate; do not re-own next: fold.",
+  "raw_ref": "openspec/changes/update-run-gates/reviews/2026-08-18-advise.md",
+  "distilled": {
+    "disposition": "task-red",
+    "summary": "Send-back update-run-gates. Cite ooda's detector and legal-fold predicate; do not re-own next: fold.",
+    "verify_command": null,
+    "verify_exit": null,
+    "commit_sha": "098b8d8",
+    "changed_files": [
+      "openspec/changes/update-run-gates/reviews/2026-08-18-advise.md",
+      "openspec/changes/update-run-gates/tasks.md"
+    ],
+    "blockers": [
+      "Same unnamed goal detector as ooda",
+      "next: fold re-owned"
+    ],
+    "raw_ref": "openspec/changes/update-run-gates/reviews/2026-08-18-advise.md"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-reader",
+    "content_hash": "sha256:965781c9ba5806d6a32bb61d7d73a1bcedcef0ba5eeecbd2ed84f13ce690a21c",
+    "signed_at": "2026-08-18T22:00:00Z"
+  }
+}
