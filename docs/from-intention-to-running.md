@@ -50,6 +50,12 @@ I0  this document (commander’s intent)
  │     well, not 1:1 consume; living `dossier`
  ├── add-paste-objects                           [folded 2026-08-18 · ADR-008]
  │     mixed paste cites; lone task invents no dossier
+ ├── add-intend-extract                          [folded 2026-08-18]
+ │     --extract-from beads/epics; action + insight
+ ├── update-dossier-promote                      [folded 2026-08-18]
+ │     promote = emerge-with-cite, not 1:1 consume
+ ├── update-run-stages                           [folded 2026-08-18]
+ │     /run <id> emits change → advise → act
  ├── T1  taskmaster.dev                          [host ADR-006 · site live]
  │     epic bazaar-lgr closed 2026-08-17
  ├── U0  Tatastu                                 [unparked 2026-08-17]

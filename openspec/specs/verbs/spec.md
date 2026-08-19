@@ -1,8 +1,10 @@
 # verbs
 
 What each dispatcher must produce. Folded from `deepen-verbs` on
-2026-08-15 (S1–S4). Hosting is `packaging`. The agent surface is
-`docs/contracts/`. This spec does not duplicate either.
+2026-08-15 (S1–S4), later `add-intend-extract` and
+`update-run-stages` on 2026-08-18. Hosting is `packaging`. The
+agent surface is `docs/contracts/`. This spec does not duplicate
+either.
 
 ## Purpose
 
@@ -116,11 +118,30 @@ tenth law to a skill body instead of `docs/contracts/` is a defect.
 `run` SHALL walk the ready-set under a stop policy (`--until`,
 `--autonomous`, `--pause-before`, `--max-inflight`) and SHALL invoke
 stage verbs by reading `plugins/intention/skills/<stage>/SKILL.md` at
-the wave it enters that stage. It SHALL NOT inline those skill bodies
-into `run/SKILL.md`. It SHALL NOT implement a node except by
-dispatching `act`. It SHALL NOT fold except when `--until fold` (or
-equivalent) is set and fold is legal. Foreign harnesses SHALL receive
+the wave it enters that stage. It SHALL accept an optional scope id.
+It SHALL set `next` to `change`, then `advise`, then `act`, in that
+order, for the focused id:
+
+- `change` when the scope names a verb-led change-id that has no
+  `openspec/changes/<id>/` directory
+- `advise` when that change is ACTIVE BUILD architecture/instrument
+  with no accepting review
+- `act` when the change is dispatchable write work
+
+It SHALL NOT inline those skill bodies into `run/SKILL.md`. It SHALL
+NOT implement a node except by dispatching `act`. It SHALL NOT fold
+except when `--until fold` (or equivalent) is set and fold is legal.
+It SHALL NOT flip a PENDING banner. Foreign harnesses SHALL receive
 a task packet and SHALL NOT receive `/run`.
+
+`stop: no-ready` SHALL mean the observe script is missing. A missing
+`openspec/` tree with a named scope SHALL be `next: change`, not
+`no-ready`.
+
+`--until advise` SHALL dispatch `next: advise` when a read is owed
+and SHALL NOT dispatch `act`. `--until activation` SHALL stop on
+PENDING. `--until empty` SHALL walk change → advise → act until
+nothing is dispatchable.
 
 `--autonomous` SHALL suppress mid-run questions, route judgment
 through consult-before-ask, defer by-eye gates to an EYES list, and
@@ -128,11 +149,32 @@ SHALL NOT flip a human-verify box or perform deploy / force-push /
 secret-exposing work. A veto or true blocker SHALL park that subject
 and SHALL NOT stop unrelated dispatchable nodes unless `--until ask`.
 
-#### Scenario: Until advise
+#### Scenario: Named landing has no change directory
+
+- GIVEN `/run add-sheaf-type` and no `openspec/changes/add-sheaf-type/`
+- WHEN `run.py` observes
+- THEN the card has `next: change` and `focus: add-sheaf-type`
+- AND `stop` is not `no-ready`
+
+#### Scenario: Architecture owes a read before a write
+
+- GIVEN `add-x` is ACTIVE BUILD, in `needs_advise`, and also has
+  open owed boxes
+- WHEN `run` observes with `--until empty`
+- THEN `next` is `advise`, not `act`
+
+#### Scenario: Until advise runs the read and not the write
 
 - GIVEN dispatchable write nodes and `--until advise`
-- WHEN `run` would next owe a read (`advise`) or an activation
-- THEN it stops and reports, and does not flip a PENDING banner
+- WHEN a read is owed
+- THEN `next` is `advise` and no PENDING banner is flipped
+- AND `act` is not dispatched
+
+#### Scenario: Until advise with no read owed
+
+- GIVEN ready write nodes, no `needs_advise`, and `--until advise`
+- WHEN `run` observes
+- THEN it stops and does not set `next: act`
 
 #### Scenario: Autonomous does not forge eyes
 
@@ -310,3 +352,40 @@ opus-5 / fable-5). Packet-only runs SHALL pass
 - GIVEN a fake `claude` on PATH
 - WHEN `run --adapter claude` executes
 - THEN the fake argv includes `-p` and the model id
+
+### Requirement: intend extract-from named items
+
+When `intend` is given `--extract-from` with one or more items, it
+SHALL observe those items before orient and split. Usual items SHALL
+be bead ids and epic ids. Observe SHALL report records of action
+(descriptions, acceptance, comments, close reasons, signed results,
+blocking edges that resolve) and insight into the intent those
+records imply. It SHALL NOT dump full transcripts into the DAG. It
+SHALL NOT implement. A missing or unreadable item SHALL be named as
+unresolved and SHALL NOT be invented. Absence of the flag SHALL keep
+today’s observe (living specs, in-flight changes, learnings).
+
+#### Scenario: Extract from an epic
+
+- GIVEN epic `bazaar-db8` has children, comments, and a close on
+  `bazaar-db8.1`
+- WHEN `intend --extract-from bazaar-db8` runs
+- THEN the output includes action records from that epic and insight
+  into intent
+- AND then Orient and a DAG
+- AND no product paths were edited for architecture nodes that still
+  need activation
+
+#### Scenario: No flag stays blank-page
+
+- GIVEN no `--extract-from`
+- WHEN `intend` runs
+- THEN observe is living specs, in-flight changes, and learnings
+- AND the run is not rejected for lacking extract-from
+
+#### Scenario: Missing item is named
+
+- GIVEN `--extract-from` names an id that does not resolve
+- WHEN `intend` observes
+- THEN that id is reported unresolved
+- AND no invented trail is presented as fact

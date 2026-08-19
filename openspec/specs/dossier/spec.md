@@ -8,7 +8,8 @@ A sectioned paste is a face of those objects: mixed paste cites;
 a lone task list invents no dossier. The parse is deterministic; the
 fixture lives in the Taskmaster sibling app. Folded from
 `add-dossier-objects` (ADR-007), `add-paste-objects` (ADR-008),
-`add-paste-grammar`, and `add-paste-tui` on 2026-08-18.
+`add-paste-grammar`, `add-paste-tui` on 2026-08-18, and
+`update-dossier-promote` on 2026-08-18.
 
 This spec is stack-neutral. Framework, TUI toolkit, language, driver,
 and look tokens are not requirements here.
@@ -68,6 +69,11 @@ provenance. Emergence SHALL NOT mutate the dossier into an intention
 or a project, consume the gathering, copy bytes into a new store, or
 introduce a second task-packet or signed-result shape.
 
+The landing id `add-dossier-promote` SHALL mean this emerge. It SHALL
+NOT mean the dossier becomes a project. `intend --extract-from`
+naming a dossier SHALL be an emerge path under this requirement, not
+a second promote rule.
+
 #### Scenario: First intention emerges
 
 - GIVEN a dossier with a self-description and citations
@@ -96,6 +102,22 @@ introduce a second task-packet or signed-result shape.
   or otherwise consumes the gathering
 - WHEN it is reviewed
 - THEN it is rejected against this requirement
+
+#### Scenario: Promote landing means emerge
+
+- GIVEN the landing id `add-dossier-promote` or tracker title
+  `bazaar-db8.4`
+- WHEN a reader asks what that landing does
+- THEN it is mint or select of an intention that cites the dossier
+- AND it is not “the dossier becomes a project”
+
+#### Scenario: Extract-from a dossier is emerge
+
+- GIVEN `intend --extract-from` names a dossier
+- WHEN an intention is minted from that run
+- THEN the intention cites the dossier
+- AND the gathering remains
+- AND no second promote rule is invented
 
 ### Requirement: Values are named preferences
 
