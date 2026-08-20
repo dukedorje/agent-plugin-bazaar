@@ -1,0 +1,23 @@
+{
+  "name": "metacoding",
+  "version": "0.1.0",
+  "description": "Typed code-graph for blast radius, callers, and same-role queries. MCP + skill. Prefer harness LSP for live types.",
+  "author": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "homepage": "https://github.com/WorldTreeNetwork/MetaCoding",
+  "repository": "https://github.com/WorldTreeNetwork/MetaCoding",
+  "license": "MIT",
+  "keywords": [
+    "code-graph",
+    "mcp",
+    "callers",
+    "ctkr",
+    "static-analysis",
+    "grok",
+    "blast-radius"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

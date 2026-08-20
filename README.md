@@ -30,6 +30,7 @@ Default verbs: `intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, 
 |--------|-------------|----------|
 | [intention](plugins/intention/) | intend, change, advise, act, fold, brief, debrief, ready, run — intention to a running system | productivity |
 | [morphist-tools](plugins/morphist-tools/) | PRD, vision, research, beads bridges. `/sprint-plan` is **parked** (revive: explicit multi-week factory) | productivity |
+| [metacoding](plugins/metacoding/) | Typed code-graph for blast radius, callers, same-role queries. MCP + skill. Prefer harness LSP for live types. | integrations |
 
 ## Creating a Plugin
 
