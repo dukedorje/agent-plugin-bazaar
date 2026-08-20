@@ -7,21 +7,44 @@ layer. MCP is the graph API.
 Live types / hover / diagnostics stay on the harness LSP (Grok's `t`
 server). This plugin does not try to replace that.
 
-Requires a running MetaCoding index. The plugin does not ship the
-ladybugdb native binary — install the CLI separately.
+Requires a MetaCoding index. The plugin does not ship ladybugdb; it
+launches `serve` via `scripts/serve.sh`.
 
-## Install the CLI + index
+## Where `serve` runs from
+
+Order:
+
+1. `$METACODING_ROOT` if it is a MetaCoding checkout (`src/cli/bin.ts`)
+2. cwd / git-root, if *that* tree is the MetaCoding repo
+3. `metacoding` on PATH (`bun add -g @identikey/metacoding` — not `bunx`)
+
+Dev against a clone (this is what you want instead of npm):
 
 ```bash
-bun add -g @identikey/metacoding
-# bunx is not supported (skips native binary install)
+export METACODING_ROOT=/home/dorje/projects/MetaCoding   # your checkout
+```
 
-export PATH="$HOME/.bun/bin:$HOME/.cache/.bun/bin:$PATH"
-metacoding index . --scip     # CALLS/REFERENCES/IMPLEMENTS need SCIP
+Grok expands `${VAR}` in MCP config. User-level override that *replaces*
+the plugin server (fields are not merged):
+
+```toml
+# ~/.grok/config.toml
+[mcp_servers.metacoding]
+command = "bun"
+args = ["run", "/home/dorje/projects/MetaCoding/src/cli/bin.ts", "serve"]
+```
+
+## Index
+
+```bash
+# from a checkout:
+bun "$METACODING_ROOT/src/cli/bin.ts" index . --scip
+# or published:
+metacoding index . --scip
 metacoding status
 ```
 
-`--scip` indexers ship bundled. Re-run (or `metacoding watch .`) when
+`--scip` fills CALLS / REFERENCES / IMPLEMENTS. Re-run or `watch` when
 the tree moves.
 
 ## Install this plugin
@@ -42,9 +65,9 @@ grok plugin marketplace add dukedorje/agent-plugin-bazaar
 grok plugin install metacoding --trust
 ```
 
-MCP command is `metacoding serve` (must be on PATH). CTKR tools also
-need `METACODING_CTKR_DATA_DIR` pointing at a `.metacoding/` whose
-`ctkr/` dir is populated.
+MCP is `scripts/serve.sh` (see above). CTKR tools also need
+`METACODING_CTKR_DATA_DIR` pointing at a `.metacoding/` whose `ctkr/`
+dir is populated.
 
 ## Always-on Grok rule (optional)
 
