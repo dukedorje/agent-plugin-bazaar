@@ -35,9 +35,10 @@ Grok: two-hop — `search_tool` query `metacoding graph_callers`, then
 Unsure of the live surface: `describe_api`.
 
 MCP down: `metacoding status` then `metacoding query '<cypher>'`.
-Index once per repo: `metacoding index . --scip` (SCIP is what fills
-CALLS / REFERENCES / IMPLEMENTS). Global install: `bun add -g @identikey/metacoding`
-(`bunx` will not work).
+Serve comes from `$METACODING_ROOT` (local checkout) if set, else cwd
+if that tree is MetaCoding, else `metacoding` on PATH. `bunx` will not
+work. Index: `metacoding index . --scip` (SCIP fills CALLS /
+REFERENCES / IMPLEMENTS).
 
 ## Route
 
