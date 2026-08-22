@@ -19,7 +19,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-STOPS = ("empty", "advise", "activation", "ask", "fold")
+STOPS = ("empty", "advise", "activation", "ask", "fold", "roll")
+ADVISE_RE = re.compile(
+    r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
+    re.I,
+)
 STAGES = ("intend", "change", "advise", "act", "fold")
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -90,6 +94,86 @@ def open_owed(tasks: str) -> list[str]:
         if m.group(2).lower() != "x":
             open_items.append(m.group(3).strip())
     return open_items
+
+
+def landing_from_title(title: str) -> str | None:
+    if not title:
+        return None
+    head = title.strip().split()[0].rstrip(":")
+    return head if is_change_id(head) else None
+
+
+def last_advise_verdict(change_dir: Path) -> str | None:
+    reviews = change_dir / "reviews"
+    if not reviews.is_dir():
+        return None
+    files = sorted(
+        p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")
+    )
+    if not files:
+        return None
+    text = files[-1].read_text(encoding="utf-8")
+    for line in text.splitlines()[:40]:
+        m = ADVISE_RE.match(line.strip())
+        if m:
+            return m.group(1).lower()
+    return None
+
+
+def fold_legal_ids(openspec: Path | None) -> list[str]:
+    if openspec is None:
+        return []
+    changes = openspec / "changes"
+    if not changes.is_dir():
+        return []
+    out: list[str] = []
+    for child in sorted(changes.iterdir()):
+        if not child.is_dir() or child.name == "archive":
+            continue
+        if fold_legal(openspec, child.name):
+            out.append(child.name)
+    return out
+
+
+def send_back_ids(openspec: Path | None) -> list[str]:
+    if openspec is None:
+        return []
+    changes = openspec / "changes"
+    if not changes.is_dir():
+        return []
+    out: list[str] = []
+    for child in sorted(changes.iterdir()):
+        if not child.is_dir() or child.name == "archive":
+            continue
+        if not (child / "proposal.md").is_file():
+            continue
+        if first_banner((child / "proposal.md").read_text(encoding="utf-8")) != "ACTIVE BUILD":
+            continue
+        if last_advise_verdict(child) == "send-back":
+            out.append(child.name)
+    return out
+
+
+def load_beads() -> list[dict[str, Any]]:
+    try:
+        proc = subprocess.run(
+            ["bd", "list", "--ready", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0:
+        return []
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    return [row for row in data if isinstance(row, dict)]
 
 
 def fold_legal(openspec: Path | None, change_id: str) -> bool:
@@ -187,6 +271,110 @@ def decide(
     if scope and scope in waiting:
         return face("activation", scope, until, ready, waiting, needs_advise, asks)
 
+    fold_ids = (
+        ids(data.get("fold_legal"))
+        if data.get("fold_legal") is not None
+        else (fold_legal_ids(openspec) if until in {"fold", "roll"} else [])
+    )
+    send_ids = (
+        ids(data.get("send_back"))
+        if data.get("send_back") is not None
+        else (send_back_ids(openspec) if until == "roll" else [])
+    )
+    raw_beads = data.get("beads")
+    if raw_beads is None:
+        beads = load_beads() if until == "roll" else []
+    elif isinstance(raw_beads, list):
+        beads = [b for b in raw_beads if isinstance(b, dict)]
+    else:
+        beads = []
+
+    if until in {"fold", "roll"} and not scope and fold_ids:
+        return {
+            "stop": None,
+            "next": "fold",
+            "focus": fold_ids[0],
+            "until": until,
+            "workers_launched": 0,
+            "ready": ready,
+            "waiting": waiting,
+            "needs_advise": needs_advise,
+            "ask": asks,
+        }
+
+    if until == "roll" and not scope:
+        if send_ids:
+            return {
+                "stop": None,
+                "next": "change",
+                "focus": send_ids[0],
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        if needs_advise:
+            return {
+                "stop": None,
+                "next": "advise",
+                "focus": needs_advise[0],
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        if ready:
+            return {
+                "stop": None,
+                "next": "act",
+                "focus": ready[0],
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        for bead in beads:
+            title = str(bead.get("title") or "")
+            kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
+            landing = landing_from_title(title)
+            if landing and find_change_dir(openspec, landing) is None:
+                return {
+                    "stop": None,
+                    "next": "change",
+                    "focus": landing,
+                    "until": until,
+                    "workers_launched": 0,
+                    "ready": ready,
+                    "waiting": waiting,
+                    "needs_advise": needs_advise,
+                    "ask": asks,
+                }
+            if (
+                kind in {"task", "feature"}
+                and not landing
+                and not title.lower().startswith("nod-")
+            ):
+                nid = str(bead.get("id") or "")
+                if nid:
+                    return {
+                        "stop": None,
+                        "next": "intend",
+                        "focus": nid,
+                        "until": until,
+                        "workers_launched": 0,
+                        "ready": ready,
+                        "waiting": waiting,
+                        "needs_advise": needs_advise,
+                        "ask": asks,
+                    }
+        return face("empty", None, until, ready, waiting, needs_advise, asks)
+
     # Decision table (not a preference order):
     # verb-led kebab → change-id; anything else with a scope → goal / intend.
     if scope and not is_change_id(scope):
@@ -215,10 +403,22 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if until == "fold" and fold_legal(openspec, scope):
+        if until in {"fold", "roll"} and fold_legal(openspec, scope):
             return {
                 "stop": None,
                 "next": "fold",
+                "focus": scope,
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        if until == "roll" and scope in send_ids:
+            return {
+                "stop": None,
+                "next": "change",
                 "focus": scope,
                 "until": until,
                 "workers_launched": 0,

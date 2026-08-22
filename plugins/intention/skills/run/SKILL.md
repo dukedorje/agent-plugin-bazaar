@@ -5,7 +5,7 @@ description: >
   Use when asked to run the loop, chain stages, go autonomous, or
   /run. Does not replace act (one node) or ready (observe only).
 user-invocable: true
-argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold] [--autonomous] [--pause-before=<id>]"
+argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--autonomous] [--max-waves=<n>] [--pause-before=<id>]"
 ---
 
 # run
@@ -21,6 +21,9 @@ repo; that file only exists in the bazaar clone.
 ```
 python3 <this-skill-dir>/scripts/run.py [<scope>] [--until …] [--autonomous]
 ```
+
+`--max-waves` is conductor policy (default 12). The script does not
+enforce it. Count waves yourself and stop when the cap hits.
 
 It observes the *current project* via the sibling ready skill
 (`../ready/scripts/ready.py` + that project's `openspec/`). It never
@@ -46,11 +49,15 @@ and re-run the script at the next wave.
 Decision table, not a preference order: a verb-led kebab
 (`add-` / `update-` / `remove-` / `refactor-` + rest) is a
 change-id. Any other scope is a goal → `intend`. Named change-id
-with no directory → `change`. `--until fold` and fold is legal
-(ACTIVE BUILD, no open owed box, not PARKED) → `fold`. Then
-`advise` before `act`. Do not `act` an architecture / instrument
-change that still `needs_advise`. Do not `fold` unless `--until
-fold` and fold is legal.
+with no directory → `change`. `--until fold` / `--until roll` and
+fold is legal (ACTIVE BUILD, no open owed box, not PARKED) →
+`fold` (unscoped scans inflight). Then `advise` before `act`.
+`--until roll` then: send-back → `change`; unblocked bead with a
+landing and no dir → `change`; unblocked task/feature with no
+landing (not epic, not `nod-`) → `intend --extract-from` that
+bead. Do not intend epics. Do not `act` an architecture /
+instrument change that still `needs_advise`. Do not `fold` unless
+`--until fold` or `--until roll` and fold is legal.
 
 ## Policy
 
@@ -60,8 +67,9 @@ fold` and fold is legal.
 | `--until advise` | dispatch `advise` when a read is owed; do not `act` |
 | `--until activation` | stop on PENDING |
 | `--until ask` | stop at the first ASK |
-| `--until fold` | `next: fold` when legal (ACTIVE BUILD, no open owed, not PARKED) |
-| `--autonomous` | same walk as empty; consult-before-ask; EYES punch-list; never deploy; never flip PENDING or by-eye |
+| `--until fold` | `next: fold` when legal; unscoped scans inflight |
+| `--until roll` | fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; stop when stuck |
+| `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Pair with `--until roll` to keep walking |
 | `--pause-before <id>` | hard stop before that node |
 
 Halting ≠ asking. Park a veto subject; keep unrelated nodes moving
@@ -75,5 +83,5 @@ ninth verb.
 - Slash a foreign worker (`/run`, `/act`, `/intend`, `/meta-execute`)
 - Flip PENDING or a by-eye box
 - Vendor `@skills` / `.atskills` / `planctl/`
-- Fold unless `--until fold` and fold is legal
+- Fold unless `--until fold` or `--until roll` and fold is legal
 - Implement a node except by following `act` after a re-read
