@@ -110,6 +110,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `ready` | List ready/unblocked work and everything parked |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
+| `map` | Intend DAG with live status, wave, and outcome |
 | `run` | Campaign over the ready-set until a stop predicate |
 
 ### morphist-tools
