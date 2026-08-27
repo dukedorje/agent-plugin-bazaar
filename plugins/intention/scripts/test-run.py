@@ -569,8 +569,77 @@ def test_roll_skip_fold_picks_advise() -> None:
         face = json.loads(proc.stdout)
         expect(face["next"] == "advise", face)
         expect(face["focus"] == "add-y", face)
-        expect("add-x" in face["ask"], face)
+        expect("add-x" not in face["ask"], face)
         expect("add-y" in face["needs_advise"], face)
+
+
+def test_roll_skip_fold_still_advises_same_id() -> None:
+    """Fold refusal --skip does not drop advise on that same id."""
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-agent-body"}],
+                "ask": [],
+                "fold_legal": ["add-agent-body"],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            [
+                "--until",
+                "roll",
+                "--skip",
+                "add-agent-body",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect(face["focus"] == "add-agent-body", face)
+        expect(face["stop"] is None, face)
+
+
+def test_roll_punt_skips_advise() -> None:
+    """ADR-005 punt parks the id; roll advises a different node."""
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-sheaf-type"}, {"id": "add-y"}],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            [
+                "--until",
+                "roll",
+                "--punt",
+                "add-sheaf-type",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect(face["focus"] == "add-y", face)
+        expect("add-sheaf-type" in face["ask"], face)
+        expect("add-sheaf-type" in face["needs_advise"], face)
 
 
 def test_roll_send_back_no_boxes_is_not_change() -> None:
@@ -662,6 +731,8 @@ def main() -> int:
         test_roll_does_not_stop_on_pending,
         test_roll_needs_advise_is_not_fold,
         test_roll_skip_fold_picks_advise,
+        test_roll_skip_fold_still_advises_same_id,
+        test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,
         test_roll_send_back_with_boxes_is_change,
     ]

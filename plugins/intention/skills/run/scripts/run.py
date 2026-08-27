@@ -5,7 +5,7 @@ Lives next to the run skill so a global `skills add` carries it.
 Uses the sibling ready skill's script against the current project's
 openspec/. Does not require the project to vendor ready.py.
 
-  python3 <skill-dir>/scripts/run.py [scope] [--until …] [--skip id,id]
+  python3 <skill-dir>/scripts/run.py [scope] [--until …] [--skip id,id] [--punt id,id]
   python3 <skill-dir>/scripts/run.py add-x --until advise --ready-json FILE
 """
 
@@ -314,6 +314,7 @@ def decide(
     scope: str | None,
     openspec: Path | None,
     skip: list[str] | None = None,
+    punt: list[str] | None = None,
 ) -> dict[str, Any]:
     if data.get("missing") == "ready.py":
         return {
@@ -328,6 +329,7 @@ def decide(
             "ask": [],
         }
     skip_set = set(skip or [])
+    punt_set = set(punt or [])
     ready = ids(data.get("ready"))
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
@@ -338,7 +340,8 @@ def decide(
         else eyes_ids(openspec)
     )
     elicited = unique(asks + waiting + eyes)
-    asks = unique(elicited + list(skip_set))
+    # Fold-skip is not an elicitation. Punt (ADR-005 / second-family) is mailbox.
+    asks = unique(elicited + list(punt_set))
     if pause_before and (
         pause_before in ready
         or pause_before in waiting
@@ -354,7 +357,7 @@ def decide(
     if scope and scope in waiting:
         return face("activation", scope, until, ready, waiting, needs_advise, asks)
 
-    if scope and scope in skip_set:
+    if scope and (scope in skip_set or scope in punt_set):
         scope = None
 
     if data.get("send_back") is not None:
@@ -384,10 +387,12 @@ def decide(
     else:
         beads = []
 
-    pick_fold = without(fold_ids, skip_set)
-    pick_send = without(send_ids, skip_set)
-    pick_advise = without(needs_advise, skip_set)
-    pick_ready = without(ready, skip_set)
+    blocked = skip_set | punt_set
+    pick_fold = without(fold_ids, blocked)
+    pick_send = without(send_ids, blocked)
+    # Fold-skip still advises — that is how a refused fold unsticks.
+    pick_advise = without(needs_advise, punt_set)
+    pick_ready = without(ready, blocked)
 
     if until in {"fold", "roll", "ask"} and not scope and pick_fold:
         return {
@@ -446,7 +451,7 @@ def decide(
             kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
             landing = landing_from_title(title)
             nid = str(bead.get("id") or "")
-            if nid in skip_set or (landing and landing in skip_set):
+            if nid in blocked or (landing and landing in blocked):
                 continue
             if landing and find_change_dir(openspec, landing) is None:
                 return {
@@ -615,7 +620,12 @@ def main() -> int:
     p.add_argument(
         "--skip",
         default="",
-        help="comma-separated change-ids to exclude from this pick (still on the card)",
+        help="exclude from fold/change/act/beads this pick; still advise",
+    )
+    p.add_argument(
+        "--punt",
+        default="",
+        help="exclude from this pick including advise (mailbox PUNT / second-family)",
     )
     p.add_argument("--ready-json", type=Path)
     p.add_argument("--json", action="store_true")
@@ -628,6 +638,7 @@ def main() -> int:
         args.scope,
         find_openspec(),
         parse_skip(args.skip),
+        parse_skip(args.punt),
     )
     if args.json:
         print(json.dumps(row, indent=2))

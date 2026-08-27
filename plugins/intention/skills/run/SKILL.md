@@ -5,7 +5,7 @@ description: >
   Use when asked to run the loop, chain stages, go autonomous, or
   /run. Does not replace act (one node) or ready (observe only).
 user-invocable: true
-argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--autonomous] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>]"
+argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--autonomous] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
 ---
 
 # run
@@ -19,7 +19,7 @@ Do **not** run `plugins/intention/scripts/run.py` from the current
 repo; that file only exists in the bazaar clone.
 
 ```
-python3 <this-skill-dir>/scripts/run.py [<scope>] [--until …] [--autonomous] [--skip id,id]
+python3 <this-skill-dir>/scripts/run.py [<scope>] [--until …] [--autonomous] [--skip id,id] [--punt id,id]
 ```
 
 `--max-waves` is conductor policy (default 12). The script does not
@@ -65,46 +65,58 @@ architecture / instrument change that still `needs_advise`. Do not
 `fold` a `needs_advise` id. `--until fold` with nothing fold-legal
 is `stop: empty`.
 
-A refused pick is a skip, not a stop. After a wave, or when the
-named stage is illegal for that focus:
-
-1. Put that id on the card ask list (mailbox already names PUNT —
-   do not invent a verb).
-2. Re-run `run.py --until roll` with `--skip` that id (comma-join
-   every id parked this run).
-3. Follow the new `next`. Stop only when the new card has `stop`
-   set, or `--max-waves` hits.
+A refused pick is a skip, not a stop. Fold refusal is “not fold
+yet,” not stuck — more advise loops often unstick it.
 
 Illegal for `focus`: `fold` + `needs_advise`; `act` +
 `needs_advise`; `change` + last advise send-back + no open owed
 boxes; `advise` you cannot promote (same-family / ADR-005).
-Refusing fold must not end the campaign. Same for “I cannot
-sole-accept this advise.”
 
-If advise cannot promote (same-family / ADR-005), do not write a
-fake send-back with no architecture boxes — that retriggers
-`change`. Park the id on ask (“second-family advise”), skip it,
-re-observe. `--until ask` stops here; `--until roll` continues.
+Split the refusal:
+
+- **Fold / illegal act / no-op change:** `--skip` that id (do not
+  fold/act/amend it this pick). Do **not** park it on ask. Do
+  **not** `--punt` it. Re-observe. `--skip` still allows `advise`
+  on that same id. Follow the new `next`.
+- **Advise cannot promote (same-family / ADR-005):** do not write a
+  fake send-back with no architecture boxes — that retriggers
+  `change`. Park the id on ask (“second-family advise”), `--punt`
+  it (mailbox already names PUNT — not a ninth verb). `--until ask`
+  stops here; `--until roll` continues **other** nodes.
+
+Stop only when the new card has `stop` set, or `--max-waves` hits.
+Refusing fold must not end the campaign.
 
 Conductor loop:
 
 ```
 waves = 0
 skip = []
+punt = []
 while waves < max_waves:
-  card = run.py --until <until> [--skip …]
+  card = run.py --until <until> [--skip …] [--punt …]
   print card
   if card.stop: halt
-  if card.next is illegal for card.focus:   # fold+needs_advise, act+needs_advise, change+send-back+no open boxes, advise+ADR-005 same-family
-    park focus on ask/punt
+  if card.next is fold and illegal:     # fold + needs_advise
     skip += [focus]
-    continue                    # do not halt
+    continue                            # re-observe → advise that id
+  if card.next is act and illegal:      # act + needs_advise
+    skip += [focus]
+    continue
+  if card.next is change and no-op:     # send-back, no open boxes
+    skip += [focus]
+    continue
+  if card.next is advise and cannot promote:  # ADR-005 same-family
+    park focus on ask/punt
+    punt += [focus]
+    continue                            # do not halt; do not re-advise
   follow sibling <next>/SKILL.md for one wave
   waves += 1
   re-read this skill
 ```
 
-Illegal fold / illegal act / no-op change = continue, not halt.
+Illegal fold / illegal act / no-op change = continue into advise,
+not halt. Same-family advise = punt, not another fake send-back.
 
 ## Policy
 
