@@ -326,6 +326,86 @@ def test_roll_bead_landing_is_change() -> None:
         expect(face["focus"] == "add-tatastu-host", face)
 
 
+def test_ask_stops_when_pending() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            ["--until", "ask", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "ask", face)
+        expect(face["next"] is None, face)
+        expect(face["focus"] == "add-y", face)
+
+
+def test_ask_without_elicitation_rolls() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [
+                    {
+                        "id": "bazaar-tvm.2",
+                        "title": "add-tatastu-host: kernel ADR names the host",
+                        "issue_type": "decision",
+                    }
+                ],
+            },
+        )
+        proc = run(
+            ["--until", "ask", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "change", face)
+        expect(face["focus"] == "add-tatastu-host", face)
+
+
+def test_roll_does_not_stop_on_pending() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act", face)
+        expect(face["focus"] == "add-x", face)
+        expect("add-y" in face["ask"], face)
+
+
 def test_roll_skips_epic() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -424,6 +504,9 @@ def main() -> int:
         test_roll_bead_landing_is_change,
         test_roll_skips_epic,
         test_roll_intend_orphan_task,
+        test_ask_stops_when_pending,
+        test_ask_without_elicitation_rolls,
+        test_roll_does_not_stop_on_pending,
     ]
     failed = 0
     for fn in tests:

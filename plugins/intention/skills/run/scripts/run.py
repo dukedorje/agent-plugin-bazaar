@@ -30,6 +30,8 @@ CHANGE_ID_RE = re.compile(
 )
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
+EYES_RE = re.compile(r"\b(ASK|EYES|by-eye|human-verify|human verify)\b", re.I)
+WALK = frozenset({"roll", "ask"})
 
 
 def sibling_ready_py() -> Path | None:
@@ -118,6 +120,36 @@ def last_advise_verdict(change_dir: Path) -> str | None:
         if m:
             return m.group(1).lower()
     return None
+
+
+def eyes_ids(openspec: Path | None) -> list[str]:
+    if openspec is None:
+        return []
+    changes = openspec / "changes"
+    if not changes.is_dir():
+        return []
+    out: list[str] = []
+    for child in sorted(changes.iterdir()):
+        if not child.is_dir() or child.name == "archive":
+            continue
+        tasks = child / "tasks.md"
+        if not tasks.is_file():
+            continue
+        for item in open_owed(tasks.read_text(encoding="utf-8")):
+            if EYES_RE.search(item):
+                out.append(child.name)
+                break
+    return out
+
+
+def unique(ids_: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for i in ids_:
+        if i and i not in seen:
+            seen.add(i)
+            out.append(i)
+    return out
 
 
 def fold_legal_ids(openspec: Path | None) -> list[str]:
@@ -256,6 +288,13 @@ def decide(
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
     asks = ids(data.get("ask"))
+    eyes = (
+        ids(data.get("eyes"))
+        if data.get("eyes") is not None
+        else eyes_ids(openspec)
+    )
+    elicited = unique(asks + waiting + eyes)
+    asks = elicited
     if pause_before and (
         pause_before in ready
         or pause_before in waiting
@@ -263,8 +302,8 @@ def decide(
         or pause_before == scope
     ):
         return face("pause-before", pause_before, until, ready, waiting, needs_advise, asks)
-    if until == "ask" and asks:
-        return face("ask", asks[0], until, ready, waiting, needs_advise, asks)
+    if until == "ask" and elicited:
+        return face("ask", elicited[0], until, ready, waiting, needs_advise, elicited)
     if until == "activation" and waiting:
         focus = scope if scope in waiting else waiting[0]
         return face("activation", focus, until, ready, waiting, needs_advise, asks)
@@ -274,22 +313,22 @@ def decide(
     fold_ids = (
         ids(data.get("fold_legal"))
         if data.get("fold_legal") is not None
-        else (fold_legal_ids(openspec) if until in {"fold", "roll"} else [])
+        else (fold_legal_ids(openspec) if until in {"fold", "roll", "ask"} else [])
     )
     send_ids = (
         ids(data.get("send_back"))
         if data.get("send_back") is not None
-        else (send_back_ids(openspec) if until == "roll" else [])
+        else (send_back_ids(openspec) if until in WALK else [])
     )
     raw_beads = data.get("beads")
     if raw_beads is None:
-        beads = load_beads() if until == "roll" else []
+        beads = load_beads() if until in WALK else []
     elif isinstance(raw_beads, list):
         beads = [b for b in raw_beads if isinstance(b, dict)]
     else:
         beads = []
 
-    if until in {"fold", "roll"} and not scope and fold_ids:
+    if until in {"fold", "roll", "ask"} and not scope and fold_ids:
         return {
             "stop": None,
             "next": "fold",
@@ -302,7 +341,7 @@ def decide(
             "ask": asks,
         }
 
-    if until == "roll" and not scope:
+    if until in WALK and not scope:
         if send_ids:
             return {
                 "stop": None,
@@ -403,7 +442,7 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if until in {"fold", "roll"} and fold_legal(openspec, scope):
+        if until in {"fold", "roll", "ask"} and fold_legal(openspec, scope):
             return {
                 "stop": None,
                 "next": "fold",
@@ -415,7 +454,7 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if until == "roll" and scope in send_ids:
+        if until in WALK and scope in send_ids:
             return {
                 "stop": None,
                 "next": "change",
