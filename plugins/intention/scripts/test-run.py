@@ -466,6 +466,32 @@ def test_roll_intend_orphan_task() -> None:
         expect(face["focus"] == "bazaar-ja7", face)
 
 
+def write_change(
+    root: Path,
+    name: str,
+    *,
+    banner: str = "ACTIVE BUILD",
+    tasks: str = "- [x] done",
+    rigor: str | None = None,
+    review: str | None = None,
+) -> Path:
+    change = root / "openspec" / "changes" / name
+    change.mkdir(parents=True)
+    body = f"# {name}\n\n> **{banner}**\n"
+    if rigor:
+        body += f"\n**Rigor:** {rigor}\n"
+    (change / "proposal.md").write_text(body, encoding="utf-8")
+    (change / "tasks.md").write_text(f"# Tasks\n\n{tasks}\n", encoding="utf-8")
+    if review:
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-08-27-advise.md").write_text(
+            f"> **ADVISE:** {review}\n",
+            encoding="utf-8",
+        )
+    return change
+
+
 def test_pending_scope_does_not_flip() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -483,6 +509,133 @@ def test_pending_scope_does_not_flip() -> None:
         expect(face["stop"] == "activation", face)
         expect(face["next"] is None, face)
         expect(face["focus"] == "add-x", face)
+
+
+def test_roll_needs_advise_is_not_fold() -> None:
+    """ACTIVE BUILD, no open boxes, in needs_advise → not fold; roll → advise."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-agent-body", rigor="architecture")
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-agent-body"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect(face["focus"] == "add-agent-body", face)
+        expect(face["stop"] is None, face)
+        expect("add-agent-body" in face["needs_advise"], face)
+
+
+def test_roll_skip_fold_picks_advise() -> None:
+    """--skip the fold-legal id; roll walks to needs_advise."""
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-y"}],
+                "ask": [],
+                "fold_legal": ["add-x"],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            [
+                "--until",
+                "roll",
+                "--skip",
+                "add-x",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect(face["focus"] == "add-y", face)
+        expect("add-x" in face["ask"], face)
+        expect("add-y" in face["needs_advise"], face)
+
+
+def test_roll_send_back_no_boxes_is_not_change() -> None:
+    """Last advise send-back, no open boxes → not change; stays needs_advise."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            review="send-back",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] != "change", face)
+        expect(face["next"] != "fold", face)
+        expect("add-sheaf-type" in face["needs_advise"], face)
+        expect(face["next"] == "advise", face)
+        expect(face["focus"] == "add-sheaf-type", face)
+
+
+def test_roll_send_back_with_boxes_is_change() -> None:
+    """Last advise send-back with open boxes → change."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] amend the SHALL on compile",
+            review="send-back",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-sheaf-type"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "change", face)
+        expect(face["focus"] == "add-sheaf-type", face)
+        expect("add-sheaf-type" in face["needs_advise"], face)
 
 
 def main() -> int:
@@ -507,6 +660,10 @@ def main() -> int:
         test_ask_stops_when_pending,
         test_ask_without_elicitation_rolls,
         test_roll_does_not_stop_on_pending,
+        test_roll_needs_advise_is_not_fold,
+        test_roll_skip_fold_picks_advise,
+        test_roll_send_back_no_boxes_is_not_change,
+        test_roll_send_back_with_boxes_is_change,
     ]
     failed = 0
     for fn in tests:

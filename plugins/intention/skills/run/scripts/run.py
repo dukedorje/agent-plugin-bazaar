@@ -5,7 +5,7 @@ Lives next to the run skill so a global `skills add` carries it.
 Uses the sibling ready skill's script against the current project's
 openspec/. Does not require the project to vendor ready.py.
 
-  python3 <skill-dir>/scripts/run.py [scope] [--until …]
+  python3 <skill-dir>/scripts/run.py [scope] [--until …] [--skip id,id]
   python3 <skill-dir>/scripts/run.py add-x --until advise --ready-json FILE
 """
 
@@ -152,7 +152,27 @@ def unique(ids_: list[str]) -> list[str]:
     return out
 
 
-def fold_legal_ids(openspec: Path | None) -> list[str]:
+def without(ids_: list[str], skip: set[str]) -> list[str]:
+    return [i for i in ids_ if i not in skip]
+
+
+def parse_skip(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+def open_owed_for(change_dir: Path) -> list[str]:
+    tasks = change_dir / "tasks.md"
+    if not tasks.is_file():
+        return []
+    return open_owed(tasks.read_text(encoding="utf-8"))
+
+
+def fold_legal_ids(
+    openspec: Path | None,
+    needs_advise: list[str] | None = None,
+) -> list[str]:
     if openspec is None:
         return []
     changes = openspec / "changes"
@@ -162,18 +182,18 @@ def fold_legal_ids(openspec: Path | None) -> list[str]:
     for child in sorted(changes.iterdir()):
         if not child.is_dir() or child.name == "archive":
             continue
-        if fold_legal(openspec, child.name):
+        if fold_legal(openspec, child.name, needs_advise):
             out.append(child.name)
     return out
 
 
-def send_back_ids(openspec: Path | None) -> list[str]:
+def _active_inflight(openspec: Path | None) -> list[Path]:
     if openspec is None:
         return []
     changes = openspec / "changes"
     if not changes.is_dir():
         return []
-    out: list[str] = []
+    out: list[Path] = []
     for child in sorted(changes.iterdir()):
         if not child.is_dir() or child.name == "archive":
             continue
@@ -181,7 +201,24 @@ def send_back_ids(openspec: Path | None) -> list[str]:
             continue
         if first_banner((child / "proposal.md").read_text(encoding="utf-8")) != "ACTIVE BUILD":
             continue
-        if last_advise_verdict(child) == "send-back":
+        out.append(child)
+    return out
+
+
+def send_back_ids(openspec: Path | None) -> list[str]:
+    """Last advise send-back AND open owed boxes → amend (change), not fold."""
+    out: list[str] = []
+    for child in _active_inflight(openspec):
+        if last_advise_verdict(child) == "send-back" and open_owed_for(child):
+            out.append(child.name)
+    return out
+
+
+def send_back_stuck_ids(openspec: Path | None) -> list[str]:
+    """Last send-back, no open boxes → re-advise / park, not change, not fold."""
+    out: list[str] = []
+    for child in _active_inflight(openspec):
+        if last_advise_verdict(child) == "send-back" and not open_owed_for(child):
             out.append(child.name)
     return out
 
@@ -208,16 +245,21 @@ def load_beads() -> list[dict[str, Any]]:
     return [row for row in data if isinstance(row, dict)]
 
 
-def fold_legal(openspec: Path | None, change_id: str) -> bool:
-    """ACTIVE BUILD, no open owed box, not PARKED."""
+def fold_legal(
+    openspec: Path | None,
+    change_id: str,
+    needs_advise: list[str] | None = None,
+) -> bool:
+    """ACTIVE BUILD, no open owed box, not PARKED, not needs_advise."""
     dest = find_change_dir(openspec, change_id)
     if dest is None:
+        return False
+    if needs_advise and change_id in needs_advise:
         return False
     banner = first_banner((dest / "proposal.md").read_text(encoding="utf-8"))
     if banner != "ACTIVE BUILD":
         return False
-    tasks = dest / "tasks.md"
-    if tasks.is_file() and open_owed(tasks.read_text(encoding="utf-8")):
+    if open_owed_for(dest):
         return False
     return True
 
@@ -271,6 +313,7 @@ def decide(
     pause_before: str | None,
     scope: str | None,
     openspec: Path | None,
+    skip: list[str] | None = None,
 ) -> dict[str, Any]:
     if data.get("missing") == "ready.py":
         return {
@@ -284,6 +327,7 @@ def decide(
             "needs_advise": [],
             "ask": [],
         }
+    skip_set = set(skip or [])
     ready = ids(data.get("ready"))
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
@@ -294,7 +338,7 @@ def decide(
         else eyes_ids(openspec)
     )
     elicited = unique(asks + waiting + eyes)
-    asks = elicited
+    asks = unique(elicited + list(skip_set))
     if pause_before and (
         pause_before in ready
         or pause_before in waiting
@@ -310,16 +354,28 @@ def decide(
     if scope and scope in waiting:
         return face("activation", scope, until, ready, waiting, needs_advise, asks)
 
-    fold_ids = (
-        ids(data.get("fold_legal"))
-        if data.get("fold_legal") is not None
-        else (fold_legal_ids(openspec) if until in {"fold", "roll", "ask"} else [])
-    )
-    send_ids = (
-        ids(data.get("send_back"))
-        if data.get("send_back") is not None
-        else (send_back_ids(openspec) if until in WALK else [])
-    )
+    if scope and scope in skip_set:
+        scope = None
+
+    if data.get("send_back") is not None:
+        send_ids = ids(data.get("send_back"))
+        stuck = []
+    elif until in WALK:
+        send_ids = send_back_ids(openspec)
+        stuck = send_back_stuck_ids(openspec)
+    else:
+        send_ids = []
+        stuck = []
+    needs_advise = unique(needs_advise + stuck)
+
+    if data.get("fold_legal") is not None:
+        fold_ids = ids(data.get("fold_legal"))
+    elif until in {"fold", "roll", "ask"}:
+        fold_ids = fold_legal_ids(openspec, needs_advise)
+    else:
+        fold_ids = []
+    fold_ids = [i for i in fold_ids if i not in needs_advise]
+
     raw_beads = data.get("beads")
     if raw_beads is None:
         beads = load_beads() if until in WALK else []
@@ -328,11 +384,16 @@ def decide(
     else:
         beads = []
 
-    if until in {"fold", "roll", "ask"} and not scope and fold_ids:
+    pick_fold = without(fold_ids, skip_set)
+    pick_send = without(send_ids, skip_set)
+    pick_advise = without(needs_advise, skip_set)
+    pick_ready = without(ready, skip_set)
+
+    if until in {"fold", "roll", "ask"} and not scope and pick_fold:
         return {
             "stop": None,
             "next": "fold",
-            "focus": fold_ids[0],
+            "focus": pick_fold[0],
             "until": until,
             "workers_launched": 0,
             "ready": ready,
@@ -340,13 +401,15 @@ def decide(
             "needs_advise": needs_advise,
             "ask": asks,
         }
+    if until == "fold" and not scope:
+        return face("empty", None, until, ready, waiting, needs_advise, asks)
 
     if until in WALK and not scope:
-        if send_ids:
+        if pick_send:
             return {
                 "stop": None,
                 "next": "change",
-                "focus": send_ids[0],
+                "focus": pick_send[0],
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -354,11 +417,11 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if needs_advise:
+        if pick_advise:
             return {
                 "stop": None,
                 "next": "advise",
-                "focus": needs_advise[0],
+                "focus": pick_advise[0],
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -366,11 +429,11 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if ready:
+        if pick_ready:
             return {
                 "stop": None,
                 "next": "act",
-                "focus": ready[0],
+                "focus": pick_ready[0],
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -382,6 +445,9 @@ def decide(
             title = str(bead.get("title") or "")
             kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
             landing = landing_from_title(title)
+            nid = str(bead.get("id") or "")
+            if nid in skip_set or (landing and landing in skip_set):
+                continue
             if landing and find_change_dir(openspec, landing) is None:
                 return {
                     "stop": None,
@@ -399,7 +465,6 @@ def decide(
                 and not landing
                 and not title.lower().startswith("nod-")
             ):
-                nid = str(bead.get("id") or "")
                 if nid:
                     return {
                         "stop": None,
@@ -442,7 +507,10 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if until in {"fold", "roll", "ask"} and fold_legal(openspec, scope):
+        if (
+            until in {"fold", "roll", "ask"}
+            and fold_legal(openspec, scope, needs_advise)
+        ):
             return {
                 "stop": None,
                 "next": "fold",
@@ -454,7 +522,9 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        if until in WALK and scope in send_ids:
+        if until == "fold":
+            return face("empty", scope, until, ready, waiting, needs_advise, asks)
+        if until in WALK and scope in pick_send:
             return {
                 "stop": None,
                 "next": "change",
@@ -467,10 +537,10 @@ def decide(
                 "ask": asks,
             }
 
-    advise_ids = [scope] if scope and scope in needs_advise else list(needs_advise)
-    ready_ids = [scope] if scope and scope in ready else list(ready)
-    if scope and scope in needs_advise:
-        ready_ids = [scope] if scope in ready else []
+    advise_ids = [scope] if scope and scope in pick_advise else list(pick_advise)
+    ready_ids = [scope] if scope and scope in pick_ready else list(pick_ready)
+    if scope and scope in pick_advise:
+        ready_ids = [scope] if scope in pick_ready else []
 
     if advise_ids:
         return {
@@ -542,11 +612,23 @@ def main() -> int:
     p.add_argument("--until", choices=STOPS, default="empty")
     p.add_argument("--autonomous", action="store_true")
     p.add_argument("--pause-before")
+    p.add_argument(
+        "--skip",
+        default="",
+        help="comma-separated change-ids to exclude from this pick (still on the card)",
+    )
     p.add_argument("--ready-json", type=Path)
     p.add_argument("--json", action="store_true")
     args = p.parse_args()
     data = load_ready(args.ready_json)
-    row = decide(data, args.until, args.pause_before, args.scope, find_openspec())
+    row = decide(
+        data,
+        args.until,
+        args.pause_before,
+        args.scope,
+        find_openspec(),
+        parse_skip(args.skip),
+    )
     if args.json:
         print(json.dumps(row, indent=2))
     else:
