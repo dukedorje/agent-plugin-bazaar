@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""List ready/unblocked work and parked items.
+"""List ready/unblocked work from OpenSpec and beads.
 
 Travels with the ready skill. Finds openspec/ by walking up from cwd
-(or --root). Does not assume this file lives in the project.
+(or --root). Beads come from `bd list --ready` (cwd). Does not assume
+this file lives in the project.
 
   python3 <skill-dir>/scripts/ready.py
   python3 <skill-dir>/scripts/ready.py --json
@@ -13,8 +14,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
@@ -101,6 +104,7 @@ def inflight(openspec: Path) -> list[dict]:
             {
                 "id": child.name,
                 "kind": "change",
+                "source": "openspec",
                 "banner": banner or "none",
                 "open": open_items,
                 "revive": revive,
@@ -130,6 +134,7 @@ def register(openspec: Path) -> list[dict]:
             {
                 "id": cols[0],
                 "kind": cols[1],
+                "source": "openspec",
                 "banner": "PARKED",
                 "open": [],
                 "revive": cols[2],
@@ -172,7 +177,107 @@ def fmt(row: dict) -> str:
 
 
 def empty() -> dict[str, list[dict]]:
-    return {"ready": [], "waiting": [], "parked": [], "needs_advise": []}
+    return {
+        "ready": [],
+        "waiting": [],
+        "parked": [],
+        "needs_advise": [],
+        "beads": [],
+    }
+
+
+def load_beads() -> list[dict]:
+    """Unblocked beads (`bd list --ready`). Empty if bd is missing."""
+    try:
+        proc = subprocess.run(
+            ["bd", "list", "--ready", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0:
+        return []
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    return normalize_beads(data)
+
+
+def load_beads_json(path: Path) -> list[dict]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return normalize_beads(data)
+
+
+def normalize_beads(raw: Any) -> list[dict]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for row in raw:
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        item = dict(row)
+        item["source"] = "beads"
+        out.append(item)
+    return out
+
+
+def fmt_bead(row: dict) -> str:
+    nid = str(row.get("id") or "")
+    kind = str(row.get("issue_type") or row.get("type") or "bead")
+    title = " ".join(str(row.get("title") or "").split())
+    if len(title) > 72:
+        title = title[:69] + "..."
+    return f"{nid:28} {kind:8} {title}"
+
+
+def print_card(
+    data: dict[str, list[dict]],
+    *,
+    show_ready: bool,
+    show_parked: bool,
+    missing: str | None = None,
+) -> None:
+    if show_ready:
+        print("READY (OpenSpec · ACTIVE BUILD, unblocked)")
+        if data["ready"]:
+            for row in data["ready"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
+        print("NEEDS ACTIVATION (OpenSpec · PENDING)")
+        if data["waiting"]:
+            for row in data["waiting"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
+        print("NEEDS ADVISE (OpenSpec · architecture/instrument)")
+        if data["needs_advise"]:
+            for row in data["needs_advise"]:
+                print("  " + fmt(row) + f"  advise: {row.get('advise', 'missing')}")
+        else:
+            print("  (none)")
+        print("BEADS (bd ready · unblocked)")
+        if data.get("beads"):
+            for row in data["beads"]:
+                print("  " + fmt_bead(row))
+        else:
+            print("  (none)")
+    if show_parked:
+        print("PARKED (OpenSpec)")
+        if data["parked"]:
+            for row in data["parked"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
+    if missing == "openspec":
+        if data.get("beads"):
+            print("no openspec/ from cwd — OpenSpec lens empty; beads still shown")
+        else:
+            print("no openspec/ from cwd — not a guessed ready-set")
 
 
 def main() -> int:
@@ -181,74 +286,48 @@ def main() -> int:
     p.add_argument("--json", action="store_true")
     p.add_argument("--ready", action="store_true")
     p.add_argument("--parked", action="store_true")
+    p.add_argument(
+        "--beads-json",
+        type=Path,
+        help="fixture beads instead of `bd list --ready`",
+    )
     args = p.parse_args()
+    if args.beads_json is not None:
+        beads = load_beads_json(args.beads_json)
+    else:
+        beads = load_beads()
     if args.root:
         openspec = args.root.resolve()
     else:
         found = find_openspec()
         openspec = found if found else Path.cwd() / "openspec"
+    missing = None
     if not openspec.is_dir():
         data = empty()
-        if args.json:
-            print(json.dumps({**data, "missing": "openspec"}, indent=2))
-        else:
-            print("READY (ACTIVE BUILD, unblocked)")
-            print("  (none)")
-            print("NEEDS ACTIVATION (PENDING)")
-            print("  (none)")
-            print("NEEDS ADVISE (ACTIVE BUILD, architecture/instrument)")
-            print("  (none)")
-            print("PARKED")
-            print("  (none)")
-            print("no openspec/ from cwd — not a guessed ready-set")
-        return 0
-    data = classify(openspec)
-    if args.json:
-        if args.parked and not args.ready:
-            print(json.dumps({"parked": data["parked"]}, indent=2))
-        elif args.ready and not args.parked:
-            print(
-                json.dumps(
-                    {
-                        "ready": data["ready"],
-                        "waiting": data["waiting"],
-                        "needs_advise": data["needs_advise"],
-                    },
-                    indent=2,
-                )
-            )
-        else:
-            print(json.dumps(data, indent=2))
-        return 0
-
+        missing = "openspec"
+    else:
+        data = classify(openspec)
+    data["beads"] = beads
     show_ready = args.ready or not args.parked
     show_parked = args.parked or not args.ready
-    if show_ready:
-        print("READY (ACTIVE BUILD, unblocked)")
-        if data["ready"]:
-            for row in data["ready"]:
-                print("  " + fmt(row))
+    if args.json:
+        payload: dict[str, Any]
+        if args.parked and not args.ready:
+            payload = {"parked": data["parked"]}
+        elif args.ready and not args.parked:
+            payload = {
+                "ready": data["ready"],
+                "waiting": data["waiting"],
+                "needs_advise": data["needs_advise"],
+                "beads": data["beads"],
+            }
         else:
-            print("  (none)")
-        print("NEEDS ACTIVATION (PENDING)")
-        if data["waiting"]:
-            for row in data["waiting"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
-        print("NEEDS ADVISE (ACTIVE BUILD, architecture/instrument)")
-        if data["needs_advise"]:
-            for row in data["needs_advise"]:
-                print("  " + fmt(row) + f"  advise: {row.get('advise', 'missing')}")
-        else:
-            print("  (none)")
-    if show_parked:
-        print("PARKED")
-        if data["parked"]:
-            for row in data["parked"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
+            payload = dict(data)
+        if missing:
+            payload["missing"] = missing
+        print(json.dumps(payload, indent=2))
+        return 0
+    print_card(data, show_ready=show_ready, show_parked=show_parked, missing=missing)
     return 0
 
 
