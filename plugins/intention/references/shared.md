@@ -26,7 +26,7 @@ disagree, the contract wins.
 
 | Verb | Produces | Must not |
 |---|---|---|
-| `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set | Implement, write SHALLs, scaffold `docs/sprints/` |
+| `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set. `--ask` presents it and stops. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask` |
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas | Implement (until ACTIVE), fold, archive |
 | `advise` | Review file + verdict (`accept` / `accept-with-nits` / `send-back`) + signed read-result | Implement, fold, flip banner, sole-author accept |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |

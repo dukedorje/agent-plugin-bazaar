@@ -5,9 +5,11 @@ description: >
   lifecycle), and split a DAG of named change-ids. Open groups when work is
   complementary or contested. Use when starting from a goal, "let's build
   this", or when asked to intend / plan work without a sprint factory.
-  --extract-from names beads/epics to read first (action records + insight).
+  Also when asked to work out a plan, run it by me, show me first, or
+  plan then advise/ask before acting. --extract-from names beads/epics
+  to read first. Optional gates: --plan --advise --ask.
 user-invocable: true
-argument-hint: "[--extract-from <items>] <intention>"
+argument-hint: "[--extract-from <items>] [--plan] [--advise] [--ask] <intention>"
 ---
 
 # intend
@@ -51,7 +53,8 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    beads (`bd create`) if they want a tracker. No `.omc/`. No SHALLs in the DAG.
 7. **Stop.** Report ready-set and what needs activation. Pin this
    DAG as the session current (`map --current <root-id>`) so later
-   `map` / elicitation stay on it. Handoff:
+   `map` / elicitation stay on it. Then apply **Run it by me** if
+   those gates were named. Otherwise handoff:
    - change nodes → `change`
    - architecture / instrument after `change` → `advise`
    - brief nodes → `brief`
@@ -60,3 +63,18 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
 
 Do not start write work on architecture or instrument nodes until the
 human activates them.
+
+## Run it by me
+
+Optional gates. Name any; omit means skip that gate. “Work out a
+plan then run it by me” is **plan + ask**. Architecture / instrument
+nodes also take **advise** unless they declined.
+
+| Gate | Means |
+|---|---|
+| `--plan` | This skill — the DAG. Default on. Skip only when a current DAG already is the plan (`map --current`) and they said not to re-plan. |
+| `--advise` | After the DAG, follow sibling `change` then `advise` on architecture / instrument nodes. Do not `act`. |
+| `--ask` | Present the DAG (and advise verdicts). Pin current. Stop. Wait for the human. Do not `act`. No `/ask` verb. |
+
+Do not treat “run it by me” as `/run --until roll` or `--until empty`.
+Those act. This stop is the plan.

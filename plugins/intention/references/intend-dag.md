@@ -54,6 +54,8 @@ Architecture / instrument / sensitive writes still PENDING.
 - `brief` for brief nodes
 - `direct fix` for vibe
 - `act` only after activation, and after advise accept when required
+- `--ask` / “run it by me”: pin current, present this page, stop.
+  Do not `act`.
 ```
 
 Node ids: `nod-<kebab>`. Change ids: verb-led (`add-`, `update-`, `remove-`,

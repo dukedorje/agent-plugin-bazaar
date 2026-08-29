@@ -3,9 +3,11 @@ name: run
 description: >
   Conduct a campaign over the ready-set until a stop predicate.
   Use when asked to run the loop, chain stages, go autonomous, or
-  /run. Does not replace act (one node) or ready (observe only).
+  /run. Also when asked to work out a plan then run it by me, with
+  optional plan / advise / ask gates (do not act until they say).
+  Does not replace act (one node) or ready (observe only).
 user-invocable: true
-argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--autonomous] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
+argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--plan] [--advise] [--ask] [--autonomous] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
 ---
 
 # run
@@ -110,6 +112,8 @@ while waves < max_waves:
     park focus on ask/punt
     punt += [focus]
     continue                            # do not halt; do not re-advise
+  if by_me_ask and card.next is act:    # “run it by me”
+    halt                                # present map; do not act
   follow sibling <next>/SKILL.md for one wave
   waves += 1
   re-read this skill
@@ -130,6 +134,24 @@ not halt. Same-family advise = punt, not another fake send-back.
 | `--until roll` | fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; stop when stuck |
 | `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Pair with `--until roll` to keep walking |
 | `--pause-before <id>` | hard stop before that node |
+| `--plan` / `--advise` / `--ask` | “run it by me” gates. See below. |
+
+### Run it by me
+
+When they want a plan shown before any implement — “work out a
+plan then run it by me”, “show me first”, optional `--plan`
+`--advise` `--ask`:
+
+| Gate | Do | Do not |
+|---|---|---|
+| `--plan` | `intend` if there is no current DAG, or they asked to re-plan. Pin `map --current`. | Skip if current already is the DAG and they did not ask to re-plan. |
+| `--advise` | Walk `--until advise` (scaffold `change`, then `advise`). | `act` |
+| `--ask` | Present `map` of current. Stop. Wait. | `act`, `--until roll`, `--until empty` |
+
+Default for that phrase: **plan + ask**. Architecture / instrument
+also gets **advise** unless they declined. `--until ask` is
+different: it may `act` until an elicitation appears. “Run it by
+me” never `act`s.
 
 Halting ≠ asking. `--until ask` stops the campaign on the first
 elicitation. `--until roll` parks that id on the card `ask` list
@@ -149,3 +171,4 @@ ninth verb.
 - Vendor `@skills` / `.atskills` / `planctl/`
 - Fold unless `--until fold`, `--until roll`, or `--until ask` and fold is legal
 - Implement a node except by following `act` after a re-read
+- `act` when `--ask` / “run it by me” is the stop
