@@ -16,9 +16,10 @@ The method of working lives in
 | Packet in, result out | [`openspec/specs/agent-surface`](../openspec/specs/agent-surface/spec.md) · [`docs/contracts/`](contracts/) |
 | Two-layer specs / changes | [`openspec/specs/living-specs`](../openspec/specs/living-specs/spec.md) |
 | Default verbs | [`openspec/specs/default-loop`](../openspec/specs/default-loop/spec.md) |
+| How to *use* the verbs | [`plugins/intention/README.md`](../plugins/intention/README.md) — current DAG, run-it-by-me, ready ∪ beads |
 | Why it is shaped this way | [`ARCHITECTURE.md`](../ARCHITECTURE.md) |
 | Hard-won facts | [`LEARNINGS.md`](LEARNINGS.md) |
-| Work graph | `bd ready` · `python3 scripts/ready.py` · `conductor.py ready` |
+| Work graph | `/ready` (OpenSpec + `bd ready`) · `conductor.py ready` |
 
 A `SHALL` only in this file is not a requirement. Name a change-id and
 fold it.

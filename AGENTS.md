@@ -2,9 +2,12 @@
 
 Process memory: [`openspec/AGENTS.md`](openspec/AGENTS.md).
 Agent surface: [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md).
-Verbs: `intend` · `change` · `act` · `fold` · `ready` · `brief` in `.agents/skills/`
+Verbs: `intend` · `change` · `advise` · `act` · `fold` · `brief` ·
+`debrief` · `map` · `ready` · `run` in `.agents/skills/`
 (same files as `plugins/intention/skills/`).
-Ready-set: `python3 scripts/ready.py` and `bd ready`.
+How: [`plugins/intention/README.md`](plugins/intention/README.md)
+(current DAG, run-it-by-me, ready unions OpenSpec + beads).
+Ready-set: `python3 scripts/ready.py` (OpenSpec **and** `bd ready`).
 Harness matrix: [`plugins/intention/references/harness.md`](plugins/intention/references/harness.md).
 
 Do **not** write or read `.omc/` for work (Claude or Grok). Tracker is

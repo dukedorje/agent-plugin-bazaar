@@ -24,6 +24,8 @@ Or install directly:
 
 Default verbs: `intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, `run`.
 
+How to use them — “run it by me”, current DAG, ready vs beads, `/run --until roll`: [plugins/intention/README.md](plugins/intention/README.md).
+
 ## Available Plugins
 
 | Plugin | Description | Category |

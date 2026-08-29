@@ -102,16 +102,18 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 
 | Skill | Description |
 |-------|-------------|
-| `intend` | Observe, orient, split a DAG of change-ids |
+| `intend` | Observe, orient, split a DAG. `--ask` / “run it by me”: show the plan, do not act |
 | `change` | OpenSpec-lite proposal + deltas |
 | `advise` | Read-only review-pair; accept / accept-with-nits / send-back |
 | `act` | Packet, focused verify, commit-on-red |
 | `fold` | Living spec + archive |
-| `ready` | List ready/unblocked work and everything parked |
+| `ready` | OpenSpec ready/pending/advise/parked **and** unblocked beads |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
-| `map` | Intend DAG with live status, wave, and outcome |
-| `run` | Campaign over the ready-set until a stop predicate |
+| `map` | Intend DAG with live status. `--current <id>` pins this tab’s DAG |
+| `run` | Campaign until a stop. `--until roll` keeps going; “run it by me” never acts |
+
+Operator how-to: `plugins/intention/README.md`.
 
 ### morphist-tools
 
