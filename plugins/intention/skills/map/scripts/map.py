@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
 """Observe-only map: intend-dag shape plus live status / wave / outcome.
 
-  python3 <skill-dir>/scripts/map.py [scope]
-  python3 <skill-dir>/scripts/map.py --fixture FILE.json
+  python3 <skill-dir>/scripts/map.py
+  python3 <skill-dir>/scripts/map.py bazaar-6os
+  python3 <skill-dir>/scripts/map.py --current bazaar-6os
+  python3 <skill-dir>/scripts/map.py --current -
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+SESSION_ENV = (
+    "INTENTION_SESSION",
+    "GROK_SESSION_ID",
+    "CLAUDE_SESSION_ID",
+    "CODEX_SESSION_ID",
+)
+SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -168,6 +180,87 @@ def bd_json(args: list[str]) -> Any:
         return None
 
 
+def session_key(explicit: str | None) -> str | None:
+    if explicit and SESSION_KEY_RE.match(explicit):
+        return explicit
+    for var in SESSION_ENV:
+        val = (os.environ.get(var) or "").strip()
+        if val and SESSION_KEY_RE.match(val):
+            return val
+    return None
+
+
+def default_store(key: str) -> Path:
+    return Path.home() / ".intention" / "sessions" / key / "current.json"
+
+
+def read_current(path: Path | None) -> str | None:
+    if path is None or not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    roots = data.get("roots")
+    if isinstance(roots, list) and roots and isinstance(roots[0], str) and roots[0]:
+        return roots[0]
+    return None
+
+
+def write_current(path: Path, root: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "roots": [root],
+        "set_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "cwd": str(Path.cwd()),
+    }
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def clear_current(path: Path | None) -> None:
+    if path is None or not path.is_file():
+        return
+    path.unlink()
+
+
+def load_open_epics() -> list[dict[str, Any]]:
+    rows = bd_json(["list", "--status", "open"])
+    if not isinstance(rows, list):
+        return []
+    return [r for r in rows if isinstance(r, dict) and r.get("issue_type") == "epic"]
+
+
+def render_index(
+    epics: list[dict[str, Any]],
+    pinned: str | None,
+) -> str:
+    lines = ["# Intentions", ""]
+    if pinned:
+        lines.append(f"Current: `{pinned}`")
+        lines.append("")
+    else:
+        lines.append("No current intention in this session.")
+        lines.append("")
+    if not epics:
+        lines.append("(no open epics)")
+    else:
+        for ep in epics:
+            nid = str(ep.get("id") or "")
+            title = str(ep.get("title") or nid)
+            mark = " *" if pinned and nid == pinned else ""
+            lines.append(f"- `{nid}`{mark}  {title}")
+    lines.extend(
+        [
+            "",
+            "Pin with `map --current <id>`. Peek with `map <id>`. Clear with `map --current -`.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def as_rec(data: Any) -> dict[str, Any] | None:
     if isinstance(data, list) and data and isinstance(data[0], dict):
         return data[0]
@@ -191,24 +284,7 @@ def load_epic(scope: str | None, fixture: dict[str, Any] | None) -> tuple[dict[s
         if rec.get("issue_type") != "epic" and isinstance(kids, list) and not kids:
             return rec, []
         return rec, [k for k in (kids or []) if isinstance(k, dict)]
-    epics = bd_json(["list", "--status", "open"])
-    rows = epics if isinstance(epics, list) else []
-    open_epics = [r for r in rows if isinstance(r, dict) and r.get("issue_type") == "epic"]
-    if not open_epics:
-        return {"id": "", "title": "open work", "status": "open"}, []
-    if len(open_epics) == 1:
-        eid = str(open_epics[0].get("id") or "")
-        kids = bd_json(["children", eid]) if eid else []
-        return open_epics[0], [k for k in (kids or []) if isinstance(k, dict)]
-    # Several epics: flatten children under a synthetic root.
-    kids: list[dict[str, Any]] = []
-    for ep in open_epics:
-        kids.append(ep)
-        eid = str(ep.get("id") or "")
-        more = bd_json(["children", eid]) if eid else []
-        if isinstance(more, list):
-            kids.extend(k for k in more if isinstance(k, dict))
-    return {"id": "", "title": "open work", "status": "open", "description": ""}, kids
+    return {"id": "", "title": "open work", "status": "open"}, []
 
 
 def render_node(rec: dict[str, Any], repo: Path, openspec: Path | None) -> str:
@@ -232,7 +308,14 @@ def render_node(rec: dict[str, Any], repo: Path, openspec: Path | None) -> str:
     return "\n".join(lines)
 
 
-def render(epic: dict[str, Any], children: list[dict[str, Any]], repo: Path, openspec: Path | None) -> str:
+def render(
+    epic: dict[str, Any],
+    children: list[dict[str, Any]],
+    repo: Path,
+    openspec: Path | None,
+    pinned: str | None = None,
+    peek: str | None = None,
+) -> str:
     title = str(epic.get("title") or epic.get("id") or "map")
     desc = (epic.get("description") or "").strip()
     nodes = children if children else ([epic] if epic.get("id") else [])
@@ -252,10 +335,18 @@ def render(epic: dict[str, Any], children: list[dict[str, Any]], repo: Path, ope
             need_act.append(nid or landing or "")
         elif st in {"open", "in_progress"}:
             ready.append(nid)
-    body = [
-        f"# {title}",
-        "",
-    ]
+    body: list[str] = []
+    if pinned:
+        body.append(f"Current: `{pinned}`")
+        if peek and peek != pinned:
+            body.append(f"Peek: `{peek}`")
+        body.append("")
+    body.extend(
+        [
+            f"# {title}",
+            "",
+        ]
+    )
     if desc:
         # Keep the gathering short: first paragraph only.
         first = desc.split("\n\n", 1)[0]
@@ -299,7 +390,18 @@ def render(epic: dict[str, Any], children: list[dict[str, Any]], repo: Path, ope
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("scope", nargs="?")
+    p.add_argument("scope", nargs="?", help="peek this DAG without changing current")
+    p.add_argument(
+        "--current",
+        metavar="ID",
+        help="pin this DAG as current for this session (`-` to clear)",
+    )
+    p.add_argument("--session", help="session key (default: GROK_SESSION_ID / INTENTION_SESSION)")
+    p.add_argument(
+        "--store",
+        type=Path,
+        help="directory for current.json (default: ~/.intention/sessions/<session>/)",
+    )
     p.add_argument("--fixture", type=Path)
     args = p.parse_args()
     fixture = None
@@ -307,13 +409,55 @@ def main() -> int:
         fixture = json.loads(args.fixture.read_text(encoding="utf-8"))
         if not isinstance(fixture, dict):
             raise SystemExit("fixture must be a JSON object")
+
+    store_path: Path | None
+    if args.store is not None:
+        store_path = args.store / "current.json"
+    else:
+        key = session_key(args.session)
+        store_path = default_store(key) if key else None
+
+    if args.current is not None:
+        if store_path is None:
+            print(
+                "no session id — pass --session NAME or set "
+                "INTENTION_SESSION / GROK_SESSION_ID",
+                file=sys.stderr,
+            )
+            return 2
+        if args.current in {"-", ""}:
+            clear_current(store_path)
+        else:
+            write_current(store_path, args.current)
+
+    pinned = read_current(store_path)
+    scope = args.scope
+    if scope is None and args.current and args.current not in {"-", ""}:
+        scope = args.current
+    if scope is None and pinned:
+        scope = pinned
+
     repo = find_repo()
     openspec = find_openspec(repo)
-    epic, children = load_epic(args.scope, fixture)
+
+    if fixture is not None and isinstance(fixture.get("epics"), list) and "epic" not in fixture:
+        epics = [e for e in fixture["epics"] if isinstance(e, dict)]
+        print(render_index(epics, pinned), end="")
+        return 0
+
+    if scope is None and fixture is None:
+        print(render_index(load_open_epics(), pinned), end="")
+        return 0
+
+    epic, children = load_epic(scope, fixture)
     if epic.get("status") == "missing":
         print(f"unresolved: {epic.get('id')}", file=sys.stderr)
         return 1
-    print(render(epic, children, repo, openspec), end="")
+    peek = scope if pinned and scope != pinned else None
+    print(
+        render(epic, children, repo, openspec, pinned=pinned, peek=peek),
+        end="",
+    )
     return 0
 
 

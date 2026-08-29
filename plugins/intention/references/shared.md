@@ -31,7 +31,7 @@ disagree, the contract wins.
 | `advise` | Review file + verdict (`accept` / `accept-with-nits` / `send-back`) + signed read-result | Implement, fold, flip banner, sole-author accept |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
 | `fold` | Living spec updated + change archived | Implement leftover tasks, fold PENDING/PARKED |
-| `map` | Intend-dag page with live status / wave / outcome | Implement, unpark, second store |
+| `map` | Intend-dag page with live status; session current pin (not in the repo) | Implement, unpark, repo-level current |
 | `ready` | OpenSpec ready-set + unblocked beads + parked list | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
 | `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |

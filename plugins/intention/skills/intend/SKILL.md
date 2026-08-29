@@ -49,7 +49,9 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    architecture write → `human-gate`. Members are agents (or groups).
 6. **Write** the DAG in the shape in `intend-dag.md`. Chat is enough;
    beads (`bd create`) if they want a tracker. No `.omc/`. No SHALLs in the DAG.
-7. **Stop.** Report ready-set and what needs activation. Handoff:
+7. **Stop.** Report ready-set and what needs activation. Pin this
+   DAG as the session current (`map --current <root-id>`) so later
+   `map` / elicitation stay on it. Handoff:
    - change nodes → `change`
    - architecture / instrument after `change` → `advise`
    - brief nodes → `brief`
