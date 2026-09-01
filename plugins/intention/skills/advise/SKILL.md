@@ -17,7 +17,7 @@ implement. You do not fold. You do not flip the change banner.
 This is the hole between `change` and `act`:
 
 ```
-intend → change → advise → act → fold
+intend → steer → change → advise → act → fold
               ↖ amend ↙
 ```
 

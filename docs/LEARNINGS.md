@@ -33,6 +33,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
 - 2026-08-28 — `/ready` unions OpenSpec and `bd list --ready`. JSON `ready` stays OpenSpec-only so `/run --until empty` does not act a bead. An empty OpenSpec lens is not an empty board. (`plugins/intention/skills/ready/`)
 - 2026-08-28 — Current intention is per session (`map --current <id>` → `~/.intention/sessions/<GROK_SESSION_ID>/`), not a repo file. Bare `map` is that DAG or an epic index, never every bead. (`plugins/intention/skills/map/`)
+- 2026-08-31 — The hole between intend and change on architecture is `steer`, not `/ask`. ASK is a run stop face (`update-run-ask`). Steer menus always include recommended, skip, and decide-for-me; residue is beads plus `steer.md` if a change dir exists. (`plugins/intention/skills/steer/SKILL.md`)
 - 2026-08-28 — “Work out a plan then run it by me” is plan + ask (advise too on architecture). It never acts. `--until ask` may still act until an elicitation. (`plugins/intention/skills/intend/SKILL.md`, `…/run/SKILL.md`)
 - 2026-08-28 — A refused fold is skip-then-advise on that same id, not a campaign stop. `--punt` is ADR-005 same-family only. (`plugins/intention/skills/run/`)
 - 2026-08-18 — A parse face that maps categories independently drops ADR-007 provenance on a mixed paste. Restate the cite on the face. (`add-paste-objects`)

@@ -146,7 +146,7 @@ plan then run it by me”, “show me first”, optional `--plan`
 |---|---|---|
 | `--plan` | `intend` if there is no current DAG, or they asked to re-plan. Pin `map --current`. | Skip if current already is the DAG and they did not ask to re-plan. |
 | `--advise` | Walk `--until advise` (scaffold `change`, then `advise`). | `act` |
-| `--ask` | Present `map` of current. Stop. Wait. | `act`, `--until roll`, `--until empty` |
+| `--ask` | Present `map` of current. Stop. Wait. Next is `steer` if they want to give direction. | `act`, `--until roll`, `--until empty` |
 
 Default for that phrase: **plan + ask**. Architecture / instrument
 also gets **advise** unless they declined. `--until ask` is
@@ -159,7 +159,8 @@ elicitation. `--until roll` parks that id on the card `ask` list
 
 A stage raises an elicitation by putting an id on the observe `ask`
 list, leaving a PENDING banner, or an open owed box matching ASK /
-EYES / by-eye / human-verify. No `/ask` verb.
+EYES / by-eye / human-verify. No `/ask` verb. Architecture /
+human-gate direction after that halt is `steer`.
 
 Mailbox is `/ready` faces plus ASK / EYES / PUNT on the card — not a
 ninth verb.

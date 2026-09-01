@@ -2,8 +2,8 @@
 
 Process memory: [`openspec/AGENTS.md`](openspec/AGENTS.md).
 Agent surface: [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md).
-Verbs: `intend` · `change` · `advise` · `act` · `fold` · `brief` ·
-`debrief` · `map` · `ready` · `run` in `.agents/skills/`
+Verbs: `intend` · `steer` · `change` · `advise` · `act` · `fold` ·
+`brief` · `debrief` · `map` · `ready` · `run` in `.agents/skills/`
 (same files as `plugins/intention/skills/`).
 How: [`plugins/intention/README.md`](plugins/intention/README.md)
 (current DAG, run-it-by-me, ready unions OpenSpec + beads).

@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, and `run`. None of them restates
+Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, and `run`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -27,7 +27,8 @@ disagree, the contract wins.
 | Verb | Produces | Must not |
 |---|---|---|
 | `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set. `--ask` presents it and stops. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask` |
-| `change` | `openspec/changes/<id>/` with banner, journey, deltas | Implement (until ACTIVE), fold, archive |
+| `steer` | Decisions on architecture / human-gate nodes: menus with recommended, skip, decide-for-me. Residue is bead design/notes, plus `steer.md` if a change dir exists. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave |
+| `change` | `openspec/changes/<id>/` with banner, journey, deltas. Reads steer residue. | Implement (until ACTIVE), fold, archive |
 | `advise` | Review file + verdict (`accept` / `accept-with-nits` / `send-back`) + signed read-result | Implement, fold, flip banner, sole-author accept |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
 | `fold` | Living spec updated + change archived | Implement leftover tasks, fold PENDING/PARKED |

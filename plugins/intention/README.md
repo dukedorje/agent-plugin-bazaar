@@ -2,10 +2,11 @@
 
 Default loop from intention to a running system:
 
-`intend` → `change` → `advise` → `act` → `fold`
+`intend` → `steer` → `change` → `advise` → `act` → `fold`
 
 Plus `brief` / `debrief` (disposable), `ready` / `map` (observe), `run`
-(campaign). Canonical skill files live here. In this repo,
+(campaign). `steer` is the human-gated guidance pass (not a `/run`
+wave; not `/ask`). Canonical skill files live here. In this repo,
 `.agents/skills/<name>` is a symlink at each skill so Grok, Hermes, and
 Prime load the same files without a plugin install.
 
@@ -14,6 +15,7 @@ Prime load the same files without a plugin install.
 | You want | Say / run |
 |---|---|
 | Work out a plan, then show me | “work out a plan then run it by me” or `intend --ask …` |
+| Give architecture / direction on the current DAG | `steer` (menus: recommended, skip, decide-for-me) |
 | Plan + architecture review, then me | `intend --advise --ask …` |
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
@@ -66,7 +68,7 @@ instrument also gets **advise** unless declined.
 |---|---|---|
 | `--plan` | Intend the DAG. Skip if current already is it. | Re-plan unasked |
 | `--advise` | `change` then `advise` | `act` |
-| `--ask` | Pin current, present `map`, wait | `act`, `--until roll` |
+| `--ask` | Pin current, present `map`, wait | `act`, `--until roll`. Next verb is `steer`. |
 
 ## Run campaign
 
@@ -93,7 +95,7 @@ clone:
 
 ```bash
 skills add /path/to/agent-plugin-bazaar/plugins/intention \
-  --skill intend --skill change --skill advise --skill act --skill fold \
+  --skill intend --skill steer --skill change --skill advise --skill act --skill fold \
   --skill brief --skill debrief --skill map --skill ready --skill run \
   --agent claude-code --agent codex --agent grok --agent hermes-agent \
   -g -y

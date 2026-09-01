@@ -55,7 +55,8 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    DAG as the session current (`map --current <root-id>`) so later
    `map` / elicitation stay on it. Then apply **Run it by me** if
    those gates were named. Otherwise handoff:
-   - change nodes → `change`
+   - architecture / instrument / human-gate that still need direction → `steer`
+   - change nodes → `change` (reads steer residue)
    - architecture / instrument after `change` → `advise`
    - brief nodes → `brief`
    - ready + activated writes (advise accept, or no advise required) → `act`
@@ -74,7 +75,7 @@ nodes also take **advise** unless they declined.
 |---|---|
 | `--plan` | This skill — the DAG. Default on. Skip only when a current DAG already is the plan (`map --current`) and they said not to re-plan. |
 | `--advise` | After the DAG, follow sibling `change` then `advise` on architecture / instrument nodes. Do not `act`. |
-| `--ask` | Present the DAG (and advise verdicts). Pin current. Stop. Wait for the human. Do not `act`. No `/ask` verb. |
+| `--ask` | Present the DAG (and advise verdicts). Pin current. Stop. Wait for the human. Do not `act`. The conversation that follows is `steer`, not `/ask`. |
 
 Do not treat “run it by me” as `/run --until roll` or `--until empty`.
 Those act. This stop is the plan.

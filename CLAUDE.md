@@ -103,6 +103,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | Skill | Description |
 |-------|-------------|
 | `intend` | Observe, orient, split a DAG. `--ask` / “run it by me”: show the plan, do not act |
+| `steer` | Human-gated guidance: menus with recommended, skip, decide-for-me. After intend, before change |
 | `change` | OpenSpec-lite proposal + deltas |
 | `advise` | Read-only review-pair; accept / accept-with-nits / send-back |
 | `act` | Packet, focused verify, commit-on-red |
