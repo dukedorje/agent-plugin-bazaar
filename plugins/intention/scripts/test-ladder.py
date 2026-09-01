@@ -41,7 +41,7 @@ def main() -> int:
         ("design", "opus-5-design", "standard"),
         ("plan", "fable-5-plan", "lean"),
         ("intend-consult", "fable-5-plan", "lean"),
-        ("architecture-review", "grok-arch-review", "lean"),
+        ("architecture-review", "opus-4.8-arch-review", "lean"),
         ("fold", "opus-5-fold", "standard"),
     ]
     for shape, route_id, density in cases:
@@ -67,15 +67,18 @@ def main() -> int:
     try:
         proc = run(["assign", "--shape", "architecture-review"])
         got = json.loads(proc.stdout)
-        expect(got["id"] == "grok-arch-review", got)
-        expect(got["harness"] == "grok", got)
+        expect(got["id"] == "opus-4.8-arch-review", got)
+        expect(got["harness"] == "claude", got)
+        expect(got["interface"] == "opus-4.8", got)
         alt = run(["assign", "--shape", "architecture-review", "--include-unavailable"])
         expect(alt.returncode == 0, alt.stderr)
-        expect(json.loads(alt.stdout)["id"] == "grok-arch-review", alt.stdout)
+        expect(json.loads(alt.stdout)["id"] == "opus-4.8-arch-review", alt.stdout)
         show = json.loads(run(["show"]).stdout)
+        grok = next(r for r in show["routes"] if r["id"] == "grok-arch-review")
+        expect(grok["available"] is True, grok)
         sol = next(r for r in show["routes"] if r["id"] == "sol-arch-review")
         expect(sol["available"] is False, sol)
-        print("pass sol is optional / not default")
+        print("pass arch-review default is opus-4.8; grok on; sol off")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol optional: {exc}")

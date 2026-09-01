@@ -31,6 +31,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — `conductor.py release` sets the bead back to `open`. Do not release after `bd close` — it undoes the close. (`bazaar-zmq`)
 - 2026-08-16 — Fold of `add-taskmaster-host` is what creates `openspec/specs/taskmaster/`. An accepted ADR is not a living capability. (`openspec/specs/taskmaster/spec.md`)
 - 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
+- 2026-08-31 — Architecture-review default reader is Opus 4.8 (`opus-4.8-arch-review`). Grok stays the cross-family pick (ADR-005). Sol still off. (`plugins/intention/references/ladder.json`)
 - 2026-08-31 — Fold is a designated-agent pass like advise: `--shape fold` → Opus 5 (`opus-5-fold`). Background spawn; Grok only if picked. (`plugins/intention/skills/fold/`, `references/ladder.json`)
 - 2026-08-28 — `/ready` unions OpenSpec and `bd list --ready`. JSON `ready` stays OpenSpec-only so `/run --until empty` does not act a bead. An empty OpenSpec lens is not an empty board. (`plugins/intention/skills/ready/`)
 - 2026-08-28 — Current intention is per session (`map --current <id>` → `~/.intention/sessions/<GROK_SESSION_ID>/`), not a repo file. Bare `map` is that DAG or an epic index, never every bead. (`plugins/intention/skills/map/`)

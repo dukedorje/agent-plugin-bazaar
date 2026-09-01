@@ -25,15 +25,18 @@ SLASH = ("/act", "/intend", "/meta-execute", "/run")
 CLAUDE_MODELS = {
     "sonnet-5": "claude-sonnet-5",
     "opus-5": "claude-opus-5",
+    "opus-4.8": "claude-opus-4-8",
     "fable-5": "claude-fable-5",
     "claude-sonnet-5": "claude-sonnet-5",
     "claude-opus-5": "claude-opus-5",
+    "claude-opus-4-8": "claude-opus-4-8",
     "claude-fable-5": "claude-fable-5",
 }
 
 CLAUDE_EFFORT = {
     "sonnet-5": "low",
     "opus-5": "medium",
+    "opus-4.8": "high",
     "fable-5": "high",
 }
 

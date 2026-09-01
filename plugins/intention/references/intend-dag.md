@@ -38,7 +38,7 @@ no flag (blank-page observe still happened).
 - Surface: skill-host | packet-only
 - Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
 - Consult: plan/replan → Fable 5; write stays here
-- Architecture: review-pair, reader = Grok (Sol only if ladder says available)
+- Architecture: review-pair, reader = Opus 4.8 (Grok for second family; Sol only if ladder says available)
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 

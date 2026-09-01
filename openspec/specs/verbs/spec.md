@@ -337,11 +337,12 @@ pick always wins.
 - THEN the assignee is Claude Sonnet 5 (`skill-host`, density
   `explicit`)
 
-#### Scenario: Architecture review is cross-family
+#### Scenario: Architecture review default reader
 
 - GIVEN shape `architecture-review`
 - WHEN assign runs
-- THEN the default reader is Grok, and GPT-5.6 Sol is not selected
+- THEN the default reader is Claude Opus 4.8, Grok remains
+  available as a cross-family pick, and GPT-5.6 Sol is not selected
   while `available` is false
 
 ### Requirement: take is the node mutex
