@@ -38,8 +38,8 @@ unblock `act` until the banner is `ACTIVE BUILD`.
    (Fable, no write). Human pick always wins. Same-family as the
    change author cannot be the sole `accept` reader (ADR-005).
 
-   Second family: Grok, or **Sol via OpenAI API** when `OPENAI_API`
-   or `OPENAI_API_KEY` is set (`ladder.py show` — `sol-arch-review`
+   Second family: Grok, or **Sol via OpenAI API** when
+   `OPENAI_API_KEY` is set (`ladder.py show` — `sol-arch-review`
    `available: true`). Pick Sol with
    `ladder.py assign --shape architecture-review --id sol-arch-review`.
    Then `spawn.py stage` + `spawn.py run --adapter openai` (model

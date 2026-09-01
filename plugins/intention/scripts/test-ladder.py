@@ -11,7 +11,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LADDER = HERE / "ladder.py"
-DROP_OPENAI = ("OPENAI_API", "OPENAI_API_KEY")
+DROP_OPENAI = ("OPENAI_API_KEY",)
 
 
 def run(
@@ -32,7 +32,7 @@ def env_without_openai() -> dict[str, str]:
 
 def env_with_openai(key: str = "sk-test-not-used") -> dict[str, str]:
     out = env_without_openai()
-    out["OPENAI_API"] = key
+    out["OPENAI_API_KEY"] = key
     return out
 
 
@@ -139,7 +139,7 @@ def main() -> int:
             run(["assign", "--shape", "architecture-review"], env=env_with_openai()).stdout
         )
         expect(default["id"] == "opus-4.8-arch-review", default)
-        print("pass sol available iff OPENAI_API; still not default")
+        print("pass sol available iff OPENAI_API_KEY; still not default")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol env: {exc}")

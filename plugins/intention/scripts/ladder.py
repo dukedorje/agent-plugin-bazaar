@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 LADDER = Path(__file__).resolve().parents[1] / "references" / "ladder.json"
-OPENAI_KEY_VARS = ("OPENAI_API", "OPENAI_API_KEY")
+OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
 
 
 def openai_api_key() -> str | None:
@@ -28,7 +28,7 @@ def openai_api_key() -> str | None:
 
 
 def apply_env(data: dict) -> dict:
-    """Sol is available when OPENAI_API or OPENAI_API_KEY is set."""
+    """Sol is available when OPENAI_API_KEY is set."""
     routes = []
     for route in data.get("routes") or []:
         if not isinstance(route, dict):
@@ -39,7 +39,7 @@ def apply_env(data: dict) -> dict:
                 row["available"] = True
                 row["notes"] = (
                     "Second-family reader via OpenAI API "
-                    "(OPENAI_API or OPENAI_API_KEY). Packet-only; spawn --adapter openai."
+                    "(OPENAI_API_KEY). Packet-only; spawn --adapter openai."
                 )
             else:
                 row["available"] = False

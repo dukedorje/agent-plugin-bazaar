@@ -22,7 +22,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-OPENAI_KEY_VARS = ("OPENAI_API", "OPENAI_API_KEY")
+OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
 
 SLASH = ("/act", "/intend", "/meta-execute", "/run")
 
@@ -222,7 +222,7 @@ def openai_chat(model: str, prompt: str, timeout_sec: float | None) -> tuple[int
     """POST /v1/chat/completions. Returns (http_status, body_text). Never logs the key."""
     key = openai_api_key()
     if not key:
-        return 0, "OPENAI_API / OPENAI_API_KEY not set"
+        return 0, "OPENAI_API_KEY not set"
     base = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com").rstrip("/")
     body = json.dumps(
         {

@@ -182,7 +182,7 @@ def test_openai_adapter_missing_key() -> None:
         }
         pkt = root / "packet.json"
         pkt.write_text(json.dumps(packet), encoding="utf-8")
-        env = {k: v for k, v in os.environ.items() if k not in {"OPENAI_API", "OPENAI_API_KEY"}}
+        env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
         staged = subprocess.run(
             [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
             text=True,
@@ -205,9 +205,9 @@ def test_openai_adapter_missing_key() -> None:
 
 
 def test_openai_adapter_sol_live() -> None:
-    key = (os.environ.get("OPENAI_API") or os.environ.get("OPENAI_API_KEY") or "").strip()
+    key = (os.environ.get("OPENAI_API_KEY") or "").strip()
     if not key:
-        print("skip test_openai_adapter_sol_live (no OPENAI_API / OPENAI_API_KEY)")
+        print("skip test_openai_adapter_sol_live (no OPENAI_API_KEY)")
         return
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
