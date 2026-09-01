@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -152,6 +153,102 @@ def test_claude_adapter_argv() -> None:
         expect(face["disposition"] == "pass", face)
 
 
+def test_openai_adapter_missing_key() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-sol",
+            "node_id": "nod-sol",
+            "goal": "Reply with the single word pong.",
+            "assignee": {
+                "id": "agt-sol",
+                "kind": "model",
+                "harness": "codex",
+                "interface": "gpt-5.6-sol",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {"permission": "read", "paths": [], "do_not": ["deploy"]},
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        env = {k: v for k, v in os.environ.items() if k not in {"OPENAI_API", "OPENAI_API_KEY"}}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(spec["adapter"] == "none", spec)
+        proc = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec["spec_file"], "--adapter", "openai"],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["disposition"] == "infra-red", face)
+        expect("openai-key-missing" in face["blockers"], face)
+
+
+def test_openai_adapter_sol_live() -> None:
+    key = (os.environ.get("OPENAI_API") or os.environ.get("OPENAI_API_KEY") or "").strip()
+    if not key:
+        print("skip test_openai_adapter_sol_live (no OPENAI_API / OPENAI_API_KEY)")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-sol-live",
+            "node_id": "nod-sol-live",
+            "goal": "Reply with the single word pong.",
+            "assignee": {
+                "id": "agt-sol",
+                "kind": "model",
+                "harness": "codex",
+                "interface": "gpt-5.6-sol",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {"permission": "read", "paths": [], "do_not": ["deploy"]},
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(spec["adapter"] == "openai", spec)
+        expect(spec["interface"] == "gpt-5.6-sol", spec)
+        proc = run(["run", "--spec", spec["spec_file"], "--adapter", "openai"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["disposition"] == "pass", face)
+        expect("pong" in (face.get("summary") or "").lower(), face)
+
+
 def test_empty_packet_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         empty = Path(td) / "empty.json"
@@ -167,6 +264,8 @@ def main() -> int:
         test_missing_prompt_fails,
         test_stall_infra_red,
         test_claude_adapter_argv,
+        test_openai_adapter_missing_key,
+        test_openai_adapter_sol_live,
         test_empty_packet_fails,
     ]
     failed = 0

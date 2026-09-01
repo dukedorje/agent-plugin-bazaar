@@ -34,11 +34,20 @@ unblock `act` until the banner is `ACTIVE BUILD`.
    `specs/**/spec.md`, cited code. `docs/LEARNINGS.md` if it names
    this id.
 3. **Assign.** `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review`
-   (reader). Optional consult: `--shape plan` (Fable, no write).
-   Human pick always wins. Same-family as the change author cannot
-   be the sole `accept` reader (ADR-005).
+   (reader; default Opus 4.8). Optional consult: `--shape plan`
+   (Fable, no write). Human pick always wins. Same-family as the
+   change author cannot be the sole `accept` reader (ADR-005).
+
+   Second family: Grok, or **Sol via OpenAI API** when `OPENAI_API`
+   or `OPENAI_API_KEY` is set (`ladder.py show` — `sol-arch-review`
+   `available: true`). Pick Sol with
+   `ladder.py assign --shape architecture-review --id sol-arch-review`.
+   Then `spawn.py stage` + `spawn.py run --adapter openai` (model
+   `gpt-5.6-sol`, packet-only). Never a Codex slash. The ambient
+   key is enough; do not paste it into the packet.
 4. **Packet.** Readers receive `permission: read`. Foreign harnesses
-   get a packet file, never a slash command.
+   get a packet file, never a slash command. Sol is API, not a
+   skill-host.
 5. **Write** `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`.
    First banner line after the title MUST be exactly one of:
 

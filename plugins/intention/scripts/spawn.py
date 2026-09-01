@@ -17,8 +17,12 @@ import signal
 import sys
 import time
 import uuid
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
+
+OPENAI_KEY_VARS = ("OPENAI_API", "OPENAI_API_KEY")
 
 SLASH = ("/act", "/intend", "/meta-execute", "/run")
 
@@ -145,6 +149,12 @@ def cmd_stage(args: argparse.Namespace) -> int:
     assert_prompt_ok(body, surface)
     atomic_write(prompt, body)
     harness = harness_of(packet)
+    if harness == "claude":
+        adapter = "claude"
+    elif harness in {"codex", "openai"} and openai_api_key():
+        adapter = "openai"
+    else:
+        adapter = "none"
     spec = {
         "node_id": node,
         "surface": surface,
@@ -153,7 +163,7 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "packet_file": str(packet_copy),
         "prompt_file": str(prompt),
         "timeout_sec": args.timeout,
-        "adapter": "claude" if harness == "claude" else "none",
+        "adapter": adapter,
         "argv": [],
     }
     spec_path = dest / "spec.json"
@@ -189,6 +199,105 @@ def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
     return argv
 
 
+def openai_api_key() -> str | None:
+    for name in OPENAI_KEY_VARS:
+        val = (os.environ.get(name) or "").strip()
+        if val:
+            return val
+    return None
+
+
+def openai_headers(key: str) -> dict[str, str]:
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+    org = (os.environ.get("OPENAI_ORG") or os.environ.get("OPENAI_ORGANIZATION") or "").strip()
+    if org:
+        headers["OpenAI-Organization"] = org
+    return headers
+
+
+def openai_chat(model: str, prompt: str, timeout_sec: float | None) -> tuple[int, str]:
+    """POST /v1/chat/completions. Returns (http_status, body_text). Never logs the key."""
+    key = openai_api_key()
+    if not key:
+        return 0, "OPENAI_API / OPENAI_API_KEY not set"
+    base = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com").rstrip("/")
+    body = json.dumps(
+        {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a read-only architecture reader. Permission: read. "
+                        "Do not implement. Do not fold. Put the ADVISE verdict first."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        base + "/v1/chat/completions",
+        data=body,
+        method="POST",
+        headers=openai_headers(key),
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec or 120) as resp:
+            return resp.status, resp.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8", errors="replace")
+    except OSError as exc:
+        return 0, str(exc)
+
+
+def run_openai(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> int:
+    prompt = read_prompt(prompt_file)
+    model = str(spec.get("interface") or "gpt-5.6-sol")
+    timeout = spec.get("timeout_sec")
+    try:
+        timeout_sec = float(timeout) if timeout is not None else 120.0
+    except (TypeError, ValueError):
+        timeout_sec = 120.0
+    status, raw = openai_chat(model, prompt, timeout_sec)
+    atomic_write(raw_path, raw, allow_empty=True)
+    content = ""
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            choices = parsed.get("choices") or []
+            if choices and isinstance(choices[0], dict):
+                msg = choices[0].get("message") or {}
+                if isinstance(msg, dict):
+                    content = str(msg.get("content") or "")
+    except json.JSONDecodeError:
+        parsed = None
+    if status == 200 and content.strip():
+        face = {
+            "disposition": "pass",
+            "summary": content.strip()[:500],
+            "verify_command": f"openai:{model}",
+            "verify_exit": 0,
+            "commit_sha": None,
+            "changed_files": [],
+            "blockers": [],
+            "raw_ref": str(raw_path),
+        }
+    else:
+        blocker = "openai-key-missing" if status == 0 and "not set" in raw else f"openai-http-{status}"
+        face = infra_face(
+            f"OpenAI API {model} failed (status {status}).",
+            blocker,
+            str(raw_path),
+        )
+    atomic_write(face_path, json.dumps(face, indent=2) + "\n")
+    print(json.dumps(face, indent=2))
+    return 0
+
+
 def read_prompt(path: Path) -> str:
     if not path.is_file():
         raise SystemExit(f"missing prompt file: {path}")
@@ -222,6 +331,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     argv = list(args.argv or spec.get("argv") or [])
     if adapter == "claude":
         argv = claude_argv(spec, prompt_file)
+    if adapter == "openai":
+        return run_openai(spec, prompt_file, raw_path, face_path)
     if adapter == "none" and not argv:
         face = infra_face(
             "No adapter configured. Spec is ready for a packet-only host.",
@@ -233,7 +344,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(face, indent=2))
         return 0
 
-    if adapter not in {"exec", "claude", "none"}:
+    if adapter not in {"exec", "claude", "openai", "none"}:
         print(f"unknown adapter: {adapter}", file=sys.stderr)
         return 2
     if not argv:

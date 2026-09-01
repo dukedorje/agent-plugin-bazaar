@@ -111,7 +111,7 @@
       "density": "lean",
       "effort": "high",
       "available": false,
-      "notes": "Optional second-family reader. Flip available when subscribed."
+      "notes": "Second-family reader via OpenAI API when OPENAI_API or OPENAI_API_KEY is set. Packet-only; spawn --adapter openai. Not a Codex slash."
     }
   ]
 }
