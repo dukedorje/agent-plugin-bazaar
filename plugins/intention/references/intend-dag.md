@@ -36,7 +36,7 @@ no flag (blank-page observe still happened).
 - Members / roles: conductor · worker · consultant · reader · human · group
 - Density: lean | standard | explicit   ← from ladder.py; inverse of capability
 - Surface: skill-host | packet-only
-- Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review>`
+- Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
 - Consult: plan/replan → Fable 5; write stays here
 - Architecture: review-pair, reader = Grok (Sol only if ladder says available)
 - Activation: none | needs human | already activated

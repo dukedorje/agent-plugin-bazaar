@@ -114,6 +114,13 @@ while waves < max_waves:
     continue                            # do not halt; do not re-advise
   if by_me_ask and card.next is act:    # “run it by me”
     halt                                # present map; do not act
+  if card.next is fold:
+    assign ladder --shape fold          # opus-5-fold unless human picked Grok
+    if this session is not that route:
+      spawn designated folder in background (packet + spawn.py)
+      waves += 1
+      continue                          # tab keeps moving
+    # else inline fold/SKILL.md below
   follow sibling <next>/SKILL.md for one wave
   waves += 1
   re-read this skill

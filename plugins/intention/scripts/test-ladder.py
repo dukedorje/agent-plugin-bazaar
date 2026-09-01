@@ -42,6 +42,7 @@ def main() -> int:
         ("plan", "fable-5-plan", "lean"),
         ("intend-consult", "fable-5-plan", "lean"),
         ("architecture-review", "grok-arch-review", "lean"),
+        ("fold", "opus-5-fold", "standard"),
     ]
     for shape, route_id, density in cases:
         try:
@@ -78,6 +79,19 @@ def main() -> int:
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol optional: {exc}")
+
+    try:
+        got = assign("fold")
+        expect(got["id"] == "opus-5-fold", got)
+        expect(got["role"] == "folder", got)
+        expect(got["interface"] == "opus-5", got)
+        show = json.loads(run(["show"]).stdout)
+        grok_fold = next(r for r in show["routes"] if r["id"] == "grok-fold")
+        expect(grok_fold["available"] is False, grok_fold)
+        print("pass fold is opus-5; grok-fold optional")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL fold route: {exc}")
 
     try:
         proc = run(["assign", "--shape", "not-a-shape"])

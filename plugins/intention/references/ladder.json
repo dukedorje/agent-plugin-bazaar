@@ -53,6 +53,30 @@
       "notes": "Planning helper. Does not take the write."
     },
     {
+      "id": "opus-5-fold",
+      "shapes": ["fold"],
+      "role": "folder",
+      "harness": "claude",
+      "interface": "opus-5",
+      "surface": "skill-host",
+      "density": "standard",
+      "effort": "medium",
+      "available": true,
+      "notes": "Designated folder. Background fold, like advise. Human pick may send this to Grok instead."
+    },
+    {
+      "id": "grok-fold",
+      "shapes": ["fold"],
+      "role": "folder",
+      "harness": "grok",
+      "interface": "grok-4.6",
+      "surface": "skill-host",
+      "density": "standard",
+      "effort": "medium",
+      "available": false,
+      "notes": "Optional folder. Flip available to prefer Grok, or human-pick. Default is opus-5-fold."
+    },
+    {
       "id": "grok-arch-review",
       "shapes": ["architecture-review"],
       "role": "reader",

@@ -3,7 +3,10 @@
 Today's date is the archive prefix (`YYYY-MM-DD`).
 
 1. **Admit.** `openspec/changes/<id>/proposal.md` banner is
-   `ACTIVE BUILD`. Refuse PENDING and PARKED.
+   `ACTIVE BUILD`. Refuse PENDING and PARKED. Assign
+   `ladder.py assign --shape fold` (Opus 5 unless the human picked
+   another folder). Spawn in the background when this session is not
+   that route.
 2. **Checkboxes.** Every owed task is `[x]` or still `[ ]` with a note
    (human journey not yet exercised, etc.). No eternal empty boxes that
    mean “not our work” — those are bullets.

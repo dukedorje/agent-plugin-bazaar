@@ -23,6 +23,7 @@ Prime load the same files without a plugin install.
 | Keep going while unblocked | `run --until roll` |
 | Walk until a question appears | `run --until ask` |
 | Scaffold + advise, never implement | `run --until advise` |
+| Fold a landed change (background, Opus 5) | `fold <id>` |
 
 `--until ask` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.

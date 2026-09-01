@@ -3,6 +3,7 @@
 
   python3 plugins/intention/scripts/ladder.py assign --shape known
   python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
+  python3 plugins/intention/scripts/ladder.py assign --shape fold
   python3 plugins/intention/scripts/ladder.py show
 """
 

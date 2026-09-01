@@ -118,12 +118,15 @@ python3 plugins/intention/scripts/ladder.py assign --shape thinking
 python3 plugins/intention/scripts/ladder.py assign --shape design
 python3 plugins/intention/scripts/ladder.py assign --shape plan
 python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
+python3 plugins/intention/scripts/ladder.py assign --shape fold
 ```
 
 Source: `plugins/intention/references/ladder.json`. Known → Sonnet 5.
 Thinking implementation → Opus 5. Design → Opus 5 low/medium +
 designer skills. Plan consult → Fable 5. Real architecture →
 review-pair whose reader is Grok (Sol only if `available`).
+Fold → designated folder Opus 5 (`opus-5-fold`; Grok only if picked
+or `grok-fold` is flipped available).
 
 A weaker worker may consult a stronger one for `explain` / `replan`.
 That is not a write handoff.
