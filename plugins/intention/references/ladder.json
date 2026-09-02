@@ -77,6 +77,19 @@
       "notes": "Optional folder. Flip available to prefer Grok, or human-pick. Default is opus-5-fold."
     },
     {
+      "id": "fable-5.1-arch-review",
+      "shapes": ["architecture-review"],
+      "role": "reader",
+      "harness": "claude",
+      "interface": "fable-5.1",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "required_on": ["architecture", "instrument"],
+      "notes": "Default architecture buddy in Claude Code. ADR-005: a Claude author still cannot be the sole accepting reader — pick Grok for that."
+    },
+    {
       "id": "opus-4.8-arch-review",
       "shapes": ["architecture-review"],
       "role": "reader",
@@ -86,8 +99,7 @@
       "density": "lean",
       "effort": "high",
       "available": true,
-      "required_on": ["architecture", "instrument"],
-      "notes": "Default architecture reader. ADR-005: a Claude author still cannot be the sole accepting reader — pick Grok for that."
+      "notes": "Alternate Claude architecture reader. Not the assign() default (Fable 5.1 is first)."
     },
     {
       "id": "grok-arch-review",
@@ -99,7 +111,7 @@
       "density": "lean",
       "effort": "high",
       "available": true,
-      "notes": "Cross-family reader vs Claude authors. Not the assign() default (Opus 4.8 is first)."
+      "notes": "Cross-family reader vs Claude authors. Not the assign() default (Fable 5.1 is first)."
     },
     {
       "id": "sol-arch-review",

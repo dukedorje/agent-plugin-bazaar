@@ -130,11 +130,11 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 Source: `plugins/intention/references/ladder.json`. Known → Sonnet 5.
 Thinking implementation → Opus 5. Design → Opus 5 low/medium +
 designer skills. Plan consult → Fable 5. Real architecture →
-review-pair whose reader is Opus 4.8 (Grok for cross-family /
+review-pair whose reader is Fable 5.1 (Grok for cross-family /
 ADR-005; Sol only if `available`).
 Fold → designated folder Opus 5 (`opus-5-fold`; Grok only if picked
 or `grok-fold` is flipped available). Architecture review default
-is Opus 4.8; Sol is on when `OPENAI_API_KEY` is set
+is Fable 5.1; Sol is on when `OPENAI_API_KEY` is set
 (`--id sol-arch-review`, `--adapter openai`).
 
 A weaker worker may consult a stronger one for `explain` / `replan`.

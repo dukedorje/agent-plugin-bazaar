@@ -34,7 +34,7 @@ unblock `act` until the banner is `ACTIVE BUILD`.
    `specs/**/spec.md`, cited code. `docs/LEARNINGS.md` if it names
    this id.
 3. **Assign.** `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review`
-   (reader; default Opus 4.8). Optional consult: `--shape plan`
+   (reader; default Fable 5.1). Optional consult: `--shape plan`
    (Fable, no write). Human pick always wins. Same-family as the
    change author cannot be the sole `accept` reader (ADR-005).
 

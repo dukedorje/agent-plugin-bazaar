@@ -31,10 +31,12 @@ CLAUDE_MODELS = {
     "opus-5": "claude-opus-5",
     "opus-4.8": "claude-opus-4-8",
     "fable-5": "claude-fable-5",
+    "fable-5.1": "claude-fable-5-1",
     "claude-sonnet-5": "claude-sonnet-5",
     "claude-opus-5": "claude-opus-5",
     "claude-opus-4-8": "claude-opus-4-8",
     "claude-fable-5": "claude-fable-5",
+    "claude-fable-5-1": "claude-fable-5-1",
 }
 
 CLAUDE_EFFORT = {
@@ -42,6 +44,7 @@ CLAUDE_EFFORT = {
     "opus-5": "medium",
     "opus-4.8": "high",
     "fable-5": "high",
+    "fable-5.1": "high",
 }
 
 

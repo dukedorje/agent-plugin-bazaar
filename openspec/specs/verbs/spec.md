@@ -341,7 +341,7 @@ pick always wins.
 
 - GIVEN shape `architecture-review`
 - WHEN assign runs
-- THEN the default reader is Claude Opus 4.8, Grok remains
+- THEN the default reader is Claude Fable 5.1, Grok remains
   available as a cross-family pick, and GPT-5.6 Sol is not selected
   while `available` is false
 

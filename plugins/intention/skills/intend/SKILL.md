@@ -45,7 +45,7 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `python3 plugins/intention/scripts/ladder.py assign --shape …`
    (known → Sonnet 5, thinking → Opus 5, plan → Fable 5, design →
    Opus 5 + designer skills). Real architecture opens a review-pair
-   whose reader is Opus 4.8 (Grok when a second family is needed).
+   whose reader is Fable 5.1 (Grok when a second family is needed).
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).
