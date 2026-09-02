@@ -21,13 +21,16 @@ without a plugin install.
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `ready` |
-| Keep going while unblocked | `run` (default `--until roll`) |
-| Walk until a question appears | `run --until ask` |
-| Scaffold + advise, never implement | `run --until advise` |
+| Keep going while unblocked | `run` |
+| At the desk; halt at first ASK/EYES/PENDING | `run --interrupt` |
+| Morning pile (ASK / EYES / PUNT) | `ready` |
+| Scaffold + advise, never implement | `run --advise` |
+| Cautious: no fold, no leftover beads | `run --no-fold --no-beads` |
+| Tidy only | `run --only fold` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
 | Second opinion (no change, no act unblock) | `consult` or `consult --panel` |
 
-`--until ask` may still `act` until an elicitation. “Run it by me”
+`--interrupt` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.
 
 ## Current intention
@@ -56,7 +59,7 @@ board.
 
 - **READY / PENDING / ADVISE / PARKED** — OpenSpec. JSON `ready` is
   this list only, so `/run --until empty` does not `act` a bead id.
-- **BEADS** — `bd list --ready`. JSON `beads`. `/run --until roll`
+- **BEADS** — `bd list --ready`. JSON `beads`. Bare `/run`
   already walks it (landing → `change`, leftover task → `intend`).
 
 Do not run `bd ready` as a second report.
@@ -71,12 +74,13 @@ instrument also gets **advise** unless declined.
 |---|---|---|
 | `--plan` | Intend the DAG. Skip if current already is it. | Re-plan unasked |
 | `--advise` | `change` then `advise` | `act` |
-| `--ask` | Pin current, present `map`, wait | `act`, `--until roll`. Next verb is `steer`. |
+| `--ask` | Pin current, present `map`, wait | `act`, `/run`. Next verb is `steer`. |
 
 ## Run campaign
 
 `run.py` observes; the conductor follows one sibling skill per wave.
-Bare `/run` is `--until roll`: fold → send-back amend → advise → act → beads.
+Bare `/run` walks away (roll). `--interrupt` is desk mode. `/ready` is
+the morning pile. `--until *` is a one-release alias.
 A refused fold is not a stop — `--skip` that id and still **advise**
 it. Same-family advise (ADR-005) **spawns** the other-family reader
 (Fable vs a Grok author; Grok/Sol vs a Claude author). `--punt` only

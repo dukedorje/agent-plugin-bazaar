@@ -644,6 +644,82 @@ def test_roll_skip_fold_still_advises_same_id() -> None:
         expect(face["stop"] is None, face)
 
 
+def test_interrupt_stops_when_pending() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--interrupt", "--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "ask", face)
+        expect(face["next"] is None, face)
+        expect(face["until"] == "ask", face)
+
+
+def test_only_fold() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-x\n\n> **ACTIVE BUILD**\n", encoding="utf-8"
+        )
+        (change / "tasks.md").write_text("# Tasks\n\n- [x] done\n", encoding="utf-8")
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            ["--only", "fold", "--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["until"] == "fold", face)
+        expect(face["next"] == "fold", face)
+        expect(face["focus"] == "add-x", face)
+
+
+def test_no_fold_no_beads_is_empty_walk() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-x\n\n> **ACTIVE BUILD**\n", encoding="utf-8"
+        )
+        (change / "tasks.md").write_text("# Tasks\n\n- [x] done\n", encoding="utf-8")
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            [
+                "add-x",
+                "--no-fold",
+                "--no-beads",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["until"] == "empty", face)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+
+
 def test_run_skill_spawns_other_family_advise() -> None:
     """Conductor prompt: same-family advise is spawn, not punt-first halt."""
     skill = HERE.parents[0] / "skills" / "run" / "SKILL.md"
@@ -784,6 +860,9 @@ def main() -> int:
         test_roll_needs_advise_is_not_fold,
         test_roll_skip_fold_picks_advise,
         test_roll_skip_fold_still_advises_same_id,
+        test_interrupt_stops_when_pending,
+        test_only_fold,
+        test_no_fold_no_beads_is_empty_walk,
         test_run_skill_spawns_other_family_advise,
         test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,

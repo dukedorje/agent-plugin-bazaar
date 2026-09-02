@@ -5,7 +5,7 @@ Lives next to the run skill so a global `skills add` carries it.
 Uses the sibling ready skill's script against the current project's
 openspec/. Does not require the project to vendor ready.py.
 
-  python3 <skill-dir>/scripts/run.py [scope] [--until …] [--skip id,id] [--punt id,id]
+  python3 <skill-dir>/scripts/run.py [scope] [--interrupt] [--only fold] [--no-fold] [--no-beads]
   python3 <skill-dir>/scripts/run.py add-x --until advise --ready-json FILE
 """
 
@@ -307,6 +307,26 @@ def ids(rows: Any) -> list[str]:
     return out
 
 
+def resolve_until(
+    until: str | None,
+    *,
+    interrupt: bool = False,
+    only: str | None = None,
+    no_fold: bool = False,
+    no_beads: bool = False,
+) -> tuple[str, bool, bool]:
+    """Operator flags win when --until is omitted. --until stays an alias."""
+    if interrupt:
+        until = until or "ask"
+    if only == "fold":
+        until = until or "fold"
+    if until is None:
+        if no_fold and no_beads:
+            return "empty", False, False
+        return "roll", no_fold, no_beads
+    return until, no_fold, no_beads
+
+
 def decide(
     data: dict[str, Any],
     until: str,
@@ -315,6 +335,8 @@ def decide(
     openspec: Path | None,
     skip: list[str] | None = None,
     punt: list[str] | None = None,
+    no_fold: bool = False,
+    no_beads: bool = False,
 ) -> dict[str, Any]:
     if data.get("missing") == "ready.py":
         return {
@@ -396,7 +418,7 @@ def decide(
     pick_advise = without(needs_advise, punt_set)
     pick_ready = without(ready, blocked)
 
-    if until in {"fold", "roll", "ask"} and not scope and pick_fold:
+    if until in {"fold", "roll", "ask"} and not scope and pick_fold and not no_fold:
         return {
             "stop": None,
             "next": "fold",
@@ -448,7 +470,7 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
-        for bead in beads:
+        for bead in beads if not no_beads else []:
             title = str(bead.get("title") or "")
             kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
             landing = landing_from_title(title)
@@ -516,6 +538,7 @@ def decide(
             }
         if (
             until in {"fold", "roll", "ask"}
+            and not no_fold
             and fold_legal(openspec, scope, needs_advise)
         ):
             return {
@@ -616,8 +639,29 @@ def card(row: dict[str, Any]) -> str:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("scope", nargs="?", help="change-id to focus (e.g. add-sheaf-type)")
-    p.add_argument("--until", choices=STOPS, default="roll")
-    p.add_argument("--autonomous", action="store_true")
+    p.add_argument(
+        "--until",
+        choices=STOPS,
+        default=None,
+        help="alias (roll is default). Prefer --interrupt / --only fold / --no-fold",
+    )
+    p.add_argument(
+        "--interrupt",
+        action="store_true",
+        help="roll walk; stop at first ASK / PENDING / EYES",
+    )
+    p.add_argument(
+        "--only",
+        choices=("fold",),
+        help="restrict the walk (fold = tidy only)",
+    )
+    p.add_argument("--no-fold", action="store_true", dest="no_fold")
+    p.add_argument("--no-beads", action="store_true", dest="no_beads")
+    p.add_argument(
+        "--autonomous",
+        action="store_true",
+        help="ignored; desk mode is --interrupt",
+    )
     p.add_argument("--pause-before")
     p.add_argument(
         "--skip",
@@ -632,15 +676,29 @@ def main() -> int:
     p.add_argument("--ready-json", type=Path)
     p.add_argument("--json", action="store_true")
     args = p.parse_args()
+    if args.autonomous:
+        print(
+            "warning: --autonomous is ignored; desk mode is --interrupt",
+            file=sys.stderr,
+        )
+    until, no_fold, no_beads = resolve_until(
+        args.until,
+        interrupt=args.interrupt,
+        only=args.only,
+        no_fold=args.no_fold,
+        no_beads=args.no_beads,
+    )
     data = load_ready(args.ready_json)
     row = decide(
         data,
-        args.until,
+        until,
         args.pause_before,
         args.scope,
         find_openspec(),
         parse_skip(args.skip),
         parse_skip(args.punt),
+        no_fold=no_fold,
+        no_beads=no_beads,
     )
     if args.json:
         print(json.dumps(row, indent=2))

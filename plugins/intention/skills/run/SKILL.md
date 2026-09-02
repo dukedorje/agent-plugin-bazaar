@@ -7,7 +7,7 @@ description: >
   optional plan / advise / ask gates (do not act until they say).
   Does not replace act (one node) or ready (observe only).
 user-invocable: true
-argument-hint: "[<scope>] [--until=empty|advise|activation|ask|fold|roll] [--plan] [--advise] [--ask] [--autonomous] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
+argument-hint: "[<scope>] [--interrupt] [--only fold] [--no-fold] [--no-beads] [--plan] [--advise] [--ask] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
 ---
 
 # run
@@ -21,7 +21,7 @@ Do **not** run `plugins/intention/scripts/run.py` from the current
 repo; that file only exists in the bazaar clone.
 
 ```
-python3 <this-skill-dir>/scripts/run.py [<scope>] [--until …] [--autonomous] [--skip id,id] [--punt id,id]
+python3 <this-skill-dir>/scripts/run.py [<scope>] [--interrupt] [--only fold] [--no-fold] [--no-beads]
 ```
 
 `--max-waves` is conductor policy (default 12). The script does not
@@ -107,7 +107,7 @@ waves = 0
 skip = []
 punt = []
 while waves < max_waves:
-  card = run.py --until <until> [--skip …] [--punt …]
+  card = run.py [--interrupt] [--only fold] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
   if card.stop is empty and needs_advise remains and not all punted:
     # other-family spawn still owed — do not halt
@@ -135,6 +135,7 @@ while waves < max_waves:
     author = harness that wrote the change (this session if you wrote it)
     route = ladder assign --shape architecture-review --not-harness <author>
     if assign failed:                   # no other-family route
+      add owed box "PUNT: second-family advise" on tasks.md if missing
       punt += [focus]
       continue
     if this session is that route:      # other family — inline
@@ -158,15 +159,16 @@ punt, not a fake send-back. Punt is last-resort only.
 
 | Token | Means |
 |---|---|
-| `--until roll` | **default.** fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; spawn other-family advise; stop only when empty (nothing dispatchable and no spawnable advise) |
-| `--until empty` | cautious: change → advise → act. Stop at PENDING, ASK, and fold. Do not intend a verb-led change-id. Do not fold. |
-| `--until advise` | dispatch `advise` when a read is owed; do not `act` |
-| `--until activation` | stop on PENDING |
-| `--until ask` | same walk as roll; stop at the first elicitation (ASK, PENDING, by-eye / EYES) |
-| `--until fold` | `next: fold` when legal; unscoped scans inflight |
-| `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Alone uses the default walk (roll) |
+| (none) | **default = roll.** fold → send-back amend → advise → act → beads; park ASK/EYES; see `/ready` for the pile; stop when empty |
+| `--interrupt` | same walk; stop at the first elicitation (ASK, PENDING, EYES). Desk mode. |
+| `--only fold` | tidy only; unscoped scan of fold-legal |
+| `--no-fold` | skip fold picks |
+| `--no-beads` | skip bead landing / leftover intend. With `--no-fold` this is today's `--until empty` |
+| `--advise` | walk owed reads; do not `act` |
 | `--pause-before <id>` | hard stop before that node |
-| `--plan` / `--advise` / `--ask` | “run it by me” gates. See below. |
+| `--plan` / `--ask` | “run it by me” gates. See below. `--ask` never acts (not `--interrupt`). |
+
+`--until roll|empty|ask|fold|advise|activation` remains an alias for one release. `--autonomous` is ignored (warn). Mailbox is `/ready`, not this card.
 
 ### Run it by me
 
@@ -181,28 +183,27 @@ plan then run it by me”, “show me first”, optional `--plan`
 | `--ask` | Present `map` of current. Stop. Wait. Next is `steer` if they want to give direction. | `act`, `--until roll`, `--until empty` |
 
 Default for that phrase: **plan + ask**. Architecture / instrument
-also gets **advise** unless they declined. `--until ask` is
+also gets **advise** unless they declined. `--interrupt` is
 different: it may `act` until an elicitation appears. “Run it by
 me” never `act`s.
 
-Halting ≠ asking. `--until ask` stops the campaign on the first
-elicitation. `--until roll` parks that id on the card `ask` list
-(morning review) and keeps unrelated nodes moving.
+Halting ≠ asking. `--interrupt` stops the campaign on the first
+elicitation. Bare `/run` parks those ids and keeps unrelated nodes
+moving. Look at the pile with `/ready`.
 
 A stage raises an elicitation by putting an id on the observe `ask`
 list, leaving a PENDING banner, or an open owed box matching ASK /
 EYES / by-eye / human-verify. No `/ask` verb. Architecture /
 human-gate direction after that halt is `steer`.
 
-Mailbox is `/ready` faces plus ASK / EYES / PUNT on the card — not a
-ninth verb.
+Mailbox is `/ready` (ASK / EYES / PUNT faces) — not a ninth verb.
 
 ## Must not
 
 - Slash a foreign worker (`/run`, `/act`, `/intend`, `/meta-execute`)
 - Flip PENDING or a by-eye box
 - Vendor `@skills` / `.atskills` / `planctl/`
-- Fold unless until is `fold`, `roll` (default), or `ask`, and fold is legal
+- Fold unless the walk is default/`--interrupt`/`--only fold` (or alias `roll`/`ask`/`fold`) and fold is legal
 - Implement a node except by following `act` after a re-read
 - `act` when `--ask` / “run it by me” is the stop
 - Halt or `--punt` same-family advise while an other-family

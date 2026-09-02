@@ -178,6 +178,58 @@ def test_ready_flag_includes_beads() -> None:
         expect("parked" not in face, face)
 
 
+def test_eyes_is_not_ready() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-x", tasks="- [ ] EYES: look at the dashboard")
+        write_change(root, "add-y", tasks="- [ ] implement the thing")
+        beads = write_beads(root, [])
+        proc = run(
+            [
+                "--json",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+            ],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect([row["id"] for row in face["ready"]] == ["add-y"], face)
+        expect([row["id"] for row in face["eyes"]] == ["add-x"], face)
+        expect(face["ask"] == [], face)
+        text = run(
+            ["--root", str(root / "openspec"), "--beads-json", str(beads)],
+            cwd=root,
+        )
+        expect("EYES" in text.stdout, text.stdout)
+        expect("ASK" in text.stdout, text.stdout)
+
+
+def test_ask_and_punt_faces() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-x", tasks="- [ ] ASK: which store")
+        write_change(root, "add-y", tasks="- [ ] PUNT: second-family advise")
+        beads = write_beads(root, [])
+        proc = run(
+            [
+                "--json",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+            ],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["ready"] == [], face)
+        expect([row["id"] for row in face["ask"]] == ["add-x"], face)
+        expect([row["id"] for row in face["punt"]] == ["add-y"], face)
+
+
 def test_pending_does_not_flip_into_ready() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -206,6 +258,8 @@ def main() -> int:
         test_missing_openspec_still_shows_beads,
         test_parked_hides_beads,
         test_ready_flag_includes_beads,
+        test_eyes_is_not_ready,
+        test_ask_and_punt_faces,
         test_pending_does_not_flip_into_ready,
     ]
     failed = 0

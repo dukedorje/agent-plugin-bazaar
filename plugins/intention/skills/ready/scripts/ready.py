@@ -38,6 +38,25 @@ REVIVE_RE = re.compile(r"revive when\s+(.+)", re.I)
 TABLE_ROW_RE = re.compile(
     r"^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$"
 )
+PUNT_BOX_RE = re.compile(r"\bPUNT\b", re.I)
+EYES_BOX_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
+ASK_BOX_RE = re.compile(r"\bASK\b", re.I)
+
+
+def box_kind(item: str) -> str | None:
+    if PUNT_BOX_RE.search(item):
+        return "punt"
+    if EYES_BOX_RE.search(item):
+        return "eyes"
+    if ASK_BOX_RE.search(item):
+        return "ask"
+    return None
+
+
+def with_open(row: dict, items: list[str]) -> dict:
+    out = dict(row)
+    out["open"] = items
+    return out
 
 
 def find_openspec(start: Path | None = None) -> Path | None:
@@ -146,14 +165,26 @@ def register(openspec: Path) -> list[dict]:
 
 def classify(openspec: Path) -> dict[str, list[dict]]:
     ready, waiting, parked, needs = [], [], [], []
+    ask, eyes, punt = [], [], []
     changes = openspec / "changes"
     for row in inflight(openspec):
         change_dir = changes / row["id"]
         if needs_advise(change_dir):
             row["advise"] = last_advise_verdict(change_dir) or "missing"
             needs.append(row)
-        if row["banner"] == "ACTIVE BUILD" and row["open"]:
-            ready.append(row)
+        kinds: dict[str, list[str]] = {"ask": [], "eyes": [], "punt": [], "work": []}
+        for item in row["open"]:
+            kind = box_kind(item) or "work"
+            kinds[kind].append(item)
+        if row["banner"] == "ACTIVE BUILD":
+            if kinds["work"]:
+                ready.append(with_open(row, kinds["work"]))
+            if kinds["ask"]:
+                ask.append(with_open(row, kinds["ask"]))
+            if kinds["eyes"]:
+                eyes.append(with_open(row, kinds["eyes"]))
+            if kinds["punt"]:
+                punt.append(with_open(row, kinds["punt"]))
         elif row["banner"] == "PENDING":
             waiting.append(row)
         elif row["banner"] == "PARKED":
@@ -164,6 +195,9 @@ def classify(openspec: Path) -> dict[str, list[dict]]:
         "waiting": waiting,
         "parked": parked,
         "needs_advise": needs,
+        "ask": ask,
+        "eyes": eyes,
+        "punt": punt,
     }
 
 
@@ -182,6 +216,9 @@ def empty() -> dict[str, list[dict]]:
         "waiting": [],
         "parked": [],
         "needs_advise": [],
+        "ask": [],
+        "eyes": [],
+        "punt": [],
         "beads": [],
     }
 
@@ -260,6 +297,24 @@ def print_card(
                 print("  " + fmt(row) + f"  advise: {row.get('advise', 'missing')}")
         else:
             print("  (none)")
+        print("ASK (decision owed)")
+        if data.get("ask"):
+            for row in data["ask"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
+        print("EYES (look owed)")
+        if data.get("eyes"):
+            for row in data["eyes"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
+        print("PUNT (second-family advise, last-resort)")
+        if data.get("punt"):
+            for row in data["punt"]:
+                print("  " + fmt(row))
+        else:
+            print("  (none)")
         print("BEADS (bd ready · unblocked)")
         if data.get("beads"):
             for row in data["beads"]:
@@ -319,6 +374,9 @@ def main() -> int:
                 "ready": data["ready"],
                 "waiting": data["waiting"],
                 "needs_advise": data["needs_advise"],
+                "ask": data.get("ask") or [],
+                "eyes": data.get("eyes") or [],
+                "punt": data.get("punt") or [],
                 "beads": data["beads"],
             }
         else:
