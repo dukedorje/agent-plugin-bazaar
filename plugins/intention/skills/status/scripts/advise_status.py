@@ -13,6 +13,7 @@ ADVISE_RE = re.compile(
     r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
     re.I,
 )
+READER_RE = re.compile(r"^>\s*\*\*READER:\*\*\s*\S+", re.I)
 RIGOR_RE = re.compile(
     r"\*\*Rigor:\*\*\s*(architecture|instrument|change|brief|vibe)\b",
     re.I,
@@ -44,11 +45,18 @@ def last_advise_verdict(change_dir: Path) -> str | None:
     if not files:
         return None
     text = files[-1].read_text(encoding="utf-8")
+    verdict = None
+    has_reader = False
     for line in text.splitlines()[:40]:
-        m = ADVISE_RE.match(line.strip())
+        stripped = line.strip()
+        m = ADVISE_RE.match(stripped)
         if m:
-            return m.group(1).lower()
-    return None
+            verdict = m.group(1).lower()
+        if READER_RE.match(stripped):
+            has_reader = True
+    if verdict in ACCEPTING and not has_reader:
+        return None
+    return verdict
 
 
 def needs_advise(change_dir: Path) -> bool:

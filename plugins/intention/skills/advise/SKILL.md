@@ -1,22 +1,23 @@
 ---
 name: advise
 description: >
-  Read-only review-pair on an in-flight change. Verdict accept,
-  accept or send-back. Notes live in the body. Use after change, before act, on
-  architecture or instrument work, or when asked to advise / review the
-  plan / architecture pass.
+  Fresh-context read-only review of an in-flight change. Verdict accept
+  or send-back. Notes in the body. Never accept in the author tab.
+  Use after change, before act, on architecture or instrument work, or
+  when asked to advise / review the plan / architecture pass.
 user-invocable: true
 argument-hint: "<change-id>"
 ---
 
 # advise
 
-Load `../../references/shared.md`. You are a **reader**. You do not
-implement. You do not fold. You do not flip the change banner.
+Load `../../references/shared.md`. You are the **conductor** of a
+reader, not the reader. You do not implement. You do not fold. You
+do not flip the change banner. You do **not** write
+`reviews/*-advise.md` with `accept` in this conversation.
+
 No change on the board? Use `consult` (second opinion). This skill
 gates an in-flight change.
-
-This is the hole between `change` and `act`:
 
 ```
 intend → steer → change → advise → act → fold
@@ -28,73 +29,90 @@ intend → steer → change → advise → act → fold
 PARKED → stop. PENDING may be read, but an `accept` does **not**
 unblock `act` until the banner is `ACTIVE BUILD`.
 
+## Same-tab is not advise
+
+This session, if it authored the change, may write
+`openspec/changes/<id>/notes/self-critique.md` (disclosure). That
+file MUST NOT contain `**ADVISE:**`. Human pick chooses **which
+reader to spawn**, not “this conversation may accept.” Grok-on-Grok
+or Claude-on-Claude in one thread is asking yourself.
+
 ## Procedure
 
 1. **Target.** Change-id from the user, or `change_id` on a packet.
    Open `openspec/changes/<id>/` (not `archive/`).
-2. **Load.** `proposal.md`, `design.md` if present, `tasks.md`,
-   `specs/**/spec.md`, cited code. `docs/LEARNINGS.md` if it names
-   this id.
-3. **Assign.** Author family is the harness that wrote the change
+2. **Assign.** Author family is the harness that wrote the change
    (this session if you wrote it; else the packet / review identity).
    Resolve a reader that is **not** that family:
 
    `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review --not-harness <author>`
 
-   Default without `--not-harness` is Fable 5.1 (Claude). Optional
-   consult: `--shape plan` (Fable, no write). Human pick always wins.
-   Same-family as the change author cannot be the sole `accept`
-   reader (ADR-005). This session inlines advise only when it **is**
-   the assigned other-family route.
+   Run `ladder.py show` / `assign` — never treat the static
+   `available: false` in `ladder.json` as physics. Env-presence
+   (`codex` on PATH, `OPENAI_API_KEY`) is a preflight, not a
+   successful spawn. If spawn infra-reds, `--after` the current id
+   and spawn the next. Do not skip Sol because the JSON file said
+   false.
 
-   Second family is any `architecture-review` harness other than the
-   author’s — not “Grok or Sol.” Grok author → Claude (Fable, or
-   Opus 4.8). Claude author → Grok, or **Sol** when the Codex CLI is
-   on PATH (`codex`) or `OPENAI_API_KEY` is set (`ladder.py show` —
-   `sol-arch-review` `available: true`). Sol off does **not** mean
-   no second family while Claude or Grok remains available.
+   Human pick (`--who` / `--id`) selects the spawned reader. It
+   does not waive isolation.
 
-   Spawn: `spawn.py stage` + `spawn.py run --adapter <harness>`
-   (`claude` → live `claude -p`; `codex` → live `codex exec`; no
-   CLI with `OPENAI_API_KEY` → `--adapter openai`). Override the
-   Codex binary with `CODEX_BIN`. Never a Codex slash command. Do
-   not paste keys into the packet. `run` waits this wave for that
-   spawn; it does not park the id as ASK.
+   Fable 5.1 on architecture-review is a valid *other-family*
+   reader only when the author is not Claude. Optional extra:
+   `--shape plan` consult (Fable). Plan consult is **not** the
+   sole accept.
 
-   **Panel (fan-out):** `ladder.py panel --shape architecture-review`
-   then spawn Fable 5.1, Sol, and Opus 4.8 (or every available
-   route). Compare verdicts. Still no sole-accept as the author
-   (ADR-005).
+   If `assign --not-harness <author>` finds no spawnable route
+   (Claude author, no Codex, Grok has no CLI adapter): park as
+   ASK (`PUNT: second-family advise` on `tasks.md`). Never
+   inline. Never fake a send-back.
+3. **Packet a new session.** Reader gets: change id, Why
+   (`proposal.md` without the design), living spec paths, cited
+   file:line, LEARNINGS lines that name this id. Not this chat.
+   Not “we just activated these.” Not `design.md` / `tasks.md`
+   in the first brief.
 
-   **Handoff:** if this reader cannot promote,
-   `ladder.py assign --shape architecture-review --after <current-id>`
-   and spawn the next. Do not fake a send-back to retrigger change.
-4. **Packet.** Readers receive `permission: read`. Foreign harnesses
-   get a packet file, never a slash command. Sol is packet-only
-   (CLI or API), not a skill-host slash.
-5. **Write** `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`.
-   First banner line after the title MUST be exactly one of:
+   `spawn.py stage` + `spawn.py run --adapter <harness>`.
+   Claude → `claude -p` (stdin). Codex → `codex exec -`.
+   No CLI + `OPENAI_API_KEY` → `--adapter openai`. Never a
+   Codex slash. `run` waits this wave.
+4. **Blind pass (in the reader packet).** Order the reader must
+   follow: Why + living spec + cited code → 10-line independent
+   take (what they would pin, refuse, one tradeoff) → **then**
+   open `design.md` / `tasks.md` → compare. Steelman against
+   that take. The take is **concerns the author must have
+   answered**, not a competing design.
+5. **Persist the verdict.** Packet-only readers (Sol) cannot
+   write the review file (read-only sandbox). After spawn,
+   write `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`
+   from the harvested body. Do not rewrite the verdict. First
+   lines after the title MUST be:
 
    ```
    > **ADVISE:** accept
-   > **ADVISE:** send-back
+   > **READER:** <route-id>
+   > **SPAWN:** <spawn-dir>
    ```
 
-   Notes belong in the body, not in the verdict. Do not write
-   `accept-with-nits` (old files still parse as accept).
+   or `send-back` instead of `accept`. Notes in the body. Do
+   not write `accept-with-nits`.
 
-   Body: steelman against, one real tradeoff, findings, what is
-   solid, leftover notes for `change` to amend. Cite file:line for
-   code claims.
-6. **Send-back** adds owed boxes on `tasks.md`. Does not flip the
-   banner. **Accept** unblocks `act` on that change's write nodes
-   (`ready.py` / `conductor.py ready`).
+   `ready.py` / `advise_status.py` **ignore** an `accept` that
+   has no `READER:` line. Same-tab accept does not unblock `act`.
+6. **Send-back** adds owed boxes on `tasks.md`. Does not flip
+   the banner. **Accept** (with `READER:`) unblocks `act`.
 7. **Signed result** (`permission: read`):
-   - accept → `disposition: pass` (notes in the review body)
+   - accept → `disposition: pass`
    - send-back → `disposition: task-red` (not infra)
-8. **Stop.** Do not implement the notes (`change` amends). Do not
-   fold. Do not `act`.
+8. **Stop.** Do not implement the notes (`change` amends). Do
+   not fold. Do not `act`.
 
-`ready.py` reports `needs_advise` when an ACTIVE BUILD architecture
-or instrument change has no accepting advise (or last is send-back).
-`act` must not dispatch those write nodes until an accept lands.
+**Panel:** `spawn.py consult --panel` is a second opinion; it
+does not unblock `act`. Gating advise is one spawned
+other-family reader (or several `--who`, still spawned). Compare
+qualitatively; no sole-author accept (ADR-005).
+
+`ready.py` reports `needs_advise` when an ACTIVE BUILD
+architecture or instrument change has no accepting advise with
+`READER:` (or last is send-back). `act` must not dispatch those
+write nodes until that accept lands.

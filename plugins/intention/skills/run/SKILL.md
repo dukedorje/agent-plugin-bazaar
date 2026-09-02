@@ -84,16 +84,16 @@ Split the refusal:
   fold/act/amend it this pick). Do **not** park it on ask. Do
   **not** `--punt` it. Re-observe. `--skip` still allows `advise`
   on that same id. Follow the new `next`.
-- **Advise, this session is the author's family (ADR-005):** do not
-  inline `accept`. Do not write a fake send-back with no
-  architecture boxes — that retriggers `change`. Assign
-  `architecture-review --not-harness <author>` and **spawn** that
-  reader (packet + `spawn.py`), same pattern as fold. Wait for
-  this wave so the review lands, then re-observe. `--punt` only
-  when no other-family route is available, or the spawn is
-  infra-red after one retry. `--until ask` still stops on a true
-  elicitation (PENDING / EYES / ASK box), not on same-family
-  advise. `--until roll` never parks same-family advise as ASK.
+- **Advise, any session:** do not inline `accept`. Do not write a
+  fake send-back with no architecture boxes — that retriggers
+  `change`. Assign `architecture-review --not-harness <author>`
+  and **spawn** that reader (packet + `spawn.py`) even if this
+  tab is the other family — fresh context. Wait this wave.
+  `--punt` only when no spawnable other-family route exists, or
+  the spawn is infra-red after `--after` handoff. No route →
+  ASK, never inline. `--until ask` still stops on a true
+  elicitation, not on same-family advise. `--until roll` never
+  parks same-family advise as ASK.
 
 Stop only when the new card has `stop` set, or `--max-waves` hits.
 Refusing fold must not end the campaign. Same-family advise must
@@ -134,18 +134,16 @@ while waves < max_waves:
   if card.next is advise:
     author = harness that wrote the change (this session if you wrote it)
     route = ladder assign --shape architecture-review --not-harness <author>
-    if assign failed:                   # no other-family route
-      add owed box "PUNT: second-family advise" on tasks.md if missing
+    if assign failed:                   # no spawnable other-family
+      add owed box "ASK: second-family advise" on tasks.md if missing
       punt += [focus]
-      continue
-    if this session is that route:      # other family — inline
-      follow advise/SKILL.md
-    else:
-      spawn that reader (packet + spawn.py); wait this wave
-      if spawn infra-red after one retry:
-        punt += [focus]
-      waves += 1
-      continue
+      continue                          # never inline accept
+    spawn that reader always (packet + spawn.py); wait this wave
+    # this session never writes reviews/*-advise.md with accept
+    if spawn infra-red after one retry:
+      assign --after <route.id> and spawn; if none left: punt
+    waves += 1
+    continue
   follow sibling <next>/SKILL.md for one wave
   waves += 1
   re-read this skill

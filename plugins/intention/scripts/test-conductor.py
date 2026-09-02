@@ -301,6 +301,19 @@ def test_advise_gate() -> None:
             "# advise\n\n> **ADVISE:** accept\n",
             encoding="utf-8",
         )
+        still = run(
+            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
+        )
+        expect(still.returncode == 0, still.stderr)
+        stuck = json.loads(still.stdout)
+        expect(
+            any("needs-advise" in r.get("reason", "") for r in stuck["deferred"]),
+            stuck["deferred"],
+        )
+        (reviews / "2026-08-16-advise.md").write_text(
+            "# advise\n\n> **ADVISE:** accept\n> **READER:** grok-arch-review\n> **SPAWN:** .spawns/x\n",
+            encoding="utf-8",
+        )
         accepted = run(
             ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
         )

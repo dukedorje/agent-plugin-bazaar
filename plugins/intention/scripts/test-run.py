@@ -745,6 +745,8 @@ def test_run_skill_spawns_other_family_advise() -> None:
     skill = HERE.parents[0] / "skills" / "run" / "SKILL.md"
     text = skill.read_text(encoding="utf-8")
     expect("spawn that reader" in text or "spawn an other-family" in text, text[:800])
+    expect("spawn that reader always" in text, text)
+    expect("this session never writes reviews" in text, text)
     expect("Punt is last-resort only" in text or "punt only" in text.lower(), text)
     expect("Same-family advise is **not** illegal" in text, text)
     expect("stop when stuck" not in text, "stuck halt still in skill")
