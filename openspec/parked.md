@@ -8,6 +8,7 @@
 |---|---|---|---|
 | P1 | host | Duke unparks intentional.agency or Mjolnir-the-product | docs/from-intention-to-running.md |
 | sprint-plan | skill | user explicitly wants the 10-phase / --thorough factory | plugins/morphist-tools/skills/sprint-plan/SKILL.md |
+| add-act-worktree-land | act isolation | Duke wants worktree isolate + land/merge again (it got complicated; wave slice stays on HEAD) | `conductor.py isolate` / `persist --worktree`; no `land` yet. Split out of `add-run-wave-workflow` 2026-09-02. |
 
 Tatastu unparked 2026-08-17 (`bazaar-tvm`). Remaining P1 hosts stay parked.
 

@@ -15,11 +15,16 @@ line. `spawn.py` cannot reach those host tools.
 
 ## What
 
-- `conductor.py wave`: mutually disjoint subset of `dispatchable`.
+- Slice one: whole-packet disjoint waves on HEAD. Empty `paths`
+  overlap everything. `max_inflight` after disjointness.
 - When this host has `workflow` and the wave has two or more nodes,
-  `/run` launches `.grok/workflows/run-wave.rhai`.
-- Each child follows `act` in an isolate worktree; conductor already
-  `take`s. No `isolation_worktree` (host worktrees do not merge).
+  the run campaign launches `.grok/workflows/run-wave.rhai`.
+  Children stay on HEAD. Conductor already `take`s; persist is
+  sequential after join.
+- Fileset organizer (ultrapilot-shaped exclusive/shared/boundary)
+  is the **next** node (`bazaar-7kb.1`), not this slice. Sol
+  dissented on stripping shared files before the mutex and close
+  see the same projection.
 - One node, or no workflow tool: existing single `act` path.
 - Claude/Sol assignees still use `spawn.py`.
 - Packet remains the brief.
@@ -35,9 +40,10 @@ line. `spawn.py` cannot reach those host tools.
 
 Duke, from a Grok tab.
 
-1. `/run` — card `next: act`, two disjoint dispatchable nodes.
-2. **Working** — `run-wave` fans them out; `/workflows` shows the
-   wave.
+1. `/run` — card `next: act`, two nodes whose packet paths do not
+   overlap.
+2. **Working** — `run-wave` fans them on HEAD; `/workflows` shows
+   the wave. Overlap waits for the next wave.
 3. **Empty** — one dispatchable: single `act`, no workflow.
 4. **Off** — still one `act` at a time on every host.
 
@@ -48,3 +54,7 @@ Duke, from a Grok tab.
 - Advise/consult/fold native spawn (later slice)
 - Replacing the whole `/run` loop with Rhai
 - `isolation_worktree` as the persist path
+- Worktree isolate / land / merge (`add-act-worktree-land`, PARKED)
+- Fileset organizer / shared-file extraction (`bazaar-7kb.1`)
+- Slice one runs from the bazaar clone only (rhai paths are
+  `plugins/intention/...`; do not invent a skill-dir arg yet)

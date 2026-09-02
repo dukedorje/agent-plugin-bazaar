@@ -24,6 +24,7 @@ python3 plugins/intention/scripts/conductor.py ready
 python3 plugins/intention/scripts/conductor.py take --node <id> --holder sonnet-5
 python3 plugins/intention/scripts/conductor.py release --node <id>
 python3 plugins/intention/scripts/conductor.py lint-packet <packet.json>
+# isolate is PARKED (add-act-worktree-land). Wave children stay on HEAD.
 python3 plugins/intention/scripts/conductor.py isolate --node <id>
 python3 plugins/intention/scripts/conductor.py persist --paths <p> [<p> ...] -m "<msg>"
 python3 plugins/intention/scripts/conductor.py classify <result.json>
@@ -41,7 +42,7 @@ The conductor of the isolation boundary commits. Workers edit
 
 ```bash
 python3 plugins/intention/scripts/conductor.py persist --paths <only touched declared paths> -m "<conventional message>"
-# isolated:
+# isolated (PARKED — add-act-worktree-land):
 python3 plugins/intention/scripts/conductor.py persist --worktree .worktrees/<id> --paths … -m "…"
 ```
 

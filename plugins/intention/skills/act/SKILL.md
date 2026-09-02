@@ -35,9 +35,10 @@ The packet is the only interface. Schema:
    `python3 plugins/intention/scripts/conductor.py lint-packet <packet>`.
    `capability` required at change+. Anchors, not file bodies. Never a
    commit exemption.
-5. **Isolate** if the worker should not share the main tree:
-   `conductor.py isolate --node <id>`. Optional. Disjoint nodes may
-   stay on HEAD.
+5. **Isolate** is PARKED (`add-act-worktree-land`). Wave children
+   stay on HEAD and write only `constraints.paths`. Single `act`
+   may still stay on HEAD (the default). Do not call
+   `conductor.py isolate` until that park is revived.
 6. **Launch.** If this host has `spawn_subagent` and the assignee
    harness is `grok`, spawn `general-purpose` with the packet path
    (the worker reads `act` and the packet). If the host has
@@ -47,10 +48,11 @@ The packet is the only interface. Schema:
    <packet>`) and `spawn.py run --adapter claude` or `codex`.
    Empty/missing prompt is a hard fail. Stall → `infra-red`. On
    infra-red / park, `release` the node.
-7. **Do the work** only on `constraints.paths` (in the worktree if
-   isolated). Workers edit and stop.
+7. **Do the work** only on `constraints.paths` (owned fileset on
+   HEAD). Workers edit and stop.
 8. **Persist** as conductor: `conductor.py persist --paths … -m …`
-   (`--worktree` when isolated). Persistence ≠ acceptance.
+   on HEAD. After a wave, persist each owned set sequentially.
+   `--worktree` is PARKED. Persistence ≠ acceptance.
 9. **Focused verify** once. Distill. Classify with
    `conductor.py classify <result>`. `repair` parks the implicated
    branch (`conductor.py implicated --node <id>`) and keeps unrelated

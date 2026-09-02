@@ -26,10 +26,7 @@ for n in nodes {
     prompt += ". Node: ";
     prompt += nid;
     prompt += ". The conductor already called take — do not take again. ";
-    prompt += "Isolate: python3 plugins/intention/scripts/conductor.py isolate --node ";
-    prompt += nid;
-    prompt += ". Work only on constraints.paths in that worktree. ";
-    prompt += "Persist: conductor.py persist --worktree. ";
+    prompt += "Stay on HEAD. Do not isolate. Work only on constraints.paths. ";
     prompt += "Focused verify once. Write the signed result. Stop. Do not fold.";
     jobs.push(#{
         prompt: prompt,

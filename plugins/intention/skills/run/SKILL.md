@@ -125,11 +125,17 @@ while waves < max_waves:
   if by_me_ask and card.next is act:    # “run it by me”
     halt                                # present map; do not act
   if card.next is act and this host has workflow:
-    wave = conductor.py wave            # mutually disjoint dispatchable
+    write+lint packets for dispatchable  # write-set before pick
+    wave = conductor.py wave            # whole-packet disjoint subset
     if len(wave) >= 2:
       take each wave node
-      write packets (act-io.md)
-      workflow name=run-wave args.nodes=[{id, packet}]
+      try:
+        workflow name=run-wave args.nodes=[{id, packet}]
+      except infra-red:
+        release each taken node
+        continue
+      persist each node's paths sequentially on HEAD
+      classify / close / repair / park per node
       waves += 1
       continue
     # else single act below
@@ -167,11 +173,13 @@ punt, not a fake send-back. Punt is last-resort only.
 This session may have `spawn_subagent` and `workflow` (Grok). Python
 `spawn.py` cannot call them.
 
-- **`act` wave, two or more disjoint dispatchable writes:**
+- **`act` wave, two or more wholly disjoint packets:**
   `conductor.py wave`, `take` each, then
   `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
-  also `.grok/workflows/run-wave.rhai` in this clone). Children
-  isolate + persist via `conductor.py`, not host `isolation_worktree`.
+  also `.grok/workflows/run-wave.rhai` in this clone). Children stay
+  on HEAD. Do not isolate (worktrees PARKED). Conductor persists
+  sequentially after join. Not host `isolation_worktree`. Fileset
+  organizer (shared-file split) is a later node, not this slice.
 - **Single `act`, assignee grok:** `spawn_subagent`
   `general-purpose` with the packet path. Follow `act`.
 - **Assignee claude / codex:** `spawn.py` as today.
