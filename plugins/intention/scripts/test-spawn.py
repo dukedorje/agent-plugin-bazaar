@@ -296,7 +296,7 @@ def test_openai_adapter_sol_live() -> None:
                 "harness": "none",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
             },
-            "constraints": {"permission": "read", "paths": [], "do_not": ["deploy"]},
+            "constraints": {"permission": "write", "paths": [], "do_not": ["deploy"]},
             "acceptance": {"kind": "none"},
             "load_class": "structure-clear",
             "rigor": "architecture",
@@ -323,6 +323,48 @@ def test_openai_adapter_sol_live() -> None:
         expect("pong" in (face.get("summary") or "").lower(), face)
 
 
+def test_read_permission_prompt_is_reader_brief() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-advise",
+            "node_id": "nod-advise",
+            "goal": "Read add-x. Verdict accept, accept-with-nits, or send-back.",
+            "assignee": {
+                "id": "agt-fable",
+                "kind": "model",
+                "harness": "claude",
+                "interface": "fable-5.1",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-fable"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {
+                "permission": "read",
+                "paths": ["openspec/changes/add-x/reviews/"],
+                "do_not": ["fold", "act", "deploy"],
+            },
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        prompt = Path(json.loads(staged.stdout)["prompt_file"]).read_text(encoding="utf-8")
+        expect("Permission: read" in prompt, prompt)
+        expect("**ADVISE:** accept" in prompt, prompt)
+        expect("Edit and stop" not in prompt, prompt)
+        expect("Do not implement" in prompt, prompt)
+
+
 def test_empty_packet_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         empty = Path(td) / "empty.json"
@@ -341,6 +383,7 @@ def main() -> int:
         test_codex_adapter_argv,
         test_openai_adapter_missing_key,
         test_openai_adapter_sol_live,
+        test_read_permission_prompt_is_reader_brief,
         test_empty_packet_fails,
     ]
     failed = 0

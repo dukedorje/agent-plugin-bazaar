@@ -35,7 +35,9 @@ launches a worker.
 invent a ready-set. A named `<scope>` with no `openspec/changes/<id>/`
 is not `no-ready`; the card will say `next: change`. Stop only when
 the card has `stop` set (empty / no-ready / pause-before / ask), or
-`--max-waves` hits. A refused `next` is a skip, not a stop.
+`--max-waves` hits. `stop: empty` while `needs_advise` remains and
+an other-family reader exists is **not** a stop — spawn advise.
+A refused `next` is a skip, not a stop.
 
 If `../../references/shared.md` exists next to this plugin, load it.
 Otherwise the Must not section below is enough.
@@ -72,7 +74,9 @@ yet,” not stuck — more advise loops often unstick it.
 
 Illegal for `focus`: `fold` + `needs_advise`; `act` +
 `needs_advise`; `change` + last advise send-back + no open owed
-boxes; `advise` you cannot promote (same-family / ADR-005).
+boxes. Same-family advise is **not** illegal. Follow `advise`:
+spawn an other-family reader. ADR-005 forbids a sole-author
+`accept`; it does not forbid the wave.
 
 Split the refusal:
 
@@ -80,14 +84,21 @@ Split the refusal:
   fold/act/amend it this pick). Do **not** park it on ask. Do
   **not** `--punt` it. Re-observe. `--skip` still allows `advise`
   on that same id. Follow the new `next`.
-- **Advise cannot promote (same-family / ADR-005):** do not write a
-  fake send-back with no architecture boxes — that retriggers
-  `change`. Park the id on ask (“second-family advise”), `--punt`
-  it (mailbox already names PUNT — not a ninth verb). `--until ask`
-  stops here; `--until roll` continues **other** nodes.
+- **Advise, this session is the author's family (ADR-005):** do not
+  inline `accept`. Do not write a fake send-back with no
+  architecture boxes — that retriggers `change`. Assign
+  `architecture-review --not-harness <author>` and **spawn** that
+  reader (packet + `spawn.py`), same pattern as fold. Wait for
+  this wave so the review lands, then re-observe. `--punt` only
+  when no other-family route is available, or the spawn is
+  infra-red after one retry. `--until ask` still stops on a true
+  elicitation (PENDING / EYES / ASK box), not on same-family
+  advise. `--until roll` never parks same-family advise as ASK.
 
 Stop only when the new card has `stop` set, or `--max-waves` hits.
-Refusing fold must not end the campaign.
+Refusing fold must not end the campaign. Same-family advise must
+not end the campaign. `stop: empty` is not stuck while
+`needs_advise` remains and an other-family route exists.
 
 Conductor loop:
 
@@ -98,7 +109,10 @@ punt = []
 while waves < max_waves:
   card = run.py --until <until> [--skip …] [--punt …]
   print card
-  if card.stop: halt
+  if card.stop is empty and needs_advise remains and not all punted:
+    # other-family spawn still owed — do not halt
+    follow advise below on that id
+  elif card.stop: halt
   if card.next is fold and illegal:     # fold + needs_advise
     skip += [focus]
     continue                            # re-observe → advise that id
@@ -108,10 +122,6 @@ while waves < max_waves:
   if card.next is change and no-op:     # send-back, no open boxes
     skip += [focus]
     continue
-  if card.next is advise and cannot promote:  # ADR-005 same-family
-    park focus on ask/punt
-    punt += [focus]
-    continue                            # do not halt; do not re-advise
   if by_me_ask and card.next is act:    # “run it by me”
     halt                                # present map; do not act
   if card.next is fold:
@@ -121,13 +131,28 @@ while waves < max_waves:
       waves += 1
       continue                          # tab keeps moving
     # else inline fold/SKILL.md below
+  if card.next is advise:
+    author = harness that wrote the change (this session if you wrote it)
+    route = ladder assign --shape architecture-review --not-harness <author>
+    if assign failed:                   # no other-family route
+      punt += [focus]
+      continue
+    if this session is that route:      # other family — inline
+      follow advise/SKILL.md
+    else:
+      spawn that reader (packet + spawn.py); wait this wave
+      if spawn infra-red after one retry:
+        punt += [focus]
+      waves += 1
+      continue
   follow sibling <next>/SKILL.md for one wave
   waves += 1
   re-read this skill
 ```
 
 Illegal fold / illegal act / no-op change = continue into advise,
-not halt. Same-family advise = punt, not another fake send-back.
+not halt. Same-family advise = spawn the other-family reader, not
+punt, not a fake send-back. Punt is last-resort only.
 
 ## Policy
 
@@ -138,7 +163,7 @@ not halt. Same-family advise = punt, not another fake send-back.
 | `--until activation` | stop on PENDING |
 | `--until ask` | same walk as roll; stop at the first elicitation (ASK, PENDING, by-eye / EYES) |
 | `--until fold` | `next: fold` when legal; unscoped scans inflight |
-| `--until roll` | fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; stop when stuck |
+| `--until roll` | fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; spawn other-family advise; stop only when empty (nothing dispatchable and no spawnable advise) |
 | `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Pair with `--until roll` to keep walking |
 | `--pause-before <id>` | hard stop before that node |
 | `--plan` / `--advise` / `--ask` | “run it by me” gates. See below. |
@@ -180,3 +205,6 @@ ninth verb.
 - Fold unless `--until fold`, `--until roll`, or `--until ask` and fold is legal
 - Implement a node except by following `act` after a re-read
 - `act` when `--ask` / “run it by me” is the stop
+- Halt or `--punt` same-family advise while an other-family
+  `architecture-review` route is available
+- Write a fake send-back so you can skip the read

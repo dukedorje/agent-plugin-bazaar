@@ -76,7 +76,9 @@ instrument also gets **advise** unless declined.
 `run.py` observes; the conductor follows one sibling skill per wave.
 `--until roll`: fold → send-back amend → advise → act → beads.
 A refused fold is not a stop — `--skip` that id and still **advise**
-it. Same-family advise (ADR-005) is `--punt`, not a fake send-back.
+it. Same-family advise (ADR-005) **spawns** the other-family reader
+(Fable vs a Grok author; Grok/Sol vs a Claude author). `--punt` only
+when no other-family route exists — not a fake send-back, not a halt.
 
 ## Install
 

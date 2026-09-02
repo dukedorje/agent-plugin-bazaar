@@ -33,20 +33,31 @@ unblock `act` until the banner is `ACTIVE BUILD`.
 2. **Load.** `proposal.md`, `design.md` if present, `tasks.md`,
    `specs/**/spec.md`, cited code. `docs/LEARNINGS.md` if it names
    this id.
-3. **Assign.** `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review`
-   (reader; default Fable 5.1). Optional consult: `--shape plan`
-   (Fable, no write). Human pick always wins. Same-family as the
-   change author cannot be the sole `accept` reader (ADR-005).
+3. **Assign.** Author family is the harness that wrote the change
+   (this session if you wrote it; else the packet / review identity).
+   Resolve a reader that is **not** that family:
 
-   Second family: Grok, or **Sol** when the Codex CLI is on PATH
-   (`codex`) or `OPENAI_API_KEY` is set (`ladder.py show` —
-   `sol-arch-review` `available: true`). Pick Sol with
-   `ladder.py assign --shape architecture-review --id sol-arch-review`.
-   Then `spawn.py stage` + `spawn.py run --adapter codex` (live
-   `codex exec -m gpt-5.6-sol`, like `claude -p`). Override the
-   binary with `CODEX_BIN`. If there is no CLI, stage falls back to
-   `--adapter openai`. Never a Codex slash command. Do not paste
-   keys into the packet.
+   `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review --not-harness <author>`
+
+   Default without `--not-harness` is Fable 5.1 (Claude). Optional
+   consult: `--shape plan` (Fable, no write). Human pick always wins.
+   Same-family as the change author cannot be the sole `accept`
+   reader (ADR-005). This session inlines advise only when it **is**
+   the assigned other-family route.
+
+   Second family is any `architecture-review` harness other than the
+   author’s — not “Grok or Sol.” Grok author → Claude (Fable, or
+   Opus 4.8). Claude author → Grok, or **Sol** when the Codex CLI is
+   on PATH (`codex`) or `OPENAI_API_KEY` is set (`ladder.py show` —
+   `sol-arch-review` `available: true`). Sol off does **not** mean
+   no second family while Claude or Grok remains available.
+
+   Spawn: `spawn.py stage` + `spawn.py run --adapter <harness>`
+   (`claude` → live `claude -p`; `codex` → live `codex exec`; no
+   CLI with `OPENAI_API_KEY` → `--adapter openai`). Override the
+   Codex binary with `CODEX_BIN`. Never a Codex slash command. Do
+   not paste keys into the packet. `run` waits this wave for that
+   spawn; it does not park the id as ASK.
 4. **Packet.** Readers receive `permission: read`. Foreign harnesses
    get a packet file, never a slash command. Sol is packet-only
    (CLI or API), not a skill-host slash.

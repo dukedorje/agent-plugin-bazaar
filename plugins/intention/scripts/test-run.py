@@ -607,8 +607,22 @@ def test_roll_skip_fold_still_advises_same_id() -> None:
         expect(face["stop"] is None, face)
 
 
+def test_run_skill_spawns_other_family_advise() -> None:
+    """Conductor prompt: same-family advise is spawn, not punt-first halt."""
+    skill = HERE.parents[0] / "skills" / "run" / "SKILL.md"
+    text = skill.read_text(encoding="utf-8")
+    expect("spawn that reader" in text or "spawn an other-family" in text, text[:800])
+    expect("Punt is last-resort only" in text or "punt only" in text.lower(), text)
+    expect("Same-family advise is **not** illegal" in text, text)
+    expect("stop when stuck" not in text, "stuck halt still in skill")
+    expect(
+        "if card.next is advise and cannot promote" not in text,
+        "punt-first loop still in skill",
+    )
+
+
 def test_roll_punt_skips_advise() -> None:
-    """ADR-005 punt parks the id; roll advises a different node."""
+    """Last-resort punt parks the id; roll advises a different node."""
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
             Path(td),
@@ -732,6 +746,7 @@ def main() -> int:
         test_roll_needs_advise_is_not_fold,
         test_roll_skip_fold_picks_advise,
         test_roll_skip_fold_still_advises_same_id,
+        test_run_skill_spawns_other_family_advise,
         test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,
         test_roll_send_back_with_boxes_is_change,

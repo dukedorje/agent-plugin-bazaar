@@ -97,17 +97,38 @@ def node_of(packet: dict, override: str | None) -> str:
     return str(packet.get("node_id") or packet.get("id") or "node")
 
 
+def permission_of(packet: dict) -> str:
+    cons = packet.get("constraints") if isinstance(packet.get("constraints"), dict) else {}
+    perm = cons.get("permission")
+    return str(perm) if isinstance(perm, str) and perm else "write"
+
+
 def prompt_body(packet: dict, packet_path: Path, surface: str) -> str:
     blob = json.dumps(packet, indent=2, ensure_ascii=False)
-    return (
+    header = (
         "You are executing ONE work node. This file is the whole brief.\n"
         "Do not look for a plan file. Do not run a host slash command.\n"
         f"Surface: {surface}. Packet file: {packet_path}\n\n"
         "Packet:\n\n"
         f"{blob}\n\n"
-        "Work only on constraints.paths. Edit and stop. The conductor persists.\n"
-        "Return a signed result JSON if you can.\n"
     )
+    if permission_of(packet) == "read":
+        closer = (
+            "You are a read-only reader. Permission: read.\n"
+            "Do not implement. Do not fold. Do not flip the change banner.\n"
+            "Work only on constraints.paths (the review file).\n"
+            "First banner line after the title MUST be exactly one of:\n"
+            "> **ADVISE:** accept\n"
+            "> **ADVISE:** accept-with-nits\n"
+            "> **ADVISE:** send-back\n"
+            "Return a signed result JSON if you can.\n"
+        )
+    else:
+        closer = (
+            "Work only on constraints.paths. Edit and stop. The conductor persists.\n"
+            "Return a signed result JSON if you can.\n"
+        )
+    return header + closer
 
 
 def assert_prompt_ok(text: str, surface: str) -> None:

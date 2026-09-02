@@ -162,6 +162,40 @@ def main() -> int:
         failed += 1
         print(f"FAIL sol env: {exc}")
 
+    try:
+        grok_author = json.loads(
+            run(
+                [
+                    "assign",
+                    "--shape",
+                    "architecture-review",
+                    "--not-harness",
+                    "grok",
+                ],
+                env=env_without_sol(),
+            ).stdout
+        )
+        expect(grok_author["id"] == "fable-5.1-arch-review", grok_author)
+        expect(grok_author["harness"] == "claude", grok_author)
+        claude_author = json.loads(
+            run(
+                [
+                    "assign",
+                    "--shape",
+                    "architecture-review",
+                    "--not-harness",
+                    "claude",
+                ],
+                env=env_without_sol(),
+            ).stdout
+        )
+        expect(claude_author["id"] == "grok-arch-review", claude_author)
+        expect(claude_author["harness"] == "grok", claude_author)
+        print("pass --not-harness skips author family")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL not-harness: {exc}")
+
     if failed:
         print(f"FAIL {failed}")
         return 1

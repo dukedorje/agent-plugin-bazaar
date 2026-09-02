@@ -74,8 +74,10 @@ def assign(
     shape: str,
     allow_unavailable: bool = False,
     route_id: str | None = None,
+    not_harness: str | None = None,
 ) -> dict:
     shape = shape.strip()
+    skip_harness = (not_harness or "").strip()
     hits = []
     for route in data["routes"]:
         if not isinstance(route, dict):
@@ -84,6 +86,8 @@ def assign(
         if shape not in shapes:
             continue
         if route_id and route.get("id") != route_id:
+            continue
+        if skip_harness and str(route.get("harness") or "") == skip_harness:
             continue
         if route.get("available") is False and not allow_unavailable:
             continue
@@ -105,6 +109,11 @@ def main() -> int:
     a = sub.add_parser("assign", help="resolve one shape")
     a.add_argument("--shape", required=True)
     a.add_argument("--id", dest="route_id", help="pick this route id (e.g. sol-arch-review)")
+    a.add_argument(
+        "--not-harness",
+        dest="not_harness",
+        help="skip routes whose harness matches (ADR-005 other-family)",
+    )
     a.add_argument("--include-unavailable", action="store_true")
     a.set_defaults(cmd="assign")
 
@@ -118,6 +127,7 @@ def main() -> int:
         args.shape,
         allow_unavailable=args.include_unavailable,
         route_id=getattr(args, "route_id", None),
+        not_harness=getattr(args, "not_harness", None),
     )
     print(json.dumps(route, indent=2))
     return 0

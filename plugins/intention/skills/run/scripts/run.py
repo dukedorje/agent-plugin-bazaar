@@ -340,7 +340,9 @@ def decide(
         else eyes_ids(openspec)
     )
     elicited = unique(asks + waiting + eyes)
-    # Fold-skip is not an elicitation. Punt (ADR-005 / second-family) is mailbox.
+    # Fold-skip is not an elicitation. Punt is last-resort when no
+    # other-family advise route exists (mailbox PUNT). Same-family
+    # advise is spawn, not punt.
     asks = unique(elicited + list(punt_set))
     if pause_before and (
         pause_before in ready
@@ -625,7 +627,7 @@ def main() -> int:
     p.add_argument(
         "--punt",
         default="",
-        help="exclude from this pick including advise (mailbox PUNT / second-family)",
+        help="last-resort: exclude from this pick including advise (no other-family route)",
     )
     p.add_argument("--ready-json", type=Path)
     p.add_argument("--json", action="store_true")
