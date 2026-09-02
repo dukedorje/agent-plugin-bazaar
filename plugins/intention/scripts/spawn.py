@@ -108,6 +108,41 @@ def permission_of(packet: dict) -> str:
     return str(perm) if isinstance(perm, str) and perm else "write"
 
 
+def packet_paths(packet: dict) -> list[str]:
+    cons = packet.get("constraints") if isinstance(packet.get("constraints"), dict) else {}
+    raw = cons.get("paths") or []
+    return [str(p) for p in raw if p]
+
+
+def writes_review(paths: list[str]) -> bool:
+    return any("reviews" in p.replace("\\", "/") for p in paths)
+
+
+def is_advise(packet: dict) -> bool:
+    if is_consult(packet):
+        return False
+    if packet.get("change_id"):
+        return True
+    return writes_review(packet_paths(packet))
+
+
+def sandbox_of(spec: dict, packet: dict | None = None) -> str:
+    """Reviewers write their own review file. Consult stays read-only."""
+    if packet is not None and is_consult(packet):
+        return "read-only"
+    perm = str(spec.get("permission") or "")
+    paths = [str(p) for p in (spec.get("paths") or [])]
+    if packet is not None:
+        perm = perm or permission_of(packet)
+        if not paths:
+            paths = packet_paths(packet)
+    if perm == "write" or writes_review(paths):
+        return "workspace-write"
+    if spec.get("surface") == "packet-only":
+        return "read-only"
+    return "workspace-write"
+
+
 def is_consult(packet: dict) -> bool:
     if packet.get("change_id"):
         return False
@@ -147,16 +182,16 @@ def prompt_body(packet: dict, packet_path: Path, surface: str) -> str:
         "Packet:\n\n"
         f"{blob}\n\n"
     )
-    if permission_of(packet) == "read":
+    if is_advise(packet):
         closer = (
-            "You are a read-only reader. Permission: read.\n"
-            "Do not implement. Do not fold. Do not flip the change banner.\n"
+            "You are a reader. Write your own review file on constraints.paths.\n"
+            "Do not implement product code. Do not fold. Do not flip the banner.\n"
             "BLIND PASS: from Why, living spec, and cited code only, write a\n"
             "10-line independent take (what you would pin, refuse, one tradeoff).\n"
             "Do not open design.md or tasks.md until that take is written.\n"
             "Then compare. Steelman against your take. The take is concerns\n"
             "the author must have answered, not a competing design.\n"
-            "Work only on constraints.paths (the review file).\n"
+            "You persist the review yourself. The conductor does not transcribe it.\n"
             "First banner lines after the title MUST include:\n"
             "> **ADVISE:** accept\n"
             "or\n"
@@ -164,6 +199,13 @@ def prompt_body(packet: dict, packet_path: Path, surface: str) -> str:
             "> **READER:** <your route id>\n"
             "> **SPAWN:** <this spawn dir>\n"
             "Notes belong in the body, not in the verdict.\n"
+        )
+        return header + closer
+    if permission_of(packet) == "read":
+        closer = (
+            "You are a read-only reader. Permission: read.\n"
+            "Do not implement. Do not fold. Do not flip the change banner.\n"
+            "Work only on constraints.paths.\n"
             "Return a signed result JSON if you can.\n"
         )
     else:
@@ -241,8 +283,11 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "timeout_sec": args.timeout,
         "adapter": adapter,
         "workspace": str(args.root.resolve()),
+        "permission": permission_of(packet),
+        "paths": packet_paths(packet),
         "argv": [],
     }
+    spec["sandbox"] = sandbox_of(spec, packet)
     assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
     if assignee.get("effort"):
         spec["effort"] = assignee["effort"]
@@ -297,7 +342,7 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
     """codex exec -. Prompt is stdin (`-`), not argv (ARG_MAX)."""
     interface = str(spec.get("interface") or "gpt-5.6-sol")
     workspace = str(spec.get("workspace") or Path.cwd())
-    sandbox = "read-only" if spec.get("surface") == "packet-only" else "workspace-write"
+    sandbox = str(spec.get("sandbox") or sandbox_of(spec))
     last = prompt_file.parent / "last.md"
     effort = effort_of(spec)
     return [

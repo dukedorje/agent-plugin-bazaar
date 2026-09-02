@@ -72,21 +72,25 @@ or Claude-on-Claude in one thread is asking yourself.
    Not “we just activated these.” Not `design.md` / `tasks.md`
    in the first brief.
 
+   Packet `constraints.paths` is the review dir (and `tasks.md`
+   if send-back may add owed boxes). `permission: write` on
+   that write-set only. Codex sandbox is `workspace-write` so
+   the reader can persist the file. Consult stays read-only.
+
    `spawn.py stage` + `spawn.py run --adapter <harness>`.
    Claude → `claude -p` (stdin). Codex → `codex exec -`.
-   No CLI + `OPENAI_API_KEY` → `--adapter openai`. Never a
-   Codex slash. `run` waits this wave.
+   No CLI + `OPENAI_API_KEY` → `--adapter openai` (HTTP cannot
+   write files — last-resort harvest only). Never a Codex
+   slash. `run` waits this wave.
 4. **Blind pass (in the reader packet).** Order the reader must
    follow: Why + living spec + cited code → 10-line independent
    take (what they would pin, refuse, one tradeoff) → **then**
    open `design.md` / `tasks.md` → compare. Steelman against
    that take. The take is **concerns the author must have
    answered**, not a competing design.
-5. **Persist the verdict.** Packet-only readers (Sol) cannot
-   write the review file (read-only sandbox). After spawn,
-   write `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`
-   from the harvested body. Do not rewrite the verdict. First
-   lines after the title MUST be:
+5. **The reader writes the review.** Not this tab. After spawn,
+   check `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`
+   exists with:
 
    ```
    > **ADVISE:** accept
@@ -94,14 +98,18 @@ or Claude-on-Claude in one thread is asking yourself.
    > **SPAWN:** <spawn-dir>
    ```
 
-   or `send-back` instead of `accept`. Notes in the body. Do
-   not write `accept-with-nits`.
+   or `send-back`. Notes in the body. Do not write
+   `accept-with-nits`. Do not transcribe or edit the verdict.
+   Missing file after a green spawn is infra — retry once, then
+   ASK. HTTP OpenAI fallback may harvest only if there is no
+   CLI.
 
    `ready.py` / `advise_status.py` **ignore** an `accept` that
    has no `READER:` line. Same-tab accept does not unblock `act`.
-6. **Send-back** adds owed boxes on `tasks.md`. Does not flip
-   the banner. **Accept** (with `READER:`) unblocks `act`.
-7. **Signed result** (`permission: read`):
+6. **Send-back** adds owed boxes on `tasks.md` (reader writes
+   those too). Does not flip the banner. **Accept** (with
+   `READER:`) unblocks `act`.
+7. **Signed result:**
    - accept → `disposition: pass`
    - send-back → `disposition: task-red` (not infra)
 8. **Stop.** Do not implement the notes (`change` amends). Do

@@ -139,7 +139,7 @@ while waves < max_waves:
       punt += [focus]
       continue                          # never inline accept
     spawn that reader always (packet + spawn.py); wait this wave
-    # this session never writes reviews/*-advise.md with accept
+    # reader writes reviews/*-advise.md; this session never does
     if spawn infra-red after one retry:
       assign --after <route.id> and spawn; if none left: punt
     waves += 1

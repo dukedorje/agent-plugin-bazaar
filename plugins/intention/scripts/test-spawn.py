@@ -367,11 +367,81 @@ def test_read_permission_prompt_is_reader_brief() -> None:
         pkt.write_text(json.dumps(packet), encoding="utf-8")
         staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
         expect(staged.returncode == 0, staged.stderr + staged.stdout)
-        prompt = Path(json.loads(staged.stdout)["prompt_file"]).read_text(encoding="utf-8")
-        expect("Permission: read" in prompt, prompt)
+        spec = json.loads(staged.stdout)
+        prompt = Path(spec["prompt_file"]).read_text(encoding="utf-8")
+        expect("Write your own review file" in prompt, prompt)
         expect("**ADVISE:** accept" in prompt, prompt)
+        expect("**READER:**" in prompt, prompt)
         expect("Edit and stop" not in prompt, prompt)
-        expect("Do not implement" in prompt, prompt)
+        expect("Do not implement product code" in prompt, prompt)
+        expect(spec.get("permission") == "read", spec)
+        expect(any("reviews" in p for p in spec.get("paths") or []), spec)
+
+
+def test_codex_advise_sandbox_is_writable() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-advise-sol",
+            "node_id": "nod-advise",
+            "change_id": "add-x",
+            "goal": "Write the advise review for add-x.",
+            "assignee": {
+                "id": "agt-sol",
+                "kind": "model",
+                "harness": "codex",
+                "interface": "gpt-5.6-sol",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {
+                "permission": "write",
+                "paths": ["openspec/changes/add-x/reviews/"],
+                "do_not": ["fold", "act", "deploy", "implement"],
+            },
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        fake = root / "fake-codex"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read()}}, open({str(argv_log)!r},'w'))\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {**os.environ, "CODEX_BIN": str(fake)}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec["spec_file"], "--adapter", "codex"],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        argv, stdin = logged["argv"], logged["stdin"]
+        expect("--sandbox" in argv and "workspace-write" in argv, argv)
+        expect("read-only" not in argv, argv)
+        expect("Write your own review file" in stdin, stdin[:500])
 
 
 def test_consult_prompt_is_not_advise() -> None:
@@ -530,6 +600,7 @@ def main() -> int:
         test_openai_adapter_missing_key,
         test_openai_adapter_sol_live,
         test_read_permission_prompt_is_reader_brief,
+        test_codex_advise_sandbox_is_writable,
         test_consult_prompt_is_not_advise,
         test_consult_cli_fake_claude,
         test_consult_who_exclusive,

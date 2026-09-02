@@ -104,10 +104,12 @@ files (`.spawns/`) stay for staging, not as the message channel.
 `--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
 
 `run --adapter codex` is live `codex exec -` (stdin). Same effort
-word maps to `-c model_reasoning_effort="…"`. Packet-only uses
-`--sandbox read-only`; writes use `workspace-write`. Override the
-binary with `CODEX_BIN`. Stage picks this when the assignee
-harness is `codex` and `codex` is on PATH.
+word maps to `-c model_reasoning_effort="…"`. Sandbox is
+`read-only` for consult / empty write-set; `workspace-write`
+when `permission: write` or `constraints.paths` includes a
+`reviews/` dir — the reader writes their own review file.
+Override the binary with `CODEX_BIN`. Stage picks this when the
+assignee harness is `codex` and `codex` is on PATH.
 
 `run --adapter openai` is the OpenAI HTTP API fallback for Sol
 when there is no Codex CLI but `OPENAI_API_KEY` is set. The prompt
