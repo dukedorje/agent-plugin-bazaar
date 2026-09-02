@@ -38,10 +38,15 @@ The packet is the only interface. Schema:
 5. **Isolate** if the worker should not share the main tree:
    `conductor.py isolate --node <id>`. Optional. Disjoint nodes may
    stay on HEAD.
-6. **Stage** a unique prompt: `spawn.py stage --packet <packet>`.
-   Empty/missing prompt is a hard fail. Launch Claude Code with
-   `spawn.py run --adapter claude` (live `claude -p`). Stall →
-   `infra-red`. On infra-red / park, `release` the node.
+6. **Launch.** If this host has `spawn_subagent` and the assignee
+   harness is `grok`, spawn `general-purpose` with the packet path
+   (the worker reads `act` and the packet). If the host has
+   `workflow` and this node is one of a disjoint wave, the
+   conductor already launched `run-wave` — do not launch again.
+   Otherwise stage a unique prompt (`spawn.py stage --packet
+   <packet>`) and `spawn.py run --adapter claude` or `codex`.
+   Empty/missing prompt is a hard fail. Stall → `infra-red`. On
+   infra-red / park, `release` the node.
 7. **Do the work** only on `constraints.paths` (in the worktree if
    isolated). Workers edit and stop.
 8. **Persist** as conductor: `conductor.py persist --paths … -m …`

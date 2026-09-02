@@ -5,6 +5,7 @@ Ready-set = inbound deps closed AND write-set disjoint from in-flight.
 Isolation MAY be a worktree; this process persists. Workers edit.
 
   python3 plugins/intention/scripts/conductor.py ready [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py wave [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py take --node ID [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py release --node ID [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py lint-packet FILE
@@ -172,6 +173,22 @@ def dispatch(
         "parked": parked,
         "slots": {"max": cap, "in_flight": len(in_flight_ids), "free": free},
     }
+
+
+def pick_wave(dispatchable: list[dict]) -> list[dict]:
+    """Mutually disjoint subset of dispatchable, first-match wins."""
+    picked: list[dict] = []
+    used: list[str] = []
+    for row in dispatchable:
+        paths = row.get("paths") or []
+        if not isinstance(paths, list):
+            paths = []
+        hits = paths_overlap([str(p) for p in paths], used)
+        if hits:
+            continue
+        picked.append(row)
+        used.extend(str(p) for p in paths if p)
+    return picked
 
 
 def implicated(nodes: list[dict], failed: str) -> list[str]:
@@ -370,6 +387,19 @@ def release_node(nodes: list[dict], node_id: str) -> dict:
     return node
 
 
+def cmd_wave(args: argparse.Namespace) -> int:
+    repo = args.repo.resolve()
+    if args.inventory:
+        nodes = load_inventory(args.inventory)
+    else:
+        nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
+    openspec = repo / "openspec"
+    result = dispatch(nodes, max_inflight=args.max_inflight, openspec=openspec)
+    wave = pick_wave(result["dispatchable"])
+    print(json.dumps({"wave": wave, "slots": result["slots"]}, indent=2))
+    return 0
+
+
 def cmd_ready(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     if args.inventory:
@@ -529,6 +559,11 @@ def main() -> int:
     ready.add_argument("--inventory", type=Path)
     ready.add_argument("--max-inflight", type=int)
     ready.set_defaults(func=cmd_ready)
+
+    wave = sub.add_parser("wave", help="mutually disjoint dispatchable subset")
+    wave.add_argument("--inventory", type=Path)
+    wave.add_argument("--max-inflight", type=int)
+    wave.set_defaults(func=cmd_wave)
 
     take = sub.add_parser("take", help="mutex: mark node in_progress")
     take.add_argument("--node", required=True)

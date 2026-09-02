@@ -323,9 +323,28 @@ def test_advise_gate() -> None:
         expect(after["deferred"] == [], after)
 
 
+def test_wave_drops_overlapping_dispatchable() -> None:
+    inv = {
+        "nodes": [
+            {"id": "b", "status": "open", "deps": [], "paths": ["docs/x.md"]},
+            {"id": "c", "status": "open", "deps": [], "paths": ["docs/x.md", "docs/y.md"]},
+            {"id": "d", "status": "open", "deps": [], "paths": ["lib/z.py"]},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        expect(proc.returncode == 0, proc.stderr)
+        data = json.loads(proc.stdout)
+        ids = [row["id"] for row in data["wave"]]
+        expect(ids == ["b", "d"], f"wave={ids} stdout={proc.stdout}")
+
+
 def main() -> int:
     tests = [
         test_ready,
+        test_wave_drops_overlapping_dispatchable,
         test_implicated,
         test_lint,
         test_classify,

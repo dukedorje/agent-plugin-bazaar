@@ -10,7 +10,7 @@ In this repo, `.agents/skills/<verb>` is a symlink to those directories.
 
 | Host | Loads in this clone? | How | Invoke | Packet-only worker? | Gap |
 |---|---|---|---|---|---|
-| **Grok** | yes | `.agents/skills/` (native scan). Marketplace: `.grok-plugin/` + `grok plugin install intention --trust` | skill name / `/intend` | When Grok is MetaDev’s `grok-headless-exec`: **yes**, give a packet | `skills` 1.5.22 `--agent grok` writes `.grok/skills/` (also scanned; higher priority than `.agents/`). Do not run that *in this repo* |
+| **Grok** | yes | `.agents/skills/` (native scan). Marketplace: `.grok-plugin/` + `grok plugin install intention --trust` | skill name / `/intend`. Conductor uses `spawn_subagent` / `workflow` (`run-wave`) for Grok-shaped work; `spawn.py` for Claude/Sol | When Grok is MetaDev’s `grok-headless-exec`: **yes**, give a packet | `skills` 1.5.22 `--agent grok` writes `.grok/skills/` (also scanned; higher priority than `.agents/`). Do not run that *in this repo* |
 | **Claude** | yes (plugin) | `claude --plugin-dir ./plugins/intention` or marketplace `intention` | `/intend` or skill match | no — it *is* a skill host | `skills add -a claude-code` writes `.claude/skills/` copies; do **not** do that in *this* repo |
 | **Codex** | yes | project `.agents/skills/` (same symlinks). Global: `~/.codex/skills/` | `$intend` / `@intention:intend` / skill name — **never** `/intend` | When Codex is a foreign worker from Claude/Grok: **yes**, packet | No slash API |
 | **Hermes** | yes if it scans `.agents/skills/`; else `.hermes/skills/` | `skills` 1.5.22 `--agent hermes-agent` → `.hermes/skills/` / `~/.hermes/skills/` | skill name | When spawned as a worker: packet | none for install |

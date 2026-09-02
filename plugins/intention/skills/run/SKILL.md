@@ -124,6 +124,15 @@ while waves < max_waves:
     continue
   if by_me_ask and card.next is act:    # “run it by me”
     halt                                # present map; do not act
+  if card.next is act and this host has workflow:
+    wave = conductor.py wave            # mutually disjoint dispatchable
+    if len(wave) >= 2:
+      take each wave node
+      write packets (act-io.md)
+      workflow name=run-wave args.nodes=[{id, packet}]
+      waves += 1
+      continue
+    # else single act below
   if card.next is fold:
     assign ladder --shape fold          # opus-5-fold unless human picked Grok
     if this session is not that route:
@@ -152,6 +161,25 @@ while waves < max_waves:
 Illegal fold / illegal act / no-op change = continue into advise,
 not halt. Same-family advise = spawn the other-family reader, not
 punt, not a fake send-back. Punt is last-resort only.
+
+## Native host
+
+This session may have `spawn_subagent` and `workflow` (Grok). Python
+`spawn.py` cannot call them.
+
+- **`act` wave, two or more disjoint dispatchable writes:**
+  `conductor.py wave`, `take` each, then
+  `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
+  also `.grok/workflows/run-wave.rhai` in this clone). Children
+  isolate + persist via `conductor.py`, not host `isolation_worktree`.
+- **Single `act`, assignee grok:** `spawn_subagent`
+  `general-purpose` with the packet path. Follow `act`.
+- **Assignee claude / codex:** `spawn.py` as today.
+- **Fold:** `subagent_type="intention:folder"` when the host has it;
+  else `spawn.py`.
+
+Packet is still the brief. Do not slash a foreign worker. Do not
+replace this whole loop with Rhai — the workflow is one act fan-out.
 
 ## Policy
 

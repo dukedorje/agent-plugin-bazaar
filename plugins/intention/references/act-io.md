@@ -77,6 +77,12 @@ python3 plugins/intention/scripts/content-hash.py <result.json>
 Writes `signature.content_hash` (`sha256:` + hex) over the result with
 `signature.content_hash` and `signature.bytes` removed.
 
+## Native host (Grok)
+
+When the conductor tab has `spawn_subagent` / `workflow`, disjoint
+`act` nodes go through `conductor.py wave` then `.grok/workflows/run-wave.rhai`.
+Single Grok assignee: `spawn_subagent`. Claude/Codex: `spawn.py` below.
+
 ## Spawn
 
 ```bash

@@ -1,0 +1,50 @@
+let meta = #{
+    name: "run-wave",
+    description: "One /run act wave: disjoint write nodes in parallel",
+    when_to_use: "Campaign next is act and conductor.py wave has two or more nodes",
+    phases: [ #{ title: "Act", detail: "one worker per disjoint write" } ],
+};
+
+if args == () { pause("verification", "Pass args.nodes — array of {id, packet}."); }
+if args.nodes == () { pause("verification", "Pass args.nodes — array of {id, packet}."); }
+
+let nodes = args.nodes;
+if type_of(nodes) != "array" { pause("verification", "args.nodes must be an array."); }
+if nodes.len() == 0 { pause("verification", "args.nodes must be non-empty."); }
+
+phase("Act");
+let jobs = [];
+for n in nodes {
+    let nid = if n == () { "" } else { n.id };
+    let pkt = if n == () { "" } else { n.packet };
+    if nid == () || nid == "" { continue; }
+    if pkt == () || pkt == "" { continue; }
+    let prompt = "You are executing ONE act node. ";
+    prompt += "Read plugins/intention/skills/act/SKILL.md from disk. ";
+    prompt += "Packet file: ";
+    prompt += pkt;
+    prompt += ". Node: ";
+    prompt += nid;
+    prompt += ". The conductor already called take — do not take again. ";
+    prompt += "Isolate: python3 plugins/intention/scripts/conductor.py isolate --node ";
+    prompt += nid;
+    prompt += ". Work only on constraints.paths in that worktree. ";
+    prompt += "Persist: conductor.py persist --worktree. ";
+    prompt += "Focused verify once. Write the signed result. Stop. Do not fold.";
+    jobs.push(#{
+        prompt: prompt,
+        label: "act:" + nid,
+        capability_mode: "execute",
+        agent_type: "general-purpose",
+    });
+}
+if jobs.len() == 0 { pause("verification", "No usable nodes in args.nodes."); }
+
+let results = parallel(jobs);
+let passed = 0;
+let failed = 0;
+for r in results {
+    if r != () && r.success { passed += 1; } else { failed += 1; }
+}
+log(passed.to_string() + " passed / " + failed.to_string() + " failed");
+complete(#{ passed: passed, failed: failed, count: jobs.len() });
