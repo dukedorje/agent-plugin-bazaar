@@ -616,7 +616,7 @@ def card(row: dict[str, Any]) -> str:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("scope", nargs="?", help="change-id to focus (e.g. add-sheaf-type)")
-    p.add_argument("--until", choices=STOPS, default="empty")
+    p.add_argument("--until", choices=STOPS, default="roll")
     p.add_argument("--autonomous", action="store_true")
     p.add_argument("--pause-before")
     p.add_argument(

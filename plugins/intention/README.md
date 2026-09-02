@@ -20,7 +20,7 @@ Prime load the same files without a plugin install.
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `ready` |
-| Keep going while unblocked | `run --until roll` |
+| Keep going while unblocked | `run` (default `--until roll`) |
 | Walk until a question appears | `run --until ask` |
 | Scaffold + advise, never implement | `run --until advise` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
@@ -74,7 +74,7 @@ instrument also gets **advise** unless declined.
 ## Run campaign
 
 `run.py` observes; the conductor follows one sibling skill per wave.
-`--until roll`: fold → send-back amend → advise → act → beads.
+Bare `/run` is `--until roll`: fold → send-back amend → advise → act → beads.
 A refused fold is not a stop — `--skip` that id and still **advise**
 it. Same-family advise (ADR-005) **spawns** the other-family reader
 (Fable vs a Grok author; Grok/Sol vs a Claude author). `--punt` only

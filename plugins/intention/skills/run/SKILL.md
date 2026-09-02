@@ -158,13 +158,13 @@ punt, not a fake send-back. Punt is last-resort only.
 
 | Token | Means |
 |---|---|
-| `--until empty` | default: change → advise → act. Stop at PENDING, ASK, and fold. Do not intend a verb-led change-id. Do not fold. |
+| `--until roll` | **default.** fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; spawn other-family advise; stop only when empty (nothing dispatchable and no spawnable advise) |
+| `--until empty` | cautious: change → advise → act. Stop at PENDING, ASK, and fold. Do not intend a verb-led change-id. Do not fold. |
 | `--until advise` | dispatch `advise` when a read is owed; do not `act` |
 | `--until activation` | stop on PENDING |
 | `--until ask` | same walk as roll; stop at the first elicitation (ASK, PENDING, by-eye / EYES) |
 | `--until fold` | `next: fold` when legal; unscoped scans inflight |
-| `--until roll` | fold → send-back amend → advise → act → bead landing/change → intend leftover tasks; park ASK on the card; spawn other-family advise; stop only when empty (nothing dispatchable and no spawnable advise) |
-| `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Pair with `--until roll` to keep walking |
+| `--autonomous` | no mid-run questions; EYES; never deploy; never flip PENDING. Alone uses the default walk (roll) |
 | `--pause-before <id>` | hard stop before that node |
 | `--plan` / `--advise` / `--ask` | “run it by me” gates. See below. |
 
@@ -202,7 +202,7 @@ ninth verb.
 - Slash a foreign worker (`/run`, `/act`, `/intend`, `/meta-execute`)
 - Flip PENDING or a by-eye box
 - Vendor `@skills` / `.atskills` / `planctl/`
-- Fold unless `--until fold`, `--until roll`, or `--until ask` and fold is legal
+- Fold unless until is `fold`, `roll` (default), or `ask`, and fold is legal
 - Implement a node except by following `act` after a re-read
 - `act` when `--ask` / “run it by me” is the stop
 - Halt or `--punt` same-family advise while an other-family

@@ -37,7 +37,7 @@ Sources (union, labeled, not collapsed):
 - **NEEDS ADVISE (OpenSpec)** — `ACTIVE BUILD` architecture/instrument
   with no accepting `reviews/*-advise.md` (or last verdict `send-back`).
 - **BEADS (bd ready)** — unblocked beads (briefs, tasks, features,
-  epics). JSON `beads`. `/run --until roll` already walks this list
+  epics). JSON `beads`. Bare `/run` (default `--until roll`) already walks this list
   (landing → `change`, leftover task → `intend`). An empty OpenSpec
   lens is not an empty board.
 - **PARKED (OpenSpec)** — in-flight `PARKED` banners plus

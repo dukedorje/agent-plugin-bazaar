@@ -37,12 +37,20 @@ def test_empty_ready_no_worker() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
             Path(td),
-            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+            },
         )
         proc = run(["--ready-json", str(fixture), "--json"])
         expect(proc.returncode == 0, proc.stderr + proc.stdout)
         face = json.loads(proc.stdout)
         expect(face["stop"] == "empty", face)
+        expect(face["until"] == "roll", face)
         expect(face["workers_launched"] == 0, face)
         expect(face["next"] is None, face)
         text = run(["--ready-json", str(fixture)])
@@ -114,6 +122,8 @@ def test_advise_before_act() -> None:
                 "waiting": [],
                 "needs_advise": [{"id": "add-x"}],
                 "ask": [],
+                "fold_legal": [],
+                "beads": [],
             },
         )
         proc = run(["--ready-json", str(fixture), "--json"])
@@ -170,6 +180,8 @@ def test_ready_is_act() -> None:
                 "waiting": [],
                 "needs_advise": [],
                 "ask": [],
+                "fold_legal": [],
+                "beads": [],
             },
         )
         proc = run(["--ready-json", str(fixture), "--json"])
@@ -239,13 +251,38 @@ def test_empty_does_not_fold_when_legal() -> None:
             {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
         )
         proc = run(
-            ["add-x", "--ready-json", str(fixture), "--json"],
+            ["add-x", "--until", "empty", "--ready-json", str(fixture), "--json"],
             cwd=root,
         )
         expect(proc.returncode == 0, proc.stderr + proc.stdout)
         face = json.loads(proc.stdout)
         expect(face["next"] is None, face)
         expect(face["stop"] == "empty", face)
+
+
+def test_default_until_is_roll() -> None:
+    """Bare run (no --until) uses the roll table: unscoped fold-legal → fold."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        change.mkdir(parents=True)
+        (change / "proposal.md").write_text(
+            "# add-x\n\n> **ACTIVE BUILD**\n", encoding="utf-8"
+        )
+        (change / "tasks.md").write_text("# Tasks\n\n- [x] done\n", encoding="utf-8")
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
+        )
+        proc = run(
+            ["--ready-json", str(fixture), "--json"],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["until"] == "roll", face)
+        expect(face["next"] == "fold", face)
+        expect(face["focus"] == "add-x", face)
 
 
 def test_unscoped_fold_scans() -> None:
@@ -735,6 +772,7 @@ def main() -> int:
         test_goal_scope_is_intend,
         test_until_fold_when_legal,
         test_empty_does_not_fold_when_legal,
+        test_default_until_is_roll,
         test_unscoped_fold_scans,
         test_roll_send_back_is_change,
         test_roll_bead_landing_is_change,

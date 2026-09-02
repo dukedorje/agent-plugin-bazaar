@@ -112,7 +112,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
 | `map` | Intend DAG with live status. `--current <id>` pins this tab’s DAG |
-| `run` | Campaign until a stop. `--until roll` keeps going; “run it by me” never acts |
+| `run` | Campaign until a stop. Default is `--until roll`; “run it by me” never acts |
 
 Operator how-to: `plugins/intention/README.md`.
 
