@@ -204,7 +204,9 @@ def test_eyes_is_not_ready() -> None:
             cwd=root,
         )
         expect("EYES" in text.stdout, text.stdout)
+        expect("YOUR EYES" in text.stdout, text.stdout)
         expect("ASK" in text.stdout, text.stdout)
+        expect("Next:" in text.stdout, text.stdout)
 
 
 def test_ask_and_punt_faces() -> None:

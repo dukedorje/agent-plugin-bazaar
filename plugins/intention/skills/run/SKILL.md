@@ -96,9 +96,11 @@ Split the refusal:
   parks same-family advise as ASK.
 
 Stop only when the new card has `stop` set, or `--max-waves` hits.
-Refusing fold must not end the campaign. Same-family advise must
-not end the campaign. `stop: empty` is not stuck while
-`needs_advise` remains and an other-family route exists.
+`stop: eyes` is a halt: Duke's look, command in Next. Do not
+paraphrase it into `stop: empty`. Refusing fold must not end the
+campaign. Same-family advise must not end the campaign.
+`stop: empty` is not stuck while `needs_advise` remains and an
+other-family route exists.
 
 Conductor loop:
 
@@ -112,6 +114,9 @@ while waves < max_waves:
   if card.stop is empty and needs_advise remains and not all punted:
     # other-family spawn still owed — do not halt
     follow advise below on that id
+  elif card.stop is eyes:
+    print the card (YOUR EYES + Next command). Halt.
+    Do not check the box. Do not skip past it into leftover beads.
   elif card.stop: halt
   if card.next is fold and illegal:     # fold + needs_advise
     skip += [focus]
@@ -222,8 +227,12 @@ different: it may `act` until an elicitation appears. “Run it by
 me” never `act`s.
 
 Halting ≠ asking. `--wait` stops the campaign on the first
-elicitation. Bare `/run` parks those ids and keeps unrelated nodes
-moving. Look at the pile with `/status`.
+elicitation (`stop: ask` or `stop: eyes`). Bare `/run` keeps
+unrelated READY moving; it SHALL halt with `stop: eyes` (YOUR EYES
++ Next command) when the pick is an EYES id, leftover beads would
+skip past a look, or the board is otherwise empty with EYES still
+open. Do not check the box. The halt message is the card — do not
+bury it.
 
 A stage raises an elicitation by putting an id on the observe `ask`
 list, leaving a PENDING banner, or an open owed box matching ASK /

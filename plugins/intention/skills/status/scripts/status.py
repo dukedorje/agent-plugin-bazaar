@@ -41,6 +41,7 @@ TABLE_ROW_RE = re.compile(
 PUNT_BOX_RE = re.compile(r"\bPUNT\b", re.I)
 EYES_BOX_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
 ASK_BOX_RE = re.compile(r"\bASK\b", re.I)
+NEXT_CMD_RE = re.compile(r"Next:\s*(.+)$", re.I)
 
 
 def box_kind(item: str) -> str | None:
@@ -57,6 +58,14 @@ def with_open(row: dict, items: list[str]) -> dict:
     out = dict(row)
     out["open"] = items
     return out
+
+
+def next_command(item: str) -> str | None:
+    m = NEXT_CMD_RE.search((item or "").strip())
+    if not m:
+        return None
+    cmd = m.group(1).strip().strip("`").strip()
+    return cmd or None
 
 
 def find_openspec(start: Path | None = None) -> Path | None:
@@ -303,10 +312,21 @@ def print_card(
                 print("  " + fmt(row))
         else:
             print("  (none)")
-        print("EYES (look owed)")
+        print("EYES — YOUR EYES (look owed, not READY)")
         if data.get("eyes"):
             for row in data["eyes"]:
                 print("  " + fmt(row))
+                cmds: list[str] = []
+                for item in row.get("open") or []:
+                    cmd = next_command(str(item))
+                    if cmd and cmd not in cmds:
+                        cmds.append(cmd)
+                print("  Next:")
+                if cmds:
+                    for cmd in cmds:
+                        print(f"    {cmd}")
+                else:
+                    print("    /status")
         else:
             print("  (none)")
         print("PUNT (second-family advise, last-resort)")

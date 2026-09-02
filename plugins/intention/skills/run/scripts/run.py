@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-STOPS = ("empty", "advise", "activation", "ask", "fold", "roll")
+STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
 ADVISE_RE = re.compile(
     r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
     re.I,
@@ -30,7 +30,8 @@ CHANGE_ID_RE = re.compile(
 )
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
-EYES_RE = re.compile(r"\b(ASK|EYES|by-eye|human-verify|human verify)\b", re.I)
+EYES_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
+NEXT_CMD_RE = re.compile(r"Next:\s*(.+)$", re.I)
 WALK = frozenset({"roll", "ask"})
 
 
@@ -148,6 +149,62 @@ def eyes_ids(openspec: Path | None) -> list[str]:
             if EYES_RE.search(item):
                 out.append(child.name)
                 break
+    return out
+
+
+def next_command(item: str) -> str | None:
+    m = NEXT_CMD_RE.search((item or "").strip())
+    if not m:
+        return None
+    cmd = m.group(1).strip().strip("`").strip()
+    return cmd or None
+
+
+def looks_for(data: dict[str, Any], openspec: Path | None) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    rows = data.get("eyes")
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict) and row.get("id"):
+                nid = str(row["id"])
+                items = [str(x) for x in (row.get("open") or []) if x]
+                if not items:
+                    items = [""]
+                for item in items:
+                    if item and not EYES_RE.search(item):
+                        continue
+                    out.append(
+                        {
+                            "id": nid,
+                            "look": item,
+                            "command": next_command(item) or "/status",
+                        }
+                    )
+            elif isinstance(row, str):
+                out.append({"id": row, "look": "", "command": "/status"})
+    if "eyes" in data:
+        return out
+    if openspec is None:
+        return []
+    changes = openspec / "changes"
+    if not changes.is_dir():
+        return []
+    for child in sorted(changes.iterdir()):
+        if not child.is_dir() or child.name == "archive":
+            continue
+        tasks = child / "tasks.md"
+        if not tasks.is_file():
+            continue
+        for item in open_owed(tasks.read_text(encoding="utf-8")):
+            if not EYES_RE.search(item):
+                continue
+            out.append(
+                {
+                    "id": child.name,
+                    "look": item,
+                    "command": next_command(item) or "/status",
+                }
+            )
     return out
 
 
@@ -364,17 +421,16 @@ def decide(
     ready = ids(data.get("ready"))
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
-    asks = ids(data.get("ask"))
+    ask_ids = ids(data.get("ask"))
     eyes = (
         ids(data.get("eyes"))
         if data.get("eyes") is not None
         else eyes_ids(openspec)
     )
-    elicited = unique(asks + waiting + eyes)
     # Fold-skip is not an elicitation. Punt is last-resort when no
     # other-family advise route exists (mailbox PUNT). Same-family
-    # advise is spawn, not punt.
-    asks = unique(elicited + list(punt_set))
+    # advise is spawn, not punt. EYES is its own face, not ASK.
+    asks = unique(ask_ids + waiting + list(punt_set))
     if pause_before and (
         pause_before in ready
         or pause_before in waiting
@@ -382,8 +438,12 @@ def decide(
         or pause_before == scope
     ):
         return face("pause-before", pause_before, until, ready, waiting, needs_advise, asks)
-    if until == "ask" and elicited:
-        return face("ask", elicited[0], until, ready, waiting, needs_advise, elicited)
+    if until == "ask" and waiting:
+        return face("ask", waiting[0], until, ready, waiting, needs_advise, asks)
+    if until == "ask" and ask_ids:
+        return face("ask", ask_ids[0], until, ready, waiting, needs_advise, asks)
+    if until == "ask" and eyes:
+        return face("eyes", eyes[0], until, ready, waiting, needs_advise, asks)
     if until == "activation" and waiting:
         focus = scope if scope in waiting else waiting[0]
         return face("activation", focus, until, ready, waiting, needs_advise, asks)
@@ -629,20 +689,94 @@ def face(
         "waiting": waiting,
         "needs_advise": needs_advise,
         "ask": asks,
+        "eyes": [],
+        "next_steps": [],
     }
+
+
+def apply_eyes_stop(
+    row: dict[str, Any],
+    data: dict[str, Any],
+    openspec: Path | None,
+) -> dict[str, Any]:
+    """EYES is a halt, not a quiet empty. Unrelated READY may still move."""
+    looks = looks_for(data, openspec)
+    eyes = unique([str(x.get("id") or "") for x in looks] + ids(data.get("eyes")))
+    row = dict(row)
+    row["eyes"] = eyes
+    row["next_steps"] = looks
+    until = str(row.get("until") or "")
+    focus = row.get("focus")
+    nxt = row.get("next")
+    stop = row.get("stop")
+    if until == "ask" and stop == "ask" and focus in eyes and focus not in ids(
+        data.get("waiting")
+    ) and focus not in ids(data.get("ask")):
+        row["stop"] = "eyes"
+        row["next"] = None
+    if until in WALK and eyes:
+        if stop is None and nxt in {"act", "fold"} and focus in eyes:
+            row["stop"] = "eyes"
+            row["next"] = None
+        elif stop is None and nxt == "intend":
+            row["stop"] = "eyes"
+            row["focus"] = eyes[0]
+            row["next"] = None
+        elif (
+            stop is None
+            and nxt == "change"
+            and isinstance(focus, str)
+            and find_change_dir(openspec, focus) is None
+        ):
+            row["stop"] = "eyes"
+            row["focus"] = eyes[0]
+            row["next"] = None
+        elif stop == "empty":
+            row["stop"] = "eyes"
+            row["focus"] = eyes[0]
+            row["next"] = None
+    return row
 
 
 def card(row: dict[str, Any]) -> str:
     stop = row["stop"] or "continue"
     focus = row.get("focus") or "—"
-    return (
-        f"┌─ RUN ─────────────────────────────────────────\n"
-        f"│ until {row['until']} · stop {stop} · workers {row['workers_launched']}\n"
-        f"│ next {row['next'] or '—'} · focus {focus}\n"
+    eyes = row.get("eyes") or []
+    lines = [
+        "┌─ RUN ─────────────────────────────────────────",
+        f"│ until {row['until']} · stop {stop} · workers {row['workers_launched']}",
+        f"│ next {row['next'] or '—'} · focus {focus}",
         f"│ ready {len(row['ready'])} · pending {len(row['waiting'])} · "
-        f"advise {len(row['needs_advise'])} · ask {len(row['ask'])}\n"
-        f"└───────────────────────────────────────────────"
-    )
+        f"advise {len(row['needs_advise'])} · ask {len(row['ask'])} · "
+        f"eyes {len(eyes)}",
+        "└───────────────────────────────────────────────",
+    ]
+    if stop == "eyes":
+        lines.append("")
+        lines.append("╔══ YOUR EYES ══════════════════════════════════")
+        steps = row.get("next_steps") or []
+        if not steps:
+            for eid in eyes:
+                lines.append(f"║ {eid}")
+            lines.append("║")
+            lines.append("║ Next:")
+            lines.append("║   /status")
+        else:
+            seen: set[str] = set()
+            for step in steps:
+                nid = str(step.get("id") or "")
+                look = str(step.get("look") or "").strip()
+                cmd = str(step.get("command") or "/status")
+                lines.append(f"║ {nid}")
+                if look:
+                    lines.append(f"║   {look}")
+                if cmd not in seen:
+                    seen.add(cmd)
+                    lines.append("║")
+                    lines.append("║ Next:")
+                    lines.append(f"║   {cmd}")
+        lines.append("╚═══════════════════════════════════════════════")
+    return "\n".join(lines)
 
 
 def main() -> int:
@@ -719,6 +853,7 @@ def main() -> int:
         no_fold=no_fold,
         no_beads=no_beads,
     )
+    row = apply_eyes_stop(row, data, find_openspec())
     if args.json:
         print(json.dumps(row, indent=2))
     else:

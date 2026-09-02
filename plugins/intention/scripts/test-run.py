@@ -42,6 +42,7 @@ def test_empty_ready_no_worker() -> None:
                 "waiting": [],
                 "needs_advise": [],
                 "ask": [],
+                "eyes": [],
                 "fold_legal": [],
                 "beads": [],
             },
@@ -824,6 +825,97 @@ def test_roll_send_back_no_boxes_is_not_change() -> None:
         expect(face["focus"] == "add-sheaf-type", face)
 
 
+def test_wait_eyes_is_stop_eyes() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "eyes": [
+                    {
+                        "id": "add-x",
+                        "open": [
+                            "EYES: one real two-node wave. Next: /run-wave"
+                        ],
+                    }
+                ],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--wait", "--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "eyes", face)
+        expect(face["next"] is None, face)
+        expect(face["focus"] == "add-x", face)
+        expect(face["next_steps"][0]["command"] == "/run-wave", face)
+        text = run(["--wait", "--ready-json", str(fixture)])
+        expect("YOUR EYES" in text.stdout, text.stdout)
+        expect("/run-wave" in text.stdout, text.stdout)
+        expect("Next:" in text.stdout, text.stdout)
+
+
+def test_roll_eyes_does_not_intend_leftover() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "eyes": [
+                    {
+                        "id": "add-run-wave-workflow",
+                        "open": ["EYES: look. Next: /run-wave"],
+                    }
+                ],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [
+                    {
+                        "id": "bazaar-ja7",
+                        "title": "Information ingestion: G Brain",
+                        "issue_type": "task",
+                    }
+                ],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "eyes", face)
+        expect(face["next"] is None, face)
+        expect(face["until"] == "roll", face)
+
+
+def test_roll_unrelated_ready_moves_with_eyes_listed() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-y"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "eyes": [{"id": "add-x", "open": ["EYES: look. Next: /status"]}],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] is None, face)
+        expect(face["next"] == "act", face)
+        expect(face["focus"] == "add-y", face)
+        expect("add-x" in face["eyes"], face)
+
+
 def test_roll_send_back_with_boxes_is_change() -> None:
     """Last advise send-back with open boxes → change."""
     with tempfile.TemporaryDirectory() as td:
@@ -890,6 +982,9 @@ def main() -> int:
         test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,
         test_roll_send_back_with_boxes_is_change,
+        test_wait_eyes_is_stop_eyes,
+        test_roll_eyes_does_not_intend_leftover,
+        test_roll_unrelated_ready_moves_with_eyes_listed,
     ]
     failed = 0
     for fn in tests:
