@@ -52,10 +52,14 @@ def norm_path(p: str) -> str:
     return posixpath.normpath(p).lstrip("/")
 
 
+def _plain_paths(paths: Iterable[str]) -> list[str]:
+    return [norm_path(x) for x in paths if x]
+
+
 def paths_overlap(a: Iterable[str], b: Iterable[str]) -> list[str]:
     hits: list[str] = []
-    left = [norm_path(x) for x in a if x]
-    right = [norm_path(x) for x in b if x]
+    left = _plain_paths(a)
+    right = _plain_paths(b)
     for x in left:
         for y in right:
             if x == y or x.startswith(y + "/") or y.startswith(x + "/"):
@@ -130,13 +134,17 @@ def dispatch(
     by_id = index_nodes(nodes)
     ready, blocked = ready_ids(nodes)
     flying_paths: list[str] = []
+    flying_unknown = False
     in_flight_ids: list[str] = []
     parked: list[dict] = []
     for nid, node in by_id.items():
         st = _status(node)
         if st in IN_FLIGHT:
             in_flight_ids.append(nid)
-            flying_paths.extend(_paths(node))
+            p = _paths(node)
+            if not p:
+                flying_unknown = True
+            flying_paths.extend(p)
         elif st in PARKED:
             parked.append({"id": nid, "reason": st})
 
@@ -149,8 +157,12 @@ def dispatch(
     deferred: list[dict] = []
     capped: list[dict] = []
     for nid in ready:
-        hits = paths_overlap(_paths(by_id[nid]), flying_paths)
-        row = {"id": nid, "paths": _paths(by_id[nid])}
+        node_paths = _paths(by_id[nid])
+        unknown = not node_paths
+        hits = paths_overlap(node_paths, flying_paths)
+        if flying_unknown or (unknown and flying_paths):
+            hits = hits or ["∅"]
+        row = {"id": nid, "paths": node_paths}
         if hits:
             row["reason"] = "paths overlap in-flight: " + ", ".join(hits)
             deferred.append(row)
@@ -176,18 +188,32 @@ def dispatch(
 
 
 def pick_wave(dispatchable: list[dict]) -> list[dict]:
-    """Mutually disjoint subset of dispatchable, first-match wins."""
+    """Mutually disjoint subset of dispatchable, first-match wins.
+
+    Empty paths overlap everything already picked (unknown write-set).
+    """
     picked: list[dict] = []
     used: list[str] = []
+    used_unknown = False
     for row in dispatchable:
-        paths = row.get("paths") or []
-        if not isinstance(paths, list):
-            paths = []
-        hits = paths_overlap([str(p) for p in paths], used)
+        raw = row.get("paths") or []
+        if not isinstance(raw, list):
+            raw = []
+        paths = [str(p) for p in raw if p]
+        unknown = not paths
+        if unknown:
+            if picked:
+                continue
+            picked.append(row)
+            used_unknown = True
+            continue
+        if used_unknown:
+            continue
+        hits = paths_overlap(paths, used)
         if hits:
             continue
         picked.append(row)
-        used.extend(str(p) for p in paths if p)
+        used.extend(paths)
     return picked
 
 
@@ -395,7 +421,9 @@ def cmd_wave(args: argparse.Namespace) -> int:
         nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
     openspec = repo / "openspec"
     result = dispatch(nodes, max_inflight=args.max_inflight, openspec=openspec)
-    wave = pick_wave(result["dispatchable"])
+    free = int(result["slots"]["free"])
+    eligible = list(result["dispatchable"]) + list(result["capped"])
+    wave = pick_wave(eligible)[: max(0, free)]
     print(json.dumps({"wave": wave, "slots": result["slots"]}, indent=2))
     return 0
 

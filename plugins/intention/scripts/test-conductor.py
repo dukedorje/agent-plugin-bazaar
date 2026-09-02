@@ -48,8 +48,8 @@ def test_ready() -> None:
         disp = {row["id"] for row in data["dispatchable"]}
         deferred = {row["id"] for row in data["deferred"]}
         blocked = {row["id"] for row in data["blocked"]}
-        expect(disp == {"c", "f"}, f"dispatchable={disp} stdout={proc.stdout}")
-        expect(deferred == {"b"}, f"deferred={deferred}")
+        expect(disp == {"c"}, f"dispatchable={disp} stdout={proc.stdout}")
+        expect(deferred == {"b", "f"}, f"deferred={deferred}")
         expect(blocked == {"d"}, f"blocked={blocked}")
         expect({row["id"] for row in data["in_flight"]} == {"a"}, data)
         expect({row["id"] for row in data["parked"]} == {"g"}, data)
@@ -341,10 +341,61 @@ def test_wave_drops_overlapping_dispatchable() -> None:
         expect(ids == ["b", "d"], f"wave={ids} stdout={proc.stdout}")
 
 
+def test_wave_pathless_is_wave_of_one() -> None:
+    inv = {
+        "nodes": [
+            {"id": "a", "status": "open", "deps": [], "paths": []},
+            {"id": "b", "status": "open", "deps": [], "paths": []},
+            {"id": "c", "status": "in_progress", "deps": [], "paths": ["in.py"]},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        expect(proc.returncode == 0, proc.stderr)
+        data = json.loads(proc.stdout)
+        ids = [row["id"] for row in data["wave"]]
+        expect(ids == [], f"path-less vs in-flight must not wave={ids} {proc.stdout}")
+
+    inv2 = {
+        "nodes": [
+            {"id": "a", "status": "open", "deps": [], "paths": []},
+            {"id": "b", "status": "open", "deps": [], "paths": []},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "inv.json"
+        path.write_text(json.dumps(inv2), encoding="utf-8")
+        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        expect(proc.returncode == 0, proc.stderr)
+        ids = [row["id"] for row in json.loads(proc.stdout)["wave"]]
+        expect(ids == ["a"], f"two path-less → wave of 1, got {ids} {proc.stdout}")
+
+
+def test_wave_cap_after_disjoint() -> None:
+    inv = {
+        "nodes": [
+            {"id": "a", "status": "open", "deps": [], "paths": ["x"]},
+            {"id": "b", "status": "open", "deps": [], "paths": ["x"]},
+            {"id": "c", "status": "open", "deps": [], "paths": ["y"]},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        proc = run(["wave", "--inventory", str(path), "--max-inflight", "2"])
+        expect(proc.returncode == 0, proc.stderr)
+        ids = [row["id"] for row in json.loads(proc.stdout)["wave"]]
+        expect(ids == ["a", "c"], f"cap after disjoint want [a,c] got {ids} {proc.stdout}")
+
+
 def main() -> int:
     tests = [
         test_ready,
         test_wave_drops_overlapping_dispatchable,
+        test_wave_pathless_is_wave_of_one,
+        test_wave_cap_after_disjoint,
         test_implicated,
         test_lint,
         test_classify,

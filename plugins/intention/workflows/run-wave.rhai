@@ -14,6 +14,7 @@ if nodes.len() == 0 { pause("verification", "args.nodes must be non-empty."); }
 
 phase("Act");
 let jobs = [];
+let ids = [];
 for n in nodes {
     let nid = if n == () { "" } else { n.id };
     let pkt = if n == () { "" } else { n.packet };
@@ -28,6 +29,7 @@ for n in nodes {
     prompt += ". The conductor already called take — do not take again. ";
     prompt += "Stay on HEAD. Do not isolate. Work only on constraints.paths. ";
     prompt += "Focused verify once. Write the signed result. Stop. Do not fold.";
+    ids.push(nid);
     jobs.push(#{
         prompt: prompt,
         label: "act:" + nid,
@@ -40,8 +42,14 @@ if jobs.len() == 0 { pause("verification", "No usable nodes in args.nodes."); }
 let results = parallel(jobs);
 let passed = 0;
 let failed = 0;
+let rows = [];
+let i = 0;
 for r in results {
-    if r != () && r.success { passed += 1; } else { failed += 1; }
+    let ok = r != () && r.success;
+    if ok { passed += 1; } else { failed += 1; }
+    let nid = if i < ids.len() { ids[i] } else { "" };
+    rows.push(#{ id: nid, success: ok });
+    i += 1;
 }
 log(passed.to_string() + " passed / " + failed.to_string() + " failed");
-complete(#{ passed: passed, failed: failed, count: jobs.len() });
+complete(#{ nodes: rows, passed: passed, failed: failed, count: jobs.len() });
