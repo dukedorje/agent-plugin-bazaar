@@ -15,9 +15,11 @@ predicate. The 10-phase factory exists but is not available work.
 ### Requirement: Default verbs
 
 The marketplace and repo orientation SHALL present `intend`,
-`change`, `advise`, `act`, `fold`, `brief`, `ready`, and `run` as
-the default planning loop. `run` is the campaign; the others are
-stages (or observe / disposable decide).
+`change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`,
+`status`, and `run` as the default planning loop. `run` is the
+campaign; `map` and `status` are observe; `brief` / `debrief` are
+disposable decide; the rest are stages. `ready` SHALL be listed
+only as an alias of `status`.
 
 #### Scenario: README install
 
@@ -25,7 +27,8 @@ stages (or observe / disposable decide).
 - WHEN a stranger copies the install line
 - THEN they install `intention@agent-plugin-bazaar`, not
   `sprint-plan@…`
-- AND the listed skills include `advise` and `run`
+- AND the listed skills include `advise`, `run`, `debrief`, and
+  `map`
 
 #### Scenario: Stranger asks how to chain
 
@@ -77,8 +80,8 @@ names SHALL NOT appear as if they were invocable.
 
 `run` SHALL be allowed to enter `intend`, `change`, `advise`,
 `act`, or `fold` as a campaign wave. It SHALL NOT be presented as
-only `change` → `advise` → `act`. `ready` and `brief` SHALL stay
-outside that wave set.
+only `change` → `advise` → `act`. `ready`, `map`, `brief`, and
+`debrief` SHALL stay outside that wave set.
 
 #### Scenario: Stranger asks if run can intend
 

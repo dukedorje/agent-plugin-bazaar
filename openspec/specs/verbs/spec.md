@@ -105,9 +105,10 @@ NOT be the sole accepting reader.
 ### Requirement: Shared references, not four surfaces
 
 The skills `intend`, `change`, `advise`, `act`, `fold`, `brief`,
-`ready`, and `run` SHALL load `plugins/intention/references/shared.md`
-and SHALL NOT restate packet fields or topology wirings. Adding a
-tenth law to a skill body instead of `docs/contracts/` is a defect.
+`debrief`, `map`, `ready`, and `run` SHALL load
+`plugins/intention/references/shared.md` and SHALL NOT restate
+packet fields or topology wirings. Adding a tenth law to a skill
+body instead of `docs/contracts/` is a defect.
 
 #### Scenario: Packet field lookup
 
@@ -456,7 +457,13 @@ today’s observe (living specs, in-flight changes, learnings).
 
 ### Requirement: run gate defaults
 
-`--until empty` SHALL be the default walk: `change` → `advise` →
+`--until roll` SHALL be the default walk: fold-legal inflight →
+send-back amend → advise → act → bead landing/`change` → leftover
+task/`intend`. It SHALL park ASK / EYES / PENDING on the card `ask`
+list and SHALL continue unrelated dispatchable work. It SHALL NOT
+stop on elicitation. It SHALL NOT flip PENDING or by-eye boxes.
+
+`--until empty` SHALL be the cautious walk: `change` → `advise` →
 `act`. It SHALL stop at PENDING, ASK, and fold. It SHALL NOT emit
 `next: fold`. It SHALL NOT emit `next: intend` unless the scope
 fails the verb-led change-id detector named by `update-run-ooda`
@@ -464,11 +471,14 @@ fails the verb-led change-id detector named by `update-run-ooda`
 
 `--until fold` SHALL use that same change's legal-fold predicate
 (ACTIVE BUILD, no open owed checkbox, not PARKED). It SHALL NOT
-define a second fold rule. `--until advise`, `--until activation`,
+define a second fold rule. Unscoped `--until fold` SHALL scan
+inflight for that predicate. `--until advise`, `--until activation`,
 and `--until ask` SHALL keep their existing stop meanings.
 
-`--autonomous` SHALL use the same walk as `--until empty`. It SHALL
-NOT flip a PENDING banner or a by-eye box. It SHALL NOT deploy.
+`--autonomous` SHALL suppress mid-run questions and SHALL NOT flip
+PENDING or by-eye boxes. Alone it SHALL use the default walk
+(`--until roll`). Combined with an explicit `--until` it SHALL use
+that walk. It SHALL NOT deploy.
 
 #### Scenario: Empty does not fold
 
@@ -499,3 +509,240 @@ NOT flip a PENDING banner or a by-eye box. It SHALL NOT deploy.
 - WHEN `run` would next owe activation
 - THEN the banner stays PENDING
 - AND `next` is not `act`
+
+#### Scenario: Bare run uses the roll table
+
+- GIVEN no `--until` and `openspec/changes/add-x/` is fold-legal
+- WHEN `run.py` observes unscoped
+- THEN `next` is `fold` and `focus` is `add-x`
+
+### Requirement: debrief expands a finished or failed unit
+
+`debrief` SHALL take a just-finished or failed unit (bead id,
+change-id, or signed result) and emit an expansion: what happened,
+context the brief did not have, takeaways, and what the next
+`intend` should extract. It SHALL stop so a human can process. It
+SHALL NOT implement, fold, or treat the debrief page as durable
+truth. Hard-won facts SHALL go to `docs/LEARNINGS.md` as one dated
+line each. It SHALL NOT be a default `/run` wave.
+
+#### Scenario: Finished unit
+
+- GIVEN a closed bead or a signed result with `disposition: pass`
+- WHEN `debrief` runs on that id
+- THEN the output names what landed, takeaways, and what intend
+  should extract
+- AND no product paths were edited
+
+#### Scenario: Failed unit
+
+- GIVEN a signed result with `disposition` other than `pass`, or a
+  parked / task-red node
+- WHEN `debrief` runs on that id
+- THEN the output names what was tried, what broke, takeaways, and
+  what intend should extract
+- AND the banner of any in-flight change is unchanged
+
+#### Scenario: Debrief is not a spec
+
+- GIVEN a debrief page from last week
+- WHEN an agent cites it as current behavior
+- THEN that citation is wrong; living spec, ADR, or LEARNINGS.md is
+  the residue
+### Requirement: map reprints the intend DAG with live residue
+
+`map` SHALL print the intend-dag shape (intention, orient if known,
+per-node goal/landing/deps, ready-set, needs activation, next) plus
+live **Status**, **Wave**, and **Outcome** for each node. Status
+SHALL come from the tracker. Wave SHALL name the last known stage
+(change banner, advise verdict, act disposition, fold/archive).
+Outcome SHALL be the signed result `distilled.summary` or the bead
+close reason. It SHALL NOT implement, unpark, or invent a second
+store. It SHALL NOT be a default `/run` wave.
+
+No scope SHALL list open epics and their children. A named epic,
+bead, or change-id SHALL focus that graph.
+
+#### Scenario: Map an epic
+
+- GIVEN epic `bazaar-6os` has a closed child `add-debrief-verb`
+- WHEN `map bazaar-6os` runs
+- THEN the page has a DAG node for that child
+- AND Status is closed
+- AND Outcome is the close reason or distilled summary
+
+#### Scenario: Map invents no tracker
+
+- GIVEN a proposal stores map state in a new file besides beads
+  and openspec
+- WHEN it is reviewed
+- THEN it is rejected against this requirement
+### Requirement: run roll walks while unblocked
+
+`--until roll` SHALL observe openspec banners and unblocked beads
+and SHALL set `next` from this table, first match wins:
+
+1. fold-legal inflight change (no scope required) → `fold`
+2. last advise is `send-back` on an ACTIVE BUILD change → `change`
+3. `needs_advise` → `advise`
+4. READY write → `act`
+5. unblocked bead whose title names a verb-led change-id and that
+   directory does not exist → `change`
+6. unblocked task or feature bead with no verb-led landing, that
+   is not an epic and whose title does not start with `nod-` →
+   `intend` (focus is that bead id)
+7. else stop empty
+
+It SHALL NOT intend epics. It SHALL NOT flip PENDING. Epics and
+`nod-` titles SHALL NOT auto-intend. `workers_launched` SHALL stay 0.
+
+Unscoped `--until fold` SHALL scan inflight for fold-legal and
+SHALL set `next: fold` on the first hit.
+
+#### Scenario: Unscoped fold finds a legal change
+
+- GIVEN `--until fold` or `--until roll`, no scope, and
+  `openspec/changes/add-x/` is fold-legal
+- WHEN `run.py` observes
+- THEN `next` is `fold` and `focus` is `add-x`
+
+#### Scenario: Send-back is amend not act
+
+- GIVEN `--until roll` and `add-x` is ACTIVE BUILD whose last
+  advise is `send-back`, and `add-x` is also READY
+- WHEN `run.py` observes
+- THEN `next` is `change` and `focus` is `add-x`
+
+#### Scenario: Bead landing with no change dir
+
+- GIVEN `--until roll`, no READY writes, and an unblocked bead
+  titled `add-tatastu-host: …` with no `openspec/changes/add-tatastu-host/`
+- WHEN `run.py` observes
+- THEN `next` is `change` and `focus` is `add-tatastu-host`
+
+#### Scenario: Epic does not auto-intend
+
+- GIVEN `--until roll` and the only unblocked bead is an epic
+- WHEN `run.py` observes
+- THEN `next` is not `intend`
+### Requirement: until ask is a roll that stops on elicitation
+
+`--until ask` SHALL use the same observe table as `--until roll`.
+It SHALL stop (`stop: ask`, `next` null) on the first elicitation:
+an `ask` id on the observe face, a PENDING change, or an open owed
+box matching ASK / EYES / by-eye / human-verify. A stage SHALL
+raise an elicitation on that face (JSON `ask`, or such an owed
+box). It SHALL NOT invent an `/ask` verb or a fourth store.
+
+`--until roll` SHALL not stop on elicitation. It SHALL keep those
+ids on the card `ask` list and SHALL continue unrelated
+dispatchable work. It SHALL NOT flip PENDING or by-eye boxes.
+
+#### Scenario: Ask stops while work remains
+
+- GIVEN `--until ask`, READY `add-x`, and PENDING `add-y`
+- WHEN `run.py` observes
+- THEN `stop` is `ask` (or activation-class)
+- AND `next` is not `act`
+
+#### Scenario: Ask without elicitation rolls
+
+- GIVEN `--until ask`, no PENDING, no ask ids, and an unblocked
+  bead titled `add-tatastu-host: …` with no change dir
+- WHEN `run.py` observes
+- THEN `next` is `change` and `focus` is `add-tatastu-host`
+
+#### Scenario: Roll keeps the morning list
+
+- GIVEN `--until roll`, PENDING `add-y`, and READY `add-x`
+- WHEN `run.py` observes
+- THEN `next` is `act` and `focus` is `add-x`
+- AND `add-y` is listed under `ask` or `waiting`
+### Requirement: second-family advise is spawned, not parked
+
+When `next` is `advise` and this session’s harness is the same family
+as the change author, `run` SHALL assign an available
+`architecture-review` route whose `harness` differs from the author
+(`ladder.py assign --shape architecture-review --not-harness <author>`)
+and SHALL spawn that reader (packet + `spawn.py`). It SHALL wait for
+that wave so the review can land, then re-observe. It SHALL NOT halt.
+It SHALL NOT `--punt` that id unless no other-family route is
+available or the spawn is `infra-red` after one retry. It SHALL NOT
+write a sole-author `accept` or a fake `send-back` with no
+architecture boxes. `--until roll` SHALL NOT treat same-family advise
+as stuck or as an ASK park. `--punt` SHALL NOT be the first response
+to ADR-005.
+
+`advise` SHALL treat second family as any `architecture-review` harness
+other than the author’s. A Grok-authored change SHALL spawn a Claude
+reader when that route is available. A Claude-authored change SHALL
+spawn Grok or Sol. “Sol unavailable” SHALL NOT mean no second family
+while a Claude or Grok route remains available.
+
+#### Scenario: Grok author, roll, Fable available
+
+- GIVEN `--until roll`, Grok authored `add-x`, `add-x` is in
+  `needs_advise`, and `sol-arch-review` is unavailable
+- WHEN the conductor’s session is Grok
+- THEN `next` is `advise` and the conductor spawns the Claude
+  `architecture-review` route
+- AND the campaign does not stop empty
+- AND `add-x` is not `--punt`ed
+
+#### Scenario: No other-family route
+
+- GIVEN `next: advise` and `ladder.py assign --shape architecture-review --not-harness <author>` fails
+- WHEN the conductor cannot spawn a different family
+- THEN it `--punt`s that id
+- AND it does not write a fake send-back
+### Requirement: run operator flags
+
+Bare `/run` SHALL use the roll walk. `--interrupt` SHALL use that
+same walk and SHALL stop at the first elicitation (ASK box, PENDING,
+EYES / by-eye / human-verify). `--only fold` SHALL scan fold-legal
+inflight and SHALL not `act`. `--no-fold` SHALL skip fold picks.
+`--no-beads` SHALL skip bead landing and leftover intend. Combined
+`--no-fold --no-beads` SHALL match `--until empty`. `--until` tokens
+SHALL remain aliases for one release (`roll` is a no-op for the
+default). `--autonomous` SHALL NOT change the walk. `--until
+activation` SHALL NOT be required; PENDING is an elicitation.
+
+#### Scenario: Interrupt stops while work remains
+
+- GIVEN `--interrupt`, READY `add-x`, and PENDING `add-y`
+- WHEN `run.py` observes
+- THEN `stop` is `ask`
+- AND `next` is not `act`
+
+#### Scenario: Only fold
+
+- GIVEN `--only fold`, no scope, and fold-legal `add-x`
+- WHEN `run.py` observes
+- THEN `next` is `fold` and `focus` is `add-x`
+
+#### Scenario: No-fold no-beads is empty walk
+
+- GIVEN `--no-fold --no-beads` and fold-legal `add-x` with no other
+  dispatchable work
+- WHEN `run.py` observes
+- THEN `next` is not `fold`
+### Requirement: wait and tidy are the operator names
+
+`--wait` SHALL be desk mode: the roll walk, stopping at the first
+elicitation. `--tidy` SHALL scan fold-legal inflight and SHALL not
+`act`. `--interrupt` SHALL be an alias of `--wait`. `--only fold`
+SHALL be an alias of `--tidy`. The observe verb SHALL be `status`.
+`ready` SHALL remain an alias of `status`.
+
+#### Scenario: Wait stops while work remains
+
+- GIVEN `--wait`, READY `add-x`, and PENDING `add-y`
+- WHEN `run.py` observes
+- THEN `stop` is `ask`
+- AND `next` is not `act`
+
+#### Scenario: Tidy is fold-only
+
+- GIVEN `--tidy`, no scope, and fold-legal `add-x`
+- WHEN `run.py` observes
+- THEN `next` is `fold` and `focus` is `add-x`
