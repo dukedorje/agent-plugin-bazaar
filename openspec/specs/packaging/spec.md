@@ -6,8 +6,8 @@ parked — see ADR-003.
 
 ## Purpose
 
-`intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, and
-`run` load on Grok and Claude from one set of files.
+`intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `ready`,
+and `run` load on Grok and Claude from one set of files.
 
 ## ADDED Requirements
 
@@ -15,8 +15,8 @@ parked — see ADR-003.
 
 The system SHALL keep canonical skill files at
 `plugins/intention/skills/<verb>/SKILL.md` for
-`intend`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`,
-`map`, `status`, and `run`. `ready` SHALL remain as an alias skill
+`intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`,
+`map`, `status`, `consult`, and `run`. `ready` SHALL remain as an alias skill
 that points at `status`. Each `SKILL.md` SHALL have YAML frontmatter whose `name`
 matches the directory.
 
@@ -28,9 +28,9 @@ plugin install.
 
 - GIVEN a clone of this repo
 - WHEN Grok starts in the repo root
-- THEN it discovers `intend`, `change`, `advise`, `act`, `fold`,
-  `brief`, `debrief`, `map`, `status`, and `run` from
-  `.agents/skills/`
+- THEN it discovers `intend`, `steer`, `change`, `advise`, `act`,
+  `fold`, `brief`, `debrief`, `map`, `status`, `consult`, and `run`
+  from `.agents/skills/`
 
 #### Scenario: Claude installs the same files
 

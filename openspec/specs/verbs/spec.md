@@ -3,17 +3,17 @@
 What each dispatcher must produce. Folded from `deepen-verbs` on
 2026-08-15 (S1–S4), later `add-intend-extract` and
 `update-run-stages` on 2026-08-18, `update-run-ooda` and
-`update-run-gates` on 2026-08-19. Hosting is `packaging`. The
-agent surface is `docs/contracts/`. This spec does not duplicate
-either.
+`update-run-gates` on 2026-08-19, `add-steer-verb` on 2026-09-02.
+Hosting is `packaging`. The agent surface is `docs/contracts/`.
+This spec does not duplicate either.
 
 ## Purpose
 
-`intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, `run`,
-and `consult` are complementary. They share
+`intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `ready`,
+`run`, and `consult` are complementary. They share
 `plugins/intention/references/shared.md`. None redefines the packet.
-`run` is the campaign; the others are stages (or observe / disposable
-decide).
+`run` is the campaign; `steer` is human-gated guidance (not a campaign
+wave); the others are stages (or observe / disposable decide).
 
 ## ADDED Requirements
 
@@ -102,10 +102,42 @@ NOT be the sole accepting reader.
 - WHEN `conductor.py ready` lists implement nodes of that change
 - THEN they are not `dispatchable`
 
+### Requirement: steer elicits human direction before change
+
+`steer` SHALL load the current intend DAG (or a named epic / bead /
+change-id) and elicit architecture and direction through
+multiple-choice menus. Every menu SHALL include a recommended
+option, skip, and decide-for-me. It SHALL record decisions on the
+node's bead (`design` / notes). If `openspec/changes/<id>/` exists
+and is not archived, it SHALL also write `steer.md` there. It SHALL
+NOT write SHALLs, implement, fold, or `act`. It SHALL NOT invent
+`/ask` or a fourth store. It SHALL NOT be a default `/run` wave.
+
+Elicitation depth SHALL follow the highest node's density, or
+`--lean` / `--explicit`. `standard` SHALL menu only HIGH / CRITICAL
+forks. Skip SHALL leave a fork open and SHALL NOT block siblings.
+
+#### Scenario: Architecture node after intend
+
+- GIVEN `map --current` is `mjolnir-mesh-st1` and
+  `identikey-core-trr.1` needs direction
+- WHEN `steer` runs
+- THEN the human is offered menus with a recommended option, skip,
+  and decide-for-me
+- AND decided forks are appended on the bead
+- AND no living-spec SHALL was written
+
+#### Scenario: Steer invents no tracker
+
+- GIVEN a proposal stores steer state in a new file besides beads
+  and `openspec/changes/<id>/steer.md`
+- WHEN it is reviewed
+- THEN it is rejected against this requirement
+
 ### Requirement: Shared references, not four surfaces
 
-The skills `intend`, `change`, `advise`, `act`, `fold`, `brief`,
-`debrief`, `map`, `ready`, and `run` SHALL load
+The skills `intend`, `steer`, `change`, `advise`, `act`, `fold`,
+`brief`, `debrief`, `map`, `ready`, `run`, and `consult` SHALL load
 `plugins/intention/references/shared.md` and SHALL NOT restate
 packet fields or topology wirings. Adding a tenth law to a skill
 body instead of `docs/contracts/` is a defect.

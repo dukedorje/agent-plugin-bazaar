@@ -6,20 +6,22 @@ What a stranger is offered first. Folded from `park-sprint-plan` on
 ## Purpose
 
 The default path from intention to running software is the loop
-`intend` → `change` → `advise` → `act` → `fold` (plus `brief` /
-`ready`). `run` is the campaign that walks that loop until a stop
-predicate. The 10-phase factory exists but is not available work.
+`intend` → `steer` → `change` → `advise` → `act` → `fold` (plus
+`brief` / `ready`). `run` is the campaign that walks that loop until
+a stop predicate. `steer` is not a campaign wave. The 10-phase
+factory exists but is not available work.
 
 ## ADDED Requirements
 
 ### Requirement: Default verbs
 
 The marketplace and repo orientation SHALL present `intend`,
-`change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`,
-`status`, and `run` as the default planning loop. `run` is the
-campaign; `map` and `status` are observe; `brief` / `debrief` are
-disposable decide; the rest are stages. `ready` SHALL be listed
-only as an alias of `status`.
+`steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`,
+`map`, `status`, and `run` as the default planning loop. `run` is
+the campaign; `map` and `status` are observe; `brief` / `debrief`
+are disposable decide; `steer` is human-gated guidance (not a
+campaign wave); the rest are stages. `ready` SHALL be listed only
+as an alias of `status`.
 
 #### Scenario: README install
 
@@ -27,8 +29,7 @@ only as an alias of `status`.
 - WHEN a stranger copies the install line
 - THEN they install `intention@agent-plugin-bazaar`, not
   `sprint-plan@…`
-- AND the listed skills include `advise`, `run`, `debrief`, and
-  `map`
+- AND the listed skills include `steer`
 
 #### Scenario: Stranger asks how to chain
 
@@ -80,8 +81,8 @@ names SHALL NOT appear as if they were invocable.
 
 `run` SHALL be allowed to enter `intend`, `change`, `advise`,
 `act`, or `fold` as a campaign wave. It SHALL NOT be presented as
-only `change` → `advise` → `act`. `ready`, `map`, `brief`, and
-`debrief` SHALL stay outside that wave set.
+only `change` → `advise` → `act`. `ready`, `map`, `brief`, `debrief`, and `steer` SHALL stay
+outside that wave set.
 
 #### Scenario: Stranger asks if run can intend
 
