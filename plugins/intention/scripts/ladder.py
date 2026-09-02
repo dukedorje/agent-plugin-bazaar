@@ -2,8 +2,9 @@
 """Resolve the assignment ladder. Human pick always wins.
 
   python3 plugins/intention/scripts/ladder.py assign --shape known
-  python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
-  python3 plugins/intention/scripts/ladder.py assign --shape fold
+  python3 plugins/intention/scripts/ladder.py assign --shape known --all
+  python3 plugins/intention/scripts/ladder.py assign --shape known --after terra-known
+  python3 plugins/intention/scripts/ladder.py panel --shape architecture-review
   python3 plugins/intention/scripts/ladder.py show
 """
 
@@ -15,6 +16,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 LADDER = Path(__file__).resolve().parents[1] / "references" / "ladder.json"
 OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
@@ -33,29 +35,27 @@ def codex_cli_present() -> bool:
     return shutil.which(binary) is not None
 
 
-def sol_available() -> bool:
-    """Codex CLI preferred; OpenAI HTTP API is the fallback."""
-    return codex_cli_present() or bool(openai_api_key())
+def requirement_met(req: str | None) -> bool:
+    if not req:
+        return True
+    if req == "codex-cli":
+        return codex_cli_present()
+    if req == "openai-key":
+        return bool(openai_api_key())
+    if req == "codex":
+        return codex_cli_present() or bool(openai_api_key())
+    return False
 
 
 def apply_env(data: dict) -> dict:
-    """Sol is available when `codex` is on PATH or OPENAI_API_KEY is set."""
     routes = []
     for route in data.get("routes") or []:
         if not isinstance(route, dict):
             continue
         row = dict(route)
-        if row.get("id") == "sol-arch-review":
-            if sol_available():
-                row["available"] = True
-                how = "codex exec" if codex_cli_present() else "OpenAI HTTP API"
-                row["notes"] = (
-                    f"Second-family reader via {how}. "
-                    "Prefer spawn --adapter codex; --adapter openai if no CLI. "
-                    "Packet-only. Never a Codex slash."
-                )
-            else:
-                row["available"] = False
+        req = row.get("requires")
+        if req:
+            row["available"] = bool(requirement_met(str(req)))
         routes.append(row)
     out = dict(data)
     out["routes"] = routes
@@ -69,16 +69,24 @@ def load(path: Path | None = None) -> dict:
     return apply_env(data)
 
 
-def assign(
+def _priority(route: dict) -> int:
+    try:
+        return int(route.get("priority") or 99)
+    except (TypeError, ValueError):
+        return 99
+
+
+def candidates(
     data: dict,
     shape: str,
     allow_unavailable: bool = False,
     route_id: str | None = None,
     not_harness: str | None = None,
-) -> dict:
+    after: str | None = None,
+) -> list[dict[str, Any]]:
     shape = shape.strip()
     skip_harness = (not_harness or "").strip()
-    hits = []
+    hits: list[dict[str, Any]] = []
     for route in data["routes"]:
         if not isinstance(route, dict):
             continue
@@ -87,13 +95,43 @@ def assign(
             continue
         if route_id and route.get("id") != route_id:
             continue
-        if skip_harness and str(route.get("harness") or "") == skip_harness:
-            continue
-        if route.get("available") is False and not allow_unavailable:
-            continue
         hits.append(route)
+    hits.sort(key=lambda r: (_priority(r), str(r.get("id") or "")))
+    if after:
+        ids = [str(r.get("id") or "") for r in hits]
+        if after in ids:
+            hits = hits[ids.index(after) + 1 :]
+        else:
+            hits = []
+    if skip_harness:
+        hits = [r for r in hits if str(r.get("harness") or "") != skip_harness]
+    if not allow_unavailable:
+        hits = [r for r in hits if r.get("available") is not False]
+    return hits
+
+
+def assign(
+    data: dict,
+    shape: str,
+    allow_unavailable: bool = False,
+    route_id: str | None = None,
+    not_harness: str | None = None,
+    after: str | None = None,
+) -> dict:
+    hits = candidates(
+        data,
+        shape,
+        allow_unavailable=allow_unavailable,
+        route_id=route_id,
+        not_harness=not_harness,
+        after=after,
+    )
     if not hits:
-        want = f"shape {shape!r}" + (f" id {route_id!r}" if route_id else "")
+        want = f"shape {shape!r}"
+        if route_id:
+            want += f" id {route_id!r}"
+        if after:
+            want += f" after {after!r}"
         raise SystemExit(f"no available route for {want}")
     return hits[0]
 
@@ -106,9 +144,11 @@ def main() -> int:
     show = sub.add_parser("show", help="print the ladder")
     show.set_defaults(cmd="show")
 
-    a = sub.add_parser("assign", help="resolve one shape")
+    a = sub.add_parser("assign", help="resolve one shape (first available by priority)")
     a.add_argument("--shape", required=True)
-    a.add_argument("--id", dest="route_id", help="pick this route id (e.g. sol-arch-review)")
+    a.add_argument("--id", dest="route_id", help="pick this route id")
+    a.add_argument("--after", help="handoff: next available route after this id")
+    a.add_argument("--all", action="store_true", help="print every available route in priority order")
     a.add_argument(
         "--not-harness",
         dest="not_harness",
@@ -117,10 +157,30 @@ def main() -> int:
     a.add_argument("--include-unavailable", action="store_true")
     a.set_defaults(cmd="assign")
 
+    pan = sub.add_parser("panel", help="available routes for a shape, priority order (fan-out)")
+    pan.add_argument("--shape", required=True)
+    pan.add_argument("--not-harness", dest="not_harness")
+    pan.set_defaults(cmd="panel")
+
     args = p.parse_args()
     data = load(args.file)
     if args.cmd == "show":
         print(json.dumps(data, indent=2))
+        return 0
+    if args.cmd == "panel":
+        hits = candidates(data, args.shape, not_harness=getattr(args, "not_harness", None))
+        print(json.dumps(hits, indent=2))
+        return 0
+    if getattr(args, "all", False):
+        hits = candidates(
+            data,
+            args.shape,
+            allow_unavailable=args.include_unavailable,
+            route_id=getattr(args, "route_id", None),
+            not_harness=getattr(args, "not_harness", None),
+            after=getattr(args, "after", None),
+        )
+        print(json.dumps(hits, indent=2))
         return 0
     route = assign(
         data,
@@ -128,13 +188,10 @@ def main() -> int:
         allow_unavailable=args.include_unavailable,
         route_id=getattr(args, "route_id", None),
         not_harness=getattr(args, "not_harness", None),
+        after=getattr(args, "after", None),
     )
     print(json.dumps(route, indent=2))
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
 
 
 if __name__ == "__main__":

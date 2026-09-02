@@ -58,6 +58,15 @@ unblock `act` until the banner is `ACTIVE BUILD`.
    Codex binary with `CODEX_BIN`. Never a Codex slash command. Do
    not paste keys into the packet. `run` waits this wave for that
    spawn; it does not park the id as ASK.
+
+   **Panel (fan-out):** `ladder.py panel --shape architecture-review`
+   then spawn Fable 5.1, Sol, and Opus 4.8 (or every available
+   route). Compare verdicts. Still no sole-accept as the author
+   (ADR-005).
+
+   **Handoff:** if this reader cannot promote,
+   `ladder.py assign --shape architecture-review --after <current-id>`
+   and spawn the next. Do not fake a send-back to retrigger change.
 4. **Packet.** Readers receive `permission: read`. Foreign harnesses
    get a packet file, never a slash command. Sol is packet-only
    (CLI or API), not a skill-host slash.

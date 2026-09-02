@@ -130,19 +130,17 @@ python3 plugins/intention/scripts/ladder.py assign --shape design
 python3 plugins/intention/scripts/ladder.py assign --shape plan
 python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
 python3 plugins/intention/scripts/ladder.py assign --shape architecture-review --not-harness grok
+python3 plugins/intention/scripts/ladder.py assign --shape known --after terra-known
+python3 plugins/intention/scripts/ladder.py panel --shape architecture-review
 python3 plugins/intention/scripts/ladder.py assign --shape fold
 ```
 
-Source: `plugins/intention/references/ladder.json`. Known → Sonnet 5.
-Thinking implementation → Opus 5. Design → Opus 5 low/medium +
-designer skills. Plan consult → Fable 5.1. Real architecture →
-review-pair whose reader is Fable 5.1 (Grok for cross-family /
-ADR-005; Sol only if `available`). Same-family author uses
-`--not-harness <author>` and **spawns** that route — does not park.
-Fold → designated folder Opus 5 (`opus-5-fold`; Grok only if picked
-or `grok-fold` is flipped available). Architecture review default
-is Fable 5.1; Sol is on when `codex` is on PATH or `OPENAI_API_KEY`
-is set (`--id sol-arch-review`, prefer `--adapter codex`).
+Source: `plugins/intention/references/ladder.json`. Priority
+(first available; `--after` handoff; `panel` fan-out): known →
+Codex Terra then Sonnet 5. Implementation/thinking → Sol then Opus
+5. Plan → Fable 5.1 then Sol. Architecture → Fable 5.1, Sol, Opus
+4.8, Grok. Fold → Opus 5. Human pick always wins. Same-family
+author uses `--not-harness <author>` and **spawns** — does not park.
 
 A weaker worker may consult a stronger one for `explain` / `replan`.
 That is not a write handoff.

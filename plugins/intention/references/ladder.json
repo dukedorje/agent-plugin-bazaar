@@ -1,35 +1,68 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "subscriptions": ["grok", "claude-code"],
-  "notes": "Claude Code has the high usage limits. Codex Sol is named for when a second-family review is available; it is not subscribed today.",
+  "notes": "Routes are tried in priority order (1 first) among available rows for a shape. Human pick always wins. Codex Terra/Sol light up when the Codex CLI is present (Sol also if OPENAI_API_KEY is set).",
   "human_override": "always wins",
   "max_inflight": 2,
   "routes": [
     {
+      "id": "terra-known",
+      "shapes": ["known", "mechanical", "bounded-edit"],
+      "priority": 1,
+      "role": "worker",
+      "harness": "codex",
+      "interface": "gpt-5.6-terra",
+      "surface": "packet-only",
+      "density": "explicit",
+      "effort": "low",
+      "available": false,
+      "requires": "codex-cli",
+      "notes": "Primary known/mechanical worker. spawn --adapter codex."
+    },
+    {
       "id": "sonnet-5",
       "shapes": ["known", "mechanical", "bounded-edit"],
+      "priority": 2,
       "role": "worker",
       "harness": "claude",
       "interface": "sonnet-5",
       "surface": "skill-host",
       "density": "explicit",
       "effort": "low",
-      "available": true
+      "available": true,
+      "notes": "Backup known/mechanical worker."
+    },
+    {
+      "id": "sol-implement",
+      "shapes": ["implementation", "thinking"],
+      "priority": 1,
+      "role": "worker",
+      "harness": "codex",
+      "interface": "gpt-5.6-sol",
+      "surface": "packet-only",
+      "density": "standard",
+      "effort": "medium",
+      "available": false,
+      "requires": "codex",
+      "notes": "Primary implementation/thinking. spawn --adapter codex (openai fallback)."
     },
     {
       "id": "opus-5",
       "shapes": ["implementation", "thinking"],
+      "priority": 2,
       "role": "worker",
       "harness": "claude",
       "interface": "opus-5",
       "surface": "skill-host",
       "density": "standard",
       "effort": "medium",
-      "available": true
+      "available": true,
+      "notes": "Backup implementation/thinking."
     },
     {
       "id": "opus-5-design",
       "shapes": ["design"],
+      "priority": 1,
       "role": "worker",
       "harness": "claude",
       "interface": "opus-5",
@@ -43,6 +76,7 @@
     {
       "id": "fable-5.1-plan",
       "shapes": ["plan", "replan", "intend-consult"],
+      "priority": 1,
       "role": "consultant",
       "harness": "claude",
       "interface": "fable-5.1",
@@ -50,11 +84,26 @@
       "density": "lean",
       "effort": "high",
       "available": true,
-      "notes": "Planning helper. Does not take the write."
+      "notes": "Primary plan consult. Does not take the write."
+    },
+    {
+      "id": "sol-plan",
+      "shapes": ["plan", "replan", "intend-consult"],
+      "priority": 2,
+      "role": "consultant",
+      "harness": "codex",
+      "interface": "gpt-5.6-sol",
+      "surface": "packet-only",
+      "density": "lean",
+      "effort": "high",
+      "available": false,
+      "requires": "codex",
+      "notes": "Plan consult after Fable. spawn --adapter codex."
     },
     {
       "id": "opus-5-fold",
       "shapes": ["fold"],
+      "priority": 1,
       "role": "folder",
       "harness": "claude",
       "interface": "opus-5",
@@ -62,11 +111,12 @@
       "density": "standard",
       "effort": "medium",
       "available": true,
-      "notes": "Designated folder. Background fold, like advise. Human pick may send this to Grok instead."
+      "notes": "Designated folder. Background fold, like advise."
     },
     {
       "id": "grok-fold",
       "shapes": ["fold"],
+      "priority": 2,
       "role": "folder",
       "harness": "grok",
       "interface": "grok-4.6",
@@ -74,11 +124,12 @@
       "density": "standard",
       "effort": "medium",
       "available": false,
-      "notes": "Optional folder. Flip available to prefer Grok, or human-pick. Default is opus-5-fold."
+      "notes": "Optional folder. Flip available or human-pick."
     },
     {
       "id": "fable-5.1-arch-review",
       "shapes": ["architecture-review"],
+      "priority": 1,
       "role": "reader",
       "harness": "claude",
       "interface": "fable-5.1",
@@ -87,35 +138,12 @@
       "effort": "high",
       "available": true,
       "required_on": ["architecture", "instrument"],
-      "notes": "Default architecture buddy in Claude Code. ADR-005: a Claude author still cannot be the sole accepting reader — pick Grok for that."
-    },
-    {
-      "id": "opus-4.8-arch-review",
-      "shapes": ["architecture-review"],
-      "role": "reader",
-      "harness": "claude",
-      "interface": "opus-4.8",
-      "surface": "skill-host",
-      "density": "lean",
-      "effort": "high",
-      "available": true,
-      "notes": "Alternate Claude architecture reader. Not the assign() default (Fable 5.1 is first)."
-    },
-    {
-      "id": "grok-arch-review",
-      "shapes": ["architecture-review"],
-      "role": "reader",
-      "harness": "grok",
-      "interface": "grok-4.6",
-      "surface": "skill-host",
-      "density": "lean",
-      "effort": "high",
-      "available": true,
-      "notes": "Cross-family reader vs Claude authors. Not the assign() default (Fable 5.1 is first)."
+      "notes": "Default architecture buddy. Panel with Sol and Opus 4.8 when comparing."
     },
     {
       "id": "sol-arch-review",
       "shapes": ["architecture-review"],
+      "priority": 2,
       "role": "reader",
       "harness": "codex",
       "interface": "gpt-5.6-sol",
@@ -123,7 +151,34 @@
       "density": "lean",
       "effort": "high",
       "available": false,
-      "notes": "Second-family reader. Prefer Codex CLI (`codex exec`, spawn --adapter codex). OpenAI HTTP API if no CLI but OPENAI_API_KEY is set. Packet-only. Never a slash."
+      "requires": "codex",
+      "notes": "Architecture reader after Fable. Prefer codex exec; OpenAI HTTP if no CLI."
+    },
+    {
+      "id": "opus-4.8-arch-review",
+      "shapes": ["architecture-review"],
+      "priority": 3,
+      "role": "reader",
+      "harness": "claude",
+      "interface": "opus-4.8",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "notes": "Architecture reader after Fable and Sol. Good panel third."
+    },
+    {
+      "id": "grok-arch-review",
+      "shapes": ["architecture-review"],
+      "priority": 4,
+      "role": "reader",
+      "harness": "grok",
+      "interface": "grok-4.6",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "notes": "Cross-family reader vs Claude authors (ADR-005)."
     }
   ]
 }

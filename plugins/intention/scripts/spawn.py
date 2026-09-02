@@ -49,6 +49,7 @@ EFFORT = {
     "fable-5": "high",
     "fable-5.1": "high",
     "gpt-5.6-sol": "high",
+    "gpt-5.6-terra": "low",
 }
 
 
@@ -200,6 +201,9 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "workspace": str(args.root.resolve()),
         "argv": [],
     }
+    assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
+    if assignee.get("effort"):
+        spec["effort"] = assignee["effort"]
     spec_path = dest / "spec.json"
     atomic_write(spec_path, json.dumps(spec, indent=2) + "\n")
     print(json.dumps({**spec, "dir": str(dest), "spec_file": str(spec_path)}, indent=2))

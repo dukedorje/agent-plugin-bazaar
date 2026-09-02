@@ -50,8 +50,12 @@ def expect(cond: bool, msg: str) -> None:
         raise AssertionError(msg)
 
 
-def assign(shape: str, extra: list[str] | None = None) -> dict:
-    proc = run(["assign", "--shape", shape, *(extra or [])])
+def assign(
+    shape: str,
+    extra: list[str] | None = None,
+    env: dict[str, str] | None = None,
+) -> dict:
+    proc = run(["assign", "--shape", shape, *(extra or [])], env=env)
     expect(proc.returncode == 0, proc.stderr or proc.stdout)
     return json.loads(proc.stdout)
 
@@ -71,7 +75,7 @@ def main() -> int:
     ]
     for shape, route_id, density in cases:
         try:
-            got = assign(shape)
+            got = assign(shape, env=env_without_sol())
             expect(got["id"] == route_id, f"{shape} -> {got.get('id')} want {route_id}")
             expect(got["density"] == density, f"{shape} density {got.get('density')}")
             expect(got.get("available") is True, f"{shape} not available")
@@ -195,6 +199,53 @@ def main() -> int:
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL not-harness: {exc}")
+
+    try:
+        got = assign("known", env=env_with_codex())
+        expect(got["id"] == "terra-known", got)
+        expect(got["interface"] == "gpt-5.6-terra", got)
+        nxt = assign("known", extra=["--after", "terra-known"], env=env_with_codex())
+        expect(nxt["id"] == "sonnet-5", nxt)
+        think = assign("thinking", env=env_with_codex())
+        expect(think["id"] == "sol-implement", think)
+        think_fb = assign("thinking", extra=["--after", "sol-implement"], env=env_with_codex())
+        expect(think_fb["id"] == "opus-5", think_fb)
+        plan = assign("plan", env=env_with_codex())
+        expect(plan["id"] == "fable-5.1-plan", plan)
+        plan_fb = assign("plan", extra=["--after", "fable-5.1-plan"], env=env_with_codex())
+        expect(plan_fb["id"] == "sol-plan", plan_fb)
+        print("pass terra/sol primaries and --after handoff")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL priority handoff: {exc}")
+
+    try:
+        proc = run(
+            ["panel", "--shape", "architecture-review"],
+            env=env_with_codex(),
+        )
+        expect(proc.returncode == 0, proc.stderr)
+        panel = json.loads(proc.stdout)
+        ids = [r["id"] for r in panel]
+        expect(ids[:4] == [
+            "fable-5.1-arch-review",
+            "sol-arch-review",
+            "opus-4.8-arch-review",
+            "grok-arch-review",
+        ], ids)
+        print("pass architecture panel order Fable, Sol, 4.8, Grok")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL panel: {exc}")
+
+    try:
+        # Terra down: --after terra-known still reaches Sonnet.
+        nxt = assign("known", extra=["--after", "terra-known"], env=env_without_sol())
+        expect(nxt["id"] == "sonnet-5", nxt)
+        print("pass --after skips unavailable rungs")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL after skip-forward: {exc}")
 
     if failed:
         print(f"FAIL {failed}")
