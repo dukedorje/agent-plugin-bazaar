@@ -472,6 +472,34 @@ def test_consult_cli_fake_claude() -> None:
         expect(Path(logged["cwd"]).resolve() == root.resolve(), logged["cwd"])
 
 
+def test_consult_who_exclusive() -> None:
+    proc = run(
+        [
+            "consult",
+            "--panel",
+            "--who",
+            "fable",
+            "--goal",
+            "x",
+        ]
+    )
+    expect(proc.returncode == 2, proc.stdout + proc.stderr)
+    expect("mutually exclusive" in proc.stderr, proc.stderr)
+    grok = run(
+        [
+            "consult",
+            "--shape",
+            "architecture-review",
+            "--who",
+            "grok",
+            "--goal",
+            "x",
+        ]
+    )
+    expect(grok.returncode == 2, grok.stdout + grok.stderr)
+    expect("no adapter" in grok.stderr, grok.stderr)
+
+
 def test_consult_empty_fails() -> None:
     proc = subprocess.run(
         [sys.executable, str(SPAWN), "consult", "--goal", ""],
@@ -504,6 +532,7 @@ def main() -> int:
         test_read_permission_prompt_is_reader_brief,
         test_consult_prompt_is_not_advise,
         test_consult_cli_fake_claude,
+        test_consult_who_exclusive,
         test_consult_empty_fails,
         test_empty_packet_fails,
     ]

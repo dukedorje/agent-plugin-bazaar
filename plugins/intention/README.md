@@ -28,7 +28,7 @@ without a plugin install.
 | Cautious: no fold, no leftover beads | `run --no-fold --no-beads` |
 | Tidy only | `run --tidy` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
-| Second opinion (no change, no act unblock) | `consult` or `consult --panel` |
+| Second opinion (no change, no act unblock) | `consult` / `consult --who sol,fable` / `consult --panel` |
 
 `--wait` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.

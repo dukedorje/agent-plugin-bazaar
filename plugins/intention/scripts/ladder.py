@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -110,6 +111,98 @@ def candidates(
     return hits
 
 
+FAMILY_FROM_INTERFACE = {
+    "gpt-5.6-sol": "sol",
+    "gpt-5.6-terra": "terra",
+    "fable-5.1": "fable",
+    "fable-5": "fable",
+    "opus-4.8": "opus",
+    "opus-5": "opus",
+    "sonnet-5": "sonnet",
+    "grok-4.6": "grok",
+    "claude-sonnet-5": "sonnet",
+    "claude-opus-5": "opus",
+    "claude-opus-4-8": "opus",
+    "claude-fable-5": "fable",
+    "claude-fable-5-1": "fable",
+}
+
+
+def nicknames(route: dict) -> set[str]:
+    """Shape-scoped names: exact id, interface, JSON aliases, family, x.y version."""
+    out: set[str] = set()
+    rid = str(route.get("id") or "").strip().lower()
+    iface = str(route.get("interface") or "").strip().lower()
+    if rid:
+        out.add(rid)
+    if iface:
+        out.add(iface)
+    for raw in route.get("aliases") or []:
+        alias = str(raw).strip().lower()
+        if alias:
+            out.add(alias)
+    family = FAMILY_FROM_INTERFACE.get(iface)
+    if family:
+        out.add(family)
+    for match in re.finditer(r"\d+\.\d+", f"{iface} {rid}"):
+        out.add(match.group(0))
+    return {n for n in out if n}
+
+
+def parse_who(raw: list[str] | None) -> list[str]:
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for item in raw or []:
+        for part in str(item).split(","):
+            tok = part.strip().lower()
+            if tok and tok not in seen:
+                seen.add(tok)
+                tokens.append(tok)
+    return tokens
+
+
+def resolve_who(
+    data: dict,
+    shape: str,
+    tokens: list[str],
+    not_harness: str | None = None,
+    allow_unavailable: bool = True,
+) -> list[dict[str, Any]]:
+    """Resolve nicknames/ids for a shape. Unknown or ambiguous → error. Priority order."""
+    if not tokens:
+        raise SystemExit("empty --who")
+    rows = candidates(
+        data,
+        shape,
+        allow_unavailable=True,
+        not_harness=not_harness,
+    )
+    if not rows:
+        raise SystemExit(f"no routes for shape {shape!r}")
+    matched: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for tok in tokens:
+        hits = [r for r in rows if tok in nicknames(r)]
+        if not hits:
+            raise SystemExit(f"unknown who {tok!r} for shape {shape!r}")
+        if len(hits) > 1:
+            ids = ", ".join(str(r.get("id") or "?") for r in hits)
+            raise SystemExit(f"ambiguous who {tok!r} for shape {shape!r}: {ids}")
+        rid = str(hits[0].get("id") or "")
+        if rid in seen_ids:
+            continue
+        seen_ids.add(rid)
+        matched.append(hits[0])
+    matched.sort(key=lambda r: (_priority(r), str(r.get("id") or "")))
+    if not allow_unavailable:
+        for route in matched:
+            if route.get("available") is False:
+                raise SystemExit(
+                    f"unavailable who {route.get('id')!r} for shape {shape!r}"
+                )
+    return matched
+
+
 def assign(
     data: dict,
     shape: str,
@@ -147,6 +240,7 @@ def main() -> int:
     a = sub.add_parser("assign", help="resolve one shape (first available by priority)")
     a.add_argument("--shape", required=True)
     a.add_argument("--id", dest="route_id", help="pick this route id")
+    a.add_argument("--who", action="append", help="nickname or id; comma list or repeatable")
     a.add_argument("--after", help="handoff: next available route after this id")
     a.add_argument("--all", action="store_true", help="print every available route in priority order")
     a.add_argument(
@@ -170,6 +264,27 @@ def main() -> int:
     if args.cmd == "panel":
         hits = candidates(data, args.shape, not_harness=getattr(args, "not_harness", None))
         print(json.dumps(hits, indent=2))
+        return 0
+    who = parse_who(getattr(args, "who", None))
+    if who and (getattr(args, "route_id", None) or getattr(args, "after", None)):
+        print("--who does not combine with --id or --after", file=sys.stderr)
+        return 2
+    if who:
+        try:
+            hits = resolve_who(
+                data,
+                args.shape,
+                who,
+                not_harness=getattr(args, "not_harness", None),
+                allow_unavailable=getattr(args, "include_unavailable", False),
+            )
+        except SystemExit as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        if not getattr(args, "all", False) and len(hits) == 1:
+            print(json.dumps(hits[0], indent=2))
+        else:
+            print(json.dumps(hits, indent=2))
         return 0
     if getattr(args, "all", False):
         hits = candidates(

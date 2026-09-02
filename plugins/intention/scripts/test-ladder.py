@@ -247,6 +247,37 @@ def main() -> int:
         failed += 1
         print(f"FAIL after skip-forward: {exc}")
 
+    try:
+        fable = json.loads(
+            run(["assign", "--shape", "architecture-review", "--who", "fable"]).stdout
+        )
+        expect(fable["id"] == "fable-5.1-arch-review", fable)
+        four = json.loads(
+            run(["assign", "--shape", "architecture-review", "--who", "4.8"]).stdout
+        )
+        expect(four["id"] == "opus-4.8-arch-review", four)
+        several = json.loads(
+            run(
+                ["assign", "--shape", "architecture-review", "--who", "sol,fable"],
+                env=env_with_codex(),
+            ).stdout
+        )
+        ids = [r["id"] for r in several]
+        expect(ids == ["fable-5.1-arch-review", "sol-arch-review"], ids)
+        terra_think = run(["assign", "--shape", "thinking", "--who", "terra"])
+        expect(terra_think.returncode != 0, terra_think.stdout)
+        expect("unknown who" in terra_think.stderr, terra_think.stderr)
+        four_think = run(["assign", "--shape", "thinking", "--who", "4.8"])
+        expect(four_think.returncode != 0, four_think.stderr)
+        mixed = run(
+            ["assign", "--shape", "architecture-review", "--who", "fable", "--id", "sol-arch-review"]
+        )
+        expect(mixed.returncode != 0, mixed.stdout + mixed.stderr)
+        print("pass --who nicknames are shape-scoped")
+    except Exception as exc:  # noqa: BLE001
+        failed += 1
+        print(f"FAIL who: {exc}")
+
     if failed:
         print(f"FAIL {failed}")
         return 1

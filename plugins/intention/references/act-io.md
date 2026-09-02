@@ -118,10 +118,12 @@ not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
 
 `consult` is a second opinion with no intend node and no act
-unblock. Default shape `architecture-review` (same ladder as
-advise: Fable 5.1, Sol, Opus 4.8; skip unspawnable Grok). `--panel`
-runs every spawnable reader. `--id` is a human pick. Prompt on
-stdin / `--goal`; JSON opinions on stdout (`agree` / `caution` /
+unblock. Default shape `architecture-review`. `--who fable,sol`
+(nicknames or ids, several, ladder order). `--panel` is every
+spawnable reader. `--id` is exact-id only. `--who` / `--panel` /
+`--id` are mutually exclusive. Named unspawnable hard-fails;
+`--panel` skips Grok until a CLI adapter exists. Prompt on stdin
+/ `--goal`; JSON opinions on stdout (`agree` / `caution` /
 `dissent`). Does not write `openspec/changes/*/reviews/`. Use
 `advise` when a change needs a gated accept.
 

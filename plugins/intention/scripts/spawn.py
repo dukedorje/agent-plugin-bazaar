@@ -685,6 +685,32 @@ def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
     import ladder as ladder_mod  # noqa: WPS433
 
     data = ladder_mod.load()
+    who = ladder_mod.parse_who(getattr(args, "who", None))
+    picked = sum(bool(x) for x in (who, args.panel, args.route_id))
+    if picked > 1:
+        raise SystemExit("--who, --panel, and --id are mutually exclusive")
+    if args.after and (who or args.panel):
+        raise SystemExit("--after does not combine with --who or --panel")
+
+    def spawnable_of(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        yes = [r for r in rows if adapter_for_harness(str(r.get("harness") or "")) != "none"]
+        no = [r for r in rows if adapter_for_harness(str(r.get("harness") or "")) == "none"]
+        return yes, no
+
+    if who:
+        rows = ladder_mod.resolve_who(
+            data,
+            args.shape,
+            who,
+            not_harness=args.not_harness,
+            allow_unavailable=True,
+        )
+        spawnable, skipped = spawnable_of(rows)
+        if skipped:
+            names = ", ".join(str(r.get("id") or "?") for r in skipped)
+            raise SystemExit(f"no adapter for named who ({names})")
+        return spawnable
+
     hits = ladder_mod.candidates(
         data,
         args.shape,
@@ -692,8 +718,7 @@ def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
         not_harness=args.not_harness,
         after=args.after,
     )
-    spawnable = [r for r in hits if adapter_for_harness(str(r.get("harness") or "")) != "none"]
-    skipped = [r for r in hits if adapter_for_harness(str(r.get("harness") or "")) == "none"]
+    spawnable, skipped = spawnable_of(hits)
     if args.route_id:
         if not hits:
             raise SystemExit(f"no route {args.route_id!r} for shape {args.shape!r}")
@@ -822,7 +847,12 @@ def main() -> int:
 
     consult = sub.add_parser("consult", help="second opinion from ladder readers (no intend node)")
     consult.add_argument("--shape", default="architecture-review")
-    consult.add_argument("--id", dest="route_id", help="ladder route id (human pick)")
+    consult.add_argument("--id", dest="route_id", help="exact ladder route id")
+    consult.add_argument(
+        "--who",
+        action="append",
+        help="nickname or id; comma list or repeatable (several). Not with --panel/--id",
+    )
     consult.add_argument("--after", help="handoff: next spawnable route after this id")
     consult.add_argument("--not-harness", dest="not_harness", help="skip this harness (ADR-005)")
     consult.add_argument("--panel", action="store_true", help="every spawnable reader for the shape")

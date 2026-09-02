@@ -17,6 +17,7 @@
       "effort": "low",
       "available": false,
       "requires": "codex-cli",
+      "aliases": ["terra"],
       "notes": "Primary known/mechanical worker. spawn --adapter codex."
     },
     {
@@ -30,6 +31,7 @@
       "density": "explicit",
       "effort": "low",
       "available": true,
+      "aliases": ["sonnet"],
       "notes": "Backup known/mechanical worker."
     },
     {
@@ -44,6 +46,7 @@
       "effort": "medium",
       "available": false,
       "requires": "codex",
+      "aliases": ["sol"],
       "notes": "Primary implementation/thinking. spawn --adapter codex (openai fallback)."
     },
     {
@@ -57,6 +60,7 @@
       "density": "standard",
       "effort": "medium",
       "available": true,
+      "aliases": ["opus"],
       "notes": "Backup implementation/thinking."
     },
     {
@@ -71,6 +75,7 @@
       "effort": "low",
       "skills": ["designer"],
       "available": true,
+      "aliases": ["opus"],
       "notes": "Effort low or medium. Use Claude Code designer skills."
     },
     {
@@ -84,6 +89,7 @@
       "density": "lean",
       "effort": "high",
       "available": true,
+      "aliases": ["fable"],
       "notes": "Primary plan consult. Does not take the write."
     },
     {
@@ -98,6 +104,7 @@
       "effort": "high",
       "available": false,
       "requires": "codex",
+      "aliases": ["sol"],
       "notes": "Plan consult after Fable. spawn --adapter codex."
     },
     {
@@ -111,6 +118,7 @@
       "density": "standard",
       "effort": "medium",
       "available": true,
+      "aliases": ["opus"],
       "notes": "Designated folder. Background fold, like advise."
     },
     {
@@ -124,6 +132,7 @@
       "density": "standard",
       "effort": "medium",
       "available": false,
+      "aliases": ["grok"],
       "notes": "Optional folder. Flip available or human-pick."
     },
     {
@@ -138,6 +147,7 @@
       "effort": "high",
       "available": true,
       "required_on": ["architecture", "instrument"],
+      "aliases": ["fable"],
       "notes": "Default architecture buddy. Panel with Sol and Opus 4.8 when comparing."
     },
     {
@@ -152,6 +162,7 @@
       "effort": "high",
       "available": false,
       "requires": "codex",
+      "aliases": ["sol"],
       "notes": "Architecture reader after Fable. Prefer codex exec; OpenAI HTTP if no CLI."
     },
     {
@@ -165,6 +176,7 @@
       "density": "lean",
       "effort": "high",
       "available": true,
+      "aliases": ["opus", "4.8"],
       "notes": "Architecture reader after Fable and Sol. Good panel third."
     },
     {
@@ -178,6 +190,7 @@
       "density": "lean",
       "effort": "high",
       "available": true,
+      "aliases": ["grok"],
       "notes": "Cross-family reader vs Claude authors (ADR-005)."
     }
   ]
