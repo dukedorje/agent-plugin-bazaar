@@ -14,6 +14,7 @@ SKILLS = PLUGIN / "skills"
 REFS = PLUGIN / "references"
 AGENTS = PLUGIN.parents[1] / ".agents" / "skills"
 VERBS = ("intend", "steer", "change", "advise", "act", "fold", "brief", "debrief", "map", "status", "ready", "run")
+EXTRA = ("consult", "run-wave")
 REQUIRED_REFS = (
     "shared.md",
     "intend-dag.md",
@@ -61,6 +62,23 @@ def main() -> int:
                 f".agents/skills/{verb} -> {link.resolve()} "
                 f"!= {skill.parent.resolve()}"
             )
+    for extra in EXTRA:
+        skill = SKILLS / extra / "SKILL.md"
+        if not skill.is_file():
+            errors.append(f"missing {skill.relative_to(PLUGIN.parent.parent)}")
+            continue
+        text = skill.read_text(encoding="utf-8")
+        got = name_from(text)
+        if got != extra:
+            errors.append(f"{skill.name}: name {got!r} != {extra!r}")
+        link = AGENTS / extra
+        if not link.exists():
+            errors.append(f".agents/skills/{extra} missing")
+        elif link.resolve() != skill.parent.resolve():
+            errors.append(
+                f".agents/skills/{extra} -> {link.resolve()} "
+                f"!= {skill.parent.resolve()}"
+            )
     cli = shutil.which("skills")
     if cli:
         listed = subprocess.run(
@@ -70,7 +88,7 @@ def main() -> int:
             text=True,
         )
         text = listed.stdout + listed.stderr
-        for verb in VERBS:
+        for verb in (*VERBS, *EXTRA):
             if not re.search(rf"(?:^|[^A-Za-z0-9_-]){re.escape(verb)}(?:[^A-Za-z0-9_-]|$)", text):
                 errors.append(f"skills add --list missed {verb}")
     if errors:

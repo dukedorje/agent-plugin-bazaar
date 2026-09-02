@@ -31,7 +31,7 @@ line. `spawn.py` cannot reach those host tools.
 
 ## Impact
 
-- Capabilities: MODIFIED `verbs`
+- Capabilities: MODIFIED `verbs`, MODIFIED `packaging`
 - ADRs: amends ADR-001 consequences (dispatch may use the host's
   native spawn when the conductor is that host). Packet schema
   unchanged.

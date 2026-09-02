@@ -17,7 +17,17 @@ existing single `act` path. Claude and Codex assignees SHALL still
 receive `spawn.py` adapters. Host `isolation_worktree` SHALL NOT be
 the persist path. Wave children SHALL NOT `conductor.py isolate`
 while worktree land is PARKED. Shared-file extraction (ultrapilot
-owned vs shared) SHALL NOT land in this slice.
+owned vs shared) SHALL NOT land in this slice. `/run-wave` SHALL
+be a user-invocable skill at `plugins/intention/skills/run-wave/`
+(`.agents/skills/run-wave` in this clone) that runs the same
+fan-out without the campaign loop.
+
+#### Scenario: /run-wave is a skill
+
+- GIVEN a clone of this repo
+- WHEN Grok starts in the repo root
+- THEN it discovers `run-wave` from `.agents/skills/`
+- AND the skill fans `conductor.py wave` of size ≥ 2 on HEAD
 
 #### Scenario: Two disjoint writes fan out
 

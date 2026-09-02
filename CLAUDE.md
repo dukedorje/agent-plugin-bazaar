@@ -113,6 +113,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
 | `map` | Intend DAG with live status. `--current <id>` pins this tab’s DAG |
 | `run` | Campaign until a stop. Default walks away (roll); `--wait` is desk mode; `--tidy` folds; “run it by me” never acts |
+| `run-wave` | One disjoint act fan-out on HEAD. Not the campaign. |
 
 Operator how-to: `plugins/intention/README.md`.
 

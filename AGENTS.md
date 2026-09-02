@@ -3,8 +3,8 @@
 Process memory: [`openspec/AGENTS.md`](openspec/AGENTS.md).
 Agent surface: [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md).
 Verbs: `intend` · `steer` · `change` · `advise` · `act` · `fold` ·
-`brief` · `debrief` · `map` · `status` · `run` in `.agents/skills/`
-(same files as `plugins/intention/skills/`).
+`brief` · `debrief` · `map` · `status` · `run` · `run-wave` in
+`.agents/skills/` (same files as `plugins/intention/skills/`).
 How: [`plugins/intention/README.md`](plugins/intention/README.md)
 (current DAG, run-it-by-me, status unions OpenSpec + beads).
 Board: `python3 scripts/status.py` (OpenSpec **and** `bd ready`).

@@ -5,7 +5,8 @@ Default loop from intention to a running system:
 `intend` → `steer` → `change` → `advise` → `act` → `fold`
 
 Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
-(campaign), `consult` (second opinion, no intend node). `steer` is the
+(campaign), `run-wave` (one disjoint act fan-out), `consult` (second
+opinion, no intend node). `steer` is the
 human-gated guidance pass (not a `/run` wave; not `/ask`). Canonical
 skill files live here. In this repo, `.agents/skills/<name>` is a
 symlink at each skill so Grok, Hermes, and Prime load the same files
@@ -22,6 +23,7 @@ without a plugin install.
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `status` |
 | Keep going while unblocked | `run` |
+| Fan two disjoint writes on HEAD | `run-wave` |
 | At the desk; halt at first ASK/EYES/PENDING | `run --wait` |
 | Morning pile (ASK / EYES / PUNT) | `status` |
 | Scaffold + advise, never implement | `run --advise` |
