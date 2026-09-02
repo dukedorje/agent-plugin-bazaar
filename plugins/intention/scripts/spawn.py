@@ -3,6 +3,7 @@
 
 Unique prompt file per spawn. Empty/missing prompt hard-fails.
 Stall (timeout) is infra-red. Packet-only gets the packet, never a slash.
+Claude/Codex CLIs take the prompt on stdin and write the result on stdout.
 
   python3 plugins/intention/scripts/spawn.py stage --packet FILE [--node ID]
   python3 plugins/intention/scripts/spawn.py run --spec FILE
@@ -217,15 +218,15 @@ def effort_of(spec: dict) -> str:
 
 
 def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
+    """claude -p. Prompt is stdin, not argv (ARG_MAX)."""
+    del prompt_file  # consumed by cmd_run via stdin
     interface = str(spec.get("interface") or "sonnet-5")
     model = CLAUDE_MODELS.get(interface, interface)
     effort = effort_of(spec)
-    prompt = read_prompt(prompt_file)
     binary = os.environ.get("CLAUDE_BIN", "claude")
     argv = [
         binary,
         "-p",
-        prompt,
         "--model",
         model,
         "--effort",
@@ -252,14 +253,13 @@ def codex_cli_present() -> bool:
 
 
 def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
-    """codex exec, parallel to claude -p. Prompt is the whole brief."""
+    """codex exec -. Prompt is stdin (`-`), not argv (ARG_MAX)."""
     interface = str(spec.get("interface") or "gpt-5.6-sol")
-    prompt = read_prompt(prompt_file)
     workspace = str(spec.get("workspace") or Path.cwd())
     sandbox = "read-only" if spec.get("surface") == "packet-only" else "workspace-write"
     last = prompt_file.parent / "last.md"
     effort = effort_of(spec)
-    argv = [
+    return [
         codex_bin(),
         "exec",
         "--skip-git-repo-check",
@@ -276,9 +276,8 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
         f'model_reasoning_effort="{effort}"',
         "--output-last-message",
         str(last),
-        prompt,
+        "-",
     ]
-    return argv
 
 
 def openai_api_key() -> str | None:
@@ -411,10 +410,13 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     adapter = args.adapter or spec.get("adapter") or "none"
     argv = list(args.argv or spec.get("argv") or [])
+    stdin_text: str | None = None
     if adapter == "claude":
         argv = claude_argv(spec, prompt_file)
+        stdin_text = read_prompt(prompt_file)
     if adapter == "codex":
         argv = codex_argv(spec, prompt_file)
+        stdin_text = read_prompt(prompt_file)
     if adapter == "openai":
         return run_openai(spec, prompt_file, raw_path, face_path)
     if adapter == "none" and not argv:
@@ -446,6 +448,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             argv,
             cwd=str(dest),
             env=env,
+            stdin=subprocess.PIPE if stdin_text is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -459,7 +462,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 0
 
     try:
-        out, _ = proc.communicate(timeout=timeout_sec)
+        out, _ = proc.communicate(input=stdin_text, timeout=timeout_sec)
     except subprocess.TimeoutExpired:
         try:
             os.killpg(proc.pid, signal.SIGTERM)

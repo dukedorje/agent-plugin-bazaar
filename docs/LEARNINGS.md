@@ -34,6 +34,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-09-02 — Advise success verdict is `accept`. Notes live in the body. Do not write `accept-with-nits` (old banners still parse as accept). (`plugins/intention/skills/advise/SKILL.md`)
 - 2026-09-02 — Ladder priority: Terra then Sonnet (known); Sol then Opus 5 (implement); Fable 5.1 then Sol (plan); Fable, Sol, 4.8, Grok (arch). `assign --all` / `panel` fan-out; `--after` handoff. (`plugins/intention/scripts/ladder.py`)
 - 2026-09-02 — Sol spawn prefers Codex CLI (`codex exec`, `--adapter codex`, `CODEX_BIN`) like `claude -p`. OpenAI HTTP is the fallback when there is no CLI. (`plugins/intention/scripts/spawn.py`)
+- 2026-09-02 — Harness CLI spawn (claude, codex) sends the prompt on stdin and captures stdout. Never argv (ARG_MAX). `claude -p` with no prompt arg; `codex exec -`. OpenAI stays HTTP body. (`plugins/intention/scripts/spawn.py`)
 - 2026-09-01 — Plan consult (`plan` / `replan` / `intend-consult`) is Fable 5.1 (`fable-5.1-plan`), same model as the architecture buddy. (`plugins/intention/references/ladder.json`)
 - 2026-09-01 — Architecture buddy / default `architecture-review` reader is Fable 5.1 in Claude Code (`fable-5.1-arch-review`). Opus 4.8 remains an alternate. (`plugins/intention/references/ladder.json`)
 - 2026-08-31 — Sol architecture-review is on when `OPENAI_API_KEY` is set. Packet-only via `spawn --adapter openai` (`gpt-5.6-sol`). Not a Codex slash. Default reader stays Opus 4.8. (`plugins/intention/scripts/ladder.py`, `spawn.py`)

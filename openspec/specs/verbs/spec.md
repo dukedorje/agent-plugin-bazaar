@@ -377,14 +377,29 @@ be `capped`, not `dispatchable`.
 
 `spawn.py run --adapter claude` SHALL invoke `claude -p` with
 `--model` and `--effort` from the spec interface (sonnet-5 /
-opus-5 / fable-5.1). Packet-only runs SHALL pass
-`--disable-slash-commands`. Tests MAY stub the binary.
+opus-5 / fable-5.1). The prompt SHALL be written to stdin, not
+argv. Packet-only runs SHALL pass `--disable-slash-commands`.
+Tests MAY stub the binary.
 
 #### Scenario: Stub records print mode
 
 - GIVEN a fake `claude` on PATH
 - WHEN `run --adapter claude` executes
 - THEN the fake argv includes `-p` and the model id
+- AND the prompt body is on stdin, not argv
+
+### Requirement: codex adapter is live exec stdin
+
+`spawn.py run --adapter codex` SHALL invoke `codex exec -` with
+the prompt on stdin, not argv. Shared effort SHALL map to
+`-c model_reasoning_effort`. Tests MAY stub the binary.
+
+#### Scenario: Stub records stdin prompt
+
+- GIVEN a fake `codex` on PATH
+- WHEN `run --adapter codex` executes
+- THEN the fake argv ends with `-`
+- AND the prompt body is on stdin, not argv
 
 ### Requirement: intend extract-from named items
 

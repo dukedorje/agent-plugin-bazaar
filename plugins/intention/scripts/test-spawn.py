@@ -133,7 +133,7 @@ def test_claude_adapter_argv() -> None:
         fake.write_text(
             "#!/usr/bin/env python3\n"
             "import json,sys\n"
-            f"json.dump(sys.argv, open({str(argv_log)!r},'w'))\n",
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read()}}, open({str(argv_log)!r},'w'))\n",
             encoding="utf-8",
         )
         fake.chmod(0o755)
@@ -144,11 +144,15 @@ def test_claude_adapter_argv() -> None:
             env={**dict(**subprocess.os.environ), "CLAUDE_BIN": str(fake)},
         )
         expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
-        argv = json.loads(argv_log.read_text(encoding="utf-8"))
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        argv, stdin = logged["argv"], logged["stdin"]
         expect("-p" in argv, argv)
         expect("--model" in argv and "claude-sonnet-5" in argv, argv)
         expect("--effort" in argv and "low" in argv, argv)
         expect("--disable-slash-commands" in argv, argv)
+        expect(not any("You are executing ONE work node" in a for a in argv), argv)
+        expect("You are executing ONE work node" in stdin, stdin[:200])
+        expect("pkt-density-explicit" in stdin, stdin[:400])
         face = json.loads(env_run.stdout)
         expect(face["disposition"] == "pass", face)
 
@@ -187,7 +191,7 @@ def test_codex_adapter_argv() -> None:
         fake.write_text(
             "#!/usr/bin/env python3\n"
             "import json,sys\n"
-            f"json.dump(sys.argv, open({str(argv_log)!r},'w'))\n",
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read()}}, open({str(argv_log)!r},'w'))\n",
             encoding="utf-8",
         )
         fake.chmod(0o755)
@@ -208,14 +212,19 @@ def test_codex_adapter_argv() -> None:
             env=env,
         )
         expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
-        argv = json.loads(argv_log.read_text(encoding="utf-8"))
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        argv, stdin = logged["argv"], logged["stdin"]
         expect("exec" in argv, argv)
+        expect(argv[-1] == "-", argv)
         expect("-m" in argv and "gpt-5.6-sol" in argv, argv)
         expect("--sandbox" in argv and "read-only" in argv, argv)
         expect("--skip-git-repo-check" in argv, argv)
         expect("--ephemeral" in argv, argv)
         expect("-c" in argv, argv)
         expect(any("model_reasoning_effort=" in a and "high" in a for a in argv), argv)
+        expect(not any("You are executing ONE work node" in a for a in argv), argv)
+        expect("You are executing ONE work node" in stdin, stdin[:200])
+        expect("pkt-codex" in stdin, stdin[:400])
         face = json.loads(env_run.stdout)
         expect(face["disposition"] == "pass", face)
 

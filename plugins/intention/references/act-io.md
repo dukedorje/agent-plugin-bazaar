@@ -93,21 +93,24 @@ hosts keep `packet-only` and set `assignee.interface`. The exec
 adapter is for tests and local commands. Live Codex/Grok/Claude CLIs
 are not vendored — the spec is the handoff.
 
-`run --adapter claude` is live `claude -p`. Model comes from the
-spec interface. Shared effort (`low` / `medium` / `high`) maps to
-`--effort`. Packet-only adds `--disable-slash-commands`. Override
-the binary with `CLAUDE_BIN`.
+Live CLI adapters send the prompt on **stdin** and capture
+**stdout**. The brief is never an argv token (ARG_MAX). Scratch
+files (`.spawns/`) stay for staging, not as the message channel.
 
-`run --adapter codex` is live `codex exec` (Sol / `gpt-5.6-sol`),
-the same pattern as Claude Code. Same effort word maps to
-`-c model_reasoning_effort="…"`. Packet-only uses `--sandbox
-read-only`; writes use `workspace-write`. Override the binary with
-`CODEX_BIN`. Stage picks this when the assignee harness is `codex`
-and `codex` is on PATH.
+`run --adapter claude` is live `claude -p` with no prompt arg
+(stdin). Model comes from the spec interface. Shared effort
+(`low` / `medium` / `high`) maps to `--effort`. Packet-only adds
+`--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
+
+`run --adapter codex` is live `codex exec -` (stdin). Same effort
+word maps to `-c model_reasoning_effort="…"`. Packet-only uses
+`--sandbox read-only`; writes use `workspace-write`. Override the
+binary with `CODEX_BIN`. Stage picks this when the assignee
+harness is `codex` and `codex` is on PATH.
 
 `run --adapter openai` is the OpenAI HTTP API fallback for Sol
-when there is no Codex CLI but `OPENAI_API_KEY` is set. Packet-only.
-Never a slash.
+when there is no Codex CLI but `OPENAI_API_KEY` is set. The prompt
+is the chat body, not argv. Packet-only. Never a slash.
 
 `run` with no adapter prints `infra-red` / `adapter-none` and does
 not pretend a worker ran. Timeout kills the process group and
