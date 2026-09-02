@@ -644,7 +644,7 @@ def test_roll_skip_fold_still_advises_same_id() -> None:
         expect(face["stop"] is None, face)
 
 
-def test_interrupt_stops_when_pending() -> None:
+def test_wait_alias_interrupt() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
             Path(td),
@@ -658,6 +658,26 @@ def test_interrupt_stops_when_pending() -> None:
             },
         )
         proc = run(["--interrupt", "--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "ask", face)
+        expect(face["until"] == "ask", face)
+
+
+def test_interrupt_stops_when_pending() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--wait", "--ready-json", str(fixture), "--json"])
         expect(proc.returncode == 0, proc.stderr + proc.stdout)
         face = json.loads(proc.stdout)
         expect(face["stop"] == "ask", face)
@@ -679,7 +699,7 @@ def test_only_fold() -> None:
             {"ready": [], "waiting": [], "needs_advise": [], "ask": []},
         )
         proc = run(
-            ["--only", "fold", "--ready-json", str(fixture), "--json"],
+            ["--tidy", "--ready-json", str(fixture), "--json"],
             cwd=root,
         )
         expect(proc.returncode == 0, proc.stderr + proc.stdout)
@@ -860,6 +880,7 @@ def main() -> int:
         test_roll_needs_advise_is_not_fold,
         test_roll_skip_fold_picks_advise,
         test_roll_skip_fold_still_advises_same_id,
+        test_wait_alias_interrupt,
         test_interrupt_stops_when_pending,
         test_only_fold,
         test_no_fold_no_beads_is_empty_walk,

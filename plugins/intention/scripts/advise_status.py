@@ -1,4 +1,4 @@
-"""Loader — canonical module is skills/ready/scripts/advise_status.py."""
+"""Loader — canonical module is skills/status/scripts/advise_status.py."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 _SRC = (
     Path(__file__).resolve().parents[1]
     / "skills"
-    / "ready"
+    / "status"
     / "scripts"
     / "advise_status.py"
 )

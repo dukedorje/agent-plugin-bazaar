@@ -77,5 +77,5 @@ nodes also take **advise** unless they declined.
 | `--advise` | After the DAG, follow sibling `change` then `advise` on architecture / instrument nodes. Do not `act`. |
 | `--ask` | Present the DAG (and advise verdicts). Pin current. Stop. Wait for the human. Do not `act`. The conversation that follows is `steer`, not `/ask`. |
 
-Do not treat “run it by me” as `/run` or `/run --interrupt`.
+Do not treat “run it by me” as `/run` or `/run --wait`.
 Those act. This stop is the plan.

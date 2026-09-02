@@ -108,11 +108,11 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `advise` | Read-only review-pair; accept / send-back (notes in the body) |
 | `act` | Packet, focused verify, commit-on-red |
 | `fold` | Living spec + archive. Designated folder is Opus 5; may spawn in the background |
-| `ready` | OpenSpec ready/pending/advise/parked **and** unblocked beads |
+| `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
 | `map` | Intend DAG with live status. `--current <id>` pins this tab’s DAG |
-| `run` | Campaign until a stop. Default walks away (roll); `--interrupt` is desk mode; “run it by me” never acts |
+| `run` | Campaign until a stop. Default walks away (roll); `--wait` is desk mode; `--tidy` folds; “run it by me” never acts |
 
 Operator how-to: `plugins/intention/README.md`.
 

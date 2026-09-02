@@ -5,7 +5,7 @@ Lives next to the run skill so a global `skills add` carries it.
 Uses the sibling ready skill's script against the current project's
 openspec/. Does not require the project to vendor ready.py.
 
-  python3 <skill-dir>/scripts/run.py [scope] [--interrupt] [--only fold] [--no-fold] [--no-beads]
+  python3 <skill-dir>/scripts/run.py [scope] [--wait] [--tidy] [--no-fold] [--no-beads]
   python3 <skill-dir>/scripts/run.py add-x --until advise --ready-json FILE
 """
 
@@ -35,8 +35,16 @@ WALK = frozenset({"roll", "ask"})
 
 
 def sibling_ready_py() -> Path | None:
-    cand = Path(__file__).resolve().parents[2] / "ready" / "scripts" / "ready.py"
-    return cand if cand.is_file() else None
+    parent = Path(__file__).resolve().parents[2]
+    for rel in (
+        ("status", "scripts", "status.py"),
+        ("ready", "scripts", "ready.py"),
+        ("status", "scripts", "ready.py"),
+    ):
+        cand = parent.joinpath(*rel)
+        if cand.is_file():
+            return cand
+    return None
 
 
 def find_openspec() -> Path | None:
@@ -56,9 +64,10 @@ def find_ready_py() -> Path | None:
         return sib
     here = Path.cwd()
     for root in [here, *here.parents]:
-        cand = root / "scripts" / "ready.py"
-        if cand.is_file():
-            return cand
+        for name in ("status.py", "ready.py"):
+            cand = root / "scripts" / name
+            if cand.is_file():
+                return cand
         if (root / ".git").exists() or (root / "openspec").is_dir():
             break
     return None
@@ -310,15 +319,15 @@ def ids(rows: Any) -> list[str]:
 def resolve_until(
     until: str | None,
     *,
-    interrupt: bool = False,
-    only: str | None = None,
+    wait: bool = False,
+    tidy: bool = False,
     no_fold: bool = False,
     no_beads: bool = False,
 ) -> tuple[str, bool, bool]:
     """Operator flags win when --until is omitted. --until stays an alias."""
-    if interrupt:
+    if wait:
         until = until or "ask"
-    if only == "fold":
+    if tidy:
         until = until or "fold"
     if until is None:
         if no_fold and no_beads:
@@ -643,24 +652,34 @@ def main() -> int:
         "--until",
         choices=STOPS,
         default=None,
-        help="alias (roll is default). Prefer --interrupt / --only fold / --no-fold",
+        help="alias (roll is default). Prefer --wait / --tidy / --no-fold",
     )
     p.add_argument(
-        "--interrupt",
+        "--wait",
         action="store_true",
         help="roll walk; stop at first ASK / PENDING / EYES",
     )
     p.add_argument(
+        "--interrupt",
+        action="store_true",
+        help="alias for --wait",
+    )
+    p.add_argument(
+        "--tidy",
+        action="store_true",
+        help="fold-legal only",
+    )
+    p.add_argument(
         "--only",
         choices=("fold",),
-        help="restrict the walk (fold = tidy only)",
+        help="alias for --tidy",
     )
     p.add_argument("--no-fold", action="store_true", dest="no_fold")
     p.add_argument("--no-beads", action="store_true", dest="no_beads")
     p.add_argument(
         "--autonomous",
         action="store_true",
-        help="ignored; desk mode is --interrupt",
+        help="ignored; desk mode is --wait",
     )
     p.add_argument("--pause-before")
     p.add_argument(
@@ -678,13 +697,13 @@ def main() -> int:
     args = p.parse_args()
     if args.autonomous:
         print(
-            "warning: --autonomous is ignored; desk mode is --interrupt",
+            "warning: --autonomous is ignored; desk mode is --wait",
             file=sys.stderr,
         )
     until, no_fold, no_beads = resolve_until(
         args.until,
-        interrupt=args.interrupt,
-        only=args.only,
+        wait=args.wait or args.interrupt,
+        tidy=args.tidy or args.only == "fold",
         no_fold=args.no_fold,
         no_beads=args.no_beads,
     )

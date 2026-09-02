@@ -47,7 +47,7 @@ A fully-checked change still in `changes/` is a lie.
 
 - Specs: `openspec/specs/*/spec.md`
 - In-flight: `openspec/changes/*/proposal.md` (skip `archive/`)
-- Ready / parked: `python3 scripts/ready.py`
+- Status / parked: `python3 scripts/status.py`
 - Full text: `rg -n "Requirement:|Scenario:" openspec/specs`
 
 The `openspec` CLI is optional. This tree is valid without it.

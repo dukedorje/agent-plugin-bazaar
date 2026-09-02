@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-READY = HERE.parents[0] / "skills" / "ready" / "scripts" / "ready.py"
+READY = HERE.parents[0] / "skills" / "status" / "scripts" / "status.py"
 
 
 def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:

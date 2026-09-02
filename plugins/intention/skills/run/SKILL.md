@@ -5,9 +5,9 @@ description: >
   Use when asked to run the loop, chain stages, go autonomous, or
   /run. Also when asked to work out a plan then run it by me, with
   optional plan / advise / ask gates (do not act until they say).
-  Does not replace act (one node) or ready (observe only).
+  Does not replace act (one node) or status (observe only).
 user-invocable: true
-argument-hint: "[<scope>] [--interrupt] [--only fold] [--no-fold] [--no-beads] [--plan] [--advise] [--ask] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
+argument-hint: "[<scope>] [--wait] [--tidy] [--no-fold] [--no-beads] [--plan] [--advise] [--ask] [--max-waves=<n>] [--pause-before=<id>] [--skip=<id,id>] [--punt=<id,id>]"
 ---
 
 # run
@@ -21,14 +21,14 @@ Do **not** run `plugins/intention/scripts/run.py` from the current
 repo; that file only exists in the bazaar clone.
 
 ```
-python3 <this-skill-dir>/scripts/run.py [<scope>] [--interrupt] [--only fold] [--no-fold] [--no-beads]
+python3 <this-skill-dir>/scripts/run.py [<scope>] [--wait] [--tidy] [--no-fold] [--no-beads]
 ```
 
 `--max-waves` is conductor policy (default 12). The script does not
 enforce it. Count waves yourself and stop when the cap hits.
 
-It observes the *current project* via the sibling ready skill
-(`../ready/scripts/ready.py` + that project's `openspec/`). It never
+It observes the *current project* via the sibling status skill
+(`../status/scripts/status.py` + that project's `openspec/`). It never
 launches a worker.
 
 `stop: no-ready` means the **observe script** is missing — do not
@@ -107,7 +107,7 @@ waves = 0
 skip = []
 punt = []
 while waves < max_waves:
-  card = run.py [--interrupt] [--only fold] [--no-fold] [--no-beads] [--skip …] [--punt …]
+  card = run.py [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
   if card.stop is empty and needs_advise remains and not all punted:
     # other-family spawn still owed — do not halt
@@ -159,16 +159,16 @@ punt, not a fake send-back. Punt is last-resort only.
 
 | Token | Means |
 |---|---|
-| (none) | **default = roll.** fold → send-back amend → advise → act → beads; park ASK/EYES; see `/ready` for the pile; stop when empty |
-| `--interrupt` | same walk; stop at the first elicitation (ASK, PENDING, EYES). Desk mode. |
-| `--only fold` | tidy only; unscoped scan of fold-legal |
+| (none) | **default = roll.** fold → send-back amend → advise → act → beads; park ASK/EYES; see `/status` for the pile; stop when empty |
+| `--wait` | same walk; stop at the first elicitation (ASK, PENDING, EYES). Desk mode. |
+| `--tidy` | fold-legal only |
 | `--no-fold` | skip fold picks |
 | `--no-beads` | skip bead landing / leftover intend. With `--no-fold` this is today's `--until empty` |
 | `--advise` | walk owed reads; do not `act` |
 | `--pause-before <id>` | hard stop before that node |
-| `--plan` / `--ask` | “run it by me” gates. See below. `--ask` never acts (not `--interrupt`). |
+| `--plan` / `--ask` | “run it by me” gates. See below. `--ask` never acts (not `--wait`). |
 
-`--until roll|empty|ask|fold|advise|activation` remains an alias for one release. `--autonomous` is ignored (warn). Mailbox is `/ready`, not this card.
+`--until *`, `--interrupt`, and `--only fold` remain aliases for one release. `--autonomous` is ignored (warn). Mailbox is `/status`, not this card.
 
 ### Run it by me
 
@@ -183,27 +183,27 @@ plan then run it by me”, “show me first”, optional `--plan`
 | `--ask` | Present `map` of current. Stop. Wait. Next is `steer` if they want to give direction. | `act`, `--until roll`, `--until empty` |
 
 Default for that phrase: **plan + ask**. Architecture / instrument
-also gets **advise** unless they declined. `--interrupt` is
+also gets **advise** unless they declined. `--wait` is
 different: it may `act` until an elicitation appears. “Run it by
 me” never `act`s.
 
-Halting ≠ asking. `--interrupt` stops the campaign on the first
+Halting ≠ asking. `--wait` stops the campaign on the first
 elicitation. Bare `/run` parks those ids and keeps unrelated nodes
-moving. Look at the pile with `/ready`.
+moving. Look at the pile with `/status`.
 
 A stage raises an elicitation by putting an id on the observe `ask`
 list, leaving a PENDING banner, or an open owed box matching ASK /
 EYES / by-eye / human-verify. No `/ask` verb. Architecture /
 human-gate direction after that halt is `steer`.
 
-Mailbox is `/ready` (ASK / EYES / PUNT faces) — not a ninth verb.
+Mailbox is `/status` (ASK / EYES / PUNT faces) — not a ninth verb. `/ready` is an alias.
 
 ## Must not
 
 - Slash a foreign worker (`/run`, `/act`, `/intend`, `/meta-execute`)
 - Flip PENDING or a by-eye box
 - Vendor `@skills` / `.atskills` / `planctl/`
-- Fold unless the walk is default/`--interrupt`/`--only fold` (or alias `roll`/`ask`/`fold`) and fold is legal
+- Fold unless the walk is default/`--wait`/`--tidy` (or alias `roll`/`ask`/`fold`) and fold is legal
 - Implement a node except by following `act` after a re-read
 - `act` when `--ask` / “run it by me” is the stop
 - Halt or `--punt` same-family advise while an other-family

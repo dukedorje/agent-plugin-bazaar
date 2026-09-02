@@ -4,7 +4,7 @@ Default loop from intention to a running system:
 
 `intend` → `steer` → `change` → `advise` → `act` → `fold`
 
-Plus `brief` / `debrief` (disposable), `ready` / `map` (observe), `run`
+Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
 (campaign), `consult` (second opinion, no intend node). `steer` is the
 human-gated guidance pass (not a `/run` wave; not `/ask`). Canonical
 skill files live here. In this repo, `.agents/skills/<name>` is a
@@ -20,17 +20,17 @@ without a plugin install.
 | Plan + architecture review, then me | `intend --advise --ask …` |
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
-| What’s on deck (OpenSpec **and** beads) | `ready` |
+| What’s on deck (OpenSpec **and** beads) | `status` |
 | Keep going while unblocked | `run` |
-| At the desk; halt at first ASK/EYES/PENDING | `run --interrupt` |
-| Morning pile (ASK / EYES / PUNT) | `ready` |
+| At the desk; halt at first ASK/EYES/PENDING | `run --wait` |
+| Morning pile (ASK / EYES / PUNT) | `status` |
 | Scaffold + advise, never implement | `run --advise` |
 | Cautious: no fold, no leftover beads | `run --no-fold --no-beads` |
-| Tidy only | `run --only fold` |
+| Tidy only | `run --tidy` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
 | Second opinion (no change, no act unblock) | `consult` or `consult --panel` |
 
-`--interrupt` may still `act` until an elicitation. “Run it by me”
+`--wait` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.
 
 ## Current intention
@@ -52,10 +52,10 @@ After `/intend`, pin the root. Storage is
 
 Bare `map` with no pin is a one-line **index** of open epics.
 
-## Ready
+## Status
 
-`/ready` unions two sources. An empty OpenSpec lens is not an empty
-board.
+`/status` unions two sources (`/ready` is an alias). An empty OpenSpec
+lens is not an empty board.
 
 - **READY / PENDING / ADVISE / PARKED** — OpenSpec. JSON `ready` is
   this list only, so `/run --until empty` does not `act` a bead id.
@@ -79,8 +79,9 @@ instrument also gets **advise** unless declined.
 ## Run campaign
 
 `run.py` observes; the conductor follows one sibling skill per wave.
-Bare `/run` walks away (roll). `--interrupt` is desk mode. `/ready` is
-the morning pile. `--until *` is a one-release alias.
+Bare `/run` walks away (roll). `--wait` is desk mode. `--tidy` folds.
+`/status` is the morning pile. `--until *` / `--interrupt` / `--only fold`
+are one-release aliases.
 A refused fold is not a stop — `--skip` that id and still **advise**
 it. Same-family advise (ADR-005) **spawns** the other-family reader
 (Fable vs a Grok author; Grok/Sol vs a Claude author). `--punt` only
@@ -105,7 +106,7 @@ clone:
 ```bash
 skills add /path/to/agent-plugin-bazaar/plugins/intention \
   --skill intend --skill steer --skill change --skill advise --skill act --skill fold \
-  --skill brief --skill debrief --skill map --skill ready --skill run \
+  --skill brief --skill debrief --skill map --skill status --skill ready --skill run \
   --skill consult \
   --agent claude-code --agent codex --agent grok --agent hermes-agent \
   -g -y

@@ -22,7 +22,7 @@ Or install directly:
 /plugin install intention@agent-plugin-bazaar
 ```
 
-Default verbs: `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, `run`.
+Default verbs: `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `status`, `run`.
 
 How to use them — “run it by me”, current DAG, ready vs beads, `/run` (roll): [plugins/intention/README.md](plugins/intention/README.md).
 
@@ -30,7 +30,7 @@ How to use them — “run it by me”, current DAG, ready vs beads, `/run` (rol
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
-| [intention](plugins/intention/) | intend, steer, change, advise, act, fold, brief, debrief, map, ready, run — intention to a running system | productivity |
+| [intention](plugins/intention/) | intend, steer, change, advise, act, fold, brief, debrief, map, status, run — intention to a running system | productivity |
 | [morphist-tools](plugins/morphist-tools/) | PRD, vision, research, beads bridges. `/sprint-plan` is **parked** (revive: explicit multi-week factory) | productivity |
 | [metacoding](plugins/metacoding/) | Typed code-graph for blast radius, callers, same-role queries. MCP + skill. Prefer harness LSP for live types. | integrations |
 

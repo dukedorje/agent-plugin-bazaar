@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, `run`, and `consult`. None of them restates
+Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `status`, `run`, and `consult`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -33,7 +33,7 @@ disagree, the contract wins.
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
 | `fold` | Living spec updated + change archived. Designated folder is Opus 5 (`--shape fold`); may spawn in the background. | Implement leftover tasks, fold PENDING/PARKED |
 | `map` | Intend-dag page with live status; session current pin (not in the repo) | Implement, unpark, repo-level current |
-| `ready` | OpenSpec ready-set + unblocked beads + parked list | Implement, unpark |
+| `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias. | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
 | `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
 | `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck |
