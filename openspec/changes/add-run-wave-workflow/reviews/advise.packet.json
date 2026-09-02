@@ -1,14 +1,16 @@
 {
   "schema_version": "1.0",
-  "id": "pkt-add-run-wave-workflow-advise",
+  "id": "pkt-add-run-wave-workflow-advise-2",
   "node_id": "add-run-wave-workflow-advise",
   "capability": "verbs",
   "change_id": "add-run-wave-workflow",
-  "goal": "Read add-run-wave-workflow. Blind pass then verdict. Write openspec/changes/add-run-wave-workflow/reviews/2026-09-02-advise.md. You are Fable, other-family reader. Author is Grok. Do not implement.",
+  "goal": "Re-advise add-run-wave-workflow after send-back amend. Blind pass then verdict. Write openspec/changes/add-run-wave-workflow/reviews/2026-09-02-advise.md. You are Fable, other-family reader. Author is Grok. Do not implement.",
   "non_goals": [
     "Fold",
     "Implement leftover native spawn for advise/consult/fold",
-    "Replace the whole /run loop with Rhai"
+    "Replace the whole campaign loop with Rhai",
+    "Worktree isolate/land (PARKED add-act-worktree-land)",
+    "Fileset organizer shared-file split (bazaar-7kb.1, later)"
   ],
   "anchors": [
     {
@@ -21,17 +23,19 @@
     },
     {
       "symbol": "plugins/intention/scripts/conductor.py",
-      "invariant": "dispatchable is disjoint from in-flight paths, not from each other"
+      "invariant": "Empty paths overlap everything already picked; max_inflight applies after disjointness; take is the only mutex."
     }
   ],
   "acceptance": {
     "kind": "contrast",
-    "if_true": "A Grok /run with two disjoint dispatchable writes launches run-wave after take; overlapping dispatchable is a wave of one; Claude/Sol still use spawn.py; host isolation_worktree is not the persist path.",
-    "if_false": "Campaign still inlines one act, or parallel writes share a path, or persist relies on host isolation_worktree."
+    "if_true": "A Grok campaign with two wholly disjoint dispatchable writes launches run-wave after take on HEAD; two path-less nodes are a wave of one; overlapping dispatchable is a wave of one; Claude/Sol still use spawn.py; host isolation_worktree is not the persist path; worktrees are PARKED.",
+    "if_false": "Campaign still inlines one act, or parallel writes share a path, or persist relies on host isolation_worktree, or empty paths still count as disjoint."
   },
   "out_of_scope": [
     {"item": "Advise/consult/fold native spawn", "tracked_as": "later slice"},
-    {"item": "Rhai as the whole campaign", "tracked_as": "out of scope"}
+    {"item": "Rhai as the whole campaign", "tracked_as": "out of scope"},
+    {"item": "Worktree isolate/land", "tracked_as": "add-act-worktree-land PARKED"},
+    {"item": "Ultrapilot shared-file extraction", "tracked_as": "bazaar-7kb.1"}
   ],
   "constraints": {
     "permission": "write",

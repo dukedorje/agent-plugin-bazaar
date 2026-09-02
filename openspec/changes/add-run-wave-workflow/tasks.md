@@ -34,6 +34,16 @@ dissent. Slice one is whole-packet disjoint waves on HEAD.
       `plugins/intention/...` until a later slice threads the skill
       dir through `args`.
 
+## Owed (advise accept 2026-09-02, fable-5.1-arch-review — small, not a blocker)
+
+- [ ] Post-join honesty check in the `run/SKILL.md` wave loop + one
+      SHALL clause in the delta: after `parallel()` joins and before
+      the first `persist`, `git status --porcelain` on HEAD ⊆ union
+      of the wave's declared `paths`; stray dirt is never persisted
+      under a sibling's message — park that node with the stray
+      paths noted. A `take` that fails midway is handled like launch
+      infra-red: release the taken, `continue`.
+
 ## Parked (split out 2026-09-02)
 
 - Landing step (`act/<node>` ff-only land) is PARKED as
