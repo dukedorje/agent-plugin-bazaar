@@ -46,7 +46,7 @@ a gated reader, use `advise` instead.
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or
    ambiguous nickname → error, do not guess. Named unspawnable
-   (Grok, no CLI) → hard fail. `--panel` skips unspawnable.
+   → hard fail. `--panel` skips unspawnable.
 
    This session’s harness is skipped (`--not-harness`) **only if**
    another spawnable reader exists, and **not** when they named
@@ -73,6 +73,6 @@ a gated reader, use `advise` instead.
 5. **Stop.** Do not `act`. Do not `fold`. Do not write an advise
    review file.
 
-Grok has no CLI adapter here — skip it on `--panel`; `--who grok`
-errors unless they want a packet to hand over. Sol is `codex exec`
-(or OpenAI HTTP if no CLI).
+Grok is `grok --prompt-file` when `grok` is on PATH (`GROK_BIN`).
+`--who grok` and `--panel` include it. Sol is `codex exec` (or
+OpenAI HTTP if no CLI).

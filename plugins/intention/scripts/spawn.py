@@ -4,10 +4,12 @@
 Unique prompt file per spawn. Empty/missing prompt hard-fails.
 Stall (timeout) is infra-red. Packet-only gets the packet, never a slash.
 Claude/Codex CLIs take the prompt on stdin and write the result on stdout.
+Grok headless does not read stdin; it takes `--prompt-file` (same brief, no ARG_MAX).
 
   python3 plugins/intention/scripts/spawn.py stage --packet FILE [--node ID]
   python3 plugins/intention/scripts/spawn.py run --spec FILE
   python3 plugins/intention/scripts/spawn.py consult [--panel] [--shape architecture-review]
+  python3 plugins/intention/scripts/spawn.py oneshot [--who terra] [--shape known]
 """
 
 from __future__ import annotations
@@ -54,6 +56,8 @@ EFFORT = {
     "fable-5.1": "high",
     "gpt-5.6-sol": "high",
     "gpt-5.6-terra": "low",
+    "grok-4.6": "high",
+    "grok-4.5": "high",
 }
 
 
@@ -264,6 +268,8 @@ def cmd_stage(args: argparse.Namespace) -> int:
     harness = harness_of(packet)
     if harness == "claude":
         adapter = "claude"
+    elif harness == "grok":
+        adapter = "grok" if grok_cli_present() else "none"
     elif harness in {"codex", "openai"}:
         if codex_cli_present():
             adapter = "codex"
@@ -541,9 +547,46 @@ def parse_consult_verdict(text: str) -> str:
     return "unknown"
 
 
+def grok_bin() -> str:
+    return os.environ.get("GROK_BIN", "grok")
+
+
+def grok_cli_present() -> bool:
+    return shutil.which(grok_bin()) is not None
+
+
+def grok_argv(spec: dict, prompt_file: Path) -> list[str]:
+    """grok --prompt-file. Grok headless does not read stdin (docs)."""
+    interface = str(spec.get("interface") or "grok-4.6")
+    effort = effort_of(spec)
+    workspace = str(spec.get("workspace") or Path.cwd())
+    argv = [
+        grok_bin(),
+        "--prompt-file",
+        str(prompt_file),
+        "-m",
+        interface,
+        "--effort",
+        effort,
+        "--output-format",
+        "json",
+        "--permission-mode",
+        "bypassPermissions",
+        "--always-approve",
+        "--cwd",
+        workspace,
+        "--verbatim",
+    ]
+    if spec.get("surface") != "skill-host":
+        argv.extend(["--disallowed-tools", "Agent"])
+    return argv
+
+
 def adapter_for_harness(harness: str) -> str:
     if harness == "claude":
         return "claude"
+    if harness == "grok":
+        return "grok" if grok_cli_present() else "none"
     if harness in {"codex", "openai"}:
         if codex_cli_present():
             return "codex"
@@ -635,6 +678,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     if adapter == "codex":
         argv = codex_argv(spec, prompt_file)
         stdin_text = read_prompt(prompt_file)
+    if adapter == "grok":
+        argv = grok_argv(spec, prompt_file)
     if adapter == "openai":
         return run_openai(spec, prompt_file, raw_path, face_path)
     if adapter == "none" and not argv:
@@ -648,7 +693,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(face, indent=2))
         return 0
 
-    if adapter not in {"exec", "claude", "codex", "openai", "none"}:
+    if adapter not in {"exec", "claude", "codex", "grok", "openai", "none"}:
         print(f"unknown adapter: {adapter}", file=sys.stderr)
         return 2
     if not argv:
@@ -800,24 +845,40 @@ def capture_json(fn, *a: Any, **kw: Any) -> tuple[int, dict[str, Any] | None, st
         return code, None, raw
 
 
-def cmd_consult(args: argparse.Namespace) -> int:
-    goal = consult_goal(args)
-    if not goal:
-        print("empty consult brief (pipe stdin or pass --goal)", file=sys.stderr)
-        return 2
-    try:
-        routes = consult_routes(args)
-    except SystemExit as exc:
-        print(str(exc), file=sys.stderr)
-        return 2
+READ_SHAPES = {"architecture-review", "plan", "replan", "intend-consult", "fold"}
 
-    root = args.root.resolve()
-    paths = list(args.paths or [])
+
+def oneshot_packet(goal: str, route: dict, paths: list[str]) -> dict[str, Any]:
+    packet = consult_packet(goal, route, paths)
+    shapes = route.get("shapes") or []
+    if any(str(s) in READ_SHAPES for s in shapes):
+        return packet
+    packet["role"] = "worker"
+    packet["node_id"] = "oneshot"
+    packet["constraints"] = {
+        "permission": "write",
+        "paths": list(paths),
+        "do_not": ["fold", "deploy", "advise"],
+    }
+    packet["rigor"] = "brief"
+    packet["density"] = str(route.get("density") or "explicit")
+    return packet
+
+
+def dispatch_routes(
+    routes: list[dict[str, Any]],
+    goal: str,
+    paths: list[str],
+    root: Path,
+    timeout: float,
+    packet_fn,
+    node: str,
+) -> list[dict[str, Any]]:
     opinions: list[dict[str, Any]] = []
     for route in routes:
         harness = str(route.get("harness") or "none")
         adapter = adapter_for_harness(harness)
-        packet = consult_packet(goal, route, paths)
+        packet = packet_fn(goal, route, paths)
         dest = root / ".spawns"
         dest.mkdir(parents=True, exist_ok=True)
         pkt_path = dest / f"{packet['id']}.json"
@@ -826,9 +887,9 @@ def cmd_consult(args: argparse.Namespace) -> int:
             cmd_stage,
             argparse.Namespace(
                 packet=pkt_path,
-                node="consult",
+                node=node,
                 surface="packet-only",
-                timeout=args.timeout,
+                timeout=timeout,
                 root=root,
             ),
         )
@@ -841,7 +902,7 @@ def cmd_consult(args: argparse.Namespace) -> int:
                     "disposition": "infra-red",
                     "verdict": "unknown",
                     "body": "stage failed",
-                    "blockers": ["consult-stage"],
+                    "blockers": [f"{node}-stage"],
                 }
             )
             continue
@@ -851,30 +912,76 @@ def cmd_consult(args: argparse.Namespace) -> int:
             argparse.Namespace(spec=spec_path, adapter=adapter, argv=None),
         )
         if face is None:
-            face = infra_face("consult run did not return a face", "consult-run", "")
+            face = infra_face(f"{node} run did not return a face", f"{node}-run", "")
         dest_dir = spec_path.parent
         raw_file = dest_dir / "raw.txt"
         raw_text = raw_file.read_text(encoding="utf-8") if raw_file.is_file() else raw_out
         body = harvest_text(dest_dir, raw_text)
         if not body:
             body = str(face.get("summary") or "")
-        opinions.append(
-            {
-                "id": route.get("id"),
-                "harness": harness,
-                "interface": route.get("interface"),
-                "adapter": adapter,
-                "disposition": face.get("disposition"),
-                "verdict": parse_consult_verdict(body),
-                "body": body,
-                "raw_ref": face.get("raw_ref"),
-                "blockers": face.get("blockers") or [],
-                "exit": code,
-            }
-        )
+        row = {
+            "id": route.get("id"),
+            "harness": harness,
+            "interface": route.get("interface"),
+            "adapter": adapter,
+            "disposition": face.get("disposition"),
+            "body": body,
+            "raw_ref": face.get("raw_ref"),
+            "blockers": face.get("blockers") or [],
+            "exit": code,
+        }
+        if is_consult(packet):
+            row["verdict"] = parse_consult_verdict(body)
+        opinions.append(row)
+    return opinions
 
+
+def cmd_consult(args: argparse.Namespace) -> int:
+    goal = consult_goal(args)
+    if not goal:
+        print("empty consult brief (pipe stdin or pass --goal)", file=sys.stderr)
+        return 2
+    try:
+        routes = consult_routes(args)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    opinions = dispatch_routes(
+        routes,
+        goal,
+        list(args.paths or []),
+        args.root.resolve(),
+        args.timeout,
+        consult_packet,
+        "consult",
+    )
     print(json.dumps({"shape": args.shape, "panel": bool(args.panel), "opinions": opinions}, indent=2))
     if not opinions:
+        return 2
+    return 0
+
+
+def cmd_oneshot(args: argparse.Namespace) -> int:
+    goal = consult_goal(args)
+    if not goal:
+        print("empty oneshot brief (pipe stdin or pass --goal)", file=sys.stderr)
+        return 2
+    try:
+        routes = consult_routes(args)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    results = dispatch_routes(
+        routes,
+        goal,
+        list(args.paths or []),
+        args.root.resolve(),
+        args.timeout,
+        oneshot_packet,
+        "oneshot",
+    )
+    print(json.dumps({"shape": args.shape, "oneshot": True, "results": results}, indent=2))
+    if not results:
         return 2
     return 0
 
@@ -914,6 +1021,23 @@ def main() -> int:
     consult.add_argument("--timeout", type=float, default=300)
     consult.add_argument("--root", type=Path, default=repo)
     consult.set_defaults(func=cmd_consult)
+
+    oneshot = sub.add_parser("oneshot", help="dispatch one ladder worker, no intend node")
+    oneshot.add_argument("--shape", default="known")
+    oneshot.add_argument("--id", dest="route_id", help="exact ladder route id")
+    oneshot.add_argument(
+        "--who",
+        action="append",
+        help="nickname or id; comma list or repeatable. Not with --panel/--id",
+    )
+    oneshot.add_argument("--after", help="handoff: next spawnable route after this id")
+    oneshot.add_argument("--not-harness", dest="not_harness")
+    oneshot.add_argument("--panel", action="store_true")
+    oneshot.add_argument("--goal", help="brief; else stdin")
+    oneshot.add_argument("--paths", nargs="*", default=[])
+    oneshot.add_argument("--timeout", type=float, default=300)
+    oneshot.add_argument("--root", type=Path, default=repo)
+    oneshot.set_defaults(func=cmd_oneshot)
 
     args = p.parse_args()
     return int(args.func(args))

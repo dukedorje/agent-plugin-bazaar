@@ -62,10 +62,10 @@ or Claude-on-Claude in one thread is asking yourself.
    `--shape plan` consult (Fable). Plan consult is **not** the
    sole accept.
 
-   If `assign --not-harness <author>` finds no spawnable route
-   (Claude author, no Codex, Grok has no CLI adapter): park as
-   ASK (`PUNT: second-family advise` on `tasks.md`). Never
-   inline. Never fake a send-back.
+   If `assign --not-harness <author>` finds no spawnable route:
+   park as ASK (`PUNT: second-family advise` on `tasks.md`).
+   Never inline. Never fake a send-back. Grok is spawnable when
+   `grok` is on PATH (`GROK_BIN`).
 3. **Packet a new session.** Reader gets: change id, Why
    (`proposal.md` without the design), living spec paths, cited
    file:line, LEARNINGS lines that name this id. Not this chat.

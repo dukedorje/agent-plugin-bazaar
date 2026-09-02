@@ -29,6 +29,7 @@ without a plugin install.
 | Tidy only | `run --tidy` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
 | Second opinion (no change, no act unblock) | `consult` / `consult --who sol,fable` / `consult --panel` |
+| Dispatch a small task (no intend node) | `oneshot` / `oneshot --who terra` |
 
 `--wait` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.

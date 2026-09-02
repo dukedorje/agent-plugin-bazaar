@@ -542,6 +542,120 @@ def test_consult_cli_fake_claude() -> None:
         expect(Path(logged["cwd"]).resolve() == root.resolve(), logged["cwd"])
 
 
+def test_grok_adapter_argv() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-grok",
+            "node_id": "nod-grok",
+            "goal": "Reply with the single word pong.",
+            "assignee": {
+                "id": "agt-grok",
+                "kind": "model",
+                "harness": "grok",
+                "interface": "grok-4.6",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-grok"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {"permission": "read", "paths": [], "do_not": ["deploy"]},
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        fake = root / "fake-grok"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump(sys.argv, open({str(argv_log)!r},'w'))\n"
+            "sys.stdout.write('{\"text\":\"pong\"}\\n')\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {**os.environ, "GROK_BIN": str(fake)}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(spec["adapter"] == "grok", spec)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec["spec_file"], "--adapter", "grok"],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        argv = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect("--prompt-file" in argv, argv)
+        expect("-p" not in argv, argv)
+        expect("-m" in argv and "grok-4.6" in argv, argv)
+        expect("--effort" in argv and "high" in argv, argv)
+        expect("--output-format" in argv and "json" in argv, argv)
+        expect(not any("You are executing ONE work node" in a for a in argv), argv)
+        face = json.loads(env_run.stdout)
+        expect(face["disposition"] == "pass", face)
+        expect("pong" in (face.get("summary") or "").lower(), face)
+
+
+def test_oneshot_cli_fake() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fake = root / "fake-claude"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read()}}, open({str(argv_log)!r},'w'))\n"
+            "sys.stdout.write('pong\\n')\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in {"OPENAI_API_KEY", "CODEX_BIN", "CLAUDE_BIN"}
+        }
+        env["CLAUDE_BIN"] = str(fake)
+        env["CODEX_BIN"] = "/nonexistent/codex-not-installed"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(SPAWN),
+                "oneshot",
+                "--shape",
+                "known",
+                "--goal",
+                "Reply with the single word pong.",
+                "--root",
+                str(root),
+            ],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        out = json.loads(proc.stdout)
+        expect(out.get("oneshot") is True, out)
+        expect(len(out["results"]) == 1, out)
+        expect(out["results"][0]["id"] == "sonnet-5", out)
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect("-p" in logged["argv"], logged["argv"])
+        expect("You are executing ONE work node" in logged["stdin"], logged["stdin"][:200])
+
+
 def test_consult_who_exclusive() -> None:
     proc = run(
         [
@@ -555,8 +669,10 @@ def test_consult_who_exclusive() -> None:
     )
     expect(proc.returncode == 2, proc.stdout + proc.stderr)
     expect("mutually exclusive" in proc.stderr, proc.stderr)
-    grok = run(
+    grok = subprocess.run(
         [
+            sys.executable,
+            str(SPAWN),
             "consult",
             "--shape",
             "architecture-review",
@@ -564,7 +680,10 @@ def test_consult_who_exclusive() -> None:
             "grok",
             "--goal",
             "x",
-        ]
+        ],
+        text=True,
+        capture_output=True,
+        env={**os.environ, "GROK_BIN": "/nonexistent/grok-not-installed"},
     )
     expect(grok.returncode == 2, grok.stdout + grok.stderr)
     expect("no adapter" in grok.stderr, grok.stderr)
@@ -603,6 +722,8 @@ def main() -> int:
         test_codex_advise_sandbox_is_writable,
         test_consult_prompt_is_not_advise,
         test_consult_cli_fake_claude,
+        test_grok_adapter_argv,
+        test_oneshot_cli_fake,
         test_consult_who_exclusive,
         test_consult_empty_fails,
         test_empty_packet_fails,

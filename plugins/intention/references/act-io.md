@@ -83,6 +83,7 @@ Writes `signature.content_hash` (`sha256:` + hex) over the result with
 python3 plugins/intention/scripts/spawn.py stage --packet <packet.json>
 python3 plugins/intention/scripts/spawn.py run --spec <spec.json>
 python3 plugins/intention/scripts/spawn.py consult --shape architecture-review [--panel]
+python3 plugins/intention/scripts/spawn.py oneshot --who terra
 ```
 
 `stage` writes a unique `.spawns/<node>-<id>/` with `packet.json`,
@@ -111,6 +112,12 @@ when `permission: write` or `constraints.paths` includes a
 Override the binary with `CODEX_BIN`. Stage picks this when the
 assignee harness is `codex` and `codex` is on PATH.
 
+`run --adapter grok` is live `grok --prompt-file` (headless). Grok
+does **not** read piped stdin; the staged `prompt.md` is the brief
+(no ARG_MAX). Model from the spec interface (`grok-4.6`). Shared
+effort maps to `--effort`. `--output-format json`. Override the
+binary with `GROK_BIN`.
+
 `run --adapter openai` is the OpenAI HTTP API fallback for Sol
 when there is no Codex CLI but `OPENAI_API_KEY` is set. The prompt
 is the chat body, not argv. Packet-only. Never a slash.
@@ -124,10 +131,14 @@ unblock. Default shape `architecture-review`. `--who fable,sol`
 (nicknames or ids, several, ladder order). `--panel` is every
 spawnable reader. `--id` is exact-id only. `--who` / `--panel` /
 `--id` are mutually exclusive. Named unspawnable hard-fails;
-`--panel` skips Grok until a CLI adapter exists. Prompt on stdin
-/ `--goal`; JSON opinions on stdout (`agree` / `caution` /
-`dissent`). Does not write `openspec/changes/*/reviews/`. Use
-`advise` when a change needs a gated accept.
+`--panel` skips harnesses with no CLI. Prompt on stdin / `--goal`;
+JSON opinions on stdout (`agree` / `caution` / `dissent`). Does
+not write `openspec/changes/*/reviews/`. Use `advise` when a
+change needs a gated accept.
+
+`oneshot` is the worker twin: no intend node. Default shape
+`known` (Terra, then Sonnet). `--who terra` / `--who sol`.
+Stdin or `--goal`; JSON `results[]` on stdout.
 
 ## Foreign harness
 
