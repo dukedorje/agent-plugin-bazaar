@@ -38,16 +38,18 @@ unblock `act` until the banner is `ACTIVE BUILD`.
    (Fable, no write). Human pick always wins. Same-family as the
    change author cannot be the sole `accept` reader (ADR-005).
 
-   Second family: Grok, or **Sol via OpenAI API** when
-   `OPENAI_API_KEY` is set (`ladder.py show` — `sol-arch-review`
-   `available: true`). Pick Sol with
+   Second family: Grok, or **Sol** when the Codex CLI is on PATH
+   (`codex`) or `OPENAI_API_KEY` is set (`ladder.py show` —
+   `sol-arch-review` `available: true`). Pick Sol with
    `ladder.py assign --shape architecture-review --id sol-arch-review`.
-   Then `spawn.py stage` + `spawn.py run --adapter openai` (model
-   `gpt-5.6-sol`, packet-only). Never a Codex slash. The ambient
-   key is enough; do not paste it into the packet.
+   Then `spawn.py stage` + `spawn.py run --adapter codex` (live
+   `codex exec -m gpt-5.6-sol`, like `claude -p`). Override the
+   binary with `CODEX_BIN`. If there is no CLI, stage falls back to
+   `--adapter openai`. Never a Codex slash command. Do not paste
+   keys into the packet.
 4. **Packet.** Readers receive `permission: read`. Foreign harnesses
-   get a packet file, never a slash command. Sol is API, not a
-   skill-host.
+   get a packet file, never a slash command. Sol is packet-only
+   (CLI or API), not a skill-host slash.
 5. **Write** `openspec/changes/<id>/reviews/<YYYY-MM-DD>-advise.md`.
    First banner line after the title MUST be exactly one of:
 

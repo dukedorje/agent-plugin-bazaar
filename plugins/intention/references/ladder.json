@@ -123,7 +123,7 @@
       "density": "lean",
       "effort": "high",
       "available": false,
-      "notes": "Second-family reader via OpenAI API when OPENAI_API_KEY is set. Packet-only; spawn --adapter openai. Not a Codex slash."
+      "notes": "Second-family reader. Prefer Codex CLI (`codex exec`, spawn --adapter codex). OpenAI HTTP API if no CLI but OPENAI_API_KEY is set. Packet-only. Never a slash."
     }
   ]
 }

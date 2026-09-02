@@ -98,11 +98,15 @@ the spec interface (`sonnet-5` → `claude-sonnet-5` / low,
 `opus-5` / medium, `fable-5.1` / high). Packet-only adds
 `--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
 
-`run --adapter openai` is the OpenAI HTTP API (Sol / `gpt-5.6-sol`).
-Key from ambient `OPENAI_API_KEY` (optional
-`OPENAI_ORG`, `OPENAI_BASE_URL`). Packet-only. Never a slash.
-Stage picks this adapter when the assignee harness is `codex` /
-`openai` and a key is set.
+`run --adapter codex` is live `codex exec` (Sol / `gpt-5.6-sol`),
+the same pattern as Claude Code. Packet-only uses `--sandbox
+read-only`; writes use `workspace-write`. Override the binary with
+`CODEX_BIN`. Stage picks this when the assignee harness is `codex`
+and `codex` is on PATH.
+
+`run --adapter openai` is the OpenAI HTTP API fallback for Sol
+when there is no Codex CLI but `OPENAI_API_KEY` is set. Packet-only.
+Never a slash.
 
 `run` with no adapter prints `infra-red` / `adapter-none` and does
 not pretend a worker ran. Timeout kills the process group and
@@ -134,8 +138,8 @@ review-pair whose reader is Fable 5.1 (Grok for cross-family /
 ADR-005; Sol only if `available`).
 Fold → designated folder Opus 5 (`opus-5-fold`; Grok only if picked
 or `grok-fold` is flipped available). Architecture review default
-is Fable 5.1; Sol is on when `OPENAI_API_KEY` is set
-(`--id sol-arch-review`, `--adapter openai`).
+is Fable 5.1; Sol is on when `codex` is on PATH or `OPENAI_API_KEY`
+is set (`--id sol-arch-review`, prefer `--adapter codex`).
 
 A weaker worker may consult a stronger one for `explain` / `replan`.
 That is not a write handoff.

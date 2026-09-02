@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import signal
 import sys
 import time
@@ -154,8 +155,13 @@ def cmd_stage(args: argparse.Namespace) -> int:
     harness = harness_of(packet)
     if harness == "claude":
         adapter = "claude"
-    elif harness in {"codex", "openai"} and openai_api_key():
-        adapter = "openai"
+    elif harness in {"codex", "openai"}:
+        if codex_cli_present():
+            adapter = "codex"
+        elif openai_api_key():
+            adapter = "openai"
+        else:
+            adapter = "none"
     else:
         adapter = "none"
     spec = {
@@ -167,6 +173,7 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "prompt_file": str(prompt),
         "timeout_sec": args.timeout,
         "adapter": adapter,
+        "workspace": str(args.root.resolve()),
         "argv": [],
     }
     spec_path = dest / "spec.json"
@@ -199,6 +206,41 @@ def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
     ]
     if spec.get("surface") != "skill-host":
         argv.append("--disable-slash-commands")
+    return argv
+
+
+def codex_bin() -> str:
+    return os.environ.get("CODEX_BIN", "codex")
+
+
+def codex_cli_present() -> bool:
+    return shutil.which(codex_bin()) is not None
+
+
+def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
+    """codex exec, parallel to claude -p. Prompt is the whole brief."""
+    interface = str(spec.get("interface") or "gpt-5.6-sol")
+    prompt = read_prompt(prompt_file)
+    workspace = str(spec.get("workspace") or Path.cwd())
+    sandbox = "read-only" if spec.get("surface") == "packet-only" else "workspace-write"
+    last = prompt_file.parent / "last.md"
+    argv = [
+        codex_bin(),
+        "exec",
+        "--skip-git-repo-check",
+        "--ephemeral",
+        "--color",
+        "never",
+        "--sandbox",
+        sandbox,
+        "-C",
+        workspace,
+        "-m",
+        interface,
+        "--output-last-message",
+        str(last),
+        prompt,
+    ]
     return argv
 
 
@@ -334,6 +376,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     argv = list(args.argv or spec.get("argv") or [])
     if adapter == "claude":
         argv = claude_argv(spec, prompt_file)
+    if adapter == "codex":
+        argv = codex_argv(spec, prompt_file)
     if adapter == "openai":
         return run_openai(spec, prompt_file, raw_path, face_path)
     if adapter == "none" and not argv:
@@ -347,7 +391,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(face, indent=2))
         return 0
 
-    if adapter not in {"exec", "claude", "openai", "none"}:
+    if adapter not in {"exec", "claude", "codex", "openai", "none"}:
         print(f"unknown adapter: {adapter}", file=sys.stderr)
         return 2
     if not argv:

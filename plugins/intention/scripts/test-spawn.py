@@ -153,6 +153,71 @@ def test_claude_adapter_argv() -> None:
         expect(face["disposition"] == "pass", face)
 
 
+def test_codex_adapter_argv() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-codex",
+            "node_id": "nod-codex",
+            "goal": "Reply with the single word pong.",
+            "assignee": {
+                "id": "agt-sol",
+                "kind": "model",
+                "harness": "codex",
+                "interface": "gpt-5.6-sol",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {"permission": "read", "paths": [], "do_not": ["deploy"]},
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        fake = root / "fake-codex"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump(sys.argv, open({str(argv_log)!r},'w'))\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {**os.environ, "CODEX_BIN": str(fake)}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(spec["adapter"] == "codex", spec)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec["spec_file"], "--adapter", "codex"],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        argv = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect("exec" in argv, argv)
+        expect("-m" in argv and "gpt-5.6-sol" in argv, argv)
+        expect("--sandbox" in argv and "read-only" in argv, argv)
+        expect("--skip-git-repo-check" in argv, argv)
+        expect("--ephemeral" in argv, argv)
+        face = json.loads(env_run.stdout)
+        expect(face["disposition"] == "pass", face)
+
+
 def test_openai_adapter_missing_key() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -182,7 +247,8 @@ def test_openai_adapter_missing_key() -> None:
         }
         pkt = root / "packet.json"
         pkt.write_text(json.dumps(packet), encoding="utf-8")
-        env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
+        env = {k: v for k, v in os.environ.items() if k not in {"OPENAI_API_KEY", "CODEX_BIN"}}
+        env["CODEX_BIN"] = "/nonexistent/codex-not-installed"
         staged = subprocess.run(
             [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
             text=True,
@@ -237,7 +303,13 @@ def test_openai_adapter_sol_live() -> None:
         }
         pkt = root / "packet.json"
         pkt.write_text(json.dumps(packet), encoding="utf-8")
-        staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
+        env = {**os.environ, "CODEX_BIN": "/nonexistent/codex-not-installed"}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
         expect(staged.returncode == 0, staged.stderr + staged.stdout)
         spec = json.loads(staged.stdout)
         expect(spec["adapter"] == "openai", spec)
@@ -264,6 +336,7 @@ def main() -> int:
         test_missing_prompt_fails,
         test_stall_infra_red,
         test_claude_adapter_argv,
+        test_codex_adapter_argv,
         test_openai_adapter_missing_key,
         test_openai_adapter_sol_live,
         test_empty_packet_fails,

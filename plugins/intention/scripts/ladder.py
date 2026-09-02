@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -27,19 +28,31 @@ def openai_api_key() -> str | None:
     return None
 
 
+def codex_cli_present() -> bool:
+    binary = os.environ.get("CODEX_BIN", "codex")
+    return shutil.which(binary) is not None
+
+
+def sol_available() -> bool:
+    """Codex CLI preferred; OpenAI HTTP API is the fallback."""
+    return codex_cli_present() or bool(openai_api_key())
+
+
 def apply_env(data: dict) -> dict:
-    """Sol is available when OPENAI_API_KEY is set."""
+    """Sol is available when `codex` is on PATH or OPENAI_API_KEY is set."""
     routes = []
     for route in data.get("routes") or []:
         if not isinstance(route, dict):
             continue
         row = dict(route)
         if row.get("id") == "sol-arch-review":
-            if openai_api_key():
+            if sol_available():
                 row["available"] = True
+                how = "codex exec" if codex_cli_present() else "OpenAI HTTP API"
                 row["notes"] = (
-                    "Second-family reader via OpenAI API "
-                    "(OPENAI_API_KEY). Packet-only; spawn --adapter openai."
+                    f"Second-family reader via {how}. "
+                    "Prefer spawn --adapter codex; --adapter openai if no CLI. "
+                    "Packet-only. Never a Codex slash."
                 )
             else:
                 row["available"] = False

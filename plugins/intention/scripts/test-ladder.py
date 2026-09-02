@@ -11,7 +11,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LADDER = HERE / "ladder.py"
-DROP_OPENAI = ("OPENAI_API_KEY",)
+DROP_SOL = ("OPENAI_API_KEY", "CODEX_BIN")
+MISSING_CODEX = "/nonexistent/codex-not-installed"
 
 
 def run(
@@ -26,13 +27,21 @@ def run(
     )
 
 
-def env_without_openai() -> dict[str, str]:
-    return {k: v for k, v in os.environ.items() if k not in DROP_OPENAI}
+def env_without_sol() -> dict[str, str]:
+    out = {k: v for k, v in os.environ.items() if k not in DROP_SOL}
+    out["CODEX_BIN"] = MISSING_CODEX
+    return out
 
 
 def env_with_openai(key: str = "sk-test-not-used") -> dict[str, str]:
-    out = env_without_openai()
+    out = env_without_sol()
     out["OPENAI_API_KEY"] = key
+    return out
+
+
+def env_with_codex() -> dict[str, str]:
+    out = env_without_sol()
+    out["CODEX_BIN"] = sys.executable
     return out
 
 
@@ -89,7 +98,7 @@ def main() -> int:
         alt = run(["assign", "--shape", "architecture-review", "--include-unavailable"])
         expect(alt.returncode == 0, alt.stderr)
         expect(json.loads(alt.stdout)["id"] == "fable-5.1-arch-review", alt.stdout)
-        show = json.loads(run(["show"], env=env_without_openai()).stdout)
+        show = json.loads(run(["show"], env=env_without_sol()).stdout)
         grok = next(r for r in show["routes"] if r["id"] == "grok-arch-review")
         expect(grok["available"] is True, grok)
         sol = next(r for r in show["routes"] if r["id"] == "sol-arch-review")
@@ -121,25 +130,34 @@ def main() -> int:
         print(f"FAIL unknown: {exc}")
 
     try:
-        off = json.loads(run(["show"], env=env_without_openai()).stdout)
+        off = json.loads(run(["show"], env=env_without_sol()).stdout)
         sol_off = next(r for r in off["routes"] if r["id"] == "sol-arch-review")
         expect(sol_off["available"] is False, sol_off)
-        on = json.loads(run(["show"], env=env_with_openai()).stdout)
-        sol_on = next(r for r in on["routes"] if r["id"] == "sol-arch-review")
-        expect(sol_on["available"] is True, sol_on)
+        on_key = json.loads(run(["show"], env=env_with_openai()).stdout)
+        expect(
+            next(r for r in on_key["routes"] if r["id"] == "sol-arch-review")["available"]
+            is True,
+            on_key,
+        )
+        on_cli = json.loads(run(["show"], env=env_with_codex()).stdout)
+        expect(
+            next(r for r in on_cli["routes"] if r["id"] == "sol-arch-review")["available"]
+            is True,
+            on_cli,
+        )
         picked = json.loads(
             run(
                 ["assign", "--shape", "architecture-review", "--id", "sol-arch-review"],
-                env=env_with_openai(),
+                env=env_with_codex(),
             ).stdout
         )
         expect(picked["id"] == "sol-arch-review", picked)
         expect(picked["interface"] == "gpt-5.6-sol", picked)
         default = json.loads(
-            run(["assign", "--shape", "architecture-review"], env=env_with_openai()).stdout
+            run(["assign", "--shape", "architecture-review"], env=env_with_codex()).stdout
         )
         expect(default["id"] == "fable-5.1-arch-review", default)
-        print("pass sol available iff OPENAI_API_KEY; still not default")
+        print("pass sol available iff codex CLI or OPENAI_API_KEY; still not default")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol env: {exc}")
