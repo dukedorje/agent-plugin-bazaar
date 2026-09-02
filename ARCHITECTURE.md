@@ -163,7 +163,7 @@ high usage limits:
 | Known / mechanical | Sonnet 5 · `explicit` |
 | Implementation that needs thought | Opus 5 · `standard` · effort medium |
 | Design | Opus 5 · effort low/medium · CC designer skills |
-| Planning helper / replan consult | Fable 5 · `lean` · no write |
+| Planning helper / replan consult | Fable 5.1 · `lean` · no write |
 | Real architecture review | **Grok** reader (required). GPT-5.6 Sol if `available` |
 
 Same-family review still cannot promote. Grok reading an Opus design

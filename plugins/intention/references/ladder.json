@@ -41,11 +41,11 @@
       "notes": "Effort low or medium. Use Claude Code designer skills."
     },
     {
-      "id": "fable-5-plan",
+      "id": "fable-5.1-plan",
       "shapes": ["plan", "replan", "intend-consult"],
       "role": "consultant",
       "harness": "claude",
-      "interface": "fable-5",
+      "interface": "fable-5.1",
       "surface": "skill-host",
       "density": "lean",
       "effort": "high",

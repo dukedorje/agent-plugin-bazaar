@@ -43,7 +43,7 @@ with the work.
 
 | Density | Expected assignee (this project) |
 |---|---|
-| `lean` | Fable 5 (plan consult) · Grok 4.6 (arch review) · Sol if subscribed |
+| `lean` | Fable 5.1 (plan consult + arch buddy) · Grok 4.6 (cross-family review) · Sol if `OPENAI_API_KEY` |
 | `standard` | Opus 5 (implementation / design, effort low–medium) |
 | `explicit` | Sonnet 5 (known / mechanical coding) |
 

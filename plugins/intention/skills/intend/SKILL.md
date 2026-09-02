@@ -43,7 +43,7 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `docs/contracts/dispatch.md` (capability order is the inverse of
    depth). Blast raises density, never lowers it. Assign with
    `python3 plugins/intention/scripts/ladder.py assign --shape …`
-   (known → Sonnet 5, thinking → Opus 5, plan → Fable 5, design →
+   (known → Sonnet 5, thinking → Opus 5, plan → Fable 5.1, design →
    Opus 5 + designer skills). Real architecture opens a review-pair
    whose reader is Fable 5.1 (Grok when a second family is needed).
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`

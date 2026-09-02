@@ -95,7 +95,7 @@ are not vendored — the spec is the handoff.
 
 `run --adapter claude` is live `claude -p`. Model/effort come from
 the spec interface (`sonnet-5` → `claude-sonnet-5` / low,
-`opus-5` / medium, `fable-5` / high). Packet-only adds
+`opus-5` / medium, `fable-5.1` / high). Packet-only adds
 `--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
 
 `run --adapter openai` is the OpenAI HTTP API (Sol / `gpt-5.6-sol`).

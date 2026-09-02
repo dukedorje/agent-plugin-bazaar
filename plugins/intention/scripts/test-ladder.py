@@ -55,8 +55,8 @@ def main() -> int:
         ("thinking", "opus-5", "standard"),
         ("implementation", "opus-5", "standard"),
         ("design", "opus-5-design", "standard"),
-        ("plan", "fable-5-plan", "lean"),
-        ("intend-consult", "fable-5-plan", "lean"),
+        ("plan", "fable-5.1-plan", "lean"),
+        ("intend-consult", "fable-5.1-plan", "lean"),
         ("architecture-review", "fable-5.1-arch-review", "lean"),
         ("fold", "opus-5-fold", "standard"),
     ]

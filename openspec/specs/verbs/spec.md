@@ -375,7 +375,7 @@ be `capped`, not `dispatchable`.
 
 `spawn.py run --adapter claude` SHALL invoke `claude -p` with
 `--model` and `--effort` from the spec interface (sonnet-5 /
-opus-5 / fable-5). Packet-only runs SHALL pass
+opus-5 / fable-5.1). Packet-only runs SHALL pass
 `--disable-slash-commands`. Tests MAY stub the binary.
 
 #### Scenario: Stub records print mode
