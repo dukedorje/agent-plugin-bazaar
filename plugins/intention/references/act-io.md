@@ -129,7 +129,7 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 
 Source: `plugins/intention/references/ladder.json`. Known → Sonnet 5.
 Thinking implementation → Opus 5. Design → Opus 5 low/medium +
-designer skills. Plan consult → Fable 5. Real architecture →
+designer skills. Plan consult → Fable 5.1. Real architecture →
 review-pair whose reader is Fable 5.1 (Grok for cross-family /
 ADR-005; Sol only if `available`).
 Fold → designated folder Opus 5 (`opus-5-fold`; Grok only if picked
