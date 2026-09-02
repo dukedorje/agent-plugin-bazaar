@@ -31,6 +31,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-16 — `conductor.py release` sets the bead back to `open`. Do not release after `bd close` — it undoes the close. (`bazaar-zmq`)
 - 2026-08-16 — Fold of `add-taskmaster-host` is what creates `openspec/specs/taskmaster/`. An accepted ADR is not a living capability. (`openspec/specs/taskmaster/spec.md`)
 - 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
+- 2026-09-02 — Advise success verdict is `accept`. Notes live in the body. Do not write `accept-with-nits` (old banners still parse as accept). (`plugins/intention/skills/advise/SKILL.md`)
 - 2026-09-02 — Ladder priority: Terra then Sonnet (known); Sol then Opus 5 (implement); Fable 5.1 then Sol (plan); Fable, Sol, 4.8, Grok (arch). `assign --all` / `panel` fan-out; `--after` handoff. (`plugins/intention/scripts/ladder.py`)
 - 2026-09-02 — Sol spawn prefers Codex CLI (`codex exec`, `--adapter codex`, `CODEX_BIN`) like `claude -p`. OpenAI HTTP is the fallback when there is no CLI. (`plugins/intention/scripts/spawn.py`)
 - 2026-09-01 — Plan consult (`plan` / `replan` / `intend-consult`) is Fable 5.1 (`fable-5.1-plan`), same model as the architecture buddy. (`plugins/intention/references/ladder.json`)

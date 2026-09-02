@@ -120,8 +120,8 @@ def prompt_body(packet: dict, packet_path: Path, surface: str) -> str:
             "Work only on constraints.paths (the review file).\n"
             "First banner line after the title MUST be exactly one of:\n"
             "> **ADVISE:** accept\n"
-            "> **ADVISE:** accept-with-nits\n"
             "> **ADVISE:** send-back\n"
+            "Notes belong in the body, not in the verdict.\n"
             "Return a signed result JSON if you can.\n"
         )
     else:

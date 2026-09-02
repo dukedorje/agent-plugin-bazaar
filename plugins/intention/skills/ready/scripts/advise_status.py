@@ -17,7 +17,7 @@ RIGOR_RE = re.compile(
     r"\*\*Rigor:\*\*\s*(architecture|instrument|change|brief|vibe)\b",
     re.I,
 )
-ACCEPTING = {"accept", "accept-with-nits"}
+ACCEPTING = {"accept", "accept-with-nits"}  # old alias still counts as accept
 NEEDS_RIGOR = {"architecture", "instrument"}
 
 

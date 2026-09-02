@@ -29,7 +29,7 @@ disagree, the contract wins.
 | `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set. `--ask` presents it and stops. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask` |
 | `steer` | Decisions on architecture / human-gate nodes: menus with recommended, skip, decide-for-me. Residue is bead design/notes, plus `steer.md` if a change dir exists. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave |
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas. Reads steer residue. | Implement (until ACTIVE), fold, archive |
-| `advise` | Review file + verdict (`accept` / `accept-with-nits` / `send-back`) + signed read-result. Same-family session spawns an other-family reader. | Implement, fold, flip banner, sole-author accept, halt instead of spawn |
+| `advise` | Review file + verdict (`accept` / `send-back`) + signed read-result. Notes in the body. Same-family session spawns an other-family reader. | Implement, fold, flip banner, sole-author accept, halt instead of spawn |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
 | `fold` | Living spec updated + change archived. Designated folder is Opus 5 (`--shape fold`); may spawn in the background. | Implement leftover tasks, fold PENDING/PARKED |
 | `map` | Intend-dag page with live status; session current pin (not in the repo) | Implement, unpark, repo-level current |

@@ -82,8 +82,10 @@ SHALL refuse PENDING and PARKED.
 `ladder.json` (`architecture-review` reader, optional Fable consult),
 and write `openspec/changes/<id>/reviews/<date>-advise.md` plus a
 signed result with `permission: read`. It SHALL NOT edit product
-paths, fold, or implement nits. Verdict SHALL be `accept`,
-`accept-with-nits`, or `send-back`. `send-back` SHALL add owed boxes
+paths, fold, or implement leftover notes. Verdict SHALL be `accept`
+or `send-back`. Notes belong in the review body, not in the
+verdict. A historical `accept-with-nits` banner SHALL still count
+as `accept`. `send-back` SHALL add owed boxes
 on the change and SHALL NOT flip the banner. The change author SHALL
 NOT be the sole accepting reader.
 

@@ -2,7 +2,7 @@
 name: advise
 description: >
   Read-only review-pair on an in-flight change. Verdict accept,
-  accept-with-nits, or send-back. Use after change, before act, on
+  accept or send-back. Notes live in the body. Use after change, before act, on
   architecture or instrument work, or when asked to advise / review the
   plan / architecture pass.
 user-invocable: true
@@ -75,20 +75,23 @@ unblock `act` until the banner is `ACTIVE BUILD`.
 
    ```
    > **ADVISE:** accept
-   > **ADVISE:** accept-with-nits
    > **ADVISE:** send-back
    ```
 
-   Body: verdict, steelman against, one real tradeoff, findings,
-   what is solid, implementer gaps. Cite file:line for code claims.
+   Notes belong in the body, not in the verdict. Do not write
+   `accept-with-nits` (old files still parse as accept).
+
+   Body: steelman against, one real tradeoff, findings, what is
+   solid, leftover notes for `change` to amend. Cite file:line for
+   code claims.
 6. **Send-back** adds owed boxes on `tasks.md`. Does not flip the
-   banner. **Accept** / **accept-with-nits** unblocks `act` on that
-   change's write nodes (`ready.py` / `conductor.py ready`).
+   banner. **Accept** unblocks `act` on that change's write nodes
+   (`ready.py` / `conductor.py ready`).
 7. **Signed result** (`permission: read`):
-   - accept / accept-with-nits → `disposition: pass` (nits listed)
+   - accept → `disposition: pass` (notes in the review body)
    - send-back → `disposition: task-red` (not infra)
-8. **Stop.** Do not implement nits (`change` amends). Do not fold.
-   Do not `act`.
+8. **Stop.** Do not implement the notes (`change` amends). Do not
+   fold. Do not `act`.
 
 `ready.py` reports `needs_advise` when an ACTIVE BUILD architecture
 or instrument change has no accepting advise (or last is send-back).

@@ -329,7 +329,7 @@ def test_read_permission_prompt_is_reader_brief() -> None:
         packet = {
             "id": "pkt-advise",
             "node_id": "nod-advise",
-            "goal": "Read add-x. Verdict accept, accept-with-nits, or send-back.",
+            "goal": "Read add-x. Verdict accept or send-back.",
             "assignee": {
                 "id": "agt-fable",
                 "kind": "model",
