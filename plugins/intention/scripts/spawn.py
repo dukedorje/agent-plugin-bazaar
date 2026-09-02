@@ -40,12 +40,15 @@ CLAUDE_MODELS = {
     "claude-fable-5-1": "claude-fable-5-1",
 }
 
-CLAUDE_EFFORT = {
+# Shared ladder language: low | medium | high.
+# Claude → --effort. Codex → -c model_reasoning_effort="…".
+EFFORT = {
     "sonnet-5": "low",
     "opus-5": "medium",
     "opus-4.8": "high",
     "fable-5": "high",
     "fable-5.1": "high",
+    "gpt-5.6-sol": "high",
 }
 
 
@@ -182,10 +185,16 @@ def cmd_stage(args: argparse.Namespace) -> int:
     return 0
 
 
+def effort_of(spec: dict) -> str:
+    interface = str(spec.get("interface") or "")
+    raw = spec.get("effort") or EFFORT.get(interface) or "medium"
+    return str(raw)
+
+
 def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
     interface = str(spec.get("interface") or "sonnet-5")
     model = CLAUDE_MODELS.get(interface, interface)
-    effort = str(spec.get("effort") or CLAUDE_EFFORT.get(interface) or "medium")
+    effort = effort_of(spec)
     prompt = read_prompt(prompt_file)
     binary = os.environ.get("CLAUDE_BIN", "claude")
     argv = [
@@ -224,6 +233,7 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
     workspace = str(spec.get("workspace") or Path.cwd())
     sandbox = "read-only" if spec.get("surface") == "packet-only" else "workspace-write"
     last = prompt_file.parent / "last.md"
+    effort = effort_of(spec)
     argv = [
         codex_bin(),
         "exec",
@@ -237,6 +247,8 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
         workspace,
         "-m",
         interface,
+        "-c",
+        f'model_reasoning_effort="{effort}"',
         "--output-last-message",
         str(last),
         prompt,

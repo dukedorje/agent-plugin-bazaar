@@ -93,13 +93,14 @@ hosts keep `packet-only` and set `assignee.interface`. The exec
 adapter is for tests and local commands. Live Codex/Grok/Claude CLIs
 are not vendored — the spec is the handoff.
 
-`run --adapter claude` is live `claude -p`. Model/effort come from
-the spec interface (`sonnet-5` → `claude-sonnet-5` / low,
-`opus-5` / medium, `fable-5.1` / high). Packet-only adds
-`--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
+`run --adapter claude` is live `claude -p`. Model comes from the
+spec interface. Shared effort (`low` / `medium` / `high`) maps to
+`--effort`. Packet-only adds `--disable-slash-commands`. Override
+the binary with `CLAUDE_BIN`.
 
 `run --adapter codex` is live `codex exec` (Sol / `gpt-5.6-sol`),
-the same pattern as Claude Code. Packet-only uses `--sandbox
+the same pattern as Claude Code. Same effort word maps to
+`-c model_reasoning_effort="…"`. Packet-only uses `--sandbox
 read-only`; writes use `workspace-write`. Override the binary with
 `CODEX_BIN`. Stage picks this when the assignee harness is `codex`
 and `codex` is on PATH.

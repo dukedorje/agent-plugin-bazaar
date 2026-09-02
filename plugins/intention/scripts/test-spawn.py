@@ -214,6 +214,8 @@ def test_codex_adapter_argv() -> None:
         expect("--sandbox" in argv and "read-only" in argv, argv)
         expect("--skip-git-repo-check" in argv, argv)
         expect("--ephemeral" in argv, argv)
+        expect("-c" in argv, argv)
+        expect(any("model_reasoning_effort=" in a and "high" in a for a in argv), argv)
         face = json.loads(env_run.stdout)
         expect(face["disposition"] == "pass", face)
 
