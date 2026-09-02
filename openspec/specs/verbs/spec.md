@@ -9,8 +9,8 @@ either.
 
 ## Purpose
 
-`intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, and `run`
-are complementary. They share
+`intend`, `change`, `advise`, `act`, `fold`, `brief`, `ready`, `run`,
+and `consult` are complementary. They share
 `plugins/intention/references/shared.md`. None redefines the packet.
 `run` is the campaign; the others are stages (or observe / disposable
 decide).
@@ -400,6 +400,22 @@ the prompt on stdin, not argv. Shared effort SHALL map to
 - WHEN `run --adapter codex` executes
 - THEN the fake argv ends with `-`
 - AND the prompt body is on stdin, not argv
+
+### Requirement: consult is a second opinion, not advise
+
+`spawn.py consult` SHALL ask spawnable ladder readers (default
+shape `architecture-review`) with the brief on stdin / `--goal`.
+It SHALL NOT write `openspec/changes/*/reviews/`, flip a banner, or
+unblock `act`. `--panel` SHALL fan out every spawnable reader.
+`--id` is a human pick. Unspawnable harnesses (no CLI adapter)
+SHALL be skipped. Verdicts SHALL be `agree` / `caution` / `dissent`.
+
+#### Scenario: Stub consult is not advise
+
+- GIVEN a fake `claude` on PATH and `--id fable-5.1-arch-review`
+- WHEN `consult --goal "…" ` executes
+- THEN the prompt asks for `CONSULT:` not `ADVISE:`
+- AND stdout is opinions JSON, not a change review file
 
 ### Requirement: intend extract-from named items
 

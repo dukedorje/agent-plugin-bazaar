@@ -374,6 +374,115 @@ def test_read_permission_prompt_is_reader_brief() -> None:
         expect("Do not implement" in prompt, prompt)
 
 
+def test_consult_prompt_is_not_advise() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        packet = {
+            "id": "pkt-consult-x",
+            "node_id": "consult",
+            "goal": "Second-opinion this architecture: keep spawn cwd as workspace.",
+            "role": "consultant",
+            "assignee": {
+                "id": "agt-fable-5-1-arch-review",
+                "kind": "model",
+                "harness": "claude",
+                "interface": "fable-5.1",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-fable-5-1-arch-review"},
+            },
+            "requester": {
+                "id": "agt-conductor",
+                "kind": "group",
+                "harness": "none",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+            },
+            "constraints": {
+                "permission": "read",
+                "paths": ["ARCHITECTURE.md"],
+                "do_not": ["fold", "act", "deploy", "implement", "advise"],
+            },
+            "acceptance": {"kind": "none"},
+            "load_class": "structure-clear",
+            "rigor": "architecture",
+            "density": "lean",
+            "surface": "packet-only",
+        }
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(packet), encoding="utf-8")
+        staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        prompt = Path(json.loads(staged.stdout)["prompt_file"]).read_text(encoding="utf-8")
+        expect("SECOND OPINION" in prompt, prompt)
+        expect("**CONSULT:** agree" in prompt, prompt)
+        expect("**ADVISE:** accept" not in prompt, prompt)
+        expect("does not unblock act" in prompt, prompt)
+
+
+def test_consult_cli_fake_claude() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fake = root / "fake-claude"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,os,sys\n"
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read(), 'cwd': os.getcwd()}}, open({str(argv_log)!r},'w'))\n"
+            "sys.stdout.write('> **CONSULT:** caution\\n\\nKeep spawn cwd as the workspace.\\n')\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in {"OPENAI_API_KEY", "CODEX_BIN", "CLAUDE_BIN"}
+        }
+        env["CLAUDE_BIN"] = str(fake)
+        env["CODEX_BIN"] = "/nonexistent/codex-not-installed"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(SPAWN),
+                "consult",
+                "--shape",
+                "architecture-review",
+                "--id",
+                "fable-5.1-arch-review",
+                "--goal",
+                "Should spawn cwd be the workspace?",
+                "--paths",
+                "ARCHITECTURE.md",
+                "--root",
+                str(root),
+            ],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        out = json.loads(proc.stdout)
+        expect(out["shape"] == "architecture-review", out)
+        expect(len(out["opinions"]) == 1, out)
+        op = out["opinions"][0]
+        expect(op["verdict"] == "caution", op)
+        expect("workspace" in (op.get("body") or "").lower(), op)
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect("-p" in logged["argv"], logged["argv"])
+        expect(not any("SECOND OPINION" in a for a in logged["argv"]), logged["argv"])
+        expect("SECOND OPINION" in logged["stdin"], logged["stdin"][:300])
+        expect("**ADVISE:** accept" not in logged["stdin"], logged["stdin"])
+        expect(Path(logged["cwd"]).resolve() == root.resolve(), logged["cwd"])
+
+
+def test_consult_empty_fails() -> None:
+    proc = subprocess.run(
+        [sys.executable, str(SPAWN), "consult", "--goal", ""],
+        text=True,
+        capture_output=True,
+        input="",
+    )
+    expect(proc.returncode == 2, proc.stdout + proc.stderr)
+    expect("empty consult brief" in proc.stderr, proc.stderr)
+
+
 def test_empty_packet_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         empty = Path(td) / "empty.json"
@@ -393,6 +502,9 @@ def main() -> int:
         test_openai_adapter_missing_key,
         test_openai_adapter_sol_live,
         test_read_permission_prompt_is_reader_brief,
+        test_consult_prompt_is_not_advise,
+        test_consult_cli_fake_claude,
+        test_consult_empty_fails,
         test_empty_packet_fails,
     ]
     failed = 0

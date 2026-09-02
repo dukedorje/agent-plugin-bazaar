@@ -7,11 +7,14 @@ Claude/Codex CLIs take the prompt on stdin and write the result on stdout.
 
   python3 plugins/intention/scripts/spawn.py stage --packet FILE [--node ID]
   python3 plugins/intention/scripts/spawn.py run --spec FILE
+  python3 plugins/intention/scripts/spawn.py consult [--panel] [--shape architecture-review]
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -105,8 +108,38 @@ def permission_of(packet: dict) -> str:
     return str(perm) if isinstance(perm, str) and perm else "write"
 
 
+def is_consult(packet: dict) -> bool:
+    if packet.get("change_id"):
+        return False
+    if str(packet.get("node_id") or "").startswith("consult"):
+        return True
+    return str(packet.get("role") or "") == "consultant"
+
+
 def prompt_body(packet: dict, packet_path: Path, surface: str) -> str:
     blob = json.dumps(packet, indent=2, ensure_ascii=False)
+    if is_consult(packet):
+        header = (
+            "You are giving a SECOND OPINION. This brief is the whole input.\n"
+            "Do not look for a plan file. Do not run a host slash command.\n"
+            f"Surface: {surface}. Packet file: {packet_path}\n\n"
+            "Packet:\n\n"
+            f"{blob}\n\n"
+        )
+        closer = (
+            "You are a second-opinion reader. Permission: read.\n"
+            "Do not implement. Do not fold. Do not flip any change banner.\n"
+            "Do not write openspec/changes/ or reviews that gate act.\n"
+            "This is not advise. An opinion does not unblock act.\n"
+            "Read constraints.paths if any; otherwise follow the goal.\n"
+            "First banner line MUST be exactly one of:\n"
+            "> **CONSULT:** agree\n"
+            "> **CONSULT:** caution\n"
+            "> **CONSULT:** dissent\n"
+            "Body: steelman against, one real tradeoff, findings, what is solid.\n"
+            "Cite file:line for code claims. Notes in the body, not the verdict.\n"
+        )
+        return header + closer
     header = (
         "You are executing ONE work node. This file is the whole brief.\n"
         "Do not look for a plan file. Do not run a host slash command.\n"
@@ -390,6 +423,138 @@ def read_prompt(path: Path) -> str:
     return text
 
 
+def _json_result_text(parsed: Any) -> str:
+    if isinstance(parsed, str) and parsed.strip():
+        return parsed.strip()
+    if isinstance(parsed, dict):
+        for key in ("result", "content", "text", "message"):
+            val = parsed.get(key)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+            if isinstance(val, dict):
+                inner = val.get("content") or val.get("text")
+                if isinstance(inner, str) and inner.strip():
+                    return inner.strip()
+        choices = parsed.get("choices")
+        if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+            msg = choices[0].get("message") or {}
+            if isinstance(msg, dict):
+                content = msg.get("content")
+                if isinstance(content, str) and content.strip():
+                    return content.strip()
+    if isinstance(parsed, list):
+        for item in reversed(parsed):
+            text = _json_result_text(item)
+            if text:
+                return text
+    return ""
+
+
+def harvest_text(dest: Path, raw: str) -> str:
+    last = dest / "last.md"
+    if last.is_file() and last.stat().st_size > 0:
+        text = last.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    blobs = [raw]
+    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+    if lines and lines[-1] != raw:
+        blobs.append(lines[-1])
+    for blob in blobs:
+        try:
+            parsed = json.loads(blob)
+        except json.JSONDecodeError:
+            continue
+        text = _json_result_text(parsed)
+        if text:
+            return text
+    return raw
+
+
+CONSULT_VERDICTS = ("agree", "caution", "dissent")
+
+
+def parse_consult_verdict(text: str) -> str:
+    for line in (text or "").splitlines():
+        low = line.lower()
+        if "consult:" not in low:
+            continue
+        for verdict in CONSULT_VERDICTS:
+            if verdict in low:
+                return verdict
+    return "unknown"
+
+
+def adapter_for_harness(harness: str) -> str:
+    if harness == "claude":
+        return "claude"
+    if harness in {"codex", "openai"}:
+        if codex_cli_present():
+            return "codex"
+        if openai_api_key():
+            return "openai"
+        return "none"
+    return "none"
+
+
+def consult_agent_id(route: dict) -> str:
+    raw = str(route.get("id") or route.get("interface") or "reader")
+    slug = []
+    prev_dash = False
+    for ch in raw.lower():
+        if ch.isalnum():
+            slug.append(ch)
+            prev_dash = False
+        elif not prev_dash:
+            slug.append("-")
+            prev_dash = True
+    cleaned = "".join(slug).strip("-") or "reader"
+    return "agt-" + cleaned[:80]
+
+
+def consult_packet(goal: str, route: dict, paths: list[str]) -> dict[str, Any]:
+    harness = str(route.get("harness") or "none")
+    interface = str(route.get("interface") or "")
+    aid = consult_agent_id(route)
+    shapes = route.get("shapes") or []
+    rigor = "architecture" if "architecture-review" in shapes else "brief"
+    packet: dict[str, Any] = {
+        "id": f"pkt-consult-{uuid.uuid4().hex[:8]}",
+        "node_id": "consult",
+        "goal": goal.strip(),
+        "assignee": {
+            "id": aid,
+            "kind": "model",
+            "harness": harness,
+            "interface": interface,
+            "signing": {"mode": "stand-in", "stand_in_id": aid},
+        },
+        "requester": {
+            "id": "agt-conductor",
+            "kind": "group",
+            "harness": "none",
+            "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+        },
+        "constraints": {
+            "permission": "read",
+            "paths": list(paths),
+            "do_not": ["fold", "act", "deploy", "implement", "advise"],
+        },
+        "acceptance": {"kind": "none"},
+        "load_class": "structure-clear",
+        "rigor": rigor,
+        "density": str(route.get("density") or "lean"),
+        "surface": "packet-only",
+        "role": "consultant",
+    }
+    if route.get("effort"):
+        packet["assignee"]["effort"] = route["effort"]
+    return packet
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     spec = load_json(args.spec.resolve())
     prompt_file = Path(str(spec.get("prompt_file") or ""))
@@ -440,13 +605,14 @@ def cmd_run(args: argparse.Namespace) -> int:
     env = os.environ.copy()
     env["SPAWN_PROMPT_FILE"] = str(prompt_file)
     env["SPAWN_PACKET_FILE"] = str(spec.get("packet_file") or "")
+    workspace = str(spec.get("workspace") or dest)
 
     import subprocess
 
     try:
         proc = subprocess.Popen(
             argv,
-            cwd=str(dest),
+            cwd=workspace,
             env=env,
             stdin=subprocess.PIPE if stdin_text is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
@@ -488,9 +654,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 0
 
     atomic_write(raw_path, out or "", allow_empty=True)
+    harvested = harvest_text(dest, out or "")
     face = {
         "disposition": "pass" if proc.returncode == 0 else "infra-red",
-        "summary": "adapter exited",
+        "summary": (harvested[:500] if harvested else "adapter exited"),
         "verify_command": " ".join(argv),
         "verify_exit": proc.returncode,
         "commit_sha": None,
@@ -500,6 +667,137 @@ def cmd_run(args: argparse.Namespace) -> int:
     }
     atomic_write(face_path, json.dumps(face, indent=2) + "\n")
     print(json.dumps(face, indent=2))
+    return 0
+
+
+def consult_goal(args: argparse.Namespace) -> str:
+    if args.goal:
+        return str(args.goal).strip()
+    if sys.stdin.isatty():
+        return ""
+    return sys.stdin.read().strip()
+
+
+def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
+    scripts = Path(__file__).resolve().parent
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    import ladder as ladder_mod  # noqa: WPS433
+
+    data = ladder_mod.load()
+    hits = ladder_mod.candidates(
+        data,
+        args.shape,
+        route_id=args.route_id,
+        not_harness=args.not_harness,
+        after=args.after,
+    )
+    spawnable = [r for r in hits if adapter_for_harness(str(r.get("harness") or "")) != "none"]
+    skipped = [r for r in hits if adapter_for_harness(str(r.get("harness") or "")) == "none"]
+    if args.route_id:
+        if not hits:
+            raise SystemExit(f"no route {args.route_id!r} for shape {args.shape!r}")
+        if not spawnable:
+            harness = str(hits[0].get("harness") or "none")
+            raise SystemExit(f"no adapter for {args.route_id} (harness {harness})")
+        return spawnable
+    if args.panel:
+        if not spawnable:
+            names = ", ".join(str(r.get("id") or "?") for r in skipped) or "none"
+            raise SystemExit(f"no spawnable readers for {args.shape!r} (skipped: {names})")
+        return spawnable
+    if not spawnable:
+        raise SystemExit(f"no spawnable route for shape {args.shape!r}")
+    return spawnable[:1]
+
+
+def capture_json(fn, *a: Any, **kw: Any) -> tuple[int, dict[str, Any] | None, str]:
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        code = fn(*a, **kw)
+    raw = buf.getvalue()
+    try:
+        return code, json.loads(raw), raw
+    except json.JSONDecodeError:
+        return code, None, raw
+
+
+def cmd_consult(args: argparse.Namespace) -> int:
+    goal = consult_goal(args)
+    if not goal:
+        print("empty consult brief (pipe stdin or pass --goal)", file=sys.stderr)
+        return 2
+    try:
+        routes = consult_routes(args)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    root = args.root.resolve()
+    paths = list(args.paths or [])
+    opinions: list[dict[str, Any]] = []
+    for route in routes:
+        harness = str(route.get("harness") or "none")
+        adapter = adapter_for_harness(harness)
+        packet = consult_packet(goal, route, paths)
+        dest = root / ".spawns"
+        dest.mkdir(parents=True, exist_ok=True)
+        pkt_path = dest / f"{packet['id']}.json"
+        atomic_write(pkt_path, json.dumps(packet, indent=2) + "\n")
+        staged, spec, _ = capture_json(
+            cmd_stage,
+            argparse.Namespace(
+                packet=pkt_path,
+                node="consult",
+                surface="packet-only",
+                timeout=args.timeout,
+                root=root,
+            ),
+        )
+        if staged != 0 or not spec or not spec.get("spec_file"):
+            opinions.append(
+                {
+                    "id": route.get("id"),
+                    "harness": harness,
+                    "interface": route.get("interface"),
+                    "disposition": "infra-red",
+                    "verdict": "unknown",
+                    "body": "stage failed",
+                    "blockers": ["consult-stage"],
+                }
+            )
+            continue
+        spec_path = Path(str(spec["spec_file"]))
+        code, face, raw_out = capture_json(
+            cmd_run,
+            argparse.Namespace(spec=spec_path, adapter=adapter, argv=None),
+        )
+        if face is None:
+            face = infra_face("consult run did not return a face", "consult-run", "")
+        dest_dir = spec_path.parent
+        raw_file = dest_dir / "raw.txt"
+        raw_text = raw_file.read_text(encoding="utf-8") if raw_file.is_file() else raw_out
+        body = harvest_text(dest_dir, raw_text)
+        if not body:
+            body = str(face.get("summary") or "")
+        opinions.append(
+            {
+                "id": route.get("id"),
+                "harness": harness,
+                "interface": route.get("interface"),
+                "adapter": adapter,
+                "disposition": face.get("disposition"),
+                "verdict": parse_consult_verdict(body),
+                "body": body,
+                "raw_ref": face.get("raw_ref"),
+                "blockers": face.get("blockers") or [],
+                "exit": code,
+            }
+        )
+
+    print(json.dumps({"shape": args.shape, "panel": bool(args.panel), "opinions": opinions}, indent=2))
+    if not opinions:
+        return 2
     return 0
 
 
@@ -521,6 +819,18 @@ def main() -> int:
     run.add_argument("--adapter")
     run.add_argument("--argv", nargs=argparse.REMAINDER)
     run.set_defaults(func=cmd_run)
+
+    consult = sub.add_parser("consult", help="second opinion from ladder readers (no intend node)")
+    consult.add_argument("--shape", default="architecture-review")
+    consult.add_argument("--id", dest="route_id", help="ladder route id (human pick)")
+    consult.add_argument("--after", help="handoff: next spawnable route after this id")
+    consult.add_argument("--not-harness", dest="not_harness", help="skip this harness (ADR-005)")
+    consult.add_argument("--panel", action="store_true", help="every spawnable reader for the shape")
+    consult.add_argument("--goal", help="brief; stdin is appended when piped")
+    consult.add_argument("--paths", nargs="*", default=[], help="paths the reader should look at")
+    consult.add_argument("--timeout", type=float, default=300)
+    consult.add_argument("--root", type=Path, default=repo)
+    consult.set_defaults(func=cmd_consult)
 
     args = p.parse_args()
     return int(args.func(args))

@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, and `run`. None of them restates
+Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `ready`, `run`, and `consult`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -37,6 +37,7 @@ disagree, the contract wins.
 | `brief` | Disposable one-pager | Become a story template |
 | `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
 | `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck |
+| `consult` | Second opinions from architecture/plan/thinking readers. stdin/stdout. No intend node. | Implement, fold, write advise reviews, unblock `act` |
 
 ## Skip a change
 

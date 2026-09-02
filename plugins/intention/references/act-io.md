@@ -82,6 +82,7 @@ Writes `signature.content_hash` (`sha256:` + hex) over the result with
 ```bash
 python3 plugins/intention/scripts/spawn.py stage --packet <packet.json>
 python3 plugins/intention/scripts/spawn.py run --spec <spec.json>
+python3 plugins/intention/scripts/spawn.py consult --shape architecture-review [--panel]
 ```
 
 `stage` writes a unique `.spawns/<node>-<id>/` with `packet.json`,
@@ -115,6 +116,14 @@ is the chat body, not argv. Packet-only. Never a slash.
 `run` with no adapter prints `infra-red` / `adapter-none` and does
 not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
+
+`consult` is a second opinion with no intend node and no act
+unblock. Default shape `architecture-review` (same ladder as
+advise: Fable 5.1, Sol, Opus 4.8; skip unspawnable Grok). `--panel`
+runs every spawnable reader. `--id` is a human pick. Prompt on
+stdin / `--goal`; JSON opinions on stdout (`agree` / `caution` /
+`dissent`). Does not write `openspec/changes/*/reviews/`. Use
+`advise` when a change needs a gated accept.
 
 ## Foreign harness
 

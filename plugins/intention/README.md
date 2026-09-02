@@ -5,10 +5,11 @@ Default loop from intention to a running system:
 `intend` → `steer` → `change` → `advise` → `act` → `fold`
 
 Plus `brief` / `debrief` (disposable), `ready` / `map` (observe), `run`
-(campaign). `steer` is the human-gated guidance pass (not a `/run`
-wave; not `/ask`). Canonical skill files live here. In this repo,
-`.agents/skills/<name>` is a symlink at each skill so Grok, Hermes, and
-Prime load the same files without a plugin install.
+(campaign), `consult` (second opinion, no intend node). `steer` is the
+human-gated guidance pass (not a `/run` wave; not `/ask`). Canonical
+skill files live here. In this repo, `.agents/skills/<name>` is a
+symlink at each skill so Grok, Hermes, and Prime load the same files
+without a plugin install.
 
 ## Say this
 
@@ -24,6 +25,7 @@ Prime load the same files without a plugin install.
 | Walk until a question appears | `run --until ask` |
 | Scaffold + advise, never implement | `run --until advise` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
+| Second opinion (no change, no act unblock) | `consult` or `consult --panel` |
 
 `--until ask` may still `act` until an elicitation. “Run it by me”
 never `act`s — the plan *is* the question.
@@ -100,6 +102,7 @@ clone:
 skills add /path/to/agent-plugin-bazaar/plugins/intention \
   --skill intend --skill steer --skill change --skill advise --skill act --skill fold \
   --skill brief --skill debrief --skill map --skill ready --skill run \
+  --skill consult \
   --agent claude-code --agent codex --agent grok --agent hermes-agent \
   -g -y
 ```

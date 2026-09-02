@@ -13,6 +13,8 @@ argument-hint: "<change-id>"
 
 Load `../../references/shared.md`. You are a **reader**. You do not
 implement. You do not fold. You do not flip the change banner.
+No change on the board? Use `consult` (second opinion). This skill
+gates an in-flight change.
 
 This is the hole between `change` and `act`:
 
