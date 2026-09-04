@@ -5,8 +5,9 @@ Travels with the ready skill. Finds openspec/ by walking up from cwd
 (or --root). Beads come from `bd list --ready` (cwd). Does not assume
 this file lives in the project.
 
-  python3 <skill-dir>/scripts/ready.py
-  python3 <skill-dir>/scripts/ready.py --json
+  python3 <skill-dir>/scripts/status.py
+  python3 <skill-dir>/scripts/status.py --json
+  python3 <skill-dir>/scripts/status.py --queue
 """
 
 from __future__ import annotations
@@ -274,10 +275,161 @@ def normalize_beads(raw: Any) -> list[dict]:
 def fmt_bead(row: dict) -> str:
     nid = str(row.get("id") or "")
     kind = str(row.get("issue_type") or row.get("type") or "bead")
-    title = " ".join(str(row.get("title") or "").split())
-    if len(title) > 72:
-        title = title[:69] + "..."
+    title = short_what(row.get("title") or "", 72)
     return f"{nid:28} {kind:8} {title}"
+
+
+def short_what(text: object, limit: int = 72) -> str:
+    title = " ".join(str(text or "").split())
+    if len(title) > limit:
+        return title[: limit - 3] + "..."
+    return title
+
+
+def pri_label(row: dict) -> str:
+    p = row.get("priority")
+    if p is None or p == "":
+        return "—"
+    try:
+        return f"P{int(p)}"
+    except (TypeError, ValueError):
+        return str(p)
+
+
+def load_blocked() -> list[dict]:
+    """Open beads with unsatisfied blockers. Empty if bd is missing."""
+    try:
+        proc = subprocess.run(
+            ["bd", "blocked", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0:
+        return []
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    return normalize_beads(data)
+
+
+def load_blocked_json(path: Path) -> list[dict]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return normalize_beads(data)
+
+
+def blocked_ids(rows: list[dict]) -> set[str]:
+    out: set[str] = set()
+    for row in rows:
+        nid = str(row.get("id") or "")
+        if nid:
+            out.add(nid)
+    return out
+
+
+def parent_ids(rows: list[dict]) -> set[str]:
+    out: set[str] = set()
+    for row in rows:
+        parent = row.get("parent")
+        if parent:
+            out.add(str(parent))
+    return out
+
+
+def is_umbrella_epic(row: dict, parents: set[str]) -> bool:
+    kind = str(row.get("issue_type") or row.get("type") or "").lower()
+    nid = str(row.get("id") or "")
+    return kind == "epic" and nid in parents
+
+
+def queue_row(row: dict, *, source: str) -> dict:
+    title = row.get("title")
+    if not title and row.get("open"):
+        title = row["open"][0]
+    if not title:
+        title = row.get("id")
+    blocked_by = row.get("blocked_by") or []
+    if not isinstance(blocked_by, list):
+        blocked_by = [blocked_by]
+    return {
+        "id": str(row.get("id") or ""),
+        "priority": row.get("priority"),
+        "issue_type": str(row.get("issue_type") or row.get("type") or row.get("kind") or "bead"),
+        "title": short_what(title, 72),
+        "source": source,
+        "blocked_by": [str(x) for x in blocked_by if x],
+    }
+
+
+def build_queue(
+    data: dict[str, list[dict]],
+    *,
+    blocked: list[dict],
+) -> dict[str, list[dict]]:
+    """Honest startable pile: unblocked leaves + OpenSpec READY implement.
+
+    Umbrella epics (have children in this payload) stay off the queue —
+    the child is the work. Blocked beads are a separate list, never mixed
+    in. Empty ASK/EYES/PUNT faces are omitted by the printer.
+    """
+    beads = list(data.get("beads") or [])
+    blocked_set = blocked_ids(blocked)
+    # bd list --ready has included blocked ids; subtract rather than trust it.
+    parents = parent_ids(beads) | parent_ids(blocked)
+    queue: list[dict] = []
+    for row in data.get("ready") or []:
+        queue.append(queue_row(row, source="openspec"))
+    for row in beads:
+        nid = str(row.get("id") or "")
+        if nid in blocked_set:
+            continue
+        if is_umbrella_epic(row, parents):
+            continue
+        queue.append(queue_row(row, source="beads"))
+    waiting = [queue_row(row, source="openspec") for row in data.get("waiting") or []]
+
+    def sort_key(row: dict) -> tuple:
+        try:
+            pri = int(row["priority"])
+        except (TypeError, ValueError):
+            pri = 99
+        return (pri, row["id"])
+
+    queue.sort(key=sort_key)
+    blocked_rows = [queue_row(row, source="beads") for row in blocked]
+    blocked_rows.sort(key=sort_key)
+    waiting.sort(key=sort_key)
+    return {"queue": queue, "blocked": blocked_rows, "waiting": waiting}
+
+
+def print_queue(face: dict[str, list[dict]]) -> None:
+    print("QUEUE (open, unblocked)")
+    if face["queue"]:
+        print("| ID | Pri | What |")
+        print("|----|-----|------|")
+        for row in face["queue"]:
+            print(f"| `{row['id']}` | {pri_label(row)} | {row['title']} |")
+    else:
+        print("(none)")
+    if face["blocked"]:
+        print("")
+        print("BLOCKED")
+        print("| ID | Pri | What | Waiting on |")
+        print("|----|-----|------|------------|")
+        for row in face["blocked"]:
+            waiting = ", ".join(f"`{x}`" for x in row.get("blocked_by") or []) or "—"
+            print(f"| `{row['id']}` | {pri_label(row)} | {row['title']} | {waiting} |")
+    if face["waiting"]:
+        print("")
+        print("NEEDS ACTIVATION (OpenSpec · PENDING)")
+        print("| ID | What |")
+        print("|----|------|")
+        for row in face["waiting"]:
+            print(f"| `{row['id']}` | {row['title']} |")
 
 
 def print_card(
@@ -362,15 +514,31 @@ def main() -> int:
     p.add_argument("--ready", action="store_true")
     p.add_argument("--parked", action="store_true")
     p.add_argument(
+        "--queue",
+        action="store_true",
+        help="honest open pile: unblocked leaves + OpenSpec READY, plus blocked",
+    )
+    p.add_argument(
         "--beads-json",
         type=Path,
         help="fixture beads instead of `bd list --ready`",
+    )
+    p.add_argument(
+        "--blocked-json",
+        type=Path,
+        help="fixture blocked beads instead of `bd blocked`",
     )
     args = p.parse_args()
     if args.beads_json is not None:
         beads = load_beads_json(args.beads_json)
     else:
         beads = load_beads()
+    if args.blocked_json is not None:
+        blocked = load_blocked_json(args.blocked_json)
+    elif args.beads_json is not None:
+        blocked = []
+    else:
+        blocked = load_blocked()
     if args.root:
         openspec = args.root.resolve()
     else:
@@ -383,6 +551,13 @@ def main() -> int:
     else:
         data = classify(openspec)
     data["beads"] = beads
+    if args.queue:
+        face = build_queue(data, blocked=blocked)
+        if args.json:
+            print(json.dumps(face, indent=2))
+            return 0
+        print_queue(face)
+        return 0
     show_ready = args.ready or not args.parked
     show_parked = args.parked or not args.ready
     if args.json:

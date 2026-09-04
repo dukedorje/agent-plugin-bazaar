@@ -22,6 +22,7 @@ without a plugin install.
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `status` |
+| Honest open pile (unblocked leaves, no empty faces) | `status --queue` |
 | Keep going while unblocked | `run` |
 | Fan two disjoint writes on HEAD | `run-wave` |
 | At the desk; halt at first ASK/EYES/PENDING | `run --wait` |
@@ -64,6 +65,9 @@ lens is not an empty board.
   this list only, so `/run --until empty` does not `act` a bead id.
 - **BEADS** — `bd list --ready`. JSON `beads`. Bare `/run`
   already walks it (landing → `change`, leftover task → `intend`).
+- **`--queue`** — honest open pile. Unblocked leaves (no umbrella
+  epics) + OpenSpec READY, then BLOCKED with waiting-on. No empty
+  ASK/EYES/(none) faces. JSON `{queue, blocked, waiting}`.
 
 Do not run `bd ready` as a second report.
 

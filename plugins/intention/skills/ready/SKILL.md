@@ -4,7 +4,7 @@ description: >
   Alias for status. Board: READY, PENDING, ASK, EYES, PUNT, beads,
   parked. Prefer status. Use when asked what's ready or "what's on deck".
 user-invocable: true
-argument-hint: "[--parked|--ready]"
+argument-hint: "[--parked|--ready|--queue]"
 ---
 
 # ready

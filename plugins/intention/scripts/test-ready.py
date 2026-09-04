@@ -232,6 +232,115 @@ def test_ask_and_punt_faces() -> None:
         expect([row["id"] for row in face["punt"]] == ["add-y"], face)
 
 
+def test_queue_omits_umbrella_epics_and_blocked() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-x", tasks="- [ ] implement the thing")
+        beads = write_beads(
+            root,
+            [
+                {
+                    "id": "bazaar-y4t",
+                    "title": "Rust is canonical",
+                    "issue_type": "epic",
+                    "priority": 1,
+                },
+                {
+                    "id": "bazaar-y4t.21",
+                    "title": "Route remaining types",
+                    "issue_type": "task",
+                    "priority": 1,
+                    "parent": "bazaar-y4t",
+                },
+                {
+                    "id": "bazaar-qy7",
+                    "title": "WASM export KATs never run under any gate",
+                    "issue_type": "bug",
+                    "priority": 1,
+                },
+            ],
+        )
+        blocked = root / "blocked.json"
+        blocked.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": "bazaar-y4t.22",
+                        "title": "Living spec canonical-types",
+                        "issue_type": "task",
+                        "priority": 1,
+                        "parent": "bazaar-y4t",
+                        "blocked_by": ["bazaar-y4t.21"],
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+        proc = run(
+            [
+                "--queue",
+                "--json",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+                "--blocked-json",
+                str(blocked),
+            ],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        ids = [row["id"] for row in face["queue"]]
+        expect("add-x" in ids, face)
+        expect("bazaar-qy7" in ids, face)
+        expect("bazaar-y4t.21" in ids, face)
+        expect("bazaar-y4t" not in ids, face)
+        expect("bazaar-y4t.22" not in ids, face)
+        expect([row["id"] for row in face["blocked"]] == ["bazaar-y4t.22"], face)
+        expect(face["blocked"][0]["blocked_by"] == ["bazaar-y4t.21"], face)
+        text = run(
+            [
+                "--queue",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+                "--blocked-json",
+                str(blocked),
+            ],
+            cwd=root,
+        )
+        expect(text.returncode == 0, text.stderr + text.stdout)
+        expect("QUEUE (open, unblocked)" in text.stdout, text.stdout)
+        expect("`bazaar-qy7`" in text.stdout, text.stdout)
+        expect("bazaar-y4t`" not in text.stdout.split("BLOCKED")[0], text.stdout)
+        expect("ASK" not in text.stdout, text.stdout)
+        expect("YOUR EYES" not in text.stdout, text.stdout)
+        expect("(none)" not in text.stdout, text.stdout)
+
+
+def test_queue_empty_is_none_not_full_board() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "openspec" / "changes").mkdir(parents=True)
+        beads = write_beads(root, [])
+        proc = run(
+            [
+                "--queue",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+            ],
+            cwd=root,
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        expect(proc.stdout.strip() == "QUEUE (open, unblocked)\n(none)", proc.stdout)
+        expect("NEEDS ACTIVATION" not in proc.stdout, proc.stdout)
+        expect("BEADS" not in proc.stdout, proc.stdout)
+
+
 def test_pending_does_not_flip_into_ready() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -263,6 +372,8 @@ def main() -> int:
         test_eyes_is_not_ready,
         test_ask_and_punt_faces,
         test_pending_does_not_flip_into_ready,
+        test_queue_omits_umbrella_epics_and_blocked,
+        test_queue_empty_is_none_not_full_board,
     ]
     failed = 0
     for fn in tests:

@@ -23,7 +23,7 @@
       "name": "intention",
       "source": "./plugins/intention",
       "description": "intend, steer, change, advise, act, fold, ready, brief, debrief, map, status, run, run-wave, consult — intention to a running system",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "category": "productivity",
       "keywords": ["intention", "ooda", "openspec", "agent-surface", "groups"],
       "license": "MIT"
