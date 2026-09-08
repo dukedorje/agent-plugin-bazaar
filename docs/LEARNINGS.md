@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-08 — Grok injects `ANTHROPIC_API_KEY` / `CLAUDE_API_KEY`. `claude -p` then bills the API ("Credit balance is too low") instead of the Claude Code subscription. `spawn.py` strips those plus `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` / `ANTHROPIC_MODEL*` for the claude adapter. (`plugins/intention/scripts/spawn.py`)
+
 - 2026-08-17 — 1:1 “dossier becomes a Project” failed advise. Intentions emerge from a dossier over time and cite it; the gathering is not consumed. (`openspec/specs/dossier/spec.md`, ADR-007)
 - 2026-08-17 — The hole between `change` and `act` is `advise` (read-only review-pair). Hygiene treats any checkbox containing "handoff" as not-owed — do not put that word in a real task line. (`plugins/intention/skills/advise/SKILL.md`, `scripts/check-hygiene.py`)
 - 2026-08-14 — Validating a JSON Schema `$defs` slice: build a tiny schema `{ "$ref": "#/$defs/Name", "$defs": schema["$defs"] }`. A bare `$ref` into the parent file needs a registry. (`docs/contracts/validate.py`)

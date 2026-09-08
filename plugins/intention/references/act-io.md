@@ -110,6 +110,11 @@ files (`.spawns/`) stay for staging, not as the message channel.
 (stdin). Model comes from the spec interface. Shared effort
 (`low` / `medium` / `high`) maps to `--effort`. Packet-only adds
 `--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
+The child env drops `ANTHROPIC_API_KEY`, `CLAUDE_API_KEY`,
+`ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_MODEL*`
+so Fable / Opus / Sonnet use the Claude Code subscription login
+instead of billing the API (Grok injects those keys; a set key
+wins over claude.ai login).
 
 `run --adapter codex` is live `codex exec -` (stdin). Same effort
 word maps to `-c model_reasoning_effort="…"`. Sandbox is

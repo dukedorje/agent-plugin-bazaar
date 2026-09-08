@@ -31,6 +31,21 @@ from typing import Any
 
 OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
 
+# `claude -p` bills the Anthropic API (or a proxy) when these are set.
+# Grok injects ANTHROPIC_API_KEY / CLAUDE_API_KEY; DeepSeek-compat shells
+# set ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN. Strip them so Fable /
+# Opus / Sonnet use the Claude Code subscription login.
+CLAUDE_SUBSCRIPTION_STRIP = (
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "CLAUDE_API_KEY",
+)
+
 SLASH = ("/act", "/intend", "/meta-execute", "/run")
 
 CLAUDE_MODELS = {
@@ -651,6 +666,15 @@ def consult_packet(goal: str, route: dict, paths: list[str]) -> dict[str, Any]:
     return packet
 
 
+def env_for_adapter(adapter: str) -> dict[str, str]:
+    """Child env. Claude adapter drops API keys so the CLI uses login."""
+    env = os.environ.copy()
+    if adapter == "claude":
+        for key in CLAUDE_SUBSCRIPTION_STRIP:
+            env.pop(key, None)
+    return env
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     spec = load_json(args.spec.resolve())
     prompt_file = Path(str(spec.get("prompt_file") or ""))
@@ -700,7 +724,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("adapter requires argv", file=sys.stderr)
         return 2
 
-    env = os.environ.copy()
+    env = env_for_adapter(str(adapter))
     env["SPAWN_PROMPT_FILE"] = str(prompt_file)
     env["SPAWN_PACKET_FILE"] = str(spec.get("packet_file") or "")
     workspace = str(spec.get("workspace") or dest)

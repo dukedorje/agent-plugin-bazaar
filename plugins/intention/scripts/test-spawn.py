@@ -132,8 +132,8 @@ def test_claude_adapter_argv() -> None:
         argv_log = root / "argv.json"
         fake.write_text(
             "#!/usr/bin/env python3\n"
-            "import json,sys\n"
-            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read()}}, open({str(argv_log)!r},'w'))\n",
+            "import json,os,sys\n"
+            f"json.dump({{'argv': sys.argv, 'stdin': sys.stdin.read(), 'env': {{k: os.environ.get(k) for k in ('ANTHROPIC_API_KEY','ANTHROPIC_AUTH_TOKEN','ANTHROPIC_BASE_URL','CLAUDE_API_KEY','CLAUDE_BIN')}}}}, open({str(argv_log)!r},'w'))\n",
             encoding="utf-8",
         )
         fake.chmod(0o755)
@@ -141,7 +141,14 @@ def test_claude_adapter_argv() -> None:
             [sys.executable, str(SPAWN), "run", "--spec", spec_path, "--adapter", "claude"],
             text=True,
             capture_output=True,
-            env={**dict(**subprocess.os.environ), "CLAUDE_BIN": str(fake)},
+            env={
+                **dict(**subprocess.os.environ),
+                "CLAUDE_BIN": str(fake),
+                "ANTHROPIC_API_KEY": "sk-test-api",
+                "ANTHROPIC_AUTH_TOKEN": "sk-test-token",
+                "ANTHROPIC_BASE_URL": "https://api.example.test",
+                "CLAUDE_API_KEY": "sk-test-claude",
+            },
         )
         expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
         logged = json.loads(argv_log.read_text(encoding="utf-8"))
@@ -153,6 +160,12 @@ def test_claude_adapter_argv() -> None:
         expect(not any("You are executing ONE work node" in a for a in argv), argv)
         expect("You are executing ONE work node" in stdin, stdin[:200])
         expect("pkt-density-explicit" in stdin, stdin[:400])
+        child_env = logged["env"]
+        expect(child_env.get("ANTHROPIC_API_KEY") is None, child_env)
+        expect(child_env.get("ANTHROPIC_AUTH_TOKEN") is None, child_env)
+        expect(child_env.get("ANTHROPIC_BASE_URL") is None, child_env)
+        expect(child_env.get("CLAUDE_API_KEY") is None, child_env)
+        expect(child_env.get("CLAUDE_BIN") == str(fake), child_env)
         face = json.loads(env_run.stdout)
         expect(face["disposition"] == "pass", face)
 
