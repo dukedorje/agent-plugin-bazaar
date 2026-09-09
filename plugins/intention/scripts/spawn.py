@@ -34,7 +34,9 @@ OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
 # `claude -p` bills the Anthropic API (or a proxy) when these are set.
 # Grok injects ANTHROPIC_API_KEY / CLAUDE_API_KEY; DeepSeek-compat shells
 # set ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN. Strip them so Fable /
-# Opus / Sonnet use the Claude Code subscription login.
+# Opus / Sonnet use the Claude Code subscription login, unless
+# CLAUDE_USE_API_KEY=1. spawn.py Popen's the binary, so it never sees
+# the interactive zsh wrapper that unsets these.
 CLAUDE_SUBSCRIPTION_STRIP = (
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
@@ -322,6 +324,35 @@ def effort_of(spec: dict) -> str:
     interface = str(spec.get("interface") or "")
     raw = spec.get("effort") or EFFORT.get(interface) or "medium"
     return str(raw)
+
+
+def claude_api_keys_present(env: dict[str, str]) -> list[str]:
+    found: list[str] = []
+    for key in CLAUDE_SUBSCRIPTION_STRIP:
+        val = env.get(key)
+        if val is not None and str(val).strip():
+            found.append(key)
+    return found
+
+
+def remind_unset_claude_api_keys(keys: list[str], *, kept: bool) -> None:
+    """Stderr so consult JSON on stdout stays parseable. For the parent agent."""
+    names = ", ".join(keys)
+    if kept:
+        print(
+            f"spawn.py: {names} still in the Claude child "
+            "(CLAUDE_USE_API_KEY=1). They shadow a claude.ai Max/Pro login.",
+            file=sys.stderr,
+        )
+        return
+    print(
+        f"spawn.py: stripped {names} from the Claude child so a claude.ai "
+        "Max/Pro login wins. Unset them in this shell too: "
+        "`unset ANTHROPIC_API_KEY CLAUDE_API_KEY ANTHROPIC_AUTH_TOKEN "
+        "ANTHROPIC_BASE_URL`. API keys shadow the subscription and yield "
+        "'Credit balance is too low'. Keep them with CLAUDE_USE_API_KEY=1.",
+        file=sys.stderr,
+    )
 
 
 def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
@@ -669,9 +700,17 @@ def consult_packet(goal: str, route: dict, paths: list[str]) -> dict[str, Any]:
 def env_for_adapter(adapter: str) -> dict[str, str]:
     """Child env. Claude adapter drops API keys so the CLI uses login."""
     env = os.environ.copy()
-    if adapter == "claude":
-        for key in CLAUDE_SUBSCRIPTION_STRIP:
-            env.pop(key, None)
+    if adapter != "claude":
+        return env
+    present = claude_api_keys_present(env)
+    flag = (env.get("CLAUDE_USE_API_KEY") or "").strip().lower()
+    keep = flag in {"1", "true", "yes"}
+    if present:
+        remind_unset_claude_api_keys(present, kept=keep)
+    if keep:
+        return env
+    for key in CLAUDE_SUBSCRIPTION_STRIP:
+        env.pop(key, None)
     return env
 
 

@@ -170,6 +170,62 @@ def test_claude_adapter_argv() -> None:
         expect(face["disposition"] == "pass", face)
 
 
+def test_claude_adapter_strips_api_keys() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        staged = run(["stage", "--packet", str(PACKET), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr)
+        spec_path = json.loads(staged.stdout)["spec_file"]
+        spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
+        spec["interface"] = "sonnet-5"
+        spec["surface"] = "packet-only"
+        Path(spec_path).write_text(json.dumps(spec), encoding="utf-8")
+        fake = root / "fake-claude"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,os,sys\n"
+            "keys=('ANTHROPIC_API_KEY','CLAUDE_API_KEY','ANTHROPIC_AUTH_TOKEN')\n"
+            f"json.dump({{'env': {{k: os.environ.get(k) for k in keys}}}}, open({str(argv_log)!r},'w'))\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        child_env = {
+            **dict(os.environ),
+            "CLAUDE_BIN": str(fake),
+            "ANTHROPIC_API_KEY": "sk-test-anthropic",
+            "CLAUDE_API_KEY": "sk-test-claude",
+            "ANTHROPIC_AUTH_TOKEN": "sk-test-auth",
+        }
+        child_env.pop("CLAUDE_USE_API_KEY", None)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec_path, "--adapter", "claude"],
+            text=True,
+            capture_output=True,
+            env=child_env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect(logged["env"]["ANTHROPIC_API_KEY"] is None, logged)
+        expect(logged["env"]["CLAUDE_API_KEY"] is None, logged)
+        expect(logged["env"]["ANTHROPIC_AUTH_TOKEN"] is None, logged)
+        expect("stripped" in env_run.stderr, env_run.stderr)
+        expect("unset ANTHROPIC_API_KEY" in env_run.stderr, env_run.stderr)
+
+        child_env["CLAUDE_USE_API_KEY"] = "1"
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec_path, "--adapter", "claude"],
+            text=True,
+            capture_output=True,
+            env=child_env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        logged = json.loads(argv_log.read_text(encoding="utf-8"))
+        expect(logged["env"]["ANTHROPIC_API_KEY"] == "sk-test-anthropic", logged)
+        expect(logged["env"]["CLAUDE_API_KEY"] == "sk-test-claude", logged)
+        expect("CLAUDE_USE_API_KEY=1" in env_run.stderr, env_run.stderr)
+
+
 def test_codex_adapter_argv() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -728,6 +784,7 @@ def main() -> int:
         test_missing_prompt_fails,
         test_stall_infra_red,
         test_claude_adapter_argv,
+        test_claude_adapter_strips_api_keys,
         test_codex_adapter_argv,
         test_openai_adapter_missing_key,
         test_openai_adapter_sol_live,
