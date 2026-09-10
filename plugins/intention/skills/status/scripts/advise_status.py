@@ -20,6 +20,19 @@ RIGOR_RE = re.compile(
 )
 ACCEPTING = {"accept", "accept-with-nits"}  # old alias still counts as accept
 NEEDS_RIGOR = {"architecture", "instrument"}
+# `…-re-advise-2.md` vs `…-re-advise.md`: '-' < '.', so lex sort picks
+# the unnumbered send-back. Unnumbered is series 1; `-sendback` is 0.
+_TRAILING_SEQ = re.compile(r"^(.*)-(\d+)$")
+
+
+def review_sort_key(path: Path) -> tuple[str, int]:
+    stem = path.name[:-3] if path.name.endswith(".md") else path.name
+    if stem.endswith("-sendback"):
+        return (stem[: -len("-sendback")], 0)
+    m = _TRAILING_SEQ.match(stem)
+    if m:
+        return (m.group(1), int(m.group(2)))
+    return (stem, 1)
 
 
 def change_rigor(change_dir: Path) -> str | None:
@@ -40,7 +53,8 @@ def last_advise_verdict(change_dir: Path) -> str | None:
     if not reviews.is_dir():
         return None
     files = sorted(
-        p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")
+        (p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")),
+        key=review_sort_key,
     )
     if not files:
         return None

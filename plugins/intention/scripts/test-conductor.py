@@ -11,6 +11,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CONDUCTOR = HERE / "conductor.py"
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+from advise_status import last_advise_verdict, needs_advise  # noqa: E402
 
 
 def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -248,6 +251,74 @@ def test_isolate_persist() -> None:
         expect(json.loads(reuse.stdout)["reused"] is True, reuse.stdout)
 
 
+def _arch_change(root: Path) -> Path:
+    change = root / "openspec" / "changes" / "add-arch"
+    change.mkdir(parents=True)
+    (change / "proposal.md").write_text(
+        "# add-arch\n\n> **ACTIVE BUILD**\n\n**Rigor:** architecture\n",
+        encoding="utf-8",
+    )
+    return change
+
+
+def test_re_advise_numbered_beats_unnumbered() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        change = _arch_change(Path(td))
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-09-10-re-advise.md").write_text(
+            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        (reviews / "2026-09-10-re-advise-2.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        expect(
+            last_advise_verdict(change) == "accept",
+            last_advise_verdict(change),
+        )
+        expect(needs_advise(change) is False, "still needs advise")
+
+
+def test_re_advise_ten_beats_two() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        change = _arch_change(Path(td))
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-09-10-re-advise-2.md").write_text(
+            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        (reviews / "2026-09-10-re-advise-10.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        expect(
+            last_advise_verdict(change) == "accept",
+            last_advise_verdict(change),
+        )
+
+
+def test_advise_sendback_sorts_before_accept() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        change = _arch_change(Path(td))
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-09-02-advise-sendback.md").write_text(
+            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        (reviews / "2026-09-02-advise.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** fable\n",
+            encoding="utf-8",
+        )
+        expect(
+            last_advise_verdict(change) == "accept",
+            last_advise_verdict(change),
+        )
+
+
 def test_advise_gate() -> None:
     with tempfile.TemporaryDirectory() as td:
         repo = Path(td)
@@ -401,6 +472,9 @@ def main() -> int:
         test_classify,
         test_cap_and_take,
         test_isolate_persist,
+        test_re_advise_numbered_beats_unnumbered,
+        test_re_advise_ten_beats_two,
+        test_advise_sendback_sorts_before_accept,
         test_advise_gate,
     ]
     failed = 0

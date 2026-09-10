@@ -19,11 +19,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_STATUS_SCRIPTS = Path(__file__).resolve().parents[2] / "status" / "scripts"
+if str(_STATUS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_STATUS_SCRIPTS))
+from advise_status import last_advise_verdict  # noqa: E402
+
 STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
-ADVISE_RE = re.compile(
-    r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
-    re.I,
-)
 STAGES = ("intend", "change", "advise", "act", "fold")
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -113,23 +114,6 @@ def landing_from_title(title: str) -> str | None:
         return None
     head = title.strip().split()[0].rstrip(":")
     return head if is_change_id(head) else None
-
-
-def last_advise_verdict(change_dir: Path) -> str | None:
-    reviews = change_dir / "reviews"
-    if not reviews.is_dir():
-        return None
-    files = sorted(
-        p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")
-    )
-    if not files:
-        return None
-    text = files[-1].read_text(encoding="utf-8")
-    for line in text.splitlines()[:40]:
-        m = ADVISE_RE.match(line.strip())
-        if m:
-            return m.group(1).lower()
-    return None
 
 
 def eyes_ids(openspec: Path | None) -> list[str]:
