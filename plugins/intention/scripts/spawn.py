@@ -314,6 +314,8 @@ def cmd_stage(args: argparse.Namespace) -> int:
     assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
     if assignee.get("effort"):
         spec["effort"] = assignee["effort"]
+    if "fast" in assignee:
+        spec["fast"] = assignee["fast"]
     spec_path = dest / "spec.json"
     atomic_write(spec_path, json.dumps(spec, indent=2) + "\n")
     print(json.dumps({**spec, "dir": str(dest), "spec_file": str(spec_path)}, indent=2))
@@ -324,6 +326,21 @@ def effort_of(spec: dict) -> str:
     interface = str(spec.get("interface") or "")
     raw = spec.get("effort") or EFFORT.get(interface) or "medium"
     return str(raw)
+
+
+def _truthy_fast(raw: object) -> bool:
+    if isinstance(raw, bool):
+        return raw
+    return str(raw).strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def codex_fast_mode(spec: dict) -> bool:
+    """Default on. Spec `fast` or CODEX_FAST=0/false/no/off turns it off."""
+    if "fast" in spec and spec.get("fast") is not None:
+        return _truthy_fast(spec.get("fast"))
+    if "CODEX_FAST" in os.environ:
+        return _truthy_fast(os.environ.get("CODEX_FAST"))
+    return True
 
 
 def claude_api_keys_present(env: dict[str, str]) -> list[str]:
@@ -397,25 +414,32 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
     sandbox = str(spec.get("sandbox") or sandbox_of(spec))
     last = prompt_file.parent / "last.md"
     effort = effort_of(spec)
-    return [
+    argv = [
         codex_bin(),
         "exec",
-        "--skip-git-repo-check",
-        "--ephemeral",
-        "--color",
-        "never",
-        "--sandbox",
-        sandbox,
-        "-C",
-        workspace,
-        "-m",
-        interface,
-        "-c",
-        f'model_reasoning_effort="{effort}"',
-        "--output-last-message",
-        str(last),
-        "-",
     ]
+    if codex_fast_mode(spec):
+        argv.extend(["--enable", "fast_mode"])
+    argv.extend(
+        [
+            "--skip-git-repo-check",
+            "--ephemeral",
+            "--color",
+            "never",
+            "--sandbox",
+            sandbox,
+            "-C",
+            workspace,
+            "-m",
+            interface,
+            "-c",
+            f'model_reasoning_effort="{effort}"',
+            "--output-last-message",
+            str(last),
+            "-",
+        ]
+    )
+    return argv
 
 
 def openai_api_key() -> str | None:
