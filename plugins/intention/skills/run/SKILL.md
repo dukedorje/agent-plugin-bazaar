@@ -62,8 +62,9 @@ before `act`. `--until roll` and `--until ask` then: send-back
 **with open owed boxes** → `change`; send-back with **no** open
 boxes → `needs_advise` (re-advise or park), not `change`, not
 `fold`; unblocked bead with a landing and no dir → `change`;
-unblocked task/feature with no landing (not epic, not `nod-`) →
-`intend --extract-from` that bead. `--until ask` stops first if
+unblocked task/feature with no landing (not epic, not beads type
+`node`, not a legacy `nod-` title) → `intend --extract-from`
+that bead. `--until ask` stops first if
 there is an elicitation. Do not intend epics. Do not `act` an
 architecture / instrument change that still `needs_advise`. Do not
 `fold` a `needs_advise` id. `--until fold` with nothing fold-legal
