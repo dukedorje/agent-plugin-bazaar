@@ -1,0 +1,36 @@
+{
+  "name": "intention",
+  "version": "0.5.0+codex.20260915064428",
+  "description": "Intention-to-running work algebra for planning, review, execution, and verification.",
+  "author": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "repository": "https://github.com/dukejones/agent-plugin-bazaar",
+  "license": "MIT",
+  "keywords": [
+    "intention",
+    "planning",
+    "openspec",
+    "multi-agent",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Intention",
+    "shortDescription": "Plan, review, execute, and verify work as an intention DAG.",
+    "longDescription": "Turn an intention into a dependency-aware work graph, guide architecture decisions, prepare changes, dispatch execution, verify outcomes, and fold completed work into living specifications.",
+    "developerName": "Duke Jones",
+    "category": "Productivity",
+    "capabilities": [
+      "Planning",
+      "Write",
+      "Multi-agent orchestration"
+    ],
+    "defaultPrompt": [
+      "Intend this work and show me the dependency graph.",
+      "Show me what is ready in the current intention.",
+      "Run this intention until a decision needs me."
+    ]
+  }
+}

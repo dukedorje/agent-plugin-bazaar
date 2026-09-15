@@ -1,0 +1,20 @@
+{
+  "name": "agent-plugin-bazaar",
+  "interface": {
+    "displayName": "Agent Plugin Bazaar"
+  },
+  "plugins": [
+    {
+      "name": "intention",
+      "source": {
+        "source": "local",
+        "path": "./plugins/intention"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

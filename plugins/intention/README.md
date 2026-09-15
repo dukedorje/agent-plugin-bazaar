@@ -103,21 +103,22 @@ Grok: clone is enough (`.agents/skills/`). Or
 `grok plugin marketplace add <this-repo>` and
 `grok plugin install intention --trust`.
 
-Codex / Hermes / Prime: Agent Skills standard. Invoke by name, never as
-a Claude slash command. Matrix:
-[`references/harness.md`](references/harness.md).
-
-Other repos (Vercel `skills` CLI) — run from `$HOME`, not inside this
-clone:
+Codex: install the complete plugin so shared references, scripts, workflows,
+and agents stay beside the skills:
 
 ```bash
-skills add /path/to/agent-plugin-bazaar/plugins/intention \
-  --skill intend --skill steer --skill change --skill advise --skill act --skill fold \
-  --skill brief --skill debrief --skill map --skill status --skill ready --skill run \
-  --skill consult \
-  --agent claude-code --agent codex --agent grok --agent hermes-agent \
-  -g -y
+codex plugin marketplace add /path/to/agent-plugin-bazaar
+codex plugin add intention@agent-plugin-bazaar
 ```
+
+Start a new Codex thread after install or update. Invoke by `$intend`,
+`@intention:intend`, or skill match—never as a Claude slash command.
+
+Hermes / Prime use the Agent Skills standard from a checkout whose
+`.agents/skills/` entries point into this complete plugin tree. Do not
+globally copy only `skills/`: Intention verbs also load the sibling
+`references/`, `scripts/`, `workflows/`, and `agents/` directories. Matrix:
+[`references/harness.md`](references/harness.md).
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs:
 `openspec/specs/`. Verb bodies: `references/` (shared vocabulary;
