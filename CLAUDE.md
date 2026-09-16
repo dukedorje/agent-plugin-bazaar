@@ -107,6 +107,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `change` | OpenSpec-lite proposal + deltas |
 | `advise` | Read-only review-pair; accept / send-back (notes in the body) |
 | `act` | Packet, focused verify, commit-on-red |
+| `demo` | Try a landed act (internal ring). Halt. Not EYES, not fold |
 | `fold` | Living spec + archive. Designated folder is Opus 5; may spawn in the background |
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |

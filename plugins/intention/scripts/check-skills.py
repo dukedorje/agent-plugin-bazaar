@@ -13,7 +13,7 @@ PLUGIN = Path(__file__).resolve().parents[1]
 SKILLS = PLUGIN / "skills"
 REFS = PLUGIN / "references"
 AGENTS = PLUGIN.parents[1] / ".agents" / "skills"
-VERBS = ("intend", "steer", "change", "advise", "act", "fold", "brief", "debrief", "map", "status", "ready", "run")
+VERBS = ("intend", "steer", "change", "advise", "act", "demo", "fold", "brief", "debrief", "map", "status", "ready", "run")
 EXTRA = ("consult", "run-wave")
 REQUIRED_REFS = (
     "shared.md",

@@ -2,7 +2,7 @@
 
 Process memory: [`openspec/AGENTS.md`](openspec/AGENTS.md).
 Agent surface: [`docs/contracts/agent-surface.md`](docs/contracts/agent-surface.md).
-Verbs: `intend` · `steer` · `change` · `advise` · `act` · `fold` ·
+Verbs: `intend` · `steer` · `change` · `advise` · `act` · `demo` · `fold` ·
 `brief` · `debrief` · `map` · `status` · `run` · `run-wave` in
 `.agents/skills/` (same files as `plugins/intention/skills/`).
 How: [`plugins/intention/README.md`](plugins/intention/README.md)

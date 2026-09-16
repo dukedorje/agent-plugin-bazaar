@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `status`, `run`, and `consult`. None of them restates
+Loaded by `intend`, `steer`, `change`, `advise`, `act`, `demo`, `fold`, `brief`, `debrief`, `map`, `status`, `run`, and `consult`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -31,6 +31,7 @@ disagree, the contract wins.
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas. Reads steer residue. | Implement (until ACTIVE), fold, archive |
 | `advise` | Review file written by the spawned reader (`accept` / `send-back` + `READER:`). Notes in the body. Always spawn a fresh other-family reader. | Implement, fold, flip banner, in-tab accept, transcribe the verdict, halt instead of spawn |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
+| `demo` | Journey for a landed act (internal ring). Halt. Residue at most a bead comment / read result. | Implement, fold, deploy, mint a box, write `demo.md`, flip EYES |
 | `fold` | Living spec updated + change archived. Designated folder is Opus 5 (`--shape fold`); may spawn in the background. | Implement leftover tasks, fold PENDING/PARKED |
 | `map` | Intend-dag page with live status; session current pin (not in the repo) | Implement, unpark, repo-level current |
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias. `--queue` is the honest open pile (unblocked leaves + blocked). | Implement, unpark |

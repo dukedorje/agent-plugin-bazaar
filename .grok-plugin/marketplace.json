@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "intention",
-      "description": "intend, steer, change, advise, act, fold, ready, brief, debrief, map, status, run, run-wave, consult — intention to a running system",
+      "description": "intend, steer, change, advise, act, demo, fold, ready, brief, debrief, map, status, run, run-wave, consult — intention to a running system",
       "category": "productivity",
       "version": "0.4.0",
       "source": { "type": "local", "path": "./plugins/intention" }

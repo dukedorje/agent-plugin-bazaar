@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-demo-verb-act",
+  "node_id": "bazaar-spi.1",
+  "capability": "verbs",
+  "change_id": "add-demo-verb",
+  "requester": {
+    "id": "agt-conductor",
+    "kind": "group",
+    "harness": "none",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-conductor" }
+  },
+  "assignee": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok-4.6",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-grok-4-6" }
+  },
+  "goal": "Land slice-one demo: skill plus script presents a landed act journey and halts. Internal ring only. No fourth store.",
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-demo-verb/specs/verbs/spec.md",
+      "invariant": "journey from proposal and Next commands; inflight then archive; invents no tracker"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-demo.py && python3 plugins/intention/scripts/check-skills.py"
+  },
+  "out_of_scope": [
+    { "item": "Campaign next: demo", "tracked_as": "update-run-demo" },
+    { "item": "Staging and production rings", "tracked_as": "bazaar-spi.2" },
+    { "item": "Fold living specs", "tracked_as": "add-demo-verb fold" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/demo/",
+      ".agents/skills/demo",
+      "plugins/intention/scripts/test-demo.py",
+      "plugins/intention/scripts/check-skills.py",
+      "plugins/intention/references/shared.md",
+      "plugins/intention/README.md",
+      "plugins/intention/.claude-plugin/plugin.json",
+      "CLAUDE.md",
+      "AGENTS.md",
+      ".claude-plugin/marketplace.json",
+      ".grok-plugin/marketplace.json",
+      "openspec/changes/add-demo-verb/",
+      "groups/bazaar-spi.1/"
+    ],
+    "do_not": ["fold", "deploy", "push"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "architecture",
+  "density": "explicit",
+  "surface": "skill-host",
+  "role": "worker"
+}

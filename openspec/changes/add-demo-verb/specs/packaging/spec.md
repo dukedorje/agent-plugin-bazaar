@@ -13,9 +13,6 @@ matches the directory.
 in this repo) so Grok, Hermes, and Prime load the files without a
 plugin install.
 
-Fold MUST union this list with any sibling inflight that also
-MODIFIES this block (today: `add-run-wave-workflow` adds `run-wave`).
-
 #### Scenario: Grok sees the verbs in-repo
 
 - GIVEN a clone of this repo
