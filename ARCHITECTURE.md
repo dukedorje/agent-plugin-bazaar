@@ -25,7 +25,7 @@ so a result can be addressed and attested without changing schema.
 
 **Consequences.**
 
-- Skills (`intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`,
+- Skills (`intend`, `steer`, `change`, `advise`, `act`, `demo`, `fold`, `brief`,
   `debrief`, `map`, `status`, `run`) dispatch packets. `ready` is an alias
   of `status`. They never invent a second RPC. Foreign
   harnesses receive a packet, never a slash command. `run` is the

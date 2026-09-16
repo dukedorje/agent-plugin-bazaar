@@ -6,7 +6,7 @@ What a stranger is offered first. Folded from `park-sprint-plan` on
 ## Purpose
 
 The default path from intention to running software is the loop
-`intend` → `steer` → `change` → `advise` → `act` → `fold` (plus
+`intend` → `steer` → `change` → `advise` → `act` → `demo` → `fold` (plus
 `brief` / `ready`). `run` is the campaign that walks that loop until
 a stop predicate. `steer` is not a campaign wave. The 10-phase
 factory exists but is not available work.
@@ -16,12 +16,14 @@ factory exists but is not available work.
 ### Requirement: Default verbs
 
 The marketplace and repo orientation SHALL present `intend`,
-`steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`,
+`steer`, `change`, `advise`, `act`, `demo`, `fold`, `brief`, `debrief`,
 `map`, `status`, and `run` as the default planning loop. `run` is
 the campaign; `map` and `status` are observe; `brief` / `debrief`
 are disposable decide; `steer` is human-gated guidance (not a
-campaign wave); the rest are stages. `ready` SHALL be listed only
-as an alias of `status`.
+campaign wave); `demo` is the human trying the iteration after
+`act` and before `fold`; the rest are stages. `ready` SHALL be listed only
+as an alias of `status`. `run-wave` SHALL be listed as the act
+fan-out, not a default-loop stage.
 
 #### Scenario: README install
 
@@ -29,7 +31,7 @@ as an alias of `status`.
 - WHEN a stranger copies the install line
 - THEN they install `intention@agent-plugin-bazaar`, not
   `sprint-plan@…`
-- AND the listed skills include `steer`
+- AND the listed skills include `steer` and `demo`
 
 #### Scenario: Stranger asks how to chain
 
