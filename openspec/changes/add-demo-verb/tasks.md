@@ -5,7 +5,9 @@
 - [x] Catalogs and check-skills list `demo`
 - [x] verbs / packaging / default-loop deltas
 - [x] Focused verify: `python3 plugins/intention/scripts/check-skills.py`
-- [ ] Fold living specs when this change folds (union packaging with `add-run-wave-workflow` if still inflight)
+
+Fold owns: union packaging “One skill tree” with `add-run-wave-workflow`
+if that change is still inflight (`docs/LEARNINGS.md` 2026-09-02).
 
 ## Owed (advise send-back 2026-09-02, fable-5.1-arch-review)
 
