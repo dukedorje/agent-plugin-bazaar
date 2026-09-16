@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "id": "res-add-demo-verb-act",
+  "packet_id": "pkt-add-demo-verb-act",
+  "signer": {
+    "id": "agt-grok-4-6",
+    "kind": "model",
+    "harness": "grok",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-4-6"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/skills/demo/SKILL.md",
+      "role": "skill"
+    },
+    {
+      "path": "plugins/intention/skills/demo/scripts/demo.py",
+      "role": "script"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-demo.py && python3 plugins/intention/scripts/check-skills.py",
+    "exit_code": 0,
+    "output_tail": "pass 4 tests\npass 13 verbs"
+  },
+  "disposition": "pass",
+  "promoted": false,
+  "commit": {
+    "sha": "3fec169",
+    "paths": [
+      "plugins/intention/skills/demo/SKILL.md",
+      "plugins/intention/skills/demo/scripts/demo.py",
+      "plugins/intention/scripts/test-demo.py",
+      "plugins/intention/scripts/check-skills.py",
+      "plugins/intention/references/shared.md",
+      "plugins/intention/README.md",
+      "plugins/intention/.claude-plugin/plugin.json",
+      ".agents/skills/demo",
+      "CLAUDE.md",
+      "AGENTS.md",
+      ".claude-plugin/marketplace.json",
+      ".grok-plugin/marketplace.json",
+      "openspec/changes/add-demo-verb/design.md",
+      "openspec/changes/add-demo-verb/specs/packaging/spec.md",
+      "openspec/changes/add-demo-verb/specs/verbs/spec.md",
+      "openspec/changes/add-demo-verb/tasks.md",
+      "openspec/changes/add-demo-verb/reviews/2026-09-15-advise.md",
+      "groups/bazaar-spi.1/packet.json"
+    ]
+  },
+  "summary": "Slice-one demo landed: skill plus script presents a landed-act journey (inflight then archive) and halts. Invents no tracker. Fold still owed.",
+  "raw_ref": "groups/bazaar-spi.1/results/agt-grok-4-6.json",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Slice-one demo landed: skill plus script presents a landed-act journey and halts. Fold still owed.",
+    "verify_command": "python3 plugins/intention/scripts/test-demo.py && python3 plugins/intention/scripts/check-skills.py",
+    "verify_exit": 0,
+    "commit_sha": "3fec169",
+    "changed_files": [
+      "plugins/intention/skills/demo/SKILL.md",
+      "plugins/intention/skills/demo/scripts/demo.py"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-spi.1/results/agt-grok-4-6.json"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-grok-4-6",
+    "signed_at": "2026-09-15T21:10:00Z",
+    "content_hash": "sha256:b624ec5df83d734def5724edfabf5847b5010f96f3697a39616ced5fe97eb04d"
+  }
+}
