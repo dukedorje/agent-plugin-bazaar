@@ -112,6 +112,7 @@ def candidates(
 
 
 FAMILY_FROM_INTERFACE = {
+    "gpt-6-astra": "astra",
     "gpt-5.6-sol": "sol",
     "gpt-5.6-terra": "terra",
     "fable-5.1": "fable",

@@ -161,7 +161,22 @@ def main() -> int:
             run(["assign", "--shape", "architecture-review"], env=env_with_codex()).stdout
         )
         expect(default["id"] == "fable-5.1-arch-review", default)
-        print("pass sol available iff codex CLI or OPENAI_API_KEY; still not default")
+        astra_off = next(r for r in off["routes"] if r["id"] == "astra-arch-review")
+        expect(astra_off["available"] is False, astra_off)
+        expect(
+            next(r for r in on_key["routes"] if r["id"] == "astra-arch-review")["available"]
+            is True,
+            on_key,
+        )
+        picked_astra = json.loads(
+            run(
+                ["assign", "--shape", "architecture-review", "--id", "astra-arch-review"],
+                env=env_with_codex(),
+            ).stdout
+        )
+        expect(picked_astra["id"] == "astra-arch-review", picked_astra)
+        expect(picked_astra["interface"] == "gpt-6-astra", picked_astra)
+        print("pass sol/astra available iff codex CLI or OPENAI_API_KEY; still not default")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol env: {exc}")
@@ -195,6 +210,20 @@ def main() -> int:
         )
         expect(claude_author["id"] == "grok-arch-review", claude_author)
         expect(claude_author["harness"] == "grok", claude_author)
+        claude_codex = json.loads(
+            run(
+                [
+                    "assign",
+                    "--shape",
+                    "architecture-review",
+                    "--not-harness",
+                    "claude",
+                ],
+                env=env_with_codex(),
+            ).stdout
+        )
+        expect(claude_codex["id"] == "astra-arch-review", claude_codex)
+        expect(claude_codex["harness"] == "codex", claude_codex)
         print("pass --not-harness skips author family")
     except Exception as exc:  # noqa: BLE001
         failed += 1
@@ -227,13 +256,14 @@ def main() -> int:
         expect(proc.returncode == 0, proc.stderr)
         panel = json.loads(proc.stdout)
         ids = [r["id"] for r in panel]
-        expect(ids[:4] == [
+        expect(ids[:5] == [
             "fable-5.1-arch-review",
+            "astra-arch-review",
             "sol-arch-review",
             "opus-4.8-arch-review",
             "grok-arch-review",
         ], ids)
-        print("pass architecture panel order Fable, Sol, 4.8, Grok")
+        print("pass architecture panel order Fable, Astra, Sol, 4.8, Grok")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL panel: {exc}")
@@ -264,6 +294,26 @@ def main() -> int:
         )
         ids = [r["id"] for r in several]
         expect(ids == ["fable-5.1-arch-review", "sol-arch-review"], ids)
+        astra = json.loads(
+            run(
+                ["assign", "--shape", "architecture-review", "--who", "astra"],
+                env=env_with_codex(),
+            ).stdout
+        )
+        expect(astra["id"] == "astra-arch-review", astra)
+        expect(astra["interface"] == "gpt-6-astra", astra)
+        expect(astra["harness"] == "codex", astra)
+        astra_fable = json.loads(
+            run(
+                ["assign", "--shape", "architecture-review", "--who", "astra,fable"],
+                env=env_with_codex(),
+            ).stdout
+        )
+        expect(
+            [r["id"] for r in astra_fable]
+            == ["fable-5.1-arch-review", "astra-arch-review"],
+            astra_fable,
+        )
         terra_think = run(["assign", "--shape", "thinking", "--who", "terra"])
         expect(terra_think.returncode != 0, terra_think.stdout)
         expect("unknown who" in terra_think.stderr, terra_think.stderr)

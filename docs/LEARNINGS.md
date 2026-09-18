@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-15 — Architecture-review panel is Fable, Astra (`gpt-6-astra`), Sol, 4.8, Grok. Astra is spawnable when Codex CLI or `OPENAI_API_KEY` is set (`requires: codex`), same as Sol; default stays Fable. `--who astra`. (`plugins/intention/references/ladder.json`)
+
 - 2026-09-15 — conductor persist `git add --` the archive dest after `git mv` copies the change and leaves inflight in HEAD; `git add --` the old path fails once the worktree is gone. Commit both old and new paths while the rename is still in the index. (`plugins/intention/scripts/conductor.py` persist)
 - 2026-09-08 — Grok injects `ANTHROPIC_API_KEY` / `CLAUDE_API_KEY`. `claude -p` then bills the API ("Credit balance is too low") instead of the Claude Code subscription. `spawn.py` strips those plus `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` / `ANTHROPIC_MODEL*` for the claude adapter. (`plugins/intention/scripts/spawn.py`)
 

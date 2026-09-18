@@ -148,12 +148,27 @@
       "available": true,
       "required_on": ["architecture", "instrument"],
       "aliases": ["fable"],
-      "notes": "Default architecture buddy. Panel with Sol and Opus 4.8 when comparing."
+      "notes": "Default architecture buddy. Panel with Astra, Sol, and Opus 4.8 when comparing."
+    },
+    {
+      "id": "astra-arch-review",
+      "shapes": ["architecture-review"],
+      "priority": 2,
+      "role": "reader",
+      "harness": "codex",
+      "interface": "gpt-6-astra",
+      "surface": "packet-only",
+      "density": "lean",
+      "effort": "high",
+      "available": false,
+      "requires": "codex",
+      "aliases": ["astra"],
+      "notes": "Architecture reader after Fable. Codex gpt-6-astra; OpenAI HTTP if no CLI."
     },
     {
       "id": "sol-arch-review",
       "shapes": ["architecture-review"],
-      "priority": 2,
+      "priority": 3,
       "role": "reader",
       "harness": "codex",
       "interface": "gpt-5.6-sol",
@@ -163,12 +178,12 @@
       "available": false,
       "requires": "codex",
       "aliases": ["sol"],
-      "notes": "Architecture reader after Fable. Prefer codex exec; OpenAI HTTP if no CLI."
+      "notes": "Architecture reader after Astra. Prefer codex exec; OpenAI HTTP if no CLI."
     },
     {
       "id": "opus-4.8-arch-review",
       "shapes": ["architecture-review"],
-      "priority": 3,
+      "priority": 4,
       "role": "reader",
       "harness": "claude",
       "interface": "opus-4.8",
@@ -177,12 +192,12 @@
       "effort": "high",
       "available": true,
       "aliases": ["opus", "4.8"],
-      "notes": "Architecture reader after Fable and Sol. Good panel third."
+      "notes": "Architecture reader after Fable, Astra, and Sol. Good panel fourth."
     },
     {
       "id": "grok-arch-review",
       "shapes": ["architecture-review"],
-      "priority": 4,
+      "priority": 5,
       "role": "reader",
       "harness": "grok",
       "interface": "grok-4.6",

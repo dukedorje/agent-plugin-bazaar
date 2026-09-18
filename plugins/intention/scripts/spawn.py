@@ -71,6 +71,7 @@ EFFORT = {
     "opus-4.8": "high",
     "fable-5": "high",
     "fable-5.1": "high",
+    "gpt-6-astra": "high",
     "gpt-5.6-sol": "high",
     "gpt-5.6-terra": "low",
     "grok-4.6": "high",

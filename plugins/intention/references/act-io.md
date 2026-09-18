@@ -139,7 +139,7 @@ not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
 
 `consult` is a second opinion with no intend node and no act
-unblock. Default shape `architecture-review`. `--who fable,sol`
+unblock. Default shape `architecture-review`. `--who fable,astra,sol`
 (nicknames or ids, several, ladder order). `--panel` is every
 spawnable reader. `--id` is exact-id only. `--who` / `--panel` /
 `--id` are mutually exclusive. Named unspawnable hard-fails;

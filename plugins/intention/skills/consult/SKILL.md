@@ -4,9 +4,9 @@ description: >
   Second opinion from architecture / plan / thinking readers. No intend
   node, no act unblock. Use when asked for a second opinion, another
   pair of eyes, consult the architecture buddy, run this by Fable /
-  Sol / Opus 4.8, call several, or convoke a panel.
+  Astra / Sol / Opus 4.8, call several, or convoke a panel.
 user-invocable: true
-argument-hint: "[--who fable,sol | --panel] [--shape architecture-review] [<question>]"
+argument-hint: "[--who fable,astra,sol | --panel] [--shape architecture-review] [<question>]"
 ---
 
 # consult
@@ -38,7 +38,7 @@ a gated reader, use `advise` instead.
 
    | Utterance | Flag |
    |---|---|
-   | named models (“Sol”, “Fable and 4.8”) | `--who sol` / `--who fable,4.8` |
+   | named models (“Astra”, “Sol”, “Fable and 4.8”) | `--who astra` / `--who sol` / `--who fable,4.8` |
    | “compare Sol and Fable” | `--who sol,fable` (named wins; not the full panel) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
    | nobody named | first spawnable (Fable on architecture) |
@@ -57,7 +57,7 @@ a gated reader, use `advise` instead.
    ```bash
    python3 plugins/intention/scripts/spawn.py consult \
      --shape architecture-review \
-     [--who fable,sol | --panel | --id <route>] \
+     [--who fable,astra,sol | --panel | --id <route>] \
      [--not-harness <harness>] \
      [--paths <p> ...] \
      --goal "<question>"
@@ -74,5 +74,5 @@ a gated reader, use `advise` instead.
    review file.
 
 Grok is `grok --prompt-file` when `grok` is on PATH (`GROK_BIN`).
-`--who grok` and `--panel` include it. Sol is `codex exec` (or
-OpenAI HTTP if no CLI).
+`--who grok` and `--panel` include it. Astra and Sol are `codex exec`
+(or OpenAI HTTP if no CLI). `--who astra` is `gpt-6-astra`.
