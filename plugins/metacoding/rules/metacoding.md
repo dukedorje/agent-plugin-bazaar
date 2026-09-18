@@ -9,3 +9,4 @@ Typed graph for structure and blast radius. Live types, hover, diagnostics: harn
 
 Grok: `search_tool` query `metacoding graph_callers`, then `use_tool` `metacoding__graph_callers`.
 If MCP is down: `metacoding status`, then `metacoding query`.
+Serve: `$METACODING_ROOT` checkout, else PATH `metacoding` (not bunx).

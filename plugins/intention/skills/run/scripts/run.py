@@ -29,6 +29,7 @@ STAGES = ("intend", "change", "advise", "act", "fold")
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
 )
+NODE_TYPES = frozenset({"node", "work-node"})
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
 EYES_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
@@ -114,6 +115,15 @@ def landing_from_title(title: str) -> str | None:
         return None
     head = title.strip().split()[0].rstrip(":")
     return head if is_change_id(head) else None
+
+
+def is_graph_node_bead(bead: dict[str, Any]) -> bool:
+    """DAG node: beads type `node`, not a `nod-` title prefix."""
+    kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
+    if kind in NODE_TYPES:
+        return True
+    title = str(bead.get("title") or "")
+    return title.lower().startswith("nod-")
 
 
 def eyes_ids(openspec: Path | None) -> list[str]:
@@ -545,7 +555,7 @@ def decide(
             if (
                 kind in {"task", "feature"}
                 and not landing
-                and not title.lower().startswith("nod-")
+                and not is_graph_node_bead(bead)
             ):
                 if nid:
                     return {

@@ -624,12 +624,15 @@ and SHALL set `next` from this table, first match wins:
 5. unblocked bead whose title names a verb-led change-id and that
    directory does not exist → `change`
 6. unblocked task or feature bead with no verb-led landing, that
-   is not an epic and whose title does not start with `nod-` →
-   `intend` (focus is that bead id)
+   is not an epic and is not a graph node (`issue_type` `node`, or
+   a legacy title starting with `nod-`) → `intend` (focus is that
+   bead id)
 7. else stop empty
 
 It SHALL NOT intend epics. It SHALL NOT flip PENDING. Epics and
-`nod-` titles SHALL NOT auto-intend. `workers_launched` SHALL stay 0.
+graph-node beads SHALL NOT auto-intend. `workers_launched` SHALL
+stay 0. New graph nodes SHALL use beads type `node` and a readable
+title, not a `nod-` prefix.
 
 Unscoped `--until fold` SHALL scan inflight for fold-legal and
 SHALL set `next: fold` on the first hit.
@@ -658,6 +661,20 @@ SHALL set `next: fold` on the first hit.
 #### Scenario: Epic does not auto-intend
 
 - GIVEN `--until roll` and the only unblocked bead is an epic
+- WHEN `run.py` observes
+- THEN `next` is not `intend`
+
+#### Scenario: Graph node type does not auto-intend
+
+- GIVEN `--until roll` and the only unblocked bead has
+  `issue_type` `node` and title `fileset organizer`
+- WHEN `run.py` observes
+- THEN `next` is not `intend`
+
+#### Scenario: Legacy nod- title still does not auto-intend
+
+- GIVEN `--until roll` and the only unblocked bead is a task
+  titled `nod-empty-paths: …`
 - WHEN `run.py` observes
 - THEN `next` is not `intend`
 ### Requirement: until ask is a roll that stops on elicitation

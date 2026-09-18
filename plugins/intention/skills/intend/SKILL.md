@@ -50,7 +50,8 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).
 6. **Write** the DAG in the shape in `intend-dag.md`. Chat is enough;
-   beads (`bd create`) if they want a tracker. No `.omc/`. No SHALLs in the DAG.
+   beads (`bd create --type node`) if they want a tracker. Title is
+   the kebab, not `nod-…`. No `.omc/`. No SHALLs in the DAG.
 7. **Stop.** Report ready-set and what needs activation. Pin this
    DAG as the session current (`map --current <root-id>`) so later
    `map` / elicitation stay on it. Then apply **Run it by me** if

@@ -504,6 +504,66 @@ def test_roll_intend_orphan_task() -> None:
         expect(face["focus"] == "bazaar-ja7", face)
 
 
+def test_roll_skips_node_type() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [
+                    {
+                        "id": "bazaar-7kb.1",
+                        "title": "fileset organizer: exclusive owned, shared deferred",
+                        "issue_type": "node",
+                    }
+                ],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+
+
+def test_roll_skips_legacy_nod_title() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [
+                    {
+                        "id": "bazaar-7kb.2",
+                        "title": "nod-empty-paths: [] overlaps everything",
+                        "issue_type": "task",
+                    }
+                ],
+            },
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+
+
 def write_change(
     root: Path,
     name: str,
@@ -968,6 +1028,8 @@ def main() -> int:
         test_roll_bead_landing_is_change,
         test_roll_skips_epic,
         test_roll_intend_orphan_task,
+        test_roll_skips_node_type,
+        test_roll_skips_legacy_nod_title,
         test_ask_stops_when_pending,
         test_ask_without_elicitation_rolls,
         test_roll_does_not_stop_on_pending,

@@ -58,5 +58,7 @@ Architecture / instrument / sensitive writes still PENDING.
   Do not `act`.
 ```
 
-Node ids: `nod-<kebab>`. Change ids: verb-led (`add-`, `update-`, `remove-`,
-`refactor-`). Do not invent sprint numbers.
+Node ids: kebab (`paste-cards`), no `nod-` prefix. Track as a bead
+with `bd create --type node` (Type column). Change ids stay verb-led
+(`add-`, `update-`, `remove-`, `refactor-`). Do not invent sprint
+numbers. Legacy titles starting `nod-` still count as graph nodes.

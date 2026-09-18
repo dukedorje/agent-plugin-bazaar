@@ -34,7 +34,10 @@ per vendor.
 | `grp-` | a group |
 | `pkt-` | a task packet |
 | `res-` | a signed result |
-| `nod-` | a work-graph node (C1, S3, …) |
+
+Work-graph nodes use a kebab id and beads `issue_type: node` (the
+Type column). Do not mint new `nod-` titles; that prefix made lists
+unreadable. Old `nod-` titles still mean graph node.
 
 ## Signing
 
