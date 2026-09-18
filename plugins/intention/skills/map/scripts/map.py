@@ -17,7 +17,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 SESSION_ENV = (
     "INTENTION_SESSION",
@@ -36,6 +36,8 @@ ADVISE_RE = re.compile(
     re.I,
 )
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
+
+CLOSED = {"closed", "done"}
 
 
 def find_repo() -> Path:
@@ -159,6 +161,64 @@ def block_deps(rec: dict[str, Any]) -> list[str]:
             if edge.get("issue_id", rec.get("id")) == rec.get("id"):
                 out.append(str(edge["depends_on_id"]))
     return out
+
+
+def dep_lookup(
+    fixture: dict[str, Any] | None,
+) -> Callable[[str], dict[str, Any] | None]:
+    """Resolve a dep id that is not in this DAG.
+
+    Fixture mode never calls bd: `outside` is the only extra set.
+    Live mode uses `bd show` and treats a missing record as not closed.
+    """
+    if fixture is not None:
+        outside: dict[str, dict[str, Any]] = {}
+        for rec in fixture.get("outside") or []:
+            if isinstance(rec, dict) and rec.get("id"):
+                outside[str(rec["id"])] = rec
+
+        def lookup(dep_id: str) -> dict[str, Any] | None:
+            return outside.get(dep_id)
+
+        return lookup
+
+    cache: dict[str, dict[str, Any] | None] = {}
+
+    def lookup(dep_id: str) -> dict[str, Any] | None:
+        if dep_id in cache:
+            return cache[dep_id]
+        rec = as_rec(bd_json(["show", dep_id]))
+        cache[dep_id] = rec
+        return rec
+
+    return lookup
+
+
+def resolve_dep(
+    dep_id: str,
+    by_id: dict[str, dict[str, Any]],
+    lookup: Callable[[str], dict[str, Any] | None] | None,
+) -> dict[str, Any] | None:
+    rec = by_id.get(dep_id)
+    if rec is not None:
+        return rec
+    if lookup is None:
+        return None
+    return lookup(dep_id)
+
+
+def open_blockers(
+    rec: dict[str, Any],
+    by_id: dict[str, dict[str, Any]],
+    lookup: Callable[[str], dict[str, Any] | None] | None,
+) -> list[str]:
+    waiting: list[str] = []
+    for dep in block_deps(rec):
+        other = resolve_dep(dep, by_id, lookup)
+        st = str((other or {}).get("status") or "")
+        if other is None or st not in CLOSED:
+            waiting.append(dep)
+    return waiting
 
 
 def bd_json(args: list[str]) -> Any:
@@ -287,7 +347,12 @@ def load_epic(scope: str | None, fixture: dict[str, Any] | None) -> tuple[dict[s
     return {"id": "", "title": "open work", "status": "open"}, []
 
 
-def render_node(rec: dict[str, Any], repo: Path, openspec: Path | None) -> str:
+def render_node(
+    rec: dict[str, Any],
+    repo: Path,
+    openspec: Path | None,
+    waiting_on: list[str] | None = None,
+) -> str:
     nid = str(rec.get("id") or "—")
     title = str(rec.get("title") or nid)
     landing = landing_from_title(title)
@@ -296,16 +361,28 @@ def render_node(rec: dict[str, Any], repo: Path, openspec: Path | None) -> str:
     outcome = distilled_summary(repo, nid) or rec.get("close_reason") or "—"
     deps = block_deps(rec)
     kind = rec.get("issue_type") or ""
+    status_line = f"- Status: {status}"
+    if kind:
+        status_line += f" ({kind})"
+    if waiting_on:
+        status_line += f" · waiting on {', '.join(waiting_on)}"
     lines = [
         f"### {nid}",
         f"- Goal: {title}",
         f"- Landing: `{landing}`" if landing else "- Landing: —",
-        f"- Status: {status}" + (f" ({kind})" if kind else ""),
+        status_line,
         f"- Wave: {wave}",
         f"- Outcome: {outcome}",
         f"- Depends on: {', '.join(deps) if deps else 'none'}",
     ]
     return "\n".join(lines)
+
+
+def waiting_label(nid: str, waiting_on: dict[str, list[str]]) -> str:
+    deps = waiting_on.get(nid) or []
+    if not deps:
+        return nid
+    return f"{nid} (on {', '.join(deps)})"
 
 
 def render(
@@ -315,11 +392,15 @@ def render(
     openspec: Path | None,
     pinned: str | None = None,
     peek: str | None = None,
+    lookup_dep: Callable[[str], dict[str, Any] | None] | None = None,
 ) -> str:
     title = str(epic.get("title") or epic.get("id") or "map")
     desc = (epic.get("description") or "").strip()
     nodes = children if children else ([epic] if epic.get("id") else [])
+    by_id = {str(r.get("id") or ""): r for r in nodes if r.get("id")}
     ready, need_act, done, failed = [], [], [], []
+    waiting, send_back, act_ready, change_ready = [], [], [], []
+    waiting_on: dict[str, list[str]] = {}
     for rec in nodes:
         st = str(rec.get("status") or "open")
         landing = landing_from_title(str(rec.get("title") or ""))
@@ -327,14 +408,25 @@ def render(
         banner = first_banner((dest / "proposal.md").read_text(encoding="utf-8")) if dest else None
         advise = last_advise(dest) if dest else None
         nid = str(rec.get("id") or "")
-        if st == "closed":
+        blockers = open_blockers(rec, by_id, lookup_dep) if st not in CLOSED else []
+        if blockers:
+            waiting_on[nid] = blockers
+        if st in CLOSED:
             done.append(nid)
         elif st in {"blocked"} or advise == "send-back":
             failed.append(nid)
+            if advise == "send-back":
+                send_back.append(nid)
+        elif blockers:
+            waiting.append(nid)
         elif banner == "PENDING":
             need_act.append(nid or landing or "")
-        elif st in {"open", "in_progress"}:
+        elif st == "open":
             ready.append(nid)
+            if banner == "ACTIVE BUILD":
+                act_ready.append(nid)
+            else:
+                change_ready.append(nid)
     body: list[str] = []
     if pinned:
         body.append(f"Current: `{pinned}`")
@@ -358,12 +450,27 @@ def render(
     if not nodes:
         body.append("(no nodes)")
     else:
-        body.append("\n\n".join(render_node(r, repo, openspec) for r in nodes))
+        body.append(
+            "\n\n".join(
+                render_node(
+                    r,
+                    repo,
+                    openspec,
+                    waiting_on=waiting_on.get(str(r.get("id") or "")),
+                )
+                for r in nodes
+            )
+        )
     body.extend(
         [
             "",
             "## Ready-set",
             ", ".join(ready) if ready else "(none)",
+            "",
+            "## Waiting",
+            ", ".join(waiting_label(n, waiting_on) for n in waiting)
+            if waiting
+            else "(none)",
             "",
             "## Needs activation",
             ", ".join(need_act) if need_act else "(none)",
@@ -377,13 +484,22 @@ def render(
             "## Next",
         ]
     )
+    dispatchable = bool(need_act or change_ready or act_ready or send_back)
     if need_act:
         body.append("- `change` / activate: " + ", ".join(need_act))
-    if ready:
-        body.append("- `act` or `/run --until roll`: " + ", ".join(ready))
-    if not need_act and not ready and done and not failed:
+    if send_back:
+        body.append("- `change` (send-back): " + ", ".join(send_back))
+    if change_ready:
+        body.append("- `change`: " + ", ".join(change_ready))
+    if act_ready:
+        body.append("- `act` or `/run --until roll`: " + ", ".join(act_ready))
+    if dispatchable:
+        body.append("- steer first if architecture / human-gate")
+    if waiting and not dispatchable:
+        body.append("- waiting on inbound edges: " + ", ".join(waiting))
+    if not dispatchable and not waiting and done and not failed:
         body.append("- `/fold` if a change is still inflight; else nothing dispatchable")
-    if not need_act and not ready and not done:
+    if not dispatchable and not waiting and not done:
         body.append("- `/intend` or `/run --until roll`")
     return "\n".join(body) + "\n"
 
@@ -455,7 +571,15 @@ def main() -> int:
         return 1
     peek = scope if pinned and scope != pinned else None
     print(
-        render(epic, children, repo, openspec, pinned=pinned, peek=peek),
+        render(
+            epic,
+            children,
+            repo,
+            openspec,
+            pinned=pinned,
+            peek=peek,
+            lookup_dep=dep_lookup(fixture),
+        ),
         end="",
     )
     return 0
