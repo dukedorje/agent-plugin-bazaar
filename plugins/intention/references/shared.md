@@ -37,7 +37,7 @@ disagree, the contract wins.
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias. `--queue` is the honest open pile (unblocked leaves + blocked). | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
 | `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
-| `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck |
+| `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. Persist on current HEAD. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck; halt fold/act over branch name; invent a checkout |
 | `run-wave` | One disjoint act fan-out on HEAD. | Campaign loop, isolate, one-node launch, fold, check EYES |
 | `consult` | Second opinions from architecture/plan/thinking readers. stdin/stdout. No intend node. | Implement, fold, write advise reviews, unblock `act` |
 

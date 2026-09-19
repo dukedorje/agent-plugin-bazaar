@@ -182,7 +182,19 @@ NOT implement a node except by dispatching `act`. It SHALL NOT fold
 except when `--until fold` (or equivalent) is set and fold is legal.
 It SHALL NOT flip a PENDING banner. Foreign harnesses SHALL receive
 a task packet and SHALL NOT receive `/run`. `workers_launched` SHALL
-stay 0.
+stay 0. The conductor SHALL persist `act` on current HEAD and SHALL
+follow `next: fold` when fold is legal. It SHALL NOT halt `act` or
+`fold` because the branch is not `main`. It SHALL NOT `git checkout`
+or create a branch unless the human named one. A failed `take` or
+empty wave SHALL NOT be a campaign stop.
+
+#### Scenario: Fold is not skipped for a feature branch
+
+- GIVEN `--until roll`, fold-legal `add-x`, and HEAD is
+  `feat/mcp-storefront`
+- WHEN `run` observes `next: fold`
+- THEN the conductor folds on that HEAD
+- AND does not invent a checkout or a halt
 
 `stop: no-ready` SHALL mean the observe script is missing. A missing
 `openspec/` tree with a named verb-led change-id SHALL be
