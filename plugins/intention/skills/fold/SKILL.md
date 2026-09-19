@@ -25,7 +25,8 @@ intend → steer → change → advise → act → fold
 ## Skip
 
 PENDING or PARKED → stop. Do not fold. Do not implement leftover
-tasks — send them back to `act`.
+tasks — send them back to `act`. Branch name is not a skip.
+Fold on current HEAD unless the human named a branch.
 
 ## Procedure
 

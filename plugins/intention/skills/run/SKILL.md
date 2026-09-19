@@ -101,7 +101,11 @@ Stop only when the new card has `stop` set, or `--max-waves` hits.
 paraphrase it into `stop: empty`. Refusing fold must not end the
 campaign. Same-family advise must not end the campaign.
 `stop: empty` is not stuck while `needs_advise` remains and an
-other-family route exists.
+other-family route exists. `next: fold` is not a halt. Persist
+`act` on **current HEAD**; do not `git checkout`, invent a
+branch, or skip fold because the branch is not `main`. A failed
+`take` or empty wave is a mutex, not a campaign stop. The human
+naming a branch is the only checkout.
 
 Conductor loop:
 
@@ -253,3 +257,6 @@ Mailbox is `/status` (ASK / EYES / PUNT faces) — not a ninth verb. `/ready` is
 - Halt or `--punt` same-family advise while an other-family
   `architecture-review` route is available
 - Write a fake send-back so you can skip the read
+- Halt `act` persist or `fold` because HEAD is a feature branch
+  or not `main`
+- `git checkout` or create a branch unless the human named one

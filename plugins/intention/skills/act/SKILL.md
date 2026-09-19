@@ -51,8 +51,11 @@ The packet is the only interface. Schema:
 7. **Do the work** only on `constraints.paths` (owned fileset on
    HEAD). Workers edit and stop.
 8. **Persist** as conductor: `conductor.py persist --paths … -m …`
-   on HEAD. After a wave, persist each owned set sequentially.
-   `--worktree` is PARKED. Persistence ≠ acceptance.
+   on **current HEAD**. After a wave, persist each owned set
+   sequentially. Do not `git checkout` or create a branch unless
+   the human named one. `--worktree` is PARKED. Persistence ≠
+   acceptance. Uncommitted writes are not a reason to skip the
+   next wave (`fold` / `demo`).
 9. **Focused verify** once. Distill. Classify with
    `conductor.py classify <result>`. `repair` parks the implicated
    branch (`conductor.py implicated --node <id>`) and keeps unrelated
