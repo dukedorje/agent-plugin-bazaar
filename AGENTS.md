@@ -9,6 +9,7 @@ How: [`plugins/intention/README.md`](plugins/intention/README.md)
 (current DAG, run-it-by-me, status unions OpenSpec + beads).
 Board: `python3 scripts/status.py` (OpenSpec **and** `bd ready`).
 Harness matrix: [`plugins/intention/references/harness.md`](plugins/intention/references/harness.md).
+Plugin copies follow `main` via `python3 scripts/sync-harness-plugins.py --install-hooks`.
 
 Do **not** write or read `.omc/` for work (Claude or Grok). Tracker is
 beads. Intent, briefs, and packets live on beads (or `groups/` for a

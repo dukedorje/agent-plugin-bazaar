@@ -62,7 +62,9 @@ Use one of the existing categories, or propose a new one:
 
 ## Versioning
 
-Follow [semantic versioning](https://semver.org/). Bump the version in both your `plugin.json` and the marketplace entry when releasing updates.
+Follow [semantic versioning](https://semver.org/). Bump the version in both your `plugin.json` and the marketplace entry when releasing updates. `.claude-plugin/marketplace.json` and `.grok-plugin/marketplace.json` versions must match `plugin.json`.
+
+Harness copies on this machine follow `main` via `scripts/sync-harness-plugins.py` (git hook). Once per clone: `python3 scripts/sync-harness-plugins.py --install-hooks`.
 
 ## Security
 

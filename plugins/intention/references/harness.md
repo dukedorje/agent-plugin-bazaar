@@ -34,6 +34,24 @@ complete plugin. Claude and Grok should use their native plugin installers.
 Hermes and Prime should load the checkout's `.agents/skills/` symlinks until
 they have a bundle-aware installer.
 
+## Follow main
+
+Installed copies are versioned snapshots. They do **not** follow GitHub
+`main` by themselves. In this clone, a git hook on `main` (post-merge,
+post-commit, post-checkout) runs `scripts/sync-harness-plugins.py` and
+mirrors `plugins/<name>` into Claude, Grok, and Codex caches under
+`$HOME`. Missing harnesses are skipped. `SYNC_HARNESS_PLUGINS=0` disables
+it. Same-version caches still get the new files.
+
+Enable once per clone:
+
+```bash
+python3 scripts/sync-harness-plugins.py --install-hooks
+```
+
+`.agents/skills/` symlinks in this repo are already live; the hook is
+for the copied installs.
+
 ## What we do not do in this repo
 
 - Run `skills add` here. It would copy into `.claude/skills/` and fight

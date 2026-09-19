@@ -98,7 +98,10 @@ when no other-family route exists — not a fake send-back, not a halt.
 ## Install
 
 Claude: `claude --plugin-dir ./plugins/intention` or marketplace
-`intention`.
+`intention`. After a `main` commit or pull, `scripts/sync-harness-plugins.py`
+refreshes the versioned marketplace cache so auto-update is not stuck on
+the last version number. Enable the git hook once:
+`python3 scripts/sync-harness-plugins.py --install-hooks`.
 
 Grok: clone is enough (`.agents/skills/`). Or
 `grok plugin marketplace add <this-repo>` and

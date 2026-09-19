@@ -20,6 +20,7 @@ ok()    { echo -e "${GREEN}OK:${NC} $1"; }
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 PLUGINS_DIR="$REPO_ROOT/plugins"
 MARKETPLACE="$REPO_ROOT/.claude-plugin/marketplace.json"
+GROK_MARKETPLACE="$REPO_ROOT/.grok-plugin/marketplace.json"
 
 # Determine which plugins to validate
 if [[ $# -gt 0 ]]; then
@@ -156,6 +157,17 @@ for PLUGIN_DIR in "${PLUGIN_DIRS[@]}"; do
         fi
     fi
 
+    if [[ -f "$GROK_MARKETPLACE" ]] && [[ -n "$VERSION" ]]; then
+        GROK_VERSION=$(jq -r --arg name "$NAME" '.plugins[] | select(.name == $name) | .version // empty' "$GROK_MARKETPLACE" 2>/dev/null)
+        if [[ -z "$GROK_VERSION" ]]; then
+            warn "$PLUGIN_NAME: Not listed in .grok-plugin/marketplace.json"
+        elif [[ "$GROK_VERSION" != "$VERSION" ]]; then
+            error "$PLUGIN_NAME: Version mismatch — plugin.json=$VERSION, grok marketplace.json=$GROK_VERSION"
+        else
+            ok "grok marketplace.json version matches"
+        fi
+    fi
+
     echo ""
 done
 
@@ -190,6 +202,11 @@ if python3 "$REPO_ROOT/scripts/test-export-graph.py"; then
     ok "taskmaster graph export"
 else
     error "taskmaster graph export failed"
+fi
+if python3 "$REPO_ROOT/scripts/test-sync-harness-plugins.py"; then
+    ok "harness plugin sync"
+else
+    error "harness plugin sync failed"
 fi
 echo ""
 

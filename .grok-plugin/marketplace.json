@@ -10,8 +10,15 @@
       "name": "intention",
       "description": "intend, steer, change, advise, act, demo, fold, ready, brief, debrief, map, status, run, run-wave, consult — intention to a running system",
       "category": "productivity",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "source": { "type": "local", "path": "./plugins/intention" }
+    },
+    {
+      "name": "morphist-tools",
+      "description": "PRD, vision, research, beads. /sprint-plan is parked — default loop is intention (intend/change/advise/act/fold).",
+      "category": "productivity",
+      "version": "2.0.0",
+      "source": { "type": "local", "path": "./plugins/morphist-tools" }
     },
     {
       "name": "metacoding",

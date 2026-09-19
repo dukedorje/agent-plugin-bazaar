@@ -2,6 +2,7 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-18 — Claude/Grok/Codex plugin caches are version- or SHA-pinned. Pushing `main` does not recopy `intention/0.5.0`. `scripts/sync-harness-plugins.py` plus `.githooks` on `main` mirrors `plugins/` into those caches. Grok marketplace versions must match plugin.json or session-start update thinks the catalog is older. (`scripts/sync-harness-plugins.py`, `.githooks/`)
 - 2026-09-15 — Architecture-review panel is Fable, Astra (`gpt-6-astra`), Sol, 4.8, Grok. Astra is spawnable when Codex CLI or `OPENAI_API_KEY` is set (`requires: codex`), same as Sol; default stays Fable. `--who astra`. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-15 — conductor persist `git add --` the archive dest after `git mv` copies the change and leaves inflight in HEAD; `git add --` the old path fails once the worktree is gone. Commit both old and new paths while the rename is still in the index. (`plugins/intention/scripts/conductor.py` persist)

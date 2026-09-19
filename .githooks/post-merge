@@ -1,0 +1,8 @@
+#!/bin/sh
+# Refresh harness plugin caches after pulling main.
+repo=$(git rev-parse --show-toplevel) || exit 0
+branch=$(git rev-parse --abbrev-ref HEAD) || exit 0
+[ "$branch" = "main" ] || exit 0
+[ "${SYNC_HARNESS_PLUGINS:-1}" = "0" ] && exit 0
+python3 "$repo/scripts/sync-harness-plugins.py" || echo "sync-harness-plugins: failed (git continues)"
+exit 0
