@@ -37,6 +37,14 @@ file MUST NOT contain `**ADVISE:**`. Human pick chooses **which
 reader to spawn**, not “this conversation may accept.” Grok-on-Grok
 or Claude-on-Claude in one thread is asking yourself.
 
+## Revised contracts
+
+An unchecked `Fresh advise after preparation` task invalidates historical
+acceptance. Review the current reconciled contract in a new reader session.
+Only that fresh accepting reader checks this task, recording the contract
+reference in its review; send-back or infra-red leaves it open. Never clear
+unrelated ASK/EYES work.
+
 ## Procedure
 
 1. **Target.** Change-id from the user, or `change_id` on a packet.
@@ -45,7 +53,7 @@ or Claude-on-Claude in one thread is asking yourself.
    (this session if you wrote it; else the packet / review identity).
    Resolve a reader that is **not** that family:
 
-   `python3 plugins/intention/scripts/ladder.py assign --shape architecture-review --not-harness <author>`
+   `python3 <this-skill-dir>/../../scripts/ladder.py assign --shape architecture-review --not-harness <author>`
 
    Run `ladder.py show` / `assign` — never treat the static
    `available: false` in `ladder.json` as physics. Env-presence
@@ -73,11 +81,14 @@ or Claude-on-Claude in one thread is asking yourself.
    in the first brief.
 
    Packet `constraints.paths` is the review dir (and `tasks.md`
-   if send-back may add owed boxes). `permission: write` on
+   if send-back may add owed boxes or fresh accept must close the
+   preparation marker). `permission: write` on
    that write-set only. Codex sandbox is `workspace-write` so
    the reader can persist the file. Consult stays read-only.
 
-   `spawn.py stage` + `spawn.py run --adapter <harness>`.
+   `python3 <this-skill-dir>/../../scripts/spawn.py stage` +
+   `spawn.py run --adapter <harness>`.
+   Do not use cwd `plugins/intention/scripts/`.
    Claude → `claude -p` (stdin). Codex → `codex exec -`.
    No CLI + `OPENAI_API_KEY` → `--adapter openai` (HTTP cannot
    write files — last-resort harvest only). Never a Codex
@@ -115,7 +126,8 @@ or Claude-on-Claude in one thread is asking yourself.
 8. **Stop.** Do not implement the notes (`change` amends). Do
    not fold. Do not `act`.
 
-**Panel:** `spawn.py consult --panel` is a second opinion; it
+**Panel:** `python3 <consult-skill-dir>/scripts/consult.py --panel`
+is a second opinion; it
 does not unblock `act`. Gating advise is one spawned
 other-family reader (or several `--who`, still spawned). Compare
 qualitatively; no sole-author accept (ADR-005).

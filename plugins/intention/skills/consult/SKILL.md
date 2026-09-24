@@ -52,10 +52,14 @@ a gated reader, use `advise` instead.
    another spawnable reader exists, and **not** when they named
    this harness. Do not skip Claude by default — that can leave
    nobody to ask.
-3. **Spawn.**
+3. **Spawn.** The script is `scripts/consult.py` **in this skill
+   directory** (the folder that contains this SKILL.md — Grok lists
+   that path). It locates plugin `spawn.py`. Do **not** run
+   `plugins/intention/scripts/spawn.py` from the current repo; that
+   file only exists in the bazaar clone.
 
    ```bash
-   python3 plugins/intention/scripts/spawn.py consult \
+   python3 <this-skill-dir>/scripts/consult.py \
      --shape architecture-review \
      [--who fable,astra,sol | --panel | --id <route>] \
      [--not-harness <harness>] \
@@ -63,7 +67,7 @@ a gated reader, use `advise` instead.
      --goal "<question>"
    ```
 
-   Or pipe the brief: `… consult --panel --paths ARCHITECTURE.md < brief.md`.
+   Or pipe the brief: `… consult.py --panel --paths ARCHITECTURE.md < brief.md`.
    Prompt is stdin; result is stdout JSON (`opinions[]` with
    `verdict` agree/caution/dissent and `body`).
 4. **Present.** Quote verdicts and the one real tradeoff from each

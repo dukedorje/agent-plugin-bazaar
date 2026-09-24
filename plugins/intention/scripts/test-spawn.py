@@ -12,6 +12,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SPAWN = HERE / "spawn.py"
+CONSULT = HERE.parents[0] / "skills" / "consult" / "scripts" / "consult.py"
 PACKET = HERE.parents[2] / "docs" / "contracts" / "examples" / "density-explicit.packet.json"
 
 
@@ -830,6 +831,26 @@ def test_consult_empty_fails() -> None:
     expect("empty consult brief" in proc.stderr, proc.stderr)
 
 
+def test_consult_shim_finds_spawn_from_foreign_cwd() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        found = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import importlib.util; "
+                f"p={str(CONSULT)!r}; "
+                "s=importlib.util.spec_from_file_location('c', p); "
+                "m=importlib.util.module_from_spec(s); s.loader.exec_module(m); "
+                "print(m.find_spawn())",
+            ],
+            text=True,
+            capture_output=True,
+            cwd=td,
+        )
+        expect(found.returncode == 0, found.stderr + found.stdout)
+        expect(Path(found.stdout.strip()).resolve() == SPAWN.resolve(), found.stdout)
+
+
 def test_empty_packet_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         empty = Path(td) / "empty.json"
@@ -858,6 +879,7 @@ def main() -> int:
         test_oneshot_cli_fake,
         test_consult_who_exclusive,
         test_consult_empty_fails,
+        test_consult_shim_finds_spawn_from_foreign_cwd,
         test_empty_packet_fails,
     ]
     failed = 0

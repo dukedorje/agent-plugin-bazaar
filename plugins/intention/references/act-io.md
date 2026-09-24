@@ -86,12 +86,20 @@ Single Grok assignee: `spawn_subagent`. Claude/Codex: `spawn.py` below.
 
 ## Spawn
 
+`spawn.py` lives in the **intention plugin** (`scripts/spawn.py` next
+to `skills/`), not in the current repo. From a skill file:
+
 ```bash
-python3 plugins/intention/scripts/spawn.py stage --packet <packet.json>
-python3 plugins/intention/scripts/spawn.py run --spec <spec.json>
-python3 plugins/intention/scripts/spawn.py consult --shape architecture-review [--panel]
-python3 plugins/intention/scripts/spawn.py oneshot --who terra
+python3 <this-skill-dir>/../../scripts/spawn.py stage --packet <packet.json>
+python3 <this-skill-dir>/../../scripts/spawn.py run --spec <spec.json>
+python3 <this-skill-dir>/scripts/consult.py \
+  --shape architecture-review [--panel]
+python3 <this-skill-dir>/../../scripts/spawn.py oneshot --who terra
 ```
+
+Consult: use `skills/consult/scripts/consult.py` (finds `spawn.py`).
+Do not `python3 plugins/intention/scripts/spawn.py` from cwd unless
+this clone *is* the bazaar.
 
 `stage` writes a unique `.spawns/<node>-<id>/` with `packet.json`,
 `prompt.md`, and `spec.json`. Two stages never share a path. Missing

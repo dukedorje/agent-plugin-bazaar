@@ -19,7 +19,7 @@ disagree, the contract wins.
 | Why it is shaped this way | `ARCHITECTURE.md` |
 | Harness matrix | `plugins/intention/references/harness.md` |
 | Conductor ready-set / persist | `plugins/intention/scripts/conductor.py` |
-| Spawn / prompt-file / stall | `plugins/intention/scripts/spawn.py` |
+| Spawn / prompt-file / stall | plugin `scripts/spawn.py` (from a skill: `../../scripts/spawn.py`; consult: `scripts/consult.py`) |
 | Assignment ladder | `plugins/intention/references/ladder.json` |
 
 ## Verb boundaries
@@ -40,6 +40,13 @@ disagree, the contract wins.
 | `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. Persist on current HEAD. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck; halt fold/act over branch name; invent a checkout |
 | `run-wave` | One disjoint act fan-out on HEAD. | Campaign loop, isolate, one-node launch, fold, check EYES |
 | `consult` | Second opinions from architecture/plan/thinking readers. stdin/stdout. No intend node. | Implement, fold, write advise reviews, unblock `act` |
+
+## Preparation and authority
+
+`preparation.md` governs just-in-time contract reconciliation and bounded
+campaign authority. Activation never substitutes for preparation. Only
+change applies a recorded grant to dependency-ready nodes; run observes and
+conducts. Human gates and ASK/EYES remain binding.
 
 ## Skip a change
 
