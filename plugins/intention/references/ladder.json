@@ -22,7 +22,7 @@
     },
     {
       "id": "sonnet-5",
-      "shapes": ["known", "mechanical", "bounded-edit", "implementation"],
+      "shapes": ["known", "mechanical", "bounded-edit"],
       "priority": 2,
       "role": "worker",
       "harness": "claude",
@@ -32,26 +32,11 @@
       "effort": "low",
       "available": true,
       "aliases": ["sonnet"],
-      "notes": "Backup known/mechanical/implementation worker."
-    },
-    {
-      "id": "terra-implement",
-      "shapes": ["implementation"],
-      "priority": 1,
-      "role": "worker",
-      "harness": "codex",
-      "interface": "gpt-5.6-terra",
-      "surface": "packet-only",
-      "density": "standard",
-      "effort": "medium",
-      "available": false,
-      "requires": "codex-cli",
-      "aliases": ["terra"],
-      "notes": "Primary implementor. Latest Terra (gpt-5.6-terra). spawn --adapter codex."
+      "notes": "Backup known/mechanical worker."
     },
     {
       "id": "sol-implement",
-      "shapes": ["thinking"],
+      "shapes": ["implementation", "thinking"],
       "priority": 1,
       "role": "worker",
       "harness": "codex",
@@ -62,11 +47,11 @@
       "available": false,
       "requires": "codex",
       "aliases": ["sol"],
-      "notes": "Primary thinking. spawn --adapter codex (openai fallback)."
+      "notes": "Primary implementation/thinking. spawn --adapter codex (openai fallback)."
     },
     {
       "id": "opus-5",
-      "shapes": ["thinking"],
+      "shapes": ["implementation", "thinking"],
       "priority": 2,
       "role": "worker",
       "harness": "claude",
@@ -76,7 +61,7 @@
       "effort": "medium",
       "available": true,
       "aliases": ["opus"],
-      "notes": "Backup thinking."
+      "notes": "Backup implementation/thinking when Sol is down."
     },
     {
       "id": "opus-5-design",

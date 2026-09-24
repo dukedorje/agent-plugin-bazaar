@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-24 — Terra is known/mechanical only. Implementation and thinking go Sol then Opus 5. (`plugins/intention/references/ladder.json`)
+
 - 2026-09-24 — Implementor is latest Terra (`gpt-5.6-terra`, `terra-implement`) then Sonnet 5. Thinking stays Sol then Opus 5. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-24 — Steer menus: recommended first and skip. No standalone decide-for-me; that is picking recommended. (`plugins/intention/skills/steer/SKILL.md`)

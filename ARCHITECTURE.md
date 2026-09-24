@@ -157,21 +157,21 @@ runners (`add-act-conductor`, `add-act-runners`).
 **Blast:** assignment. Who gets the packet.
 
 **Decision.** Default coding agents are Claude Code, which holds the
-high usage limits, except the **implementor** is Codex Terra when
-the Codex CLI is present:
+high usage limits, except Codex Terra is the known/mechanical
+worker when the CLI is present, and Sol takes implementation and
+thinking:
 
 | Shape | Assignee |
 |---|---|
 | Known / mechanical | Codex Terra (`gpt-5.6-terra`) then Sonnet 5 · `explicit` |
-| Implementation | Codex Terra (`gpt-5.6-terra`) · `standard` · effort medium; Sonnet 5 backup |
+| Implementation / thinking | GPT-5.6 Sol · `standard` · effort medium; Opus 5 backup |
 | Design | Opus 5 · effort low/medium · CC designer skills |
 | Planning helper / replan consult | Fable 5.1 · `lean` · no write |
 | Real architecture review | **Grok** reader (required). GPT-5.6 Sol if `available` |
 
 Same-family review still cannot promote. Grok reading an Opus design
 is the cross-family gate. Terra/Sol stay `available: false` until
-Codex is present. Human pick always wins. Thinking stays Sol then
-Opus 5.
+Codex is present. Human pick always wins.
 
 Source of truth: `plugins/intention/references/ladder.json`.
 Resolve: `plugins/intention/scripts/ladder.py assign --shape …`.
