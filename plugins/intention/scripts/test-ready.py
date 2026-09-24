@@ -102,10 +102,10 @@ def test_empty_openspec_still_shows_beads() -> None:
             cwd=root,
         )
         expect(text.returncode == 0, text.stderr + text.stdout)
-        expect("BEADS" in text.stdout, text.stdout)
+        expect("Beads" in text.stdout, text.stdout)
         expect("bazaar-tvm.2" in text.stdout, text.stdout)
-        expect("READY (OpenSpec" in text.stdout, text.stdout)
-        expect("(none)" in text.stdout, text.stdout)
+        expect("Beads 1" in text.stdout, text.stdout)
+        expect("# Status" in text.stdout, text.stdout)
 
 
 def test_missing_openspec_still_shows_beads() -> None:
@@ -125,6 +125,7 @@ def test_missing_openspec_still_shows_beads() -> None:
         expect(text.returncode == 0, text.stderr + text.stdout)
         expect("bazaar-ja7" in text.stdout, text.stdout)
         expect("beads still shown" in text.stdout, text.stdout)
+        expect("# Status" in text.stdout, text.stdout)
 
 
 def test_parked_hides_beads() -> None:
@@ -205,8 +206,8 @@ def test_eyes_is_not_ready() -> None:
         )
         expect("EYES" in text.stdout, text.stdout)
         expect("YOUR EYES" in text.stdout, text.stdout)
-        expect("ASK" in text.stdout, text.stdout)
         expect("Next:" in text.stdout, text.stdout)
+        expect("## Ask" not in text.stdout, text.stdout)
 
 
 def test_ask_and_punt_faces() -> None:
@@ -312,10 +313,9 @@ def test_queue_omits_umbrella_epics_and_blocked() -> None:
             cwd=root,
         )
         expect(text.returncode == 0, text.stderr + text.stdout)
-        expect("QUEUE (open, unblocked)" in text.stdout, text.stdout)
+        expect("# Queue" in text.stdout, text.stdout)
         expect("`bazaar-qy7`" in text.stdout, text.stdout)
-        expect("bazaar-y4t`" not in text.stdout.split("BLOCKED")[0], text.stdout)
-        expect("ASK" not in text.stdout, text.stdout)
+        expect("`bazaar-y4t.21`" in text.stdout, text.stdout)
         expect("YOUR EYES" not in text.stdout, text.stdout)
         expect("(none)" not in text.stdout, text.stdout)
 
@@ -336,9 +336,10 @@ def test_queue_empty_is_none_not_full_board() -> None:
             cwd=root,
         )
         expect(proc.returncode == 0, proc.stderr + proc.stdout)
-        expect(proc.stdout.strip() == "QUEUE (open, unblocked)\n(none)", proc.stdout)
-        expect("NEEDS ACTIVATION" not in proc.stdout, proc.stdout)
-        expect("BEADS" not in proc.stdout, proc.stdout)
+        expect("# Queue" in proc.stdout, proc.stdout)
+        expect("(none)" in proc.stdout, proc.stdout)
+        expect("Needs activation" not in proc.stdout, proc.stdout)
+        expect("Beads" not in proc.stdout, proc.stdout)
 
 
 def test_pending_does_not_flip_into_ready() -> None:
@@ -362,8 +363,43 @@ def test_pending_does_not_flip_into_ready() -> None:
         expect([row["id"] for row in face["waiting"]] == ["add-x"], face)
 
 
+def test_preparation_invalidates_historical_accept() -> None:
+    """The explicit owed review blocks writes until a fresh reader clears it."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-x", tasks="- [ ] implement")
+        change = root / "openspec" / "changes" / "add-x"
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-09-01-advise.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** independent-reader\n",
+            encoding="utf-8",
+        )
+        beads = write_beads(root, [])
+        for rigor, banner, task, blocked in (
+            ("architecture", "ACTIVE BUILD", "- [ ] Fresh advise after preparation", True),
+            ("instrument", "ACTIVE BUILD", "- [ ] Fresh advise after preparation", True),
+            ("architecture", "ACTIVE BUILD", "- [x] Fresh advise after preparation", False),
+            ("architecture", "ACTIVE BUILD", "- [ ] ordinary implementation", False),
+            ("change", "ACTIVE BUILD", "- [ ] Fresh advise after preparation", False),
+            ("architecture", "PENDING", "- [ ] Fresh advise after preparation", False),
+        ):
+            (change / "proposal.md").write_text(
+                f"# add-x\n\n> **{banner}**\n\n**Rigor:** {rigor}\n",
+                encoding="utf-8",
+            )
+            (change / "tasks.md").write_text(task + "\n- [ ] implement\n", encoding="utf-8")
+            proc = run(["--json", "--root", str(root / "openspec"),
+                        "--beads-json", str(beads)], cwd=root)
+            expect(proc.returncode == 0, proc.stderr)
+            face = json.loads(proc.stdout)
+            advise_ids = [row["id"] for row in face["needs_advise"]]
+            expect(("add-x" in advise_ids) == blocked, (rigor, banner, task, face))
+
+
 def main() -> int:
     tests = [
+        test_preparation_invalidates_historical_accept,
         test_openspec_ready_stays_openspec,
         test_empty_openspec_still_shows_beads,
         test_missing_openspec_still_shows_beads,

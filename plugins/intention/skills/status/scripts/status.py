@@ -80,6 +80,14 @@ def find_openspec(start: Path | None = None) -> Path | None:
     return None
 
 
+def first_heading(text: str) -> str:
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("# "):
+            return s[2:].strip()
+    return ""
+
+
 def first_banner(text: str) -> tuple[str | None, str]:
     for i, line in enumerate(text.splitlines()):
         if i >= 40:
@@ -122,7 +130,8 @@ def inflight(openspec: Path) -> list[dict]:
         proposal = child / "proposal.md"
         if not proposal.is_file():
             continue
-        banner, revive = first_banner(proposal.read_text(encoding="utf-8"))
+        body = proposal.read_text(encoding="utf-8")
+        banner, revive = first_banner(body)
         tasks_path = child / "tasks.md"
         open_items = open_owed(tasks_path.read_text(encoding="utf-8")) if tasks_path.is_file() else []
         try:
@@ -135,6 +144,7 @@ def inflight(openspec: Path) -> list[dict]:
                 "kind": "change",
                 "source": "openspec",
                 "banner": banner or "none",
+                "title": first_heading(body) or child.name,
                 "open": open_items,
                 "revive": revive,
                 "where": where,
@@ -212,12 +222,13 @@ def classify(openspec: Path) -> dict[str, list[dict]]:
 
 
 def fmt(row: dict) -> str:
+    """Legacy one-liner; printers use print_change / print_bead_line."""
     extra = ""
-    if row["open"]:
+    if row.get("open"):
         extra = f"  open: {'; '.join(row['open'][:3])}"
-    elif row["revive"]:
+    elif row.get("revive"):
         extra = f"  revive: {row['revive']}"
-    return f"{row['id']:28} {row['kind']:8} {row['where']}{extra}"
+    return f"{row['id']:28} {row.get('kind', ''):8} {row.get('where', '')}{extra}"
 
 
 def empty() -> dict[str, list[dict]]:
@@ -348,8 +359,10 @@ def is_umbrella_epic(row: dict, parents: set[str]) -> bool:
 
 def queue_row(row: dict, *, source: str) -> dict:
     title = row.get("title")
-    if not title and row.get("open"):
-        title = row["open"][0]
+    if not title or title == row.get("id"):
+        opens = row.get("open") or []
+        if opens:
+            title = strip_next(str(opens[0]))
     if not title:
         title = row.get("id")
     blocked_by = row.get("blocked_by") or []
@@ -406,30 +419,200 @@ def build_queue(
     return {"queue": queue, "blocked": blocked_rows, "waiting": waiting}
 
 
+def code_id(nid: object) -> str:
+    return f"`{nid}`"
+
+
+def pri_sort(row: dict) -> tuple:
+    try:
+        pri = int(row.get("priority"))
+    except (TypeError, ValueError):
+        pri = 99
+    return (pri, str(row.get("id") or ""))
+
+
+def family_of(nid: str) -> str | None:
+    if "." in nid:
+        return nid.split(".", 1)[0]
+    return None
+
+
+def print_bullets(items: list[str], *, limit: int = 6, indent: str = "  ") -> None:
+    shown = items[:limit]
+    for item in shown:
+        print(f"{indent}- {item}")
+    extra = len(items) - len(shown)
+    if extra > 0:
+        print(f"{indent}- +{extra} more")
+
+
+def strip_next(item: str) -> str:
+    return NEXT_CMD_RE.sub("", item or "").rstrip(" .—-").strip()
+
+
+def display_title(row: dict, *, from_open: bool = True) -> str:
+    nid = str(row.get("id") or "")
+    title = short_what(row.get("title") or "", 88)
+    if title and title != nid:
+        return title
+    if from_open:
+        opens = row.get("open") or []
+        if opens:
+            return short_what(strip_next(str(opens[0])), 88)
+    return ""
+
+
+def print_change(row: dict, *, note: str | None = None, from_open: bool = True) -> None:
+    nid = str(row.get("id") or "")
+    title = display_title(row, from_open=from_open)
+    kind = str(row.get("kind") or "")
+    head = f"- **{code_id(nid)}**"
+    if kind and kind not in {"change", "bead"}:
+        head += f" · {kind}"
+    if title:
+        head += f"  {title}"
+    print(head)
+    if note:
+        print(f"  {note}")
+    opens = [str(x) for x in (row.get("open") or []) if x]
+    title_is_first_open = bool(
+        from_open and opens and title == short_what(strip_next(str(opens[0])), 88)
+    )
+    rest = opens[1:] if title_is_first_open else opens
+    if rest:
+        print_bullets(rest)
+    elif row.get("revive") and not opens:
+        print(f"  Revive when {row['revive']}")
+
+
+def print_bead_line(row: dict, *, waiting: str | None = None) -> None:
+    nid = str(row.get("id") or "")
+    kind = str(row.get("issue_type") or row.get("type") or row.get("kind") or "bead")
+    title = short_what(row.get("title") or "", 80)
+    pri = pri_label(row)
+    bits = [f"- {code_id(nid)}"]
+    if pri != "—":
+        bits.append(pri)
+    if kind and kind not in {"bead", "change"}:
+        bits.append(kind)
+    if title:
+        bits.append(title)
+    print(" · ".join(bits))
+    if waiting:
+        print(f"  waiting on {waiting}")
+
+
+def grouped_rows(rows: list[dict]) -> list[tuple[str | None, dict | None, list[dict]]]:
+    """Group dotted children under a family id. Ungrouped rows have family None."""
+    by_id = {str(r.get("id") or ""): r for r in rows if r.get("id")}
+    children: dict[str, list[dict]] = {}
+    ungrouped: list[dict] = []
+    for row in rows:
+        nid = str(row.get("id") or "")
+        parent = str(row.get("parent") or "") or family_of(nid)
+        if parent and parent != nid:
+            children.setdefault(parent, []).append(row)
+        else:
+            ungrouped.append(row)
+    used_children: set[str] = set()
+    groups: list[tuple[str | None, dict | None, list[dict]]] = []
+    families = sorted(children, key=lambda fid: pri_sort(by_id.get(fid) or {"id": fid}))
+    for fid in families:
+        kids = sorted(children[fid], key=pri_sort)
+        used_children.update(str(k.get("id") or "") for k in kids)
+        head = by_id.get(fid)
+        groups.append((fid, head, kids))
+    rest = [r for r in ungrouped if str(r.get("id") or "") not in used_children]
+    rest = [r for r in rest if str(r.get("id") or "") not in children]
+    rest.sort(key=pri_sort)
+    if rest:
+        groups.append((None, None, rest))
+    return groups
+
+
+def print_grouped(rows: list[dict], *, line) -> None:
+    groups = grouped_rows(rows)
+    for i, (fid, head, members) in enumerate(groups):
+        if i:
+            print()
+        if fid is not None:
+            if head is not None:
+                title = short_what(head.get("title") or "", 80)
+                pri = pri_label(head)
+                label = f"**{code_id(fid)}**"
+                if pri != "—":
+                    label += f" · {pri}"
+                if title:
+                    label += f"  {title}"
+                print(label)
+            else:
+                print(f"**{code_id(fid)}**")
+            for row in members:
+                line(row)
+        else:
+            if i > 0:
+                print("**Also**")
+            for row in members:
+                line(row)
+
+
+def tally(data: dict[str, list[dict]], *, show_ready: bool, show_parked: bool) -> str:
+    pairs: list[tuple[str, int]] = []
+    if show_ready:
+        pairs.extend(
+            [
+                ("Ready", len(data.get("ready") or [])),
+                ("Pending", len(data.get("waiting") or [])),
+                ("Advise", len(data.get("needs_advise") or [])),
+                ("Ask", len(data.get("ask") or [])),
+                ("Eyes", len(data.get("eyes") or [])),
+                ("Punt", len(data.get("punt") or [])),
+                ("Beads", len(data.get("beads") or [])),
+            ]
+        )
+    if show_parked:
+        pairs.append(("Parked", len(data.get("parked") or [])))
+    bits = [f"{label} {n}" for label, n in pairs if n]
+    return " · ".join(bits) if bits else "Empty"
+
+
+def print_section(title: str, blurb: str | None, rows: list, printer) -> None:
+    if not rows:
+        return
+    print(f"## {title} · {len(rows)}")
+    if blurb:
+        print(blurb)
+    print()
+    printer(rows)
+    print()
+
+
 def print_queue(face: dict[str, list[dict]]) -> None:
-    print("QUEUE (open, unblocked)")
+    print("# Queue")
+    print()
+    print("Open, unblocked.")
+    print()
     if face["queue"]:
-        print("| ID | Pri | What |")
-        print("|----|-----|------|")
-        for row in face["queue"]:
-            print(f"| `{row['id']}` | {pri_label(row)} | {row['title']} |")
+        print_grouped(face["queue"], line=print_bead_line)
     else:
         print("(none)")
     if face["blocked"]:
-        print("")
-        print("BLOCKED")
-        print("| ID | Pri | What | Waiting on |")
-        print("|----|-----|------|------------|")
-        for row in face["blocked"]:
-            waiting = ", ".join(f"`{x}`" for x in row.get("blocked_by") or []) or "—"
-            print(f"| `{row['id']}` | {pri_label(row)} | {row['title']} | {waiting} |")
+        print()
+        print(f"## Blocked · {len(face['blocked'])}")
+        print()
+
+        def blocked_line(row: dict) -> None:
+            waiting = ", ".join(code_id(x) for x in row.get("blocked_by") or []) or "—"
+            print_bead_line(row, waiting=waiting)
+
+        print_grouped(face["blocked"], line=blocked_line)
     if face["waiting"]:
-        print("")
-        print("NEEDS ACTIVATION (OpenSpec · PENDING)")
-        print("| ID | What |")
-        print("|----|------|")
+        print()
+        print(f"## Needs activation · {len(face['waiting'])}")
+        print("OpenSpec · PENDING")
+        print()
         for row in face["waiting"]:
-            print(f"| `{row['id']}` | {row['title']} |")
+            print_bead_line(row)
 
 
 def print_card(
@@ -439,72 +622,106 @@ def print_card(
     show_parked: bool,
     missing: str | None = None,
 ) -> None:
+    print("# Status")
+    print()
+    print(tally(data, show_ready=show_ready, show_parked=show_parked))
+    print()
+
     if show_ready:
-        print("READY (OpenSpec · ACTIVE BUILD, unblocked)")
-        if data["ready"]:
-            for row in data["ready"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
-        print("NEEDS ACTIVATION (OpenSpec · PENDING)")
-        if data["waiting"]:
-            for row in data["waiting"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
-        print("NEEDS ADVISE (OpenSpec · architecture/instrument)")
-        if data["needs_advise"]:
-            for row in data["needs_advise"]:
-                print("  " + fmt(row) + f"  advise: {row.get('advise', 'missing')}")
-        else:
-            print("  (none)")
-        print("ASK (decision owed)")
-        if data.get("ask"):
-            for row in data["ask"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
-        print("EYES — YOUR EYES (look owed, not READY)")
-        if data.get("eyes"):
-            for row in data["eyes"]:
-                print("  " + fmt(row))
+        eyes = data.get("eyes") or []
+        if eyes:
+            print(f"## YOUR EYES · {len(eyes)}")
+            print("Look owed — not READY. Check the box after you look.")
+            print()
+            for row in eyes:
+                heading = dict(row)
+                heading["open"] = []
+                print_change(heading, from_open=False)
                 cmds: list[str] = []
+                looks: list[str] = []
                 for item in row.get("open") or []:
-                    cmd = next_command(str(item))
+                    text = str(item)
+                    cmd = next_command(text)
                     if cmd and cmd not in cmds:
                         cmds.append(cmd)
-                print("  Next:")
-                if cmds:
-                    for cmd in cmds:
-                        print(f"    {cmd}")
-                else:
-                    print("    /status")
-        else:
-            print("  (none)")
-        print("PUNT (second-family advise, last-resort)")
-        if data.get("punt"):
-            for row in data["punt"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
-        print("BEADS (bd ready · unblocked)")
-        if data.get("beads"):
-            for row in data["beads"]:
-                print("  " + fmt_bead(row))
-        else:
-            print("  (none)")
+                    look = strip_next(text)
+                    if look:
+                        looks.append(look)
+                if looks:
+                    print_bullets(looks)
+                if not cmds:
+                    cmds = ["/status"]
+                print("  Next: " + ", ".join(f"`{c}`" for c in cmds))
+            print()
+
+        print_section(
+            "Ready",
+            "OpenSpec · ACTIVE BUILD, unblocked implement work.",
+            data.get("ready") or [],
+            lambda rows: [print_change(r) for r in rows],
+        )
+        print_section(
+            "Needs activation",
+            "OpenSpec · PENDING.",
+            data.get("waiting") or [],
+            lambda rows: [print_change(r) for r in rows],
+        )
+        print_section(
+            "Needs advise",
+            "OpenSpec · architecture / instrument.",
+            data.get("needs_advise") or [],
+            lambda rows: [
+                print_change(r, note=f"advise: {r.get('advise', 'missing')}") for r in rows
+            ],
+        )
+        print_section(
+            "Ask",
+            "Decision owed. Next is `steer`.",
+            data.get("ask") or [],
+            lambda rows: [print_change(r) for r in rows],
+        )
+        print_section(
+            "Punt",
+            "Second-family advise, last-resort.",
+            data.get("punt") or [],
+            lambda rows: [print_change(r) for r in rows],
+        )
+        beads = data.get("beads") or []
+        if beads:
+            print(f"## Beads · {len(beads)}")
+            print("Unblocked (`bd ready`).")
+            print()
+            print_grouped(beads, line=print_bead_line)
+            print()
+        elif show_ready and not any(
+            data.get(k)
+            for k in ("ready", "waiting", "needs_advise", "ask", "eyes", "punt")
+        ):
+            print("## Beads · 0")
+            print()
+            print("(none)")
+            print()
+
     if show_parked:
-        print("PARKED (OpenSpec)")
-        if data["parked"]:
-            for row in data["parked"]:
-                print("  " + fmt(row))
-        else:
-            print("  (none)")
+        parked = data.get("parked") or []
+        if parked:
+            print(f"## Parked · {len(parked)}")
+            print("OpenSpec.")
+            print()
+            for row in parked:
+                print_change(row)
+            print()
+        elif not show_ready:
+            print("## Parked · 0")
+            print()
+            print("(none)")
+            print()
+
     if missing == "openspec":
         if data.get("beads"):
-            print("no openspec/ from cwd — OpenSpec lens empty; beads still shown")
+            print("No `openspec/` from cwd — OpenSpec lens empty; beads still shown.")
         else:
-            print("no openspec/ from cwd — not a guessed ready-set")
+            print("No `openspec/` from cwd — not a guessed ready-set.")
 
 
 def main() -> int:

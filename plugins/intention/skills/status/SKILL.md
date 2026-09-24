@@ -26,8 +26,9 @@ python3 <this-skill-dir>/scripts/status.py --queue --json
 ```
 
 Print the command output. That is the report. Do not re-derive the
-ready-set by grepping banners yourself. Do not run `bd ready` as a
-second report — beads are already on this card.
+ready-set by grepping banners yourself. Do not restyle it. Do not run
+`bd ready` as a second report — beads are already on this card. Empty
+faces are omitted; the tally line is the counts.
 
 Sources (union, labeled, not collapsed):
 
