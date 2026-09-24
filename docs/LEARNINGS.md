@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-24 — Steer menus: recommended first and skip. No standalone decide-for-me; that is picking recommended. (`plugins/intention/skills/steer/SKILL.md`)
+
 - 2026-09-19 — Dossier host projection and compose UI live in the Taskmaster tracker (`tm-mi1`, `tm-893`), not bazaar beads. Kernel gather stays `bazaar-db8.3` (on `ja7`). Filing host work in the kernel tracker made a bazaar Grok pick it. (`~/work/Taskmaster/taskmaster-web/docs/RELATED.md`)
 - 2026-09-18 — Claude/Grok/Codex plugin caches are version- or SHA-pinned. Pushing `main` does not recopy `intention/0.5.0`. `scripts/sync-harness-plugins.py` plus `.githooks` on `main` mirrors `plugins/` into those caches. Grok marketplace versions must match plugin.json or session-start update thinks the catalog is older. (`scripts/sync-harness-plugins.py`, `.githooks/`)
 

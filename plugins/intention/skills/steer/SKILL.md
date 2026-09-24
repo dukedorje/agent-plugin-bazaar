@@ -3,7 +3,7 @@ name: steer
 description: >
   Human-gated guidance pass on the current intend DAG. Elicit
   architecture and direction with menus: recommended option first,
-  always skip and decide-for-me. Records decisions on beads (and
+  always skip. Records decisions on beads (and
   steer.md if a change dir exists) so change can update the node
   docs. Use after intend, before change, when asked to steer,
   give guidance, run architecture by me, or activate human-gate
@@ -64,9 +64,8 @@ sensitive always includes the human (already a member).
    print the template below and wait. Every question includes:
    - **Recommended** option first, labeled
    - **Skip** — leave undecided; do not block siblings
-   - **Decide for me** — take the recommendation and continue
-   Hosts add **Other**. "Decide for me and automate the rest" switches
-   remaining forks to lean auto-log.
+   Hosts add **Other**. Picking recommended *is* decide-for-me.
+   Saying automate the rest switches remaining forks to lean auto-log.
 4. **Record.** For each decided fork, `bd update <id> --append-notes`
    (and `--design` when it is the node's design). If
    `openspec/changes/<id>/` exists (not `archive/`), write or append
@@ -93,7 +92,6 @@ sensitive always includes the human (already a member).
 | **<A> (Recommended)** | … |
 | <B> | … |
 | Skip | Leave open; siblings may proceed |
-| Decide for me | Take the recommendation |
 ```
 
 ## `steer.md` (only inside an existing change dir)
@@ -105,7 +103,7 @@ sensitive always includes the human (already a member).
 **Depth.** lean | standard | explicit
 
 ## Decided
-- <fork>: <choice> (user | auto | decide-for-me)
+- <fork>: <choice> (user | auto)
   Why: …
 
 ## Skipped

@@ -27,7 +27,7 @@ disagree, the contract wins.
 | Verb | Produces | Must not |
 |---|---|---|
 | `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set. `--ask` presents it and stops. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask` |
-| `steer` | Decisions on architecture / human-gate nodes: menus with recommended, skip, decide-for-me. Residue is bead design/notes, plus `steer.md` if a change dir exists. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave |
+| `steer` | Decisions on architecture / human-gate nodes: menus with recommended first and skip. Residue is bead design/notes, plus `steer.md` if a change dir exists. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave, a separate decide-for-me option |
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas. Reads steer residue. | Implement (until ACTIVE), fold, archive |
 | `advise` | Review file written by the spawned reader (`accept` / `send-back` + `READER:`). Notes in the body. Always spawn a fresh other-family reader. | Implement, fold, flip banner, in-tab accept, transcribe the verdict, halt instead of spawn |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |

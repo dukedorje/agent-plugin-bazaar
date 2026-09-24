@@ -109,7 +109,8 @@ NOT be the sole accepting reader.
 `steer` SHALL load the current intend DAG (or a named epic / bead /
 change-id) and elicit architecture and direction through
 multiple-choice menus. Every menu SHALL include a recommended
-option, skip, and decide-for-me. It SHALL record decisions on the
+option first and skip. It SHALL NOT add a separate decide-for-me
+choice; picking recommended is that choice. It SHALL record decisions on the
 node's bead (`design` / notes). If `openspec/changes/<id>/` exists
 and is not archived, it SHALL also write `steer.md` there. It SHALL
 NOT write SHALLs, implement, fold, or `act`. It SHALL NOT invent
@@ -124,8 +125,7 @@ forks. Skip SHALL leave a fork open and SHALL NOT block siblings.
 - GIVEN `map --current` is `mjolnir-mesh-st1` and
   `identikey-core-trr.1` needs direction
 - WHEN `steer` runs
-- THEN the human is offered menus with a recommended option, skip,
-  and decide-for-me
+- THEN the human is offered menus with a recommended option and skip
 - AND decided forks are appended on the bead
 - AND no living-spec SHALL was written
 
