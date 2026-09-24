@@ -17,7 +17,7 @@ without a plugin install.
 | You want | Say / run |
 |---|---|
 | Work out a plan, then show me | “work out a plan then run it by me” or `intend --ask …` |
-| Give architecture / direction on the current DAG | `steer` (menus: recommended, skip, decide-for-me) |
+| Give architecture / direction on the current DAG | `steer` (menus: recommended, skip) |
 | Plan + architecture review, then me | `intend --advise --ask …` |
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
