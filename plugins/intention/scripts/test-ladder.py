@@ -94,20 +94,23 @@ def main() -> int:
         print(f"FAIL design skills: {exc}")
 
     try:
-        proc = run(["assign", "--shape", "architecture-review"])
+        proc = run(["assign", "--shape", "architecture-review"], env=env_without_sol())
         got = json.loads(proc.stdout)
         expect(got["id"] == "fable-5.1-arch-review", got)
         expect(got["harness"] == "claude", got)
         expect(got["interface"] == "fable-5.1", got)
-        alt = run(["assign", "--shape", "architecture-review", "--include-unavailable"])
+        alt = run(
+            ["assign", "--shape", "architecture-review", "--include-unavailable"],
+            env=env_without_sol(),
+        )
         expect(alt.returncode == 0, alt.stderr)
-        expect(json.loads(alt.stdout)["id"] == "fable-5.1-arch-review", alt.stdout)
+        expect(json.loads(alt.stdout)["id"] == "astra-arch-review", alt.stdout)
         show = json.loads(run(["show"], env=env_without_sol()).stdout)
         grok = next(r for r in show["routes"] if r["id"] == "grok-arch-review")
         expect(grok["available"] is True, grok)
         sol = next(r for r in show["routes"] if r["id"] == "sol-arch-review")
         expect(sol["available"] is False, sol)
-        print("pass arch-review default is fable-5.1; grok on; sol off without key")
+        print("pass arch-review default is fable without Codex; Astra first if listed")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol optional: {exc}")
@@ -160,7 +163,8 @@ def main() -> int:
         default = json.loads(
             run(["assign", "--shape", "architecture-review"], env=env_with_codex()).stdout
         )
-        expect(default["id"] == "fable-5.1-arch-review", default)
+        expect(default["id"] == "astra-arch-review", default)
+        expect(default["interface"] == "gpt-6-astra", default)
         astra_off = next(r for r in off["routes"] if r["id"] == "astra-arch-review")
         expect(astra_off["available"] is False, astra_off)
         expect(
@@ -176,7 +180,7 @@ def main() -> int:
         )
         expect(picked_astra["id"] == "astra-arch-review", picked_astra)
         expect(picked_astra["interface"] == "gpt-6-astra", picked_astra)
-        print("pass sol/astra available iff codex CLI or OPENAI_API_KEY; still not default")
+        print("pass sol/astra available iff codex CLI or OPENAI_API_KEY; Astra is default")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL sol env: {exc}")
@@ -263,13 +267,13 @@ def main() -> int:
         panel = json.loads(proc.stdout)
         ids = [r["id"] for r in panel]
         expect(ids[:5] == [
-            "fable-5.1-arch-review",
             "astra-arch-review",
+            "fable-5.1-arch-review",
             "sol-arch-review",
             "opus-4.8-arch-review",
             "grok-arch-review",
         ], ids)
-        print("pass architecture panel order Fable, Astra, Sol, 4.8, Grok")
+        print("pass architecture panel order Astra, Fable, Sol, 4.8, Grok")
     except Exception as exc:  # noqa: BLE001
         failed += 1
         print(f"FAIL panel: {exc}")
@@ -317,7 +321,7 @@ def main() -> int:
         )
         expect(
             [r["id"] for r in astra_fable]
-            == ["fable-5.1-arch-review", "astra-arch-review"],
+            == ["astra-arch-review", "fable-5.1-arch-review"],
             astra_fable,
         )
         terra_impl = run(["assign", "--shape", "implementation", "--who", "terra"])

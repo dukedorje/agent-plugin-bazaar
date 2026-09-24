@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-24 — Default architecture reader is Astra (`gpt-6-astra`, `astra-arch-review`) when Codex is present; Fable 5.1 is the backup. Panel order Astra, Fable, Sol, 4.8, Grok. (`plugins/intention/references/ladder.json`)
+
 - 2026-09-24 — After intend, default is steer (decision briefing, then menus). “Activate this set” is the campaign grant; `--go` / `--autonomous` skip the pause; `/run` already takes waves. (`plugins/intention/skills/intend/SKILL.md`, `map`)
 
 - 2026-09-24 — Terra is known/mechanical only. Implementation and thinking go Sol then Opus 5. (`plugins/intention/references/ladder.json`)

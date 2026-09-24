@@ -136,24 +136,9 @@
       "notes": "Optional folder. Flip available or human-pick."
     },
     {
-      "id": "fable-5.1-arch-review",
-      "shapes": ["architecture-review"],
-      "priority": 1,
-      "role": "reader",
-      "harness": "claude",
-      "interface": "fable-5.1",
-      "surface": "skill-host",
-      "density": "lean",
-      "effort": "high",
-      "available": true,
-      "required_on": ["architecture", "instrument"],
-      "aliases": ["fable"],
-      "notes": "Default architecture buddy. Panel with Astra, Sol, and Opus 4.8 when comparing."
-    },
-    {
       "id": "astra-arch-review",
       "shapes": ["architecture-review"],
-      "priority": 2,
+      "priority": 1,
       "role": "reader",
       "harness": "codex",
       "interface": "gpt-6-astra",
@@ -162,8 +147,23 @@
       "effort": "high",
       "available": false,
       "requires": "codex",
+      "required_on": ["architecture", "instrument"],
       "aliases": ["astra"],
-      "notes": "Architecture reader after Fable. Codex gpt-6-astra; OpenAI HTTP if no CLI."
+      "notes": "Default architecture buddy. Codex gpt-6-astra; OpenAI HTTP if no CLI."
+    },
+    {
+      "id": "fable-5.1-arch-review",
+      "shapes": ["architecture-review"],
+      "priority": 2,
+      "role": "reader",
+      "harness": "claude",
+      "interface": "fable-5.1",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "available": true,
+      "aliases": ["fable"],
+      "notes": "Architecture reader after Astra. Claude backup when Codex is down."
     },
     {
       "id": "sol-arch-review",
@@ -192,7 +192,7 @@
       "effort": "high",
       "available": true,
       "aliases": ["opus", "4.8"],
-      "notes": "Architecture reader after Fable, Astra, and Sol. Good panel fourth."
+      "notes": "Architecture reader after Astra, Fable, and Sol. Good panel fourth."
     },
     {
       "id": "grok-arch-review",

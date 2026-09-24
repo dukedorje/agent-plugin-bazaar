@@ -65,10 +65,11 @@ unrelated ASK/EYES work.
    Human pick (`--who` / `--id`) selects the spawned reader. It
    does not waive isolation.
 
-   Fable 5.1 on architecture-review is a valid *other-family*
-   reader only when the author is not Claude. Optional extra:
-   `--shape plan` consult (Fable). Plan consult is **not** the
-   sole accept.
+   Astra (`gpt-6-astra`) is the default architecture reader when
+   Codex is present. Fable 5.1 is the Claude backup, and a valid
+   *other-family* reader only when the author is not Claude.
+   Optional extra: `--shape plan` consult (Fable). Plan consult is
+   **not** the sole accept.
 
    If `assign --not-harness <author>` finds no spawnable route:
    park as ASK (`PUNT: second-family advise` on `tasks.md`).

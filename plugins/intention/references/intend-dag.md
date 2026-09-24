@@ -39,7 +39,7 @@ no flag (blank-page observe still happened).
 - Surface: skill-host | packet-only
 - Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
 - Consult: plan/replan → Fable 5.1; write stays here
-- Architecture: review-pair, reader = Fable 5.1 (Grok for second family; Sol via `codex exec` or OPENAI_API_KEY)
+- Architecture: review-pair, reader = Astra (`gpt-6-astra`; Fable 5.1 without Codex; Grok for second family)
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 

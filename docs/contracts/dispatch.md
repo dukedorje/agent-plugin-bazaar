@@ -43,7 +43,7 @@ with the work.
 
 | Density | Expected assignee (this project) |
 |---|---|
-| `lean` | Fable 5.1 (plan consult + arch buddy) · Grok 4.6 (cross-family review) · Sol if `OPENAI_API_KEY` |
+| `lean` | Astra (`gpt-6-astra`, arch buddy) · Fable 5.1 (plan consult + arch backup) · Grok 4.6 (cross-family review) · Sol if `OPENAI_API_KEY` |
 | `standard` | Sol (implementation / thinking) · Opus 5 (backup + design, effort low–medium) |
 | `explicit` | Codex Terra then Sonnet 5 (known / mechanical) |
 
@@ -55,8 +55,8 @@ python3 plugins/intention/scripts/ladder.py assign --shape known
 
 Source: `plugins/intention/references/ladder.json`. Known work is
 Codex Terra when the CLI is present, else Sonnet 5. Implementation
-and thinking are Sol, else Opus 5. Grok is the default architecture
-reader.
+and thinking are Sol, else Opus 5. Architecture reader is Astra when
+Codex is present, else Fable 5.1. Grok is the cross-family reader.
 
 Blast **raises** density and never lowers it: schema/migration, auth,
 crypto, money, cross-service contract → at least `standard`.

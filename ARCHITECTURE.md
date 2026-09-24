@@ -167,11 +167,11 @@ thinking:
 | Implementation / thinking | GPT-5.6 Sol · `standard` · effort medium; Opus 5 backup |
 | Design | Opus 5 · effort low/medium · CC designer skills |
 | Planning helper / replan consult | Fable 5.1 · `lean` · no write |
-| Real architecture review | **Grok** reader (required). GPT-5.6 Sol if `available` |
+| Real architecture review | Astra (`gpt-6-astra`) then Fable 5.1. **Grok** when a second family is needed |
 
 Same-family review still cannot promote. Grok reading an Opus design
-is the cross-family gate. Terra/Sol stay `available: false` until
-Codex is present. Human pick always wins.
+is the cross-family gate. Astra/Terra/Sol stay `available: false`
+until Codex is present. Human pick always wins.
 
 Source of truth: `plugins/intention/references/ladder.json`.
 Resolve: `plugins/intention/scripts/ladder.py assign --shape …`.

@@ -6,7 +6,7 @@ description: >
   pair of eyes, consult the architecture buddy, run this by Fable /
   Astra / Sol / Opus 4.8, call several, or convoke a panel.
 user-invocable: true
-argument-hint: "[--who fable,astra,sol | --panel] [--shape architecture-review] [<question>]"
+argument-hint: "[--who astra,fable,sol | --panel] [--shape architecture-review] [<question>]"
 ---
 
 # consult
@@ -41,7 +41,7 @@ a gated reader, use `advise` instead.
    | named models (“Astra”, “Sol”, “Fable and 4.8”) | `--who astra` / `--who sol` / `--who fable,4.8` |
    | “compare Sol and Fable” | `--who sol,fable` (named wins; not the full panel) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
-   | nobody named | first spawnable (Fable on architecture) |
+   | nobody named | first spawnable (Astra on architecture, Fable without Codex) |
 
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or
