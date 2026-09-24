@@ -66,7 +66,7 @@ def main() -> int:
         ("known", "sonnet-5", "explicit"),
         ("mechanical", "sonnet-5", "explicit"),
         ("thinking", "opus-5", "standard"),
-        ("implementation", "opus-5", "standard"),
+        ("implementation", "sonnet-5", "explicit"),
         ("design", "opus-5-design", "standard"),
         ("plan", "fable-5.1-plan", "lean"),
         ("intend-consult", "fable-5.1-plan", "lean"),
@@ -235,6 +235,13 @@ def main() -> int:
         expect(got["interface"] == "gpt-5.6-terra", got)
         nxt = assign("known", extra=["--after", "terra-known"], env=env_with_codex())
         expect(nxt["id"] == "sonnet-5", nxt)
+        impl = assign("implementation", env=env_with_codex())
+        expect(impl["id"] == "terra-implement", impl)
+        expect(impl["interface"] == "gpt-5.6-terra", impl)
+        impl_fb = assign(
+            "implementation", extra=["--after", "terra-implement"], env=env_with_codex()
+        )
+        expect(impl_fb["id"] == "sonnet-5", impl_fb)
         think = assign("thinking", env=env_with_codex())
         expect(think["id"] == "sol-implement", think)
         think_fb = assign("thinking", extra=["--after", "sol-implement"], env=env_with_codex())
@@ -272,6 +279,10 @@ def main() -> int:
         # Terra down: --after terra-known still reaches Sonnet.
         nxt = assign("known", extra=["--after", "terra-known"], env=env_without_sol())
         expect(nxt["id"] == "sonnet-5", nxt)
+        impl_nxt = assign(
+            "implementation", extra=["--after", "terra-implement"], env=env_without_sol()
+        )
+        expect(impl_nxt["id"] == "sonnet-5", impl_nxt)
         print("pass --after skips unavailable rungs")
     except Exception as exc:  # noqa: BLE001
         failed += 1
@@ -314,6 +325,13 @@ def main() -> int:
             == ["fable-5.1-arch-review", "astra-arch-review"],
             astra_fable,
         )
+        terra_impl = json.loads(
+            run(
+                ["assign", "--shape", "implementation", "--who", "terra"],
+                env=env_with_codex(),
+            ).stdout
+        )
+        expect(terra_impl["id"] == "terra-implement", terra_impl)
         terra_think = run(["assign", "--shape", "thinking", "--who", "terra"])
         expect(terra_think.returncode != 0, terra_think.stdout)
         expect("unknown who" in terra_think.stderr, terra_think.stderr)

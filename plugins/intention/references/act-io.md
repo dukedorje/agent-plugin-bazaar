@@ -184,8 +184,8 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 
 Source: `plugins/intention/references/ladder.json`. Priority
 (first available; `--after` handoff; `panel` fan-out): known →
-Codex Terra then Sonnet 5. Implementation/thinking → Sol then Opus
-5. Plan → Fable 5.1 then Sol. Architecture → Fable 5.1, Sol, Opus
+Codex Terra then Sonnet 5. Implementation → Terra then Sonnet 5.
+Thinking → Sol then Opus 5. Plan → Fable 5.1 then Sol. Architecture → Fable 5.1, Sol, Opus
 4.8, Grok. Fold → Opus 5. Human pick always wins. Same-family
 author uses `--not-harness <author>` and **spawns** — does not park.
 

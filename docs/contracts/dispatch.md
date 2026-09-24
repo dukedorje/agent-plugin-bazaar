@@ -44,8 +44,8 @@ with the work.
 | Density | Expected assignee (this project) |
 |---|---|
 | `lean` | Fable 5.1 (plan consult + arch buddy) · Grok 4.6 (cross-family review) · Sol if `OPENAI_API_KEY` |
-| `standard` | Opus 5 (implementation / design, effort low–medium) |
-| `explicit` | Sonnet 5 (known / mechanical coding) |
+| `standard` | Codex Terra (`gpt-5.6-terra`, implementation) · Opus 5 (design, effort low–medium) |
+| `explicit` | Sonnet 5 (known / mechanical / implementation backup) |
 
 Assignment is **not** restated here. Resolve:
 
@@ -53,9 +53,10 @@ Assignment is **not** restated here. Resolve:
 python3 plugins/intention/scripts/ladder.py assign --shape known
 ```
 
-Source: `plugins/intention/references/ladder.json`. Claude Code is the
-coding pool (high limits). Grok is the default architecture reader.
-GPT-5.6 Sol is named but `available: false` until subscribed.
+Source: `plugins/intention/references/ladder.json`. Implementor is
+Codex Terra when the CLI is present, else Sonnet 5. Grok is the
+default architecture reader. GPT-5.6 Sol is named but
+`available: false` until subscribed.
 
 Blast **raises** density and never lowers it: schema/migration, auth,
 crypto, money, cross-service contract → at least `standard`.

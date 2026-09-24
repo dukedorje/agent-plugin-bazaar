@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-24 — Implementor is latest Terra (`gpt-5.6-terra`, `terra-implement`) then Sonnet 5. Thinking stays Sol then Opus 5. (`plugins/intention/references/ladder.json`)
+
 - 2026-09-24 — Steer menus: recommended first and skip. No standalone decide-for-me; that is picking recommended. (`plugins/intention/skills/steer/SKILL.md`)
 
 - 2026-09-19 — Dossier host projection and compose UI live in the Taskmaster tracker (`tm-mi1`, `tm-893`), not bazaar beads. Kernel gather stays `bazaar-db8.3` (on `ja7`). Filing host work in the kernel tracker made a bazaar Grok pick it. (`~/work/Taskmaster/taskmaster-web/docs/RELATED.md`)
