@@ -102,8 +102,8 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 
 | Skill | Description |
 |-------|-------------|
-| `intend` | Observe, orient, split a DAG. `--ask` / “run it by me”: show the plan, do not act |
-| `steer` | Human-gated guidance: menus with recommended, skip. After intend, before change |
+| `intend` | Observe, orient, split a DAG. Default next is `steer`. `--ask` / “run it by me”: show the plan, do not act. “Activate this set” records a campaign grant. `--go` / `--autonomous` skip the steer pause |
+| `steer` | Decision briefing, then menus with recommended, skip. Default after intend, before change |
 | `change` | OpenSpec-lite proposal + deltas |
 | `advise` | Read-only review-pair; accept / send-back (notes in the body) |
 | `act` | Packet, focused verify, commit-on-red |
@@ -112,9 +112,9 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
 | `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
-| `map` | Intend DAG with live status. `--current <id>` pins this tab’s DAG |
-| `run` | Campaign until a stop. Default walks away (roll); `--wait` is desk mode; `--tidy` folds; “run it by me” never acts |
-| `run-wave` | One disjoint act fan-out on HEAD. Not the campaign. |
+| `map` | Intend DAG with live status + decision briefing. `--current <id>` pins this tab’s DAG |
+| `run` | Campaign until a stop. Default walks away (roll) and waves when two+ disjoint writes are ready; `--wait` is desk mode; `--tidy` folds; `--autonomous` skips steer pause, does not flip PENDING without a grant; “run it by me” never acts |
+| `run-wave` | One disjoint act fan-out on HEAD. Mechanism `/run` already uses. Not the campaign. |
 
 Operator how-to: `plugins/intention/README.md`.
 

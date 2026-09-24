@@ -2,17 +2,24 @@
 name: run-wave
 description: >
   One act fan-out: two or more wholly disjoint write nodes in parallel
-  on HEAD. Use when asked to run-wave, /run-wave, fan out disjoint
-  acts, or to look at a real two-node wave (EYES). Not the campaign
-  (/run). Not a single node (/act).
+  on HEAD. /run already launches this when a wave of two+ exists.
+  Use only for a one-shot fan-out without the campaign, or to look at
+  a real two-node wave (EYES). Not the campaign. Not a single node
+  (/act). Does not activate PENDING.
 user-invocable: true
 argument-hint: "[<id> <id> …]"
 ---
 
 # run-wave
 
+Load `../../references/preparation.md`. Prepare every candidate before
+packet generation and selection; refresh packets and recompute disjointness
+after reconciliation. Unprepared nodes cannot enter this wave.
+
 You are the **wave conductor**. One fan-out, then stop. You do not
 run the campaign. You do not fold. You do not check EYES boxes.
+You do not activate. Prefer `/run` unless they asked for this
+one-shot fan-out.
 
 Load `../../references/shared.md` and `../../references/act-io.md`.
 
@@ -28,15 +35,16 @@ ids. Do not isolate.
 
 ## Procedure
 
-1. **Pick.** If they named node ids, those are the candidates.
-   Always run `python3 plugins/intention/scripts/conductor.py wave`
-   and keep only ids that appear in `wave` (wholly disjoint owned
-   packets). Unnamed: use the whole `wave` list. Fewer than two →
-   Skip above.
-2. **Packets.** Each node needs `groups/<id>/packet.json` with
-   non-empty `constraints.paths`. Write + lint missing packets
-   (`act-io.md`, `conductor.py lint-packet`) **before** take.
-   Empty paths overlap everything — they cannot form a wave of two.
+1. **Prepare candidates.** Use the named ids, or observe the current
+   dispatchable set. Apply preparation.md to each; retain only prepared,
+   authorized, in-scope nodes. Re-observe after contract or review changes.
+2. **Packets, then pick.** Generate or refresh each retained node's
+   `groups/<id>/packet.json` from its reconciled contract, with non-empty
+   `constraints.paths`. Lint (`act-io.md`, `conductor.py lint-packet`).
+   Then run `python3 plugins/intention/scripts/conductor.py wave` and
+   intersect its wholly disjoint `wave` with the retained candidate ids.
+   Never take unrelated or deferred ids returned by the global selector.
+   Fewer than two → Skip above. Empty paths cannot form a wave of two.
 3. **Take.** `conductor.py take --node <id> --holder <this-host>`
    for every wave node. A child that takes again fails. If a take
    fails midway: `release` every node already taken, stop (infra-red).

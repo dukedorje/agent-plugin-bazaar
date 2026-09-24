@@ -7,7 +7,8 @@ description: >
   steer.md if a change dir exists) so change can update the node
   docs. Use after intend, before change, when asked to steer,
   give guidance, run architecture by me, or activate human-gate
-  nodes. Not /ask (that is a run stop face).
+  nodes. Default after intend. Not /ask (that is a run stop face).
+  Starts with a decision briefing so a context-switch can catch up.
 user-invocable: true
 argument-hint: "[<epic | bead | change-id>] [--lean|--explicit]"
 ---
@@ -28,8 +29,9 @@ intend → steer → change → advise → act → fold
 ```
 
 `--ask` on intend presents the DAG and stops. This verb *is* the
-conversation that stop was waiting for. `run --until ask` may halt
-*for* steer. Do not name this `/ask`.
+conversation that stop was waiting for, and the **default** next
+after intend (skip with `--go` / `--autonomous`). `run --until ask`
+may halt *for* steer. Do not name this `/ask`.
 
 ## Inputs
 
@@ -51,11 +53,16 @@ sensitive always includes the human (already a member).
 
 ## Procedure
 
-1. **Scope.** Pin if they named an id (`map --current`). Load that DAG
-   plus the architecture / instrument / human-gate nodes that still
-   need direction. Read bead descriptions, living specs, in-flight
-   changes. Do not re-intend unless there is no current DAG and they
-   asked to plan — then hand off to `intend`.
+1. **Scope + briefing.** Pin if they named an id (`map --current`).
+   Print `map` (it includes **Decision briefing**) or the same
+   section: upcoming forks, why they matter, what later nodes cannot
+   undo, downstream ids, last `steer.md` decided/skipped, relevant
+   spec/learning anchors. Enough to prime a context switch — not a
+   transcript. Then load architecture / instrument / human-gate
+   nodes that still need direction. Do not re-intend unless there is
+   no current DAG and they asked to plan — then hand off to `intend`.
+   No forks → say so, hand off `change`. `--go` / `--autonomous` from
+   intend already auto-logged remaining lean; do not re-menu those.
 2. **Forks.** Name 1–4 options each. Recommended first, with why.
    Group related forks into one menu. At most a handful of menus per
    turn; leftover forks wait.

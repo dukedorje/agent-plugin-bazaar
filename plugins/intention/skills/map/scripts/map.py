@@ -385,6 +385,97 @@ def waiting_label(nid: str, waiting_on: dict[str, list[str]]) -> str:
     return f"{nid} (on {', '.join(deps)})"
 
 
+def first_para(text: str, limit: int = 240) -> str:
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    first = raw.split("\n\n", 1)[0]
+    lines = [ln.strip() for ln in first.splitlines() if ln.strip() and not ln.startswith("#")]
+    lede = " ".join(lines).strip()
+    if len(lede) > limit:
+        return lede[: limit - 1].rstrip() + "…"
+    return lede
+
+
+def downstream_of(nid: str, nodes: list[dict[str, Any]]) -> list[str]:
+    out: list[str] = []
+    for rec in nodes:
+        if nid in block_deps(rec):
+            kid = str(rec.get("id") or "")
+            if kid:
+                out.append(kid)
+    return out
+
+
+def steer_open(dest: Path | None) -> list[str]:
+    if dest is None:
+        return []
+    path = dest / "steer.md"
+    if not path.is_file():
+        return []
+    skipped: list[str] = []
+    in_skipped = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip() == "## Skipped":
+            in_skipped = True
+            continue
+        if in_skipped and line.startswith("## "):
+            break
+        if in_skipped and line.startswith("- "):
+            skipped.append(line[2:].strip())
+    return skipped[:6]
+
+
+def decision_briefing(
+    nodes: list[dict[str, Any]],
+    by_id: dict[str, dict[str, Any]],
+    need_act: list[str],
+    change_ready: list[str],
+    send_back: list[str],
+    act_ready: list[str],
+    openspec: Path | None,
+) -> list[str]:
+    """Prime a context switch before steer / grant / run."""
+    lines = ["## Decision briefing", ""]
+    upcoming = list(dict.fromkeys([*need_act, *send_back, *change_ready]))
+    if not upcoming:
+        if act_ready:
+            lines.append(
+                "No direction waiting. Writes are ready: `/run` "
+                "(waves when two+ disjoint). Review afterwards with `demo` / `map`."
+            )
+        else:
+            lines.append("No upcoming decisions on this DAG.")
+        lines.append("")
+        return lines
+    lines.append("Upcoming (why it matters; what later nodes cannot undo):")
+    for nid in upcoming:
+        rec = by_id.get(nid) or {}
+        title = str(rec.get("title") or nid)
+        landing = landing_from_title(title)
+        dest = find_change_dir(openspec, landing) if landing else None
+        why = first_para(str(rec.get("description") or "")) or title
+        downs = downstream_of(nid, nodes)
+        tag = "PENDING" if nid in need_act else ("send-back" if nid in send_back else "needs change")
+        bit = f"- `{nid}` ({tag}) — {why}"
+        if downs:
+            bit += f" Downstream: {', '.join(downs)}."
+        skipped = steer_open(dest)
+        if skipped:
+            bit += " Open steer: " + "; ".join(skipped)
+        lines.append(bit)
+    lines.extend(
+        [
+            "",
+            "Default after intend is `steer`. Activate this set → grant, then "
+            "change/advise, then pause (or `--go` / autonomous into `/run`). "
+            "`/run` already takes waves; you do not need `/run-wave` for that.",
+            "",
+        ]
+    )
+    return lines
+
+
 def render(
     epic: dict[str, Any],
     children: list[dict[str, Any]],
@@ -481,9 +572,20 @@ def render(
             "## Failed / send-back",
             ", ".join(failed) if failed else "(none)",
             "",
-            "## Next",
         ]
     )
+    body.extend(
+        decision_briefing(
+            nodes,
+            by_id,
+            need_act,
+            change_ready,
+            send_back,
+            act_ready,
+            openspec,
+        )
+    )
+    body.extend(["## Next"])
     dispatchable = bool(need_act or change_ready or act_ready or send_back)
     if need_act:
         body.append("- `change` / activate: " + ", ".join(need_act))
@@ -494,7 +596,7 @@ def render(
     if act_ready:
         body.append("- `act` or `/run --until roll`: " + ", ".join(act_ready))
     if dispatchable:
-        body.append("- steer first if architecture / human-gate")
+        body.append("- `steer` first (default after intend); skip with `--go`")
     if waiting and not dispatchable:
         body.append("- waiting on inbound edges: " + ", ".join(waiting))
     if not dispatchable and not waiting and done and not failed:

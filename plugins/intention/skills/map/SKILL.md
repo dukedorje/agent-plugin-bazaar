@@ -4,7 +4,8 @@ description: >
   Reprint the intend DAG with live status, last wave, and outcome.
   Pin or change the current intention for this session with --current.
   Use when asked for the lay of the land, the map, DAG status, how
-  the nodes went, or to switch which DAG this tab is on.
+  the nodes went, to switch which DAG this tab is on, or for a
+  decision briefing after a context switch.
 user-invocable: true
 argument-hint: "[<epic | bead | change-id>] [--current <id>|-]"
 ---
@@ -25,7 +26,8 @@ python3 <this-skill-dir>/scripts/map.py --current -
 ```
 
 Print the command output. That is the report. Do not re-derive the
-DAG from memory.
+DAG from memory. **Decision briefing** is the context-switch primer
+for upcoming steer / activation / advise forks — not a transcript.
 
 ## Current intention
 

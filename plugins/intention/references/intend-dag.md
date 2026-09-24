@@ -32,6 +32,7 @@ no flag (blank-page observe still happened).
 - Capability: <kebab> | (omit at vibe/brief)
 - Rigor: …
 - Depends on: <node-ids or none>
+- Assumptions: provisional facts to revisit when dependencies land
 - Group: solo | weave | fork | human-gate | conductor-workers | …
 - Members / roles: conductor · worker · consultant · reader · human · group
 - Density: lean | standard | explicit   ← from ladder.py; inverse of capability
@@ -42,13 +43,25 @@ no flag (blank-page observe still happened).
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 
+## Campaign authority
+User instruction and agreed scope / non-goals / architectural commitments,
+or none. “Activate this set” / “run this whole intention” fills this.
+This grants permission, not preparation of downstream designs.
+
 ## Ready-set
 Nodes with all inbound edges satisfied.
 
 ## Needs activation
 Architecture / instrument / sensitive writes still PENDING.
 
+## Decision briefing
+Upcoming forks, why they matter, downstream, last steer skipped.
+Enough to prime a context switch. Same section `map` prints.
+
 ## Next
+- Default: `steer` (briefing + menus). `--go` / `--autonomous` skips.
+- Grant (“activate this set”) → `change` then `advise` until ready,
+  then pause unless `--go` / autonomous, then `/run`
 - `change <id>` for each activated (or just-drafted) change node
 - `advise <id>` after architecture / instrument `change`
 - `brief` for brief nodes

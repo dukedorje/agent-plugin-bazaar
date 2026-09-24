@@ -5,9 +5,9 @@ Default loop from intention to a running system:
 `intend` → `steer` → `change` → `advise` → `act` → `demo` → `fold`
 
 Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
-(campaign), `run-wave` (one disjoint act fan-out), `consult` (second
+(campaign; takes waves when two+ disjoint writes are ready), `consult` (second
 opinion, no intend node), `demo` (try a landed act). `steer` is the
-human-gated guidance pass (not a `/run` wave; not `/ask`). Canonical
+default next after `intend` (not a `/run` wave; not `/ask`). Canonical
 skill files live here. In this repo, `.agents/skills/<name>` is a
 symlink at each skill so Grok, Hermes, and Prime load the same files
 without a plugin install.
@@ -16,15 +16,20 @@ without a plugin install.
 
 | You want | Say / run |
 |---|---|
-| Work out a plan, then show me | “work out a plan then run it by me” or `intend --ask …` |
-| Give architecture / direction on the current DAG | `steer` (menus: recommended, skip) |
+| Work out a plan, then show me | “work out a plan then run it by me” or `intend --ask …` (default after intend is already `steer`) |
+| Prime yourself after a context switch | `map` (Decision briefing) or `steer` |
+| Give architecture / direction on the current DAG | `steer` (briefing, then menus: recommended, skip) |
+| Skip the steer pause | `intend --go …` / “don't pause” |
+| Activate the set we just intended, scaffold, then pause for me | “activate this set” (grant) — `change`/`advise` until ready, then stop |
+| Same, then implement | “activate this set and run” or grant + `/run` |
+| Fully autonomous; I'll review afterwards | “activate this set” + `--autonomous` / “I'll review after” → `/run`. EYES stay unchecked. |
 | Plan + architecture review, then me | `intend --advise --ask …` |
 | Switch which DAG this tab is on | `map --current <epic-or-id>` |
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `status` |
 | Honest open pile (unblocked leaves, no empty faces) | `status --queue` |
-| Keep going while unblocked | `run` |
-| Fan two disjoint writes on HEAD | `run-wave` |
+| Keep going while unblocked | `run` (waves internally when two+ disjoint writes are ready) |
+| One fan-out without the campaign | `run-wave` — usually you want `run` |
 | Try a landed act (internal ring) | `demo` / `demo <change-id>` |
 | At the desk; halt at first ASK/EYES/PENDING | `run --wait` |
 | Morning pile (ASK / EYES / PUNT) | `status` |
@@ -127,3 +132,20 @@ globally copy only `skills/`: Intention verbs also load the sibling
 Contracts: `docs/contracts/agent-surface.md`. Living specs:
 `openspec/specs/`. Verb bodies: `references/` (shared vocabulary;
 skills do not fork the surface).
+
+### Learning as the DAG advances
+
+Say “run this whole intention” or “activate this set” to grant continuing
+authority within the intention's agreed scope. The conductor records that
+grant on the root bead (or existing chat DAG), prepares and activates
+nodes as dependencies land, walks `change`/`advise`, then pauses for
+review unless you said `--go` / `--autonomous`. Then `/run` (waves
+when two+ disjoint writes are ready). Bare `/run` uses existing
+authority; it does not invent a grant.
+
+Before dispatch, `change` reconciles each node with upstream results and
+current specs. “Still valid” is enough; routine refinements proceed, while
+changed scope or architectural commitments return to you. Required reviews
+cover the reconciled design. `activate all` still cannot skip this check.
+Blocked descendants remain lightweight plans, and parallel waves prepare
+every member. See [preparation](references/preparation.md).

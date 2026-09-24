@@ -42,6 +42,29 @@ A refused `next` is a skip, not a stop.
 If `../../references/shared.md` exists next to this plugin, load it.
 Otherwise the Must not section below is enough.
 
+## Prepare before dispatch
+
+Load `../../references/preparation.md`. The card is eligibility, not proof
+that a proposal is current. `prepare_before_act` names candidates to check;
+older cards without it still require preparation of every dispatch target.
+Before act (including a fan-out), follow change/brief to reconcile upstream
+results with each node's contract. Re-observe after amendments, activation,
+or review changes. Reuse unchanged preparation after checking its inputs.
+
+For a recorded “run this whole intention” grant, inspect dependency-ready
+PENDING nodes in that intention before treating activation as a terminal
+stop. Follow change to prepare and apply the grant, then re-observe. Do not
+activate blocked descendants or let the Python script infer authorization.
+Without a grant, leave PENDING and retain the existing stop/skip policy.
+Explicit --ask, --plan, --advise, --wait, --tidy, and --pause-before limits
+win: do not use delegated activation to step past their boundaries. Do not
+prepare or activate --skip/--punt nodes on this pass.
+
+Material scope/architecture changes return to the human via intend/steer;
+routine refinements continue. Preparation-triggered fresh advise is real
+owed review, not the forbidden fake send-back. Never dispatch on an old
+accept for a revised contract.
+
 ## Attention
 
 When the card says `next` is a stage (`intend`, `change`, `advise`,
@@ -116,6 +139,9 @@ punt = []
 while waves < max_waves:
   card = run.py [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
+  # Before activation stops: apply an existing bounded campaign grant via
+  # change to eligible PENDING nodes, respecting explicit policy limits;
+  # re-observe if anything changed. Never infer a grant from the card.
   if card.stop is empty and needs_advise remains and not all punted:
     # other-family spawn still owed — do not halt
     follow advise below on that id
@@ -134,9 +160,15 @@ while waves < max_waves:
     continue
   if by_me_ask and card.next is act:    # “run it by me”
     halt                                # present map; do not act
+  if card.next is act:
+    prepare each dispatch candidate via change/brief (preparation.md)
+    if contract/activation/review/dependencies changed: continue  # re-observe
+    defer candidates without current preparation or authority
   if card.next is act and this host has workflow:
     write+lint packets for dispatchable  # write-set before pick
     wave = conductor.py wave            # whole-packet disjoint subset
+    wave = intersect(wave, prepared_authorized_in_scope_ids)
+    # Never take unrelated or deferred ids returned by the global selector.
     if len(wave) >= 2:
       take each wave node
       try:
@@ -212,7 +244,17 @@ replace this whole loop with Rhai — the workflow is one act fan-out.
 | `--pause-before <id>` | hard stop before that node |
 | `--plan` / `--ask` | “run it by me” gates. See below. `--ask` never acts (not `--wait`). |
 
-`--until *`, `--interrupt`, and `--only fold` remain aliases for one release. `--autonomous` is ignored (warn). Mailbox is `/status`, not this card.
+`--until *`, `--interrupt`, and `--only fold` remain aliases for one release.
+`--autonomous` does **not** change the observe walk (still roll). It
+skips the post-intend steer pause and does not halt the campaign to
+wait for steer. It does **not** flip PENDING without a recorded grant
+(“activate this set” / “run this whole intention”). It does **not**
+check EYES. Review afterwards is `map` / `demo` / `status`. Mailbox
+is `/status`, not this card.
+
+`run-wave` is the fan-out this loop already launches when two or more
+wholly disjoint writes are dispatchable. Do not tell the human to
+invoke `/run-wave` instead of `/run`.
 
 ### Run it by me
 

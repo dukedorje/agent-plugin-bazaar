@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-24 — After intend, default is steer (decision briefing, then menus). “Activate this set” is the campaign grant; `--go` / `--autonomous` skip the pause; `/run` already takes waves. (`plugins/intention/skills/intend/SKILL.md`, `map`)
+
 - 2026-09-24 — Terra is known/mechanical only. Implementation and thinking go Sol then Opus 5. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-24 — Implementor is latest Terra (`gpt-5.6-terra`, `terra-implement`) then Sonnet 5. Thinking stays Sol then Opus 5. (`plugins/intention/references/ladder.json`)

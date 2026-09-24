@@ -26,8 +26,8 @@ disagree, the contract wins.
 
 | Verb | Produces | Must not |
 |---|---|---|
-| `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set. `--ask` presents it and stops. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask` |
-| `steer` | Decisions on architecture / human-gate nodes: menus with recommended first and skip. Residue is bead design/notes, plus `steer.md` if a change dir exists. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave, a separate decide-for-me option |
+| `intend` | A DAG of nodes (change-id / brief / direct fix), rigor, groups, ready-set, decision briefing. Default next is `steer`. `--ask` presents it and stops. “Activate this set” records campaign authority. | Implement, write SHALLs, scaffold `docs/sprints/`, `act` under `--ask`, skip steer unless `--go` / autonomous |
+| `steer` | Decision briefing, then menus with recommended first and skip. Residue is bead design/notes, plus `steer.md` if a change dir exists. Default after intend. | Implement, write SHALLs, `/ask` as a verb, fourth store, default `/run` wave, a separate decide-for-me option |
 | `change` | `openspec/changes/<id>/` with banner, journey, deltas. Reads steer residue. | Implement (until ACTIVE), fold, archive |
 | `advise` | Review file written by the spawned reader (`accept` / `send-back` + `READER:`). Notes in the body. Always spawn a fresh other-family reader. | Implement, fold, flip banner, in-tab accept, transcribe the verdict, halt instead of spawn |
 | `act` | Edits + commit + signed result | Fold, flip living specs as “done”, slash-command a foreign harness |
@@ -37,8 +37,8 @@ disagree, the contract wins.
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias. `--queue` is the honest open pile (unblocked leaves + blocked). | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
 | `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
-| `run` | Campaign card + waves until a stop predicate. Same-family advise spawns, does not halt. Persist on current HEAD. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck; halt fold/act over branch name; invent a checkout |
-| `run-wave` | One disjoint act fan-out on HEAD. | Campaign loop, isolate, one-node launch, fold, check EYES |
+| `run` | Campaign card + waves until a stop predicate. Two+ disjoint dispatchable writes use the run-wave fan-out. Same-family advise spawns, does not halt. Persist on current HEAD. `--autonomous` skips steer pause; does not flip PENDING without a grant. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck; halt fold/act over branch name; invent a checkout |
+| `run-wave` | One disjoint act fan-out on HEAD. Mechanism `/run` already uses. | Campaign loop, isolate, one-node launch, fold, check EYES, activate PENDING |
 | `consult` | Second opinions from architecture/plan/thinking readers. stdin/stdout. No intend node. | Implement, fold, write advise reviews, unblock `act` |
 
 ## Preparation and authority

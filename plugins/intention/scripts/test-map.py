@@ -414,6 +414,10 @@ def test_pending_unblocked_needs_activation() -> None:
         nxt = section_after(out, "Next")
         expect("`change` / activate: n-pend" in nxt, nxt)
         expect("`act`" not in nxt, nxt)
+        brief = section_after(out, "Decision briefing")
+        expect("n-pend" in brief, brief)
+        expect("PENDING" in brief, brief)
+        expect("`steer` first" in nxt, nxt)
 
 
 def test_active_build_is_act() -> None:

@@ -35,6 +35,35 @@ SHALL stop at `direct fix`.
   one acceptance surface, and no code has been written for architecture
   nodes that still need activation
 
+### Requirement: intend default next is steer
+
+After emitting the DAG, `intend` SHALL pin current, print a decision
+briefing, and hand off to `steer` unless the human named `--go`,
+“don't pause”, or `--autonomous`. `--ask` / “run it by me” SHALL
+remain a pause with no `act`. “Activate this set”, “activate what we
+just intended”, and “run this whole intention” SHALL record campaign
+authority on the root (bead or chat DAG) and SHALL walk `change` then
+`advise` until contracts are ready, then pause unless `--go` /
+`--autonomous`, after which `/run` SHALL conduct (including a
+run-wave fan-out when two or more wholly disjoint writes are
+dispatchable). `--go` and `--autonomous` SHALL NOT themselves grant
+activation. `intend` SHALL NOT fold.
+
+#### Scenario: Bare intend pauses at steer
+
+- GIVEN `intend` finished a DAG with an architecture or human-gate node
+- WHEN no `--go` / `--autonomous` was named
+- THEN next is `steer` with a decision briefing
+- AND no write `act` has started
+
+#### Scenario: Activate this set then pause
+
+- GIVEN the human said “activate this set” after intend
+- WHEN change/advise for dependency-ready nodes in scope has finished
+- THEN campaign authority is recorded
+- AND the session pauses with map + briefing
+- AND `/run` has not started unless they also said `--go` / autonomous
+
 ### Requirement: change scaffolds OpenSpec-lite
 
 `change` SHALL write `openspec/changes/<id>/{proposal,tasks}.md` and
@@ -207,11 +236,13 @@ and SHALL NOT dispatch `act`. `--until activation` SHALL stop on
 PENDING. `--until empty` SHALL walk change → advise → act until
 nothing is dispatchable.
 
-`--autonomous` SHALL suppress mid-run questions, route judgment
-through consult-before-ask, defer by-eye gates to an EYES list, and
-SHALL NOT flip a human-verify box or perform deploy / force-push /
-secret-exposing work. A veto or true blocker SHALL park that subject
-and SHALL NOT stop unrelated dispatchable nodes unless `--until ask`.
+`--autonomous` SHALL suppress the post-intend steer pause and mid-run
+steer halt, route judgment through consult-before-ask, defer by-eye
+gates to an EYES list, and SHALL NOT flip a human-verify box or
+perform deploy / force-push / secret-exposing work. It SHALL NOT flip
+PENDING without a recorded grant. A veto or true blocker SHALL park
+that subject and SHALL NOT stop unrelated dispatchable nodes unless
+`--until ask`. Review afterwards is `map` / `demo` / `status`.
 
 #### Scenario: Named landing has no change directory
 
@@ -522,10 +553,12 @@ define a second fold rule. Unscoped `--until fold` SHALL scan
 inflight for that predicate. `--until advise`, `--until activation`,
 and `--until ask` SHALL keep their existing stop meanings.
 
-`--autonomous` SHALL suppress mid-run questions and SHALL NOT flip
-PENDING or by-eye boxes. Alone it SHALL use the default walk
-(`--until roll`). Combined with an explicit `--until` it SHALL use
-that walk. It SHALL NOT deploy.
+`--autonomous` SHALL suppress the post-intend steer pause and SHALL
+NOT halt the campaign to wait for steer. It SHALL NOT change the
+observe walk (default remains `--until roll`). It SHALL NOT flip
+PENDING or by-eye boxes without a recorded grant. Combined with an
+explicit `--until` it SHALL use that walk. It SHALL NOT deploy.
+Review afterwards is `map` / `demo` / `status`.
 
 #### Scenario: Empty does not fold
 
@@ -599,12 +632,15 @@ line each. It SHALL NOT be a default `/run` wave.
 ### Requirement: map reprints the intend DAG with live residue
 
 `map` SHALL print the intend-dag shape (intention, orient if known,
-per-node goal/landing/deps, ready-set, needs activation, next) plus
-live **Status**, **Wave**, and **Outcome** for each node. Status
-SHALL come from the tracker. Wave SHALL name the last known stage
-(change banner, advise verdict, act disposition, fold/archive).
-Outcome SHALL be the signed result `distilled.summary` or the bead
-close reason. It SHALL NOT implement, unpark, or invent a second
+per-node goal/landing/deps, ready-set, needs activation, **decision
+briefing**, next) plus live **Status**, **Wave**, and **Outcome**
+for each node. Status SHALL come from the tracker. Wave SHALL name
+the last known stage (change banner, advise verdict, act
+disposition, fold/archive). Outcome SHALL be the signed result
+`distilled.summary` or the bead close reason. Decision briefing
+SHALL name upcoming activation / send-back / change forks, why they
+matter, downstream ids, and open steer residue, enough to prime a
+context switch. It SHALL NOT implement, unpark, or invent a second
 store. It SHALL NOT be a default `/run` wave.
 
 No scope SHALL list open epics and their children. A named epic,
@@ -624,6 +660,13 @@ bead, or change-id SHALL focus that graph.
   and openspec
 - WHEN it is reviewed
 - THEN it is rejected against this requirement
+
+#### Scenario: Map briefs upcoming decisions
+
+- GIVEN a pinned DAG with PENDING `add-pend-it`
+- WHEN `map` runs
+- THEN the page has a Decision briefing naming that node
+- AND Next still offers `steer` first
 ### Requirement: run roll walks while unblocked
 
 `--until roll` SHALL observe openspec banners and unblocked beads
@@ -768,7 +811,8 @@ inflight and SHALL not `act`. `--no-fold` SHALL skip fold picks.
 `--no-beads` SHALL skip bead landing and leftover intend. Combined
 `--no-fold --no-beads` SHALL match `--until empty`. `--until` tokens
 SHALL remain aliases for one release (`roll` is a no-op for the
-default). `--autonomous` SHALL NOT change the walk. `--until
+default). `--autonomous` SHALL NOT change the observe walk. It
+SHALL skip the steer pause. `--until
 activation` SHALL NOT be required; PENDING is an elicitation.
 
 #### Scenario: Interrupt stops while work remains
