@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -43,6 +44,108 @@ PUNT_BOX_RE = re.compile(r"\bPUNT\b", re.I)
 EYES_BOX_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
 ASK_BOX_RE = re.compile(r"\bASK\b", re.I)
 NEXT_CMD_RE = re.compile(r"Next:\s*(.+)$", re.I)
+SESSION_ENV = (
+    "INTENTION_SESSION",
+    "GROK_SESSION_ID",
+    "CLAUDE_SESSION_ID",
+    "CODEX_SESSION_ID",
+)
+SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def session_key(explicit: str | None = None) -> str | None:
+    if explicit and SESSION_KEY_RE.match(explicit):
+        return explicit
+    for var in SESSION_ENV:
+        val = (os.environ.get(var) or "").strip()
+        if val and SESSION_KEY_RE.match(val):
+            return val
+    return None
+
+
+def sessions_root() -> Path:
+    return Path.home() / ".intention" / "sessions"
+
+
+def load_pin_file(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    roots = data.get("roots")
+    pin = None
+    if isinstance(roots, list) and roots and isinstance(roots[0], str) and roots[0]:
+        pin = roots[0]
+    return {
+        "pin": pin,
+        "set_at": data.get("set_at") if isinstance(data.get("set_at"), str) else None,
+        "cwd": data.get("cwd") if isinstance(data.get("cwd"), str) else None,
+    }
+
+
+def list_pins(root: Path, this_key: str | None) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if root.is_dir():
+        for child in sorted(root.iterdir()):
+            if not child.is_dir():
+                continue
+            rec = load_pin_file(child / "current.json")
+            if rec is None:
+                continue
+            rec["session"] = child.name
+            rec["this"] = bool(this_key and child.name == this_key)
+            rows.append(rec)
+    if this_key and not any(r.get("session") == this_key for r in rows):
+        rows.append(
+            {
+                "session": this_key,
+                "this": True,
+                "pin": None,
+                "set_at": None,
+                "cwd": None,
+            }
+        )
+    this_rows = [r for r in rows if r.get("this")]
+    others = [r for r in rows if not r.get("this")]
+    others.sort(key=lambda r: str(r.get("set_at") or ""), reverse=True)
+    return this_rows + others
+
+
+def short_session(key: str) -> str:
+    if len(key) <= 16:
+        return key
+    return f"{key[:8]}…{key[-4:]}"
+
+
+def short_cwd(path: str | None) -> str:
+    if not path:
+        return ""
+    home = str(Path.home())
+    if path == home or path.startswith(home + os.sep):
+        path = "~" + path[len(home) :]
+    if len(path) > 56:
+        parts = path.split("/")
+        if len(parts) > 3:
+            path = "/".join([parts[0], "…", parts[-2], parts[-1]])
+    return path
+
+
+def pin_label(pin: str | None, data: dict[str, list[dict]] | None) -> str:
+    if not pin:
+        return "(none)"
+    title = ""
+    if data:
+        for row in data.get("beads") or []:
+            if str(row.get("id") or "") == pin:
+                title = short_what(row.get("title") or "", 56)
+                break
+    if title:
+        return f"**{code_id(pin)}**  {title}"
+    return f"**{code_id(pin)}**"
 
 
 def box_kind(item: str) -> str | None:
@@ -587,9 +690,46 @@ def print_section(title: str, blurb: str | None, rows: list, printer) -> None:
     print()
 
 
-def print_queue(face: dict[str, list[dict]]) -> None:
+def print_pins(
+    pins: list[dict[str, Any]],
+    *,
+    data: dict[str, list[dict]] | None = None,
+    heading: bool = True,
+) -> None:
+    if heading:
+        print("## Pinned")
+        print()
+    this = next((r for r in pins if r.get("this")), None)
+    others = [r for r in pins if not r.get("this")]
+    if this:
+        sid = short_session(str(this.get("session") or ""))
+        print(f"This tab · `{sid}` · {pin_label(this.get('pin'), data)}")
+        cwd = short_cwd(this.get("cwd"))
+        if cwd:
+            print(f"  {cwd}")
+    elif not others:
+        print("This tab · (no session pin)")
+    if others:
+        print()
+        print("Other tabs")
+        for row in others:
+            sid = short_session(str(row.get("session") or ""))
+            bits = [f"- `{sid}`", pin_label(row.get("pin"), data)]
+            when = str(row.get("set_at") or "")
+            if when:
+                bits.append(when[:10])
+            cwd = short_cwd(row.get("cwd"))
+            if cwd:
+                bits.append(f"`{cwd}`")
+            print(" · ".join(bits))
+    print()
+
+
+def print_queue(face: dict[str, list[dict]], pins: list[dict[str, Any]] | None = None) -> None:
     print("# Queue")
     print()
+    if pins:
+        print_pins(pins, heading=True)
     print("Open, unblocked.")
     print()
     if face["queue"]:
@@ -621,11 +761,13 @@ def print_card(
     show_ready: bool,
     show_parked: bool,
     missing: str | None = None,
+    pins: list[dict[str, Any]] | None = None,
 ) -> None:
     print("# Status")
     print()
     print(tally(data, show_ready=show_ready, show_parked=show_parked))
     print()
+    print_pins(pins or [], data=data)
 
     if show_ready:
         eyes = data.get("eyes") or []
@@ -745,7 +887,15 @@ def main() -> int:
         type=Path,
         help="fixture blocked beads instead of `bd blocked`",
     )
+    p.add_argument("--session", help="this tab's session key (default: GROK_SESSION_ID / INTENTION_SESSION)")
+    p.add_argument(
+        "--sessions",
+        type=Path,
+        help="directory of session folders (default: ~/.intention/sessions)",
+    )
     args = p.parse_args()
+    this_key = session_key(args.session)
+    pins = list_pins(args.sessions if args.sessions is not None else sessions_root(), this_key)
     if args.beads_json is not None:
         beads = load_beads_json(args.beads_json)
     else:
@@ -770,10 +920,11 @@ def main() -> int:
     data["beads"] = beads
     if args.queue:
         face = build_queue(data, blocked=blocked)
+        face["pins"] = pins
         if args.json:
             print(json.dumps(face, indent=2))
             return 0
-        print_queue(face)
+        print_queue(face, pins=pins)
         return 0
     show_ready = args.ready or not args.parked
     show_parked = args.parked or not args.ready
@@ -793,11 +944,18 @@ def main() -> int:
             }
         else:
             payload = dict(data)
+        payload["pins"] = pins
         if missing:
             payload["missing"] = missing
         print(json.dumps(payload, indent=2))
         return 0
-    print_card(data, show_ready=show_ready, show_parked=show_parked, missing=missing)
+    print_card(
+        data,
+        show_ready=show_ready,
+        show_parked=show_parked,
+        missing=missing,
+        pins=pins,
+    )
     return 0
 
 

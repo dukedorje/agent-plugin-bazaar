@@ -1,7 +1,8 @@
 ---
 name: status
 description: >
-  Board status: READY, PENDING, ASK, EYES, PUNT, beads, parked.
+  Board status: READY, PENDING, ASK, EYES, PUNT, beads, parked,
+  and which intention each tab has pinned.
   Use when asked for status, what's ready, what's unblocked, what's
   parked, the ready-set, the morning pile, or "what's on deck".
 user-invocable: true
@@ -28,9 +29,13 @@ python3 <this-skill-dir>/scripts/status.py --queue --json
 Print the command output. That is the report. Do not re-derive the
 ready-set by grepping banners yourself. Do not restyle it. Do not run
 `bd ready` as a second report — beads are already on this card. Empty
-faces are omitted; the tally line is the counts.
+faces are omitted; the tally line is the counts. **Pinned** is this
+tab's `map --current` plus other tabs under `~/.intention/sessions/`.
 
 Sources (union, labeled, not collapsed):
+
+- **PINNED** — this tab's current intention, then other sessions and
+  what they pinned (same store as `map --current`). Not a work face.
 
 - **READY (OpenSpec)** — `ACTIVE BUILD` with open *implement* boxes
   (not ASK / EYES / PUNT). JSON `ready` is this list only.
@@ -59,7 +64,7 @@ Sources (union, labeled, not collapsed):
 - **NEEDS ACTIVATION** — OpenSpec PENDING, omitted when empty.
 
 Do not flatten QUEUE into JSON `ready` (`/run --until empty` still acts
-OpenSpec READY only). JSON `--queue` is `{queue, blocked, waiting}`.
+OpenSpec READY only). JSON `--queue` is `{queue, blocked, waiting, pins}`.
 
 The morning pile is this card (`/status`), not `/run`. `/ready` is an alias.
 When asked for the honest queue / still-open pile, run `--queue`.

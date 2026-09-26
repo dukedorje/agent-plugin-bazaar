@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -11,14 +12,35 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 READY = HERE.parents[0] / "skills" / "status" / "scripts" / "status.py"
+DROP_SESSION = (
+    "INTENTION_SESSION",
+    "GROK_SESSION_ID",
+    "CLAUDE_SESSION_ID",
+    "CODEX_SESSION_ID",
+)
 
 
-def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str],
+    cwd: Path | None = None,
+    *,
+    sessions: Path | None = None,
+    session: str | None = "test-session",
+) -> subprocess.CompletedProcess[str]:
+    argv = list(args)
+    if sessions is None:
+        sessions = Path(tempfile.mkdtemp(prefix="intention-sessions-"))
+    if "--sessions" not in argv:
+        argv.extend(["--sessions", str(sessions)])
+    if session and "--session" not in argv:
+        argv.extend(["--session", session])
+    env = {k: v for k, v in os.environ.items() if k not in DROP_SESSION}
     return subprocess.run(
-        [sys.executable, str(READY), *args],
+        [sys.executable, str(READY), *argv],
         text=True,
         capture_output=True,
         cwd=str(cwd) if cwd else None,
+        env=env,
     )
 
 
@@ -317,7 +339,69 @@ def test_queue_omits_umbrella_epics_and_blocked() -> None:
         expect("`bazaar-qy7`" in text.stdout, text.stdout)
         expect("`bazaar-y4t.21`" in text.stdout, text.stdout)
         expect("YOUR EYES" not in text.stdout, text.stdout)
-        expect("(none)" not in text.stdout, text.stdout)
+        after_open = text.stdout.split("Open, unblocked", 1)[-1]
+        expect("(none)" not in after_open, after_open)
+
+
+def test_status_lists_this_and_other_pins() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "openspec" / "changes").mkdir(parents=True)
+        beads = write_beads(
+            root,
+            [{"id": "bazaar-tvm", "title": "Make Tatastu a sibling host", "issue_type": "epic"}],
+        )
+        sessions = root / "sessions"
+        mine = sessions / "tab-mine"
+        other = sessions / "tab-other"
+        mine.mkdir(parents=True)
+        other.mkdir(parents=True)
+        (mine / "current.json").write_text(
+            json.dumps(
+                {
+                    "roots": ["bazaar-tvm"],
+                    "set_at": "2026-09-26T12:00:00Z",
+                    "cwd": "/tmp/bazaar",
+                }
+            ),
+            encoding="utf-8",
+        )
+        (other / "current.json").write_text(
+            json.dumps(
+                {
+                    "roots": ["bazaar-ja7"],
+                    "set_at": "2026-09-25T08:00:00Z",
+                    "cwd": "/tmp/other",
+                }
+            ),
+            encoding="utf-8",
+        )
+        proc = run(
+            ["--json", "--root", str(root / "openspec"), "--beads-json", str(beads)],
+            cwd=root,
+            sessions=sessions,
+            session="tab-mine",
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        pins = face["pins"]
+        expect(pins[0]["this"] is True, pins)
+        expect(pins[0]["pin"] == "bazaar-tvm", pins)
+        expect(pins[0]["session"] == "tab-mine", pins)
+        other_row = next(r for r in pins if r["session"] == "tab-other")
+        expect(other_row["pin"] == "bazaar-ja7", other_row)
+        expect(other_row["this"] is False, other_row)
+        text = run(
+            ["--root", str(root / "openspec"), "--beads-json", str(beads)],
+            cwd=root,
+            sessions=sessions,
+            session="tab-mine",
+        )
+        expect("## Pinned" in text.stdout, text.stdout)
+        expect("This tab" in text.stdout, text.stdout)
+        expect("bazaar-tvm" in text.stdout, text.stdout)
+        expect("Other tabs" in text.stdout, text.stdout)
+        expect("bazaar-ja7" in text.stdout, text.stdout)
 
 
 def test_queue_empty_is_none_not_full_board() -> None:
@@ -409,6 +493,7 @@ def main() -> int:
         test_ask_and_punt_faces,
         test_pending_does_not_flip_into_ready,
         test_queue_omits_umbrella_epics_and_blocked,
+        test_status_lists_this_and_other_pins,
         test_queue_empty_is_none_not_full_board,
     ]
     failed = 0
