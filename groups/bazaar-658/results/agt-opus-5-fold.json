@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-658-fold-opus",
+  "packet_id": "pkt-bazaar-658-fold-1",
+  "signer": {
+    "id": "agt-opus-5-fold",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "opus-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-opus-5-fold"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/specs/verbs/spec.md",
+      "role": "living specification"
+    },
+    {
+      "path": "openspec/changes/archive/2026-09-27-update-campaign-inflight-accounting/",
+      "role": "archived change"
+    },
+    {
+      "path": "groups/bazaar-658/fold.packet.json",
+      "role": "fold packet"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "The complete campaign-aware take and max_inflight requirements are living, the active change directory is absent, and the dated archive contains the frozen change.",
+    "if_false": "A claimed requirement remains only in the change/archive, the old living requirements remain, or the active change directory still exists.",
+    "observed": "if_true: openspec/specs/verbs/spec.md contains both complete MODIFIED blocks at requirements take is the node mutex and max_inflight caps campaign act leases; the active directory is absent; the full change is archived under the 2026-09-27 prefix."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "f348c6ba3ceaae250cabdc4678df4151c99e4da8",
+    "paths": [
+      "groups/bazaar-658/fold.packet.json",
+      "openspec/specs/verbs/spec.md",
+      "openspec/changes/archive/2026-09-27-update-campaign-inflight-accounting/"
+    ]
+  },
+  "summary": "Folded the accepted campaign-inflight requirements into the living verbs spec and archived the complete change under the 2026-09-27 prefix.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-opus-5-fold",
+    "content_hash": "sha256:95ef1f24df8897c94dd675b94410d5efb3e8ebafc3630670e05c80716e5e925a"
+  },
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Campaign lease accounting is living truth and the completed change is archived.",
+    "verify_command": "contrast: living requirements present; active directory absent; dated archive present",
+    "verify_exit": 0,
+    "commit_sha": "f348c6ba3ceaae250cabdc4678df4151c99e4da8",
+    "changed_files": [
+      "openspec/specs/verbs/spec.md",
+      "openspec/changes/archive/2026-09-27-update-campaign-inflight-accounting/",
+      "groups/bazaar-658/fold.packet.json"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-658/results/agt-opus-5-fold.json"
+  },
+  "raw_ref": "groups/bazaar-658/results/agt-opus-5-fold.json"
+}
