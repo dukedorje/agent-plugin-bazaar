@@ -15,6 +15,8 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from advise_status import last_advise_verdict, needs_advise  # noqa: E402
 
+CAMPAIGN = "campaign-a"
+
 
 def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -30,6 +32,48 @@ def expect(cond: bool, msg: str) -> None:
         raise AssertionError(msg)
 
 
+def schedule_args(
+    root: Path,
+    command: str,
+    inventory: Path,
+    *,
+    campaign: str = CAMPAIGN,
+) -> list[str]:
+    return [
+        "--repo",
+        str(root),
+        command,
+        "--campaign",
+        campaign,
+        "--inventory",
+        str(inventory),
+        "--leases-dir",
+        str(root / "leases"),
+    ]
+
+
+def write_lease(
+    root: Path,
+    node_id: str,
+    paths: list[str],
+    *,
+    campaign: str | None = CAMPAIGN,
+    status: str = "held",
+) -> Path:
+    dest = root / "leases" / f"{node_id}.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "node_id": node_id,
+        "holder": "test",
+        "paths": paths,
+        "status": status,
+    }
+    if campaign is not None:
+        data["campaign_id"] = campaign
+    dest.write_text(json.dumps(data), encoding="utf-8")
+    return dest
+
+
 def test_ready() -> None:
     inv = {
         "nodes": [
@@ -43,9 +87,11 @@ def test_ready() -> None:
         ]
     }
     with tempfile.TemporaryDirectory() as td:
-        path = Path(td) / "inv.json"
+        root = Path(td)
+        path = root / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        proc = run(["ready", "--inventory", str(path), "--max-inflight", "8"])
+        write_lease(root, "a", ["src/a.py"])
+        proc = run(schedule_args(root, "ready", path) + ["--max-inflight", "8"])
         expect(proc.returncode == 0, proc.stderr)
         data = json.loads(proc.stdout)
         disp = {row["id"] for row in data["dispatchable"]}
@@ -142,7 +188,16 @@ def git(repo: Path, extra: list[str]) -> str:
 def test_cap_and_take() -> None:
     inv = {
         "nodes": [
-            {"id": "hold", "status": "in_progress", "deps": [], "paths": ["src/hold.py"], "holder": "a"},
+            *[
+                {
+                    "id": f"historical-{i}",
+                    "status": "in_progress",
+                    "deps": [],
+                    "paths": [f"history/{i}.txt"],
+                    "holder": "old",
+                }
+                for i in range(19)
+            ],
             {"id": "x", "status": "open", "deps": [], "paths": ["docs/x.md"]},
             {"id": "y", "status": "open", "deps": [], "paths": ["docs/y.md"]},
         ]
@@ -151,61 +206,82 @@ def test_cap_and_take() -> None:
         root = Path(td)
         path = root / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        capped = run(
-            ["--repo", str(root), "ready", "--inventory", str(path), "--max-inflight", "1"]
-        )
-        expect(capped.returncode == 0, capped.stderr)
-        data = json.loads(capped.stdout)
-        expect(data["dispatchable"] == [], data)
-        expect({r["id"] for r in data["capped"]} == {"x", "y"}, data)
-        expect(data["slots"]["free"] == 0, data)
+        room = run(schedule_args(root, "ready", path) + ["--max-inflight", "2"])
+        expect(room.returncode == 0, room.stderr)
+        room_data = json.loads(room.stdout)
+        expect({r["id"] for r in room_data["dispatchable"]} == {"x", "y"}, room_data)
+        expect(room_data["slots"]["in_flight"] == 0, room_data)
+        expect(room_data["slots"]["free"] == 2, room_data)
 
-        room = run(
-            ["--repo", str(root), "ready", "--inventory", str(path), "--max-inflight", "3"]
-        )
-        expect({r["id"] for r in json.loads(room.stdout)["dispatchable"]} == {"x", "y"}, room.stdout)
+        write_lease(root, "same-campaign-hold", ["src/hold.py"])
+        one_slot = run(schedule_args(root, "ready", path) + ["--max-inflight", "2"])
+        one_data = json.loads(one_slot.stdout)
+        expect(one_data["slots"]["in_flight"] == 1, one_data)
+        expect(one_data["slots"]["free"] == 1, one_data)
+        expect(len(one_data["dispatchable"]) == 1, one_data)
+
+        wave = run(schedule_args(root, "wave", path) + ["--max-inflight", "2"])
+        expect(wave.returncode == 0, wave.stderr)
+        expect(len(json.loads(wave.stdout)["wave"]) == 1, wave.stdout)
 
         first = run(
-            [
-                "--repo",
-                str(root),
-                "take",
+            schedule_args(root, "take", path)
+            + [
                 "--node",
                 "x",
                 "--holder",
                 "sonnet-5",
-                "--inventory",
-                str(path),
                 "--max-inflight",
-                "3",
+                "2",
             ]
         )
         expect(first.returncode == 0, first.stderr)
         taken = json.loads(first.stdout)
         expect(taken["taken"] == "x", taken)
+        expect(taken["campaign_id"] == CAMPAIGN, taken)
         expect(Path(taken["lease"]).is_file(), taken)
+        lease = json.loads(Path(taken["lease"]).read_text(encoding="utf-8"))
+        expect(lease["campaign_id"] == CAMPAIGN, lease)
+
+        capped = run(schedule_args(root, "ready", path) + ["--max-inflight", "2"])
+        capped_data = json.loads(capped.stdout)
+        expect(capped_data["slots"]["free"] == 0, capped_data)
+        expect({r["id"] for r in capped_data["capped"]} == {"y"}, capped_data)
+
         again = run(
-            [
-                "--repo",
-                str(root),
-                "take",
+            schedule_args(root, "take", path)
+            + [
                 "--node",
                 "x",
                 "--holder",
                 "opus-5",
-                "--inventory",
-                str(path),
                 "--max-inflight",
-                "3",
+                "2",
             ]
         )
         expect(again.returncode != 0, "second take should fail")
         expect("already taken" in again.stderr, again.stderr)
-        rel = run(["--repo", str(root), "release", "--node", "x", "--inventory", str(path)])
+        rel = run(
+            [
+                "--repo",
+                str(root),
+                "release",
+                "--node",
+                "x",
+                "--inventory",
+                str(path),
+                "--leases-dir",
+                str(root / "leases"),
+            ]
+        )
         expect(rel.returncode == 0, rel.stderr)
         after = json.loads(path.read_text(encoding="utf-8"))
         node = next(n for n in after["nodes"] if n["id"] == "x")
         expect(node["status"] == "open", node)
+        restored = run(schedule_args(root, "ready", path) + ["--max-inflight", "2"])
+        restored_data = json.loads(restored.stdout)
+        expect(restored_data["slots"]["free"] == 1, restored_data)
+        expect(len(restored_data["dispatchable"]) == 1, restored_data)
 
 
 def test_isolate_persist() -> None:
@@ -352,9 +428,7 @@ def test_advise_gate() -> None:
         }
         path = repo / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        blocked = run(
-            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
-        )
+        blocked = run(schedule_args(repo, "ready", path) + ["--max-inflight", "8"])
         expect(blocked.returncode == 0, blocked.stderr)
         data = json.loads(blocked.stdout)
         disp = {r["id"] for r in data["dispatchable"]}
@@ -372,9 +446,7 @@ def test_advise_gate() -> None:
             "# advise\n\n> **ADVISE:** accept\n",
             encoding="utf-8",
         )
-        still = run(
-            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
-        )
+        still = run(schedule_args(repo, "ready", path) + ["--max-inflight", "8"])
         expect(still.returncode == 0, still.stderr)
         stuck = json.loads(still.stdout)
         expect(
@@ -385,9 +457,7 @@ def test_advise_gate() -> None:
             "# advise\n\n> **ADVISE:** accept\n> **READER:** grok-arch-review\n> **SPAWN:** .spawns/x\n",
             encoding="utf-8",
         )
-        accepted = run(
-            ["--repo", str(repo), "ready", "--inventory", str(path), "--max-inflight", "8"]
-        )
+        accepted = run(schedule_args(repo, "ready", path) + ["--max-inflight", "8"])
         expect(accepted.returncode == 0, accepted.stderr)
         after = json.loads(accepted.stdout)
         expect({r["id"] for r in after["dispatchable"]} == {"impl", "reader"}, after)
@@ -403,9 +473,10 @@ def test_wave_drops_overlapping_dispatchable() -> None:
         ]
     }
     with tempfile.TemporaryDirectory() as td:
-        path = Path(td) / "inv.json"
+        root = Path(td)
+        path = root / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        proc = run(schedule_args(root, "wave", path) + ["--max-inflight", "8"])
         expect(proc.returncode == 0, proc.stderr)
         data = json.loads(proc.stdout)
         ids = [row["id"] for row in data["wave"]]
@@ -421,9 +492,11 @@ def test_wave_pathless_is_wave_of_one() -> None:
         ]
     }
     with tempfile.TemporaryDirectory() as td:
-        path = Path(td) / "inv.json"
+        root = Path(td)
+        path = root / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        write_lease(root, "c", ["in.py"])
+        proc = run(schedule_args(root, "wave", path) + ["--max-inflight", "8"])
         expect(proc.returncode == 0, proc.stderr)
         data = json.loads(proc.stdout)
         ids = [row["id"] for row in data["wave"]]
@@ -436,9 +509,10 @@ def test_wave_pathless_is_wave_of_one() -> None:
         ]
     }
     with tempfile.TemporaryDirectory() as td:
-        path = Path(td) / "inv.json"
+        root = Path(td)
+        path = root / "inv.json"
         path.write_text(json.dumps(inv2), encoding="utf-8")
-        proc = run(["wave", "--inventory", str(path), "--max-inflight", "8"])
+        proc = run(schedule_args(root, "wave", path) + ["--max-inflight", "8"])
         expect(proc.returncode == 0, proc.stderr)
         ids = [row["id"] for row in json.loads(proc.stdout)["wave"]]
         expect(ids == ["a"], f"two path-less → wave of 1, got {ids} {proc.stdout}")
@@ -453,12 +527,93 @@ def test_wave_cap_after_disjoint() -> None:
         ]
     }
     with tempfile.TemporaryDirectory() as td:
-        path = Path(td) / "inv.json"
+        root = Path(td)
+        path = root / "inv.json"
         path.write_text(json.dumps(inv), encoding="utf-8")
-        proc = run(["wave", "--inventory", str(path), "--max-inflight", "2"])
+        proc = run(schedule_args(root, "wave", path) + ["--max-inflight", "2"])
         expect(proc.returncode == 0, proc.stderr)
         ids = [row["id"] for row in json.loads(proc.stdout)["wave"]]
         expect(ids == ["a", "c"], f"cap after disjoint want [a,c] got {ids} {proc.stdout}")
+
+
+def test_cross_campaign_and_legacy_collision() -> None:
+    inv = {
+        "nodes": [
+            {"id": "x", "status": "open", "deps": [], "paths": ["shared/x.py"]},
+            {"id": "y", "status": "open", "deps": [], "paths": ["docs/y.md"]},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        path = root / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        write_lease(root, "other", ["shared/x.py"], campaign="campaign-b")
+        proc = run(schedule_args(root, "ready", path) + ["--max-inflight", "1"])
+        expect(proc.returncode == 0, proc.stderr)
+        data = json.loads(proc.stdout)
+        expect(data["slots"]["in_flight"] == 0, data)
+        expect(data["slots"]["free"] == 1, data)
+        expect({row["id"] for row in data["deferred"]} == {"x"}, data)
+        expect({row["id"] for row in data["dispatchable"]} == {"y"}, data)
+
+        write_lease(root, "legacy-unknown", [], campaign=None)
+        blocked = run(schedule_args(root, "ready", path) + ["--max-inflight", "1"])
+        expect(blocked.returncode == 0, blocked.stderr)
+        blocked_data = json.loads(blocked.stdout)
+        expect(blocked_data["slots"]["in_flight"] == 0, blocked_data)
+        expect({row["id"] for row in blocked_data["deferred"]} == {"x", "y"}, blocked_data)
+
+
+def test_concurrent_take_does_not_oversubscribe() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        inventories: list[Path] = []
+        for node_id in ("x", "y"):
+            path = root / f"{node_id}.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "nodes": [
+                            {
+                                "id": node_id,
+                                "status": "open",
+                                "deps": [],
+                                "paths": [f"docs/{node_id}.md"],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            inventories.append(path)
+
+        procs = [
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(CONDUCTOR),
+                    *schedule_args(root, "take", inventory),
+                    "--node",
+                    inventory.stem,
+                    "--max-inflight",
+                    "1",
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            for inventory in inventories
+        ]
+        results = [proc.communicate() + (proc.returncode,) for proc in procs]
+        expect(
+            sorted(result[2] for result in results) == [0, 1],
+            f"concurrent takes={results}",
+        )
+        leases = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in (root / "leases").glob("*.json")
+        ]
+        expect(len([lease for lease in leases if lease.get("status") == "held"]) == 1, leases)
 
 
 def main() -> int:
@@ -467,6 +622,8 @@ def main() -> int:
         test_wave_drops_overlapping_dispatchable,
         test_wave_pathless_is_wave_of_one,
         test_wave_cap_after_disjoint,
+        test_cross_campaign_and_legacy_collision,
+        test_concurrent_take_does_not_oversubscribe,
         test_implicated,
         test_lint,
         test_classify,

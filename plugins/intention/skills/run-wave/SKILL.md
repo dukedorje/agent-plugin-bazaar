@@ -21,6 +21,11 @@ run the campaign. You do not fold. You do not check EYES boxes.
 You do not activate. Prefer `/run` unless they asked for this
 one-shot fan-out.
 
+Use the `campaign_id` supplied by the invoking `/run`, or resolve the pinned
+intention/root id for a direct `/run-wave`. If neither exists, stop and ask
+for the root to pin. Carry that same explicit id through `wave` and every
+`take`; bead status is never a campaign identity.
+
 Load `../../references/shared.md` and `../../references/act-io.md`.
 
 The rhai envelope is `plugins/intention/workflows/run-wave.rhai`
@@ -41,11 +46,13 @@ ids. Do not isolate.
 2. **Packets, then pick.** Generate or refresh each retained node's
    `groups/<id>/packet.json` from its reconciled contract, with non-empty
    `constraints.paths`. Lint (`act-io.md`, `conductor.py lint-packet`).
-   Then run `python3 plugins/intention/scripts/conductor.py wave` and
+   Then run `python3 plugins/intention/scripts/conductor.py wave --campaign
+   <campaign_id>` and
    intersect its wholly disjoint `wave` with the retained candidate ids.
    Never take unrelated or deferred ids returned by the global selector.
    Fewer than two → Skip above. Empty paths cannot form a wave of two.
-3. **Take.** `conductor.py take --node <id> --holder <this-host>`
+3. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
+   --holder <this-host>`
    for every wave node. A child that takes again fails. If a take
    fails midway: `release` every node already taken, stop (infra-red).
 4. **Launch.** Do **not** isolate. Do **not** use host

@@ -15,6 +15,12 @@ argument-hint: "[<scope>] [--wait] [--tidy] [--no-fold] [--no-beads] [--plan] [-
 You are the **campaign conductor**. You do not inline other verbs.
 You do not invent a second packet.
 
+Resolve the session's pinned intention/root id once as `campaign_id` before
+dispatch. It is the explicit scheduler identity for this campaign; pass
+`--campaign <campaign_id>` to every conductor `ready`, `wave`, and `take`
+call. If no intention/root is pinned, pin the intended root before dispatch;
+never infer campaign membership from bead ancestry or status.
+
 The campaign script is `scripts/run.py` **in this skill directory**
 (the folder that contains this SKILL.md — Grok lists that path).
 Do **not** run `plugins/intention/scripts/run.py` from the current
@@ -166,11 +172,11 @@ while waves < max_waves:
     defer candidates without current preparation or authority
   if card.next is act and this host has workflow:
     write+lint packets for dispatchable  # write-set before pick
-    wave = conductor.py wave            # whole-packet disjoint subset
+    wave = conductor.py wave --campaign campaign_id  # whole-packet disjoint subset
     wave = intersect(wave, prepared_authorized_in_scope_ids)
     # Never take unrelated or deferred ids returned by the global selector.
     if len(wave) >= 2:
-      take each wave node
+      take each wave node --campaign campaign_id
       try:
         workflow name=run-wave args.nodes=[{id, packet}]
       except infra-red:
@@ -216,7 +222,8 @@ This session may have `spawn_subagent` and `workflow` (Grok). Python
 `spawn.py` cannot call them.
 
 - **`act` wave, two or more wholly disjoint packets:**
-  `conductor.py wave`, `take` each, then
+  `conductor.py wave --campaign <campaign_id>`, `take --campaign
+  <campaign_id>` each, then
   `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
   also `.grok/workflows/run-wave.rhai` in this clone). Children stay
   on HEAD. Do not isolate (worktrees PARKED). Conductor persists

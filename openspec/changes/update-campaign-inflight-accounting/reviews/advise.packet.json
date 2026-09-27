@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-campaign-inflight-accounting-advise-2",
+  "node_id": "bazaar-658-advise",
+  "capability": "verbs",
+  "change_id": "update-campaign-inflight-accounting",
+  "goal": "Independently review update-campaign-inflight-accounting. First read only proposal.md Why, openspec/specs/verbs/spec.md, plugins/intention/scripts/conductor.py, plugins/intention/skills/run/SKILL.md, and the cited LEARNINGS lines. Write a 10-line independent take naming what you would pin, refuse, and one tradeoff. Only then open design.md, tasks.md, steer.md, and the delta; compare and steelman. Write openspec/changes/update-campaign-inflight-accounting/reviews/2026-09-27-advise.md with ADVISE accept or send-back, READER opus-4.8-arch-review, and SPAWN path. If send-back, add concrete owed boxes to tasks.md. Do not implement, fold, or change the banner.",
+  "non_goals": [
+    "Implement conductor or skill changes",
+    "Fold the delta into the living spec",
+    "Clean historical in_progress beads",
+    "Weaken cross-campaign write collision protection",
+    "Implement add-run-wave-workflow's remaining honesty task"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-campaign-inflight-accounting/proposal.md#Why",
+      "invariant": "Global in_progress tracking must not exhaust a campaign's worker allowance when no act lease is held."
+    },
+    {
+      "symbol": "openspec/specs/verbs/spec.md:428",
+      "invariant": "Current living behavior conflates in_progress bead status with the node mutex and max_inflight accounting."
+    },
+    {
+      "symbol": "plugins/intention/scripts/conductor.py:131",
+      "invariant": "dispatch currently derives both free capacity and in-flight paths from nodes whose status is in_progress."
+    },
+    {
+      "symbol": "plugins/intention/scripts/conductor.py:367",
+      "invariant": "Lease files already record node, holder, paths, timestamp, and held/released status but no campaign identity."
+    },
+    {
+      "symbol": "plugins/intention/skills/run/SKILL.md",
+      "invariant": "run owns campaign scope and calls conductor ready, wave, and take; campaign identity must cross those command boundaries explicitly."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The reviewed contract cleanly separates campaign focus, held act leases, and bead tracking; same-campaign held leases consume capacity; unrelated status does not; all held leases still protect overlapping paths globally; command boundaries and legacy lease behavior are explicit enough to implement and test.",
+    "if_false": "The contract still derives capacity or collision safety from global bead status, depends on a harness-local pin implicitly, allows cross-campaign overlapping writes, or leaves legacy/no-campaign behavior unsafe or ambiguous."
+  },
+  "out_of_scope": [
+    {
+      "item": "Historical bead cleanup",
+      "tracked_as": "project maintenance outside this change"
+    },
+    {
+      "item": "Run-wave post-join honesty check",
+      "tracked_as": "add-run-wave-workflow"
+    }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/update-campaign-inflight-accounting/reviews/",
+      "openspec/changes/update-campaign-inflight-accounting/tasks.md"
+    ],
+    "do_not": [
+      "act",
+      "fold",
+      "deploy",
+      "change-banner"
+    ]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader",
+  "inherited": [
+    "docs/LEARNINGS.md:42 says ready fills dispatchable up to max_inflight even with zero in_progress.",
+    "docs/LEARNINGS.md:50 says take is in_progress plus lease plus write-set and max_inflight controls fan-out; this coupling is the policy under review."
+  ],
+  "assignee": {
+    "id": "agt-opus-4.8-arch-review",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "opus-4.8",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-opus-4.8-arch-review"
+    }
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-codex-conductor"
+    }
+  }
+}

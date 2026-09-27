@@ -17,7 +17,10 @@ The packet is the only interface. Schema:
 
 ## Procedure
 
-1. **Admit.** `python3 plugins/intention/scripts/conductor.py ready`.
+1. **Admit.** Resolve `campaign_id` explicitly: use the pinned
+   intention/root id when this act belongs to a campaign, or the node id for a
+   direct one-node act. Then run `python3
+   plugins/intention/scripts/conductor.py ready --campaign <campaign_id>`.
    Dispatch only a `dispatchable` id. Overlap is deferred. `capped`
    means `max_inflight` is full (`ACT_MAX_INFLIGHT` or
    `ladder.json`). If rigor is `change` / `architecture` /
@@ -28,7 +31,8 @@ The packet is the only interface. Schema:
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
    Complementary → weave. Architecture → review-pair with a Grok
    reader. Foreign harness → packet file, never a slash command.
-3. **Take.** `conductor.py take --node <id> --holder <route-id>`.
+3. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
+   --holder <route-id>`.
    That is the mutex: `in_progress` + lease + write-set. A second
    take fails. Do not spawn without a take.
 4. **Write the packet** to the path in `act-io.md`. Lint:

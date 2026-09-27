@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-658-act-1",
+  "node_id": "bazaar-658",
+  "capability": "verbs",
+  "change_id": "update-campaign-inflight-accounting",
+  "goal": "Implement the accepted campaign-scoped inflight policy: explicit campaign identity crosses the campaign, single-worker, and wave skill boundaries into conductor ready, wave, and take; held leases rather than bead status determine same-campaign slot usage; all held leases still enforce global path collision safety. Add focused regression coverage, update architecture/process documentation, and check the change tasks that the implementation satisfies.",
+  "non_goals": [
+    "Clean or rewrite historical in_progress beads",
+    "Change max_inflight precedence or default value",
+    "Add a global worker ceiling",
+    "Implement add-run-wave-workflow's post-join honesty task",
+    "Fold or archive either change"
+  ],
+  "anchors": [
+    {
+      "symbol": "plugins/intention/scripts/conductor.py:131",
+      "invariant": "Capacity comes from held leases tagged with the explicit campaign id; bead status remains readiness/tracking data only."
+    },
+    {
+      "symbol": "plugins/intention/scripts/conductor.py:367",
+      "invariant": "Lease records carry node, holder, paths, timestamp, status, and now campaign identity; released leases consume no capacity or collision ownership."
+    },
+    {
+      "symbol": "campaign conductor skill",
+      "invariant": "The campaign conductor passes its pinned intention/root id explicitly at every ready, wave, and take boundary."
+    },
+    {
+      "symbol": "openspec/changes/update-campaign-inflight-accounting/reviews/2026-09-27-advise.md",
+      "invariant": "Preserve empty-path global fail-safe behavior, hermetic inventory lease inputs, and safe same-campaign slot admission."
+    },
+    {
+      "symbol": "openspec/changes/add-run-wave-workflow/specs/verbs/spec.md",
+      "invariant": "Wave selection still de-overlaps before applying available campaign capacity; do not implement the unrelated post-join honesty task."
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-conductor.py",
+    "criteria": [
+      "Nineteen unrelated in_progress beads do not reduce a named campaign's free slots.",
+      "Held same-campaign leases consume slots and release restores them.",
+      "An in_progress bead without a held lease consumes no slot.",
+      "Cross-campaign and legacy held leases still defer overlapping paths, including empty-path fail-safe behavior.",
+      "ready, wave, and take share campaign-aware accounting with hermetic inventory tests.",
+      "Concurrent same-campaign admission cannot oversubscribe the last slot, or the documented single-conductor invariant explicitly bounds that behavior."
+    ]
+  },
+  "out_of_scope": [
+    {
+      "item": "Stale-lease TTL or reaper",
+      "tracked_as": "future reliability work; no worse than current crashed in_progress behavior"
+    },
+    {
+      "item": "Run-wave post-join honesty",
+      "tracked_as": "add-run-wave-workflow"
+    }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/scripts/conductor.py",
+      "plugins/intention/scripts/test-conductor.py",
+      "plugins/intention/skills/",
+      "plugins/intention/references/",
+      "openspec/changes/update-campaign-inflight-accounting/",
+      "openspec/changes/add-run-wave-workflow/specs/verbs/spec.md",
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md",
+      "groups/bazaar-658/"
+    ],
+    "do_not": [
+      "fold",
+      "archive",
+      "push",
+      "implement-post-join-honesty"
+    ]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "packet-only",
+  "role": "worker",
+  "inherited": [
+    "docs/LEARNINGS.md:42 records that dispatch currently fills to max_inflight from in_progress accounting.",
+    "docs/LEARNINGS.md:50 records take as the node mutex and max_inflight as the fan-out cap; this change separates lease truth from bead tracking."
+  ],
+  "assignee": {
+    "id": "agt-sol-campaign-inflight",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5.6-sol",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-sol-campaign-inflight"
+    }
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-codex-conductor"
+    }
+  }
+}

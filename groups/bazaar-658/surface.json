@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "identity": {
+    "id": "agt-sol-campaign-inflight",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5.6-sol",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-sol-campaign-inflight"
+    }
+  },
+  "topology": "solo",
+  "members": [
+    {
+      "id": "agt-sol-campaign-inflight",
+      "kind": "model",
+      "harness": "codex",
+      "interface": "gpt-5.6-sol",
+      "signing": {
+        "mode": "stand-in",
+        "stand_in_id": "agt-sol-campaign-inflight"
+      }
+    }
+  ],
+  "reduce": "The solo implementation worker returns one focused result for conductor persistence and classification."
+}

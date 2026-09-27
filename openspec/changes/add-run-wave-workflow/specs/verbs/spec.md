@@ -6,7 +6,9 @@ When the campaign's `next` is `act` and this host provides
 `workflow`, `run` SHALL write and lint each candidate packet, then
 ask `conductor.py wave` for a mutually disjoint subset of
 `dispatchable` write nodes. Empty `paths` overlap everything.
-`max_inflight` SHALL apply after disjointness. If that subset has
+`run` SHALL pass its pinned intention/root id explicitly as the campaign id
+to `wave` and every `take`. `max_inflight` SHALL apply after disjointness
+within that campaign. If that subset has
 two or more nodes, it SHALL `take` each node before launch, SHALL
 launch the `run-wave` workflow with those nodes (packet paths in
 `args.nodes`) on HEAD, and SHALL release every taken node if the
@@ -41,20 +43,20 @@ fan-out without the campaign loop.
 #### Scenario: Overlapping dispatchable is not a wave of two
 
 - GIVEN two `dispatchable` nodes that share a path
-- WHEN `conductor.py wave` runs
+- WHEN `conductor.py wave --campaign <root-id>` runs
 - THEN the wave contains only the first of those two
 
 #### Scenario: Two path-less nodes are not a wave of two
 
 - GIVEN two `dispatchable` nodes whose `paths` are empty
-- WHEN `conductor.py wave` runs
+- WHEN `conductor.py wave --campaign <root-id>` runs
 - THEN empty `paths` overlap everything
 - AND the wave contains at most one of those nodes
 
 #### Scenario: Cap applies after disjointness
 
 - GIVEN `max_inflight` 2 and ready nodes `a(x)`, `b(x)`, `c(y)`
-- WHEN `conductor.py wave` runs
+- WHEN `conductor.py wave --campaign <root-id>` runs
 - THEN the wave is `[a, c]`, not `[a]`
 
 #### Scenario: Infra-red launch releases every take

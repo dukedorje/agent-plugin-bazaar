@@ -20,8 +20,8 @@ Examples live in `docs/contracts/examples/`.
 ## Conductor
 
 ```bash
-python3 plugins/intention/scripts/conductor.py ready
-python3 plugins/intention/scripts/conductor.py take --node <id> --holder sonnet-5
+python3 plugins/intention/scripts/conductor.py ready --campaign <root-id>
+python3 plugins/intention/scripts/conductor.py take --campaign <root-id> --node <id> --holder sonnet-5
 python3 plugins/intention/scripts/conductor.py release --node <id>
 python3 plugins/intention/scripts/conductor.py lint-packet <packet.json>
 # isolate is PARKED (add-act-worktree-land). Wave children stay on HEAD.
@@ -32,8 +32,11 @@ python3 plugins/intention/scripts/conductor.py implicated --node <id>
 ```
 
 `ready` is beads (or `--inventory`) minus closed/parked, minus nodes
-whose paths overlap an `in_progress` write-set. Overlap → `deferred`.
-Independent ready nodes stay `dispatchable`.
+whose paths overlap any globally held lease. Overlap → `deferred`.
+Independent ready nodes stay `dispatchable`. Capacity counts only held
+leases carrying the explicit current campaign id; bead `in_progress` and
+other campaigns do not consume its slots. Inventory mode also requires an
+explicit `--leases-dir` so tests cannot read the live registry.
 
 ## Persist
 
@@ -81,7 +84,8 @@ Writes `signature.content_hash` (`sha256:` + hex) over the result with
 ## Native host (Grok)
 
 When the conductor tab has `spawn_subagent` / `workflow`, disjoint
-`act` nodes go through `conductor.py wave` then `.grok/workflows/run-wave.rhai`.
+`act` nodes go through `conductor.py wave --campaign <root-id>` then
+`.grok/workflows/run-wave.rhai`.
 Single Grok assignee: `spawn_subagent`. Claude/Codex: `spawn.py` below.
 
 ## Spawn
@@ -211,18 +215,20 @@ Full report stays at `raw_ref`. Open it only to investigate.
 not a second tracker:
 
 1. Node must be `dispatchable` (deps closed, paths not overlapping
-   in-flight, a free slot).
+   any held lease, a free campaign slot).
 2. Status becomes `in_progress`. Holder is recorded.
-3. A lease is written to `.spawns/leases/<node>.json`.
+3. A lease with the explicit campaign id is written to
+   `.spawns/leases/<node>.json`.
 4. Live beads: `bd update --claim`.
 5. A second take of the same node fails.
 6. Overlapping paths on other nodes become `deferred`.
 7. `release` returns the node to `open` and frees the slot.
 
-How many background workers: `ladder.json` `max_inflight` (default
-2). Override with `ACT_MAX_INFLIGHT=4` or
-`conductor.py ready --max-inflight 4`. When full, extra ready nodes
-are `capped`.
+How many background workers in one campaign: `ladder.json`
+`max_inflight` (default 2). Override with `ACT_MAX_INFLIGHT=4` or
+`conductor.py ready --campaign <root-id> --max-inflight 4`. Held leases for
+that campaign consume the cap; all held leases retain global collision
+ownership. When full, extra ready nodes are `capped`.
 
 Do not copy `planctl`. Beads are the graph. `.omc/` is off.
 

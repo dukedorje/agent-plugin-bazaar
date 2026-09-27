@@ -355,3 +355,39 @@ from a lone task list is the same ticket table under another name.
 **Not decided here.** Parser grammar. Cite encoding. Ingest store
 (`bazaar-ja7`). Host schema. Ratatui crate. Card layout.
 
+---
+
+### ADR-009: Campaign capacity is local; lease collision is global ✅
+
+**Status:** Accepted 2026-09-27
+(`update-campaign-inflight-accounting` activated and independently advised).
+**Blast:** act scheduling and lease ownership.
+
+**Decision.** A conducted campaign carries the explicit id of its pinned
+intention/root through `ready`, `wave`, and `take`. A successful `take` writes
+that id on the held act lease. `max_inflight` counts held leases tagged with
+the current campaign id; bead `in_progress` remains tracking state and does
+not consume capacity. Legacy leases without a campaign id consume no named
+campaign's slots.
+
+Write ownership has a wider boundary than capacity. Every held lease,
+including another campaign's and a legacy lease without a campaign id,
+participates in global path-collision checks. A held lease with an empty path
+set continues to block all dispatch as an unknown write-set. Released leases
+participate in neither capacity nor collision.
+
+The lease registry serializes admission around the capacity check and lease
+write, so concurrent conductor processes cannot both claim the last slot of
+one campaign. Inventory scheduling must receive an explicit lease directory;
+it never reads the repository's live lease registry implicitly.
+
+**Why.** Tracker status describes broader project progress and can outlive a
+worker. Using it as worker capacity lets unrelated historical work exhaust a
+campaign. Campaign-scoped lease counts restore the intended fan-out while the
+global collision boundary preserves safe ownership between concurrent
+campaigns.
+
+**Consequences.** Multiple campaigns may each use their own allowance; there
+is no machine-wide worker ceiling in this decision. Stale-lease expiry remains
+future reliability work. The existing `max_inflight` precedence and default
+do not change.

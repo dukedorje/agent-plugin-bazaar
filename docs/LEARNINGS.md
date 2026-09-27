@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-09-27 — `max_inflight` is campaign-local and lease-backed: only held leases tagged with the explicit pinned intention/root consume its slots. Collision ownership remains global across every held lease, including legacy and empty-path leases; bead `in_progress` is tracking, not capacity. (`plugins/intention/scripts/conductor.py`, ADR-009)
+
 - 2026-09-24 — Default architecture reader is Astra (`gpt-6-astra`, `astra-arch-review`) when Codex is present; Fable 5.1 is the backup. Panel order Astra, Fable, Sol, 4.8, Grok. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-24 — After intend, default is steer (decision briefing, then menus). “Activate this set” is the campaign grant; `--go` / `--autonomous` skip the pause; `/run` already takes waves. (`plugins/intention/skills/intend/SKILL.md`, `map`)

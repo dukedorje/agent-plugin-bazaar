@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Conductor scheduler for `act`.
 
-Ready-set = inbound deps closed AND write-set disjoint from in-flight.
+Ready-set = inbound deps closed AND write-set disjoint from held leases.
 Isolation MAY be a worktree; this process persists. Workers edit.
 
-  python3 plugins/intention/scripts/conductor.py ready [--inventory FILE]
-  python3 plugins/intention/scripts/conductor.py wave [--inventory FILE]
-  python3 plugins/intention/scripts/conductor.py take --node ID [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py ready --campaign ID [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py wave --campaign ID [--inventory FILE]
+  python3 plugins/intention/scripts/conductor.py take --campaign ID --node ID [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py release --node ID [--inventory FILE]
   python3 plugins/intention/scripts/conductor.py lint-packet FILE
   python3 plugins/intention/scripts/conductor.py isolate --node ID
@@ -18,12 +18,14 @@ Isolation MAY be a worktree; this process persists. Workers edit.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import posixpath
 import re
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -128,6 +130,8 @@ def resolve_max_inflight(cli: int | None = None, ladder: Path | None = None) -> 
 
 def dispatch(
     nodes: list[dict],
+    leases: list[dict],
+    campaign: str,
     max_inflight: int | None = None,
     openspec: Path | None = None,
 ) -> dict[str, Any]:
@@ -135,23 +139,28 @@ def dispatch(
     ready, blocked = ready_ids(nodes)
     flying_paths: list[str] = []
     flying_unknown = False
-    in_flight_ids: list[str] = []
+    held_leases: list[dict] = []
+    campaign_leases: list[dict] = []
     parked: list[dict] = []
     for nid, node in by_id.items():
         st = _status(node)
-        if st in IN_FLIGHT:
-            in_flight_ids.append(nid)
-            p = _paths(node)
-            if not p:
-                flying_unknown = True
-            flying_paths.extend(p)
-        elif st in PARKED:
+        if st in PARKED:
             parked.append({"id": nid, "reason": st})
+    for lease in leases:
+        if str(lease.get("status") or "") != "held":
+            continue
+        held_leases.append(lease)
+        p = _paths(lease)
+        if not p:
+            flying_unknown = True
+        flying_paths.extend(p)
+        if str(lease.get("campaign_id") or "") == campaign:
+            campaign_leases.append(lease)
 
     advise_block = set(needs_advise_ids(openspec)) if openspec is not None else set()
 
     cap = resolve_max_inflight(max_inflight)
-    free = max(0, cap - len(in_flight_ids))
+    free = max(0, cap - len(campaign_leases))
     remaining = free
     dispatchable: list[dict] = []
     deferred: list[dict] = []
@@ -181,9 +190,21 @@ def dispatch(
         "deferred": deferred,
         "capped": capped,
         "blocked": [{"id": i} for i in blocked],
-        "in_flight": [{"id": i, "holder": by_id[i].get("holder")} for i in in_flight_ids],
+        "in_flight": [
+            {
+                "id": str(lease.get("node_id") or ""),
+                "holder": lease.get("holder"),
+                "campaign_id": lease.get("campaign_id"),
+            }
+            for lease in held_leases
+        ],
         "parked": parked,
-        "slots": {"max": cap, "in_flight": len(in_flight_ids), "free": free},
+        "slots": {
+            "campaign_id": campaign,
+            "max": cap,
+            "in_flight": len(campaign_leases),
+            "free": free,
+        },
     }
 
 
@@ -364,15 +385,52 @@ def write_inventory(path: Path, nodes: list[dict]) -> None:
     path.write_text(json.dumps({"nodes": nodes}, indent=2) + "\n", encoding="utf-8")
 
 
-def lease_path(repo: Path, node_id: str) -> Path:
-    return repo / ".spawns" / "leases" / f"{safe_node(node_id)}.json"
+def lease_path(leases_dir: Path, node_id: str) -> Path:
+    return leases_dir / f"{safe_node(node_id)}.json"
 
 
-def write_lease(repo: Path, node: dict, holder: str) -> Path:
-    dest = lease_path(repo, str(node["id"]))
+def load_leases(leases_dir: Path) -> list[dict]:
+    if not leases_dir.is_dir():
+        return []
+    leases: list[dict] = []
+    for path in sorted(leases_dir.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SystemExit(f"invalid lease {path}: {exc}") from exc
+        if not isinstance(data, dict):
+            raise SystemExit(f"invalid lease {path}: expected object")
+        leases.append(data)
+    return leases
+
+
+def resolve_leases_dir(args: argparse.Namespace, repo: Path) -> Path:
+    if args.leases_dir is not None:
+        return args.leases_dir.resolve()
+    if args.inventory is not None:
+        raise SystemExit("--leases-dir is required with --inventory")
+    return repo / ".spawns" / "leases"
+
+
+@contextmanager
+def lease_registry_lock(leases_dir: Path, *, exclusive: bool):
+    """Keep each lease snapshot coherent; exclusive take makes admission atomic."""
+    leases_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = leases_dir / ".registry.lock"
+    with lock_path.open("a+", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def write_lease(leases_dir: Path, node: dict, holder: str, campaign: str) -> Path:
+    dest = lease_path(leases_dir, str(node["id"]))
     dest.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "node_id": node["id"],
+        "campaign_id": campaign,
         "holder": holder,
         "paths": _paths(node),
         "taken_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -384,12 +442,20 @@ def write_lease(repo: Path, node: dict, holder: str) -> Path:
 
 def take_node(
     nodes: list[dict],
+    leases: list[dict],
     node_id: str,
     holder: str,
+    campaign: str,
     max_inflight: int | None = None,
     openspec: Path | None = None,
 ) -> dict:
-    state = dispatch(nodes, max_inflight=max_inflight, openspec=openspec)
+    state = dispatch(
+        nodes,
+        leases,
+        campaign,
+        max_inflight=max_inflight,
+        openspec=openspec,
+    )
     by_id = index_nodes(nodes)
     node = by_id.get(node_id)
     if node is None:
@@ -415,12 +481,20 @@ def release_node(nodes: list[dict], node_id: str) -> dict:
 
 def cmd_wave(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
-    if args.inventory:
-        nodes = load_inventory(args.inventory)
-    else:
-        nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-    openspec = repo / "openspec"
-    result = dispatch(nodes, max_inflight=args.max_inflight, openspec=openspec)
+    leases_dir = resolve_leases_dir(args, repo)
+    with lease_registry_lock(leases_dir, exclusive=False):
+        if args.inventory:
+            nodes = load_inventory(args.inventory)
+        else:
+            nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
+        openspec = repo / "openspec"
+        result = dispatch(
+            nodes,
+            load_leases(leases_dir),
+            args.campaign,
+            max_inflight=args.max_inflight,
+            openspec=openspec,
+        )
     free = int(result["slots"]["free"])
     eligible = list(result["dispatchable"]) + list(result["capped"])
     wave = pick_wave(eligible)[: max(0, free)]
@@ -430,12 +504,20 @@ def cmd_wave(args: argparse.Namespace) -> int:
 
 def cmd_ready(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
-    if args.inventory:
-        nodes = load_inventory(args.inventory)
-    else:
-        nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-    openspec = repo / "openspec"
-    result = dispatch(nodes, max_inflight=args.max_inflight, openspec=openspec)
+    leases_dir = resolve_leases_dir(args, repo)
+    with lease_registry_lock(leases_dir, exclusive=False):
+        if args.inventory:
+            nodes = load_inventory(args.inventory)
+        else:
+            nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
+        openspec = repo / "openspec"
+        result = dispatch(
+            nodes,
+            load_leases(leases_dir),
+            args.campaign,
+            max_inflight=args.max_inflight,
+            openspec=openspec,
+        )
     print(json.dumps(result, indent=2))
     return 0
 
@@ -444,53 +526,73 @@ def cmd_take(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
     holder = args.holder or os.environ.get("ACT_HOLDER") or "conductor"
     openspec = repo / "openspec"
-    if args.inventory:
-        nodes = load_inventory(args.inventory)
+    leases_dir = resolve_leases_dir(args, repo)
+    with lease_registry_lock(leases_dir, exclusive=True):
+        if args.inventory:
+            nodes = load_inventory(args.inventory)
+        else:
+            nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
         node = take_node(
-            nodes, args.node, holder, max_inflight=args.max_inflight, openspec=openspec
+            nodes,
+            load_leases(leases_dir),
+            args.node,
+            holder,
+            args.campaign,
+            max_inflight=args.max_inflight,
+            openspec=openspec,
         )
-        write_inventory(args.inventory, nodes)
-    else:
-        nodes = beads_to_nodes(run_bd_json(["list", "--all", "-n", "0"]), repo)
-        node = take_node(
-            nodes, args.node, holder, max_inflight=args.max_inflight, openspec=openspec
+        if args.inventory:
+            write_inventory(args.inventory, nodes)
+        else:
+            try:
+                subprocess.check_call(
+                    [
+                        "bd",
+                        "update",
+                        args.node,
+                        "--claim",
+                        "-a",
+                        holder,
+                        "-s",
+                        "in_progress",
+                    ]
+                )
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise SystemExit(f"bd claim failed: {exc}") from exc
+        lease = write_lease(leases_dir, node, holder, args.campaign)
+    print(
+        json.dumps(
+            {
+                "taken": node["id"],
+                "campaign_id": args.campaign,
+                "holder": holder,
+                "paths": _paths(node),
+                "lease": str(lease),
+            },
+            indent=2,
         )
-        try:
-            subprocess.check_call(
-                [
-                    "bd",
-                    "update",
-                    args.node,
-                    "--claim",
-                    "-a",
-                    holder,
-                    "-s",
-                    "in_progress",
-                ]
-            )
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise SystemExit(f"bd claim failed: {exc}") from exc
-    lease = write_lease(repo, node, holder)
-    print(json.dumps({"taken": node["id"], "holder": holder, "paths": _paths(node), "lease": str(lease)}, indent=2))
+    )
     return 0
 
 
 def cmd_release(args: argparse.Namespace) -> int:
     repo = args.repo.resolve()
-    if args.inventory:
-        nodes = load_inventory(args.inventory)
-        release_node(nodes, args.node)
-        write_inventory(args.inventory, nodes)
-    else:
-        try:
-            subprocess.check_call(["bd", "update", args.node, "-s", "open", "-a", ""])
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise SystemExit(f"bd release failed: {exc}") from exc
-    lease = lease_path(repo, args.node)
-    if lease.is_file():
-        data = json.loads(lease.read_text(encoding="utf-8"))
-        data["status"] = "released"
-        lease.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    leases_dir = resolve_leases_dir(args, repo)
+    with lease_registry_lock(leases_dir, exclusive=True):
+        if args.inventory:
+            nodes = load_inventory(args.inventory)
+            release_node(nodes, args.node)
+            write_inventory(args.inventory, nodes)
+        else:
+            try:
+                subprocess.check_call(["bd", "update", args.node, "-s", "open", "-a", ""])
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise SystemExit(f"bd release failed: {exc}") from exc
+        lease = lease_path(leases_dir, args.node)
+        if lease.is_file():
+            data = json.loads(lease.read_text(encoding="utf-8"))
+            data["status"] = "released"
+            lease.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"released": args.node}, indent=2))
     return 0
 
@@ -584,25 +686,32 @@ def main() -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     ready = sub.add_parser("ready", help="dispatchable ready-set")
+    ready.add_argument("--campaign", required=True)
     ready.add_argument("--inventory", type=Path)
+    ready.add_argument("--leases-dir", type=Path)
     ready.add_argument("--max-inflight", type=int)
     ready.set_defaults(func=cmd_ready)
 
     wave = sub.add_parser("wave", help="mutually disjoint dispatchable subset")
+    wave.add_argument("--campaign", required=True)
     wave.add_argument("--inventory", type=Path)
+    wave.add_argument("--leases-dir", type=Path)
     wave.add_argument("--max-inflight", type=int)
     wave.set_defaults(func=cmd_wave)
 
     take = sub.add_parser("take", help="mutex: mark node in_progress")
     take.add_argument("--node", required=True)
+    take.add_argument("--campaign", required=True)
     take.add_argument("--holder")
     take.add_argument("--inventory", type=Path)
+    take.add_argument("--leases-dir", type=Path)
     take.add_argument("--max-inflight", type=int)
     take.set_defaults(func=cmd_take)
 
     rel = sub.add_parser("release", help="drop the node mutex")
     rel.add_argument("--node", required=True)
     rel.add_argument("--inventory", type=Path)
+    rel.add_argument("--leases-dir", type=Path)
     rel.set_defaults(func=cmd_release)
 
     lint = sub.add_parser("lint-packet", help="reject commit exemptions")
