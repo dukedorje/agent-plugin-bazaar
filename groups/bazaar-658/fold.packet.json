@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-658-fold-1",
+  "node_id": "bazaar-658-fold",
+  "capability": "verbs",
+  "goal": "Fold the completed ACTIVE BUILD change update-campaign-inflight-accounting into the living verbs specification and archive it under the 2026-09-27 prefix. Follow the repository fold algorithm exactly. Confirm every owed task is checked and every claimed requirement becomes living truth. Do not implement new behavior.",
+  "non_goals": [
+    "Implement leftover code",
+    "Modify the adjacent add-run-wave-workflow tasks",
+    "Change the accepted campaign and collision boundaries",
+    "Push or deploy"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-campaign-inflight-accounting/specs/verbs/spec.md",
+      "invariant": "The two complete MODIFIED requirement blocks replace their living counterparts without dropping scenarios."
+    },
+    {
+      "symbol": "openspec/specs/verbs/spec.md",
+      "invariant": "After fold, campaign lease accounting and global collision safety are living truth."
+    },
+    {
+      "symbol": "plugins/intention/references/fold-steps.md",
+      "invariant": "Apply deltas, confirm SHALLs, archive the change, and do not implement leftover work."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "openspec/specs/verbs/spec.md contains the complete campaign-aware take and max_inflight requirements, openspec/changes/update-campaign-inflight-accounting is gone, and openspec/changes/archive/2026-09-27-update-campaign-inflight-accounting contains the full frozen change.",
+    "if_false": "Any claimed requirement exists only in the change/archive, an old living requirement remains, the active change directory still exists, or unchecked owed work was archived."
+  },
+  "out_of_scope": [
+    {
+      "item": "Adjacent run-wave remaining task",
+      "tracked_as": "add-run-wave-workflow"
+    }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/specs/verbs/spec.md",
+      "openspec/changes/update-campaign-inflight-accounting/",
+      "openspec/changes/archive/2026-09-27-update-campaign-inflight-accounting/",
+      "groups/bazaar-658/"
+    ],
+    "do_not": [
+      "act",
+      "implement",
+      "push",
+      "deploy"
+    ]
+  },
+  "load_class": "structure-clear",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "skill-host",
+  "role": "folder",
+  "assignee": {
+    "id": "agt-opus-5-fold",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "opus-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-opus-5-fold"
+    }
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-codex-conductor"
+    }
+  }
+}
