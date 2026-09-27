@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-658-sol",
+  "packet_id": "pkt-bazaar-658-act-1",
+  "signer": {
+    "id": "agt-sol-campaign-inflight",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-5.6-sol",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-sol-campaign-inflight"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/scripts/conductor.py",
+      "role": "implementation"
+    },
+    {
+      "path": "plugins/intention/scripts/test-conductor.py",
+      "role": "verification"
+    },
+    {
+      "path": "plugins/intention/skills/run/SKILL.md",
+      "role": "campaign contract"
+    },
+    {
+      "path": "plugins/intention/skills/act/SKILL.md",
+      "role": "act contract"
+    },
+    {
+      "path": "plugins/intention/skills/run-wave/SKILL.md",
+      "role": "wave contract"
+    },
+    {
+      "path": "plugins/intention/references/act-io.md",
+      "role": "operator reference"
+    },
+    {
+      "path": "openspec/changes/update-campaign-inflight-accounting/",
+      "role": "change contract"
+    },
+    {
+      "path": "openspec/changes/add-run-wave-workflow/specs/verbs/spec.md",
+      "role": "in-flight reconciliation"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "role": "ADR"
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "role": "learning"
+    },
+    {
+      "path": "groups/bazaar-658/",
+      "role": "packet surface"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-conductor.py",
+    "exit_code": 0,
+    "output_tail": "15 conductor tests passed"
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "e28499fe726fc3f4b455c8eaf53791016d84fe4d",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md",
+      "groups/bazaar-658/packet.json",
+      "groups/bazaar-658/surface.json",
+      "openspec/changes/add-run-wave-workflow/specs/verbs/spec.md",
+      "openspec/changes/update-campaign-inflight-accounting/",
+      "plugins/intention/references/act-io.md",
+      "plugins/intention/scripts/conductor.py",
+      "plugins/intention/scripts/test-conductor.py",
+      "plugins/intention/skills/act/SKILL.md",
+      "plugins/intention/skills/run-wave/SKILL.md",
+      "plugins/intention/skills/run/SKILL.md"
+    ]
+  },
+  "summary": "Implemented explicit campaign identity and lease-backed campaign capacity while retaining global collision ownership; added hermetic lease fixtures, serialized same-campaign admission, updated skill contracts and architecture, and passed all focused conductor tests.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-sol-campaign-inflight",
+    "content_hash": "sha256:3503b8dd9ab095bc6de08c720e01edc7ff71d2106caa23f2cab803ca40afce50"
+  },
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Campaign capacity now counts held same-campaign leases rather than global in_progress beads; collision safety remains global.",
+    "verify_command": "python3 plugins/intention/scripts/test-conductor.py",
+    "verify_exit": 0,
+    "commit_sha": "e28499fe726fc3f4b455c8eaf53791016d84fe4d",
+    "changed_files": [
+      "plugins/intention/scripts/conductor.py",
+      "plugins/intention/scripts/test-conductor.py",
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/skills/act/SKILL.md",
+      "plugins/intention/skills/run-wave/SKILL.md",
+      "plugins/intention/references/act-io.md",
+      "openspec/changes/update-campaign-inflight-accounting/",
+      "openspec/changes/add-run-wave-workflow/specs/verbs/spec.md",
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md",
+      "groups/bazaar-658/"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-658/results/agt-sol-campaign-inflight.json"
+  },
+  "raw_ref": "groups/bazaar-658/results/agt-sol-campaign-inflight.json"
+}
