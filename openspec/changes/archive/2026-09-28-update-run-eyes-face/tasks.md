@@ -5,4 +5,4 @@
 - [x] `/status` EYES prints YOUR EYES + Next
 - [x] EYES box on `add-run-wave-workflow` carries `Next: /run-wave`
 - [x] Tests
-- [ ] EYES: halt card shows YOUR EYES and a Next command. Next: /run --wait
+- [x] EYES: halt card shows YOUR EYES and a Next command. Next: /run --wait
