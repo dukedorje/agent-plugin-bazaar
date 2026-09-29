@@ -21,6 +21,7 @@ import json
 import os
 import shutil
 import signal
+import subprocess
 import sys
 import time
 import uuid
@@ -118,6 +119,18 @@ def harness_of(packet: dict) -> str:
     return str(harness) if isinstance(harness, str) and harness else "none"
 
 
+def target_repo() -> Path:
+    """The repo being worked on: git toplevel of cwd, else cwd. Never the plugin install."""
+    proc = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0 and proc.stdout.strip():
+        return Path(proc.stdout.strip())
+    return Path.cwd()
+
+
 def node_of(packet: dict, override: str | None) -> str:
     if override:
         return override
@@ -141,9 +154,13 @@ def writes_review(paths: list[str]) -> bool:
 
 
 def is_advise(packet: dict) -> bool:
+    """A reader packet. change_id alone is not one: act packets carry it too."""
     if is_consult(packet):
         return False
-    if packet.get("change_id"):
+    role = str(packet.get("role") or "")
+    if role:
+        return role == "reader"
+    if str(packet.get("node_id") or "").endswith("-advise"):
         return True
     return writes_review(packet_paths(packet))
 
@@ -1075,7 +1092,7 @@ def cmd_oneshot(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    repo = Path(__file__).resolve().parents[3]
+    repo = target_repo()
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="cmd", required=True)
 

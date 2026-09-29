@@ -81,7 +81,9 @@ unrelated ASK/EYES work.
    Not “we just activated these.” Not `design.md` / `tasks.md`
    in the first brief.
 
-   Packet `constraints.paths` is the review dir (and `tasks.md`
+   Packet sets `role: reader` (spawn.py keys the reader brief on
+   it; `change_id` alone is an act packet). `constraints.paths` is
+   the review dir (and `tasks.md`
    if send-back may add owed boxes or fresh accept must close the
    preparation marker). `permission: write` on
    that write-set only. Codex sandbox is `workspace-write` so

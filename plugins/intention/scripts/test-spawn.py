@@ -509,6 +509,70 @@ def test_read_permission_prompt_is_reader_brief() -> None:
         expect(any("reviews" in p for p in spec.get("paths") or []), spec)
 
 
+def act_packet(change_id: str | None = "add-x") -> dict:
+    packet = {
+        "id": "pkt-act",
+        "node_id": "add-x-impl",
+        "role": "worker",
+        "goal": "Implement add-x.",
+        "assignee": {
+            "id": "agt-sol",
+            "kind": "model",
+            "harness": "codex",
+            "interface": "gpt-5.6-sol",
+            "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
+        },
+        "requester": {
+            "id": "agt-conductor",
+            "kind": "group",
+            "harness": "none",
+            "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
+        },
+        "constraints": {"permission": "write", "paths": ["src/x.py"], "do_not": ["fold"]},
+        "acceptance": {"kind": "none"},
+        "load_class": "structure-clear",
+        "rigor": "change",
+        "density": "lean",
+        "surface": "packet-only",
+    }
+    if change_id:
+        packet["change_id"] = change_id
+    return packet
+
+
+def test_act_packet_with_change_id_is_worker() -> None:
+    """bazaar-8dj: change_id on an act packet must not append the reader brief."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(act_packet()), encoding="utf-8")
+        staged = run(["stage", "--packet", str(pkt), "--root", str(root)])
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        prompt = Path(json.loads(staged.stdout)["prompt_file"]).read_text(encoding="utf-8")
+        expect("Edit and stop" in prompt, prompt)
+        expect("You are a reader" not in prompt, prompt)
+
+
+def test_stage_defaults_root_to_cwd_repo() -> None:
+    """bazaar-8dj: without --root, stage lands in the target repo, not the plugin install."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td).resolve()
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        (root / "sub").mkdir()
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(act_packet()), encoding="utf-8")
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt)],
+            text=True,
+            capture_output=True,
+            cwd=root / "sub",
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(Path(spec["workspace"]).resolve() == root, spec)
+        expect(Path(spec["prompt_file"]).resolve().is_relative_to(root / ".spawns"), spec)
+
+
 def test_codex_advise_sandbox_is_writable() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -873,6 +937,8 @@ def main() -> int:
         test_openai_adapter_sol_live,
         test_read_permission_prompt_is_reader_brief,
         test_codex_advise_sandbox_is_writable,
+        test_act_packet_with_change_id_is_worker,
+        test_stage_defaults_root_to_cwd_repo,
         test_consult_prompt_is_not_advise,
         test_consult_cli_fake_claude,
         test_grok_adapter_argv,

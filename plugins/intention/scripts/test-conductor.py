@@ -153,13 +153,24 @@ def test_lint() -> None:
             json.dumps(
                 {
                     "goal": "implement the node",
-                    "constraints": {"permission": "write", "paths": ["x"], "do_not": ["push", "deploy"]},
+                    "constraints": {
+                        "permission": "write",
+                        "paths": ["x"],
+                        "do_not": ["push", "deploy", "git stash", "git reset --hard"],
+                    },
                 }
             ),
             encoding="utf-8",
         )
         proc = run(["lint-packet", str(good)])
         expect(proc.returncode == 0, proc.stdout + proc.stderr)
+        for item in ("git commit", "git add -A"):
+            bad.write_text(
+                json.dumps({"goal": "edit", "constraints": {"paths": ["x"], "do_not": [item]}}),
+                encoding="utf-8",
+            )
+            proc = run(["lint-packet", str(bad)])
+            expect(proc.returncode != 0, f"lint should reject do_not {item!r}")
 
 
 def test_classify() -> None:
@@ -536,6 +547,54 @@ def test_wave_cap_after_disjoint() -> None:
         expect(ids == ["a", "c"], f"cap after disjoint want [a,c] got {ids} {proc.stdout}")
 
 
+def test_unrelated_ready_beads_do_not_fill_campaign_cap() -> None:
+    """bazaar-8dj: a campaign node was capped behind unrelated ready beads."""
+    root_id = "epic-1"
+    inv = {
+        "nodes": [
+            *[
+                {"id": f"unrelated-{i}", "status": "open", "deps": [], "paths": [f"u/{i}.txt"]}
+                for i in range(5)
+            ],
+            {"id": root_id, "status": "open", "deps": ["epic-1.1"], "paths": ["docs/root.md"]},
+            {"id": "epic-1.1", "status": "open", "deps": [], "paths": ["src/a.py"], "parent": root_id},
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        path = root / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        ready = run(schedule_args(root, "ready", path, campaign=root_id) + ["--max-inflight", "2"])
+        expect(ready.returncode == 0, ready.stderr)
+        data = json.loads(ready.stdout)
+        expect([r["id"] for r in data["dispatchable"]] == ["epic-1.1"], data)
+        expect(data["capped"] == [], data)
+        expect(len(data["outside"]) == 5, data)
+        took = run(
+            schedule_args(root, "take", path, campaign=root_id)
+            + ["--node", "epic-1.1", "--holder", "sol", "--max-inflight", "2"]
+        )
+        expect(took.returncode == 0, took.stderr)
+
+
+def test_take_is_not_refused_behind_listed_siblings() -> None:
+    inv = {
+        "nodes": [
+            {"id": f"n{i}", "status": "open", "deps": [], "paths": [f"src/{i}.py"]}
+            for i in range(4)
+        ]
+    }
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        path = root / "inv.json"
+        path.write_text(json.dumps(inv), encoding="utf-8")
+        took = run(
+            schedule_args(root, "take", path)
+            + ["--node", "n3", "--holder", "sol", "--max-inflight", "1"]
+        )
+        expect(took.returncode == 0, took.stderr)
+
+
 def test_cross_campaign_and_legacy_collision() -> None:
     inv = {
         "nodes": [
@@ -623,6 +682,8 @@ def main() -> int:
         test_wave_pathless_is_wave_of_one,
         test_wave_cap_after_disjoint,
         test_cross_campaign_and_legacy_collision,
+        test_unrelated_ready_beads_do_not_fill_campaign_cap,
+        test_take_is_not_refused_behind_listed_siblings,
         test_concurrent_take_does_not_oversubscribe,
         test_implicated,
         test_lint,

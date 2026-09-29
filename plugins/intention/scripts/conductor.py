@@ -45,6 +45,9 @@ COMMIT_EXEMPT = re.compile(
     re.I,
 )
 DO_NOT_FORBIDDEN = {"commit", "git", "persist"}
+# Forbidding these is a commit exemption; forbidding `git stash`,
+# `git reset --hard`, or `git push --force` is a safety rule and stays legal.
+DO_NOT_GIT_EXEMPT = ("git commit", "git add")
 
 
 def norm_path(p: str) -> str:
@@ -128,15 +131,44 @@ def resolve_max_inflight(cli: int | None = None, ladder: Path | None = None) -> 
     return 2
 
 
+def campaign_scope(by_id: dict[str, dict], campaign: str) -> set[str] | None:
+    """The campaign root and its parent-child descendants; None when the root is unknown."""
+    if campaign not in by_id:
+        return None
+    children: dict[str, list[str]] = {}
+    for nid, node in by_id.items():
+        parent = node.get("parent")
+        if parent:
+            children.setdefault(str(parent), []).append(nid)
+    scope: set[str] = set()
+    stack = [campaign]
+    while stack:
+        nid = stack.pop()
+        if nid in scope:
+            continue
+        scope.add(nid)
+        stack.extend(children.get(nid, []))
+    return scope
+
+
 def dispatch(
     nodes: list[dict],
     leases: list[dict],
     campaign: str,
     max_inflight: int | None = None,
     openspec: Path | None = None,
+    prefer: str | None = None,
 ) -> dict[str, Any]:
     by_id = index_nodes(nodes)
     ready, blocked = ready_ids(nodes)
+    # Only this campaign's nodes compete for its slots. Unrelated ready
+    # beads are listed as outside, never as capped ahead of our own.
+    scope = campaign_scope(by_id, campaign)
+    outside = [nid for nid in ready if scope is not None and nid not in scope]
+    ready = [nid for nid in ready if scope is None or nid in scope]
+    if prefer in ready:
+        ready.remove(prefer)
+        ready.insert(0, prefer)
     flying_paths: list[str] = []
     flying_unknown = False
     held_leases: list[dict] = []
@@ -189,6 +221,7 @@ def dispatch(
         "dispatchable": dispatchable,
         "deferred": deferred,
         "capped": capped,
+        "outside": [{"id": i} for i in outside],
         "blocked": [{"id": i} for i in blocked],
         "in_flight": [
             {
@@ -266,7 +299,7 @@ def lint_packet(data: dict) -> list[str]:
     do_not = constraints.get("do_not") if isinstance(constraints.get("do_not"), list) else []
     for item in do_not:
         token = str(item).strip().lower()
-        if token in DO_NOT_FORBIDDEN or token.startswith("git "):
+        if token in DO_NOT_FORBIDDEN or token.startswith(DO_NOT_GIT_EXEMPT):
             errors.append(f"constraints.do_not contains commit exemption: {item!r}")
     blob = json.dumps(data, ensure_ascii=False)
     if COMMIT_EXEMPT.search(blob):
@@ -320,12 +353,16 @@ def beads_to_nodes(issues: list[dict], repo: Path) -> list[dict]:
         if not nid:
             continue
         deps: list[str] = []
+        parent: str | None = None
         for edge in issue.get("dependencies") or []:
             if not isinstance(edge, dict):
                 continue
-            if edge.get("type") in {None, "blocks"} and edge.get("depends_on_id"):
-                if edge.get("issue_id", nid) == nid:
-                    deps.append(str(edge["depends_on_id"]))
+            if edge.get("issue_id", nid) != nid or not edge.get("depends_on_id"):
+                continue
+            if edge.get("type") in {None, "blocks"}:
+                deps.append(str(edge["depends_on_id"]))
+            elif edge.get("type") == "parent-child":
+                parent = str(edge["depends_on_id"])
         packet = repo / "groups" / nid / "packet.json"
         extra: dict = {}
         if packet.is_file():
@@ -348,6 +385,7 @@ def beads_to_nodes(issues: list[dict], repo: Path) -> list[dict]:
                 "deps": deps,
                 "paths": load_packet_paths(repo, nid),
                 "holder": issue.get("assignee") or issue.get("owner"),
+                **({"parent": parent} if parent else {}),
                 **extra,
             }
         )
@@ -455,6 +493,7 @@ def take_node(
         campaign,
         max_inflight=max_inflight,
         openspec=openspec,
+        prefer=node_id,
     )
     by_id = index_nodes(nodes)
     node = by_id.get(node_id)
@@ -679,8 +718,20 @@ def cmd_implicated(args: argparse.Namespace) -> int:
     return 0
 
 
+def target_repo() -> Path:
+    """The repo being worked on: git toplevel of cwd, else cwd. Never the plugin install."""
+    proc = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0 and proc.stdout.strip():
+        return Path(proc.stdout.strip())
+    return Path.cwd()
+
+
 def main() -> int:
-    repo_default = Path(__file__).resolve().parents[3]
+    repo_default = target_repo()
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--repo", type=Path, default=repo_default)
     sub = p.add_subparsers(dest="cmd", required=True)
