@@ -168,6 +168,16 @@ for PLUGIN_DIR in "${PLUGIN_DIRS[@]}"; do
         fi
     fi
 
+    CODEX_MANIFEST="$PLUGIN_DIR/.codex-plugin/plugin.json"
+    if [[ -f "$CODEX_MANIFEST" ]] && [[ -n "$VERSION" ]]; then
+        CODEX_VERSION=$(jq -r '.version // empty' "$CODEX_MANIFEST" 2>/dev/null)
+        if [[ "${CODEX_VERSION%%+*}" != "$VERSION" ]]; then
+            error "$PLUGIN_NAME: Version mismatch — plugin.json=$VERSION, .codex-plugin/plugin.json=$CODEX_VERSION"
+        else
+            ok "codex plugin.json version matches"
+        fi
+    fi
+
     echo ""
 done
 
