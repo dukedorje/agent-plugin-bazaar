@@ -3,8 +3,10 @@
 
 Claude, Grok, and Codex cache plugins by version or git SHA. Pushing
 main does not recopy those dirs. After a commit/merge/checkout of
-main, this script mirrors plugins/<name> into every bazaar cache it
-finds under $HOME. Missing harnesses are skipped.
+main, this script mirrors the committed plugins/<name> (HEAD, never
+uncommitted working-tree edits) into every bazaar cache it finds under
+$HOME. Caches that are git clones of the bazaar fast-forward to this
+clone's HEAD instead of receiving copies. Missing harnesses are skipped.
 """
 
 from __future__ import annotations
@@ -15,6 +17,8 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 from pathlib import Path
 
 MARKETPLACE_ID = "agent-plugin-bazaar"
@@ -117,29 +121,42 @@ def git_ff_main(path: Path, source_repo: Path) -> str | None:
     url = (ident.stdout or "").strip().lower()
     if MARKETPLACE_ID not in url and "agent-plugin-bazaar" not in url:
         return None
-    fetch = subprocess.run(
-        ["git", "fetch", "--quiet", "origin"],
-        cwd=path,
-        capture_output=True,
-        text=True,
-    )
-    if fetch.returncode != 0:
+    def git(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["git", *args], cwd=path, capture_output=True, text=True)
+
+    if git("fetch", "--quiet", "origin").returncode != 0:
         return f"fetch-fail {path}"
-    subprocess.run(
-        ["git", "checkout", "--quiet", "main"],
-        cwd=path,
-        capture_output=True,
-        text=True,
-    )
-    pull = subprocess.run(
-        ["git", "merge", "--ff-only", "--quiet", "origin/main"],
-        cwd=path,
-        capture_output=True,
-        text=True,
-    )
-    if pull.returncode != 0:
+    # The clone is a cache we own. Stray edits (older syncs copied the
+    # working tree in) would block the fast-forward, so drop them.
+    git("checkout", "--quiet", "--force", "main")
+    git("reset", "--quiet", "--hard")
+    target = "origin/main"
+    # Prefer this clone's committed HEAD: the post-commit hook runs
+    # before push, so origin/main may lag.
+    if (source_repo / ".git").exists() and git(
+        "fetch", "--quiet", str(source_repo.resolve()), "HEAD"
+    ).returncode == 0:
+        if git("merge-base", "--is-ancestor", "origin/main", "FETCH_HEAD").returncode == 0:
+            target = "FETCH_HEAD"
+    if git("merge", "--ff-only", "--quiet", target).returncode != 0:
         return f"ff-fail {path}"
     return f"ff {path}"
+
+
+def committed_plugins(repo: Path, scratch: Path) -> Path:
+    """HEAD's plugins/ tree, extracted under scratch. Falls back to the working tree."""
+    proc = subprocess.run(
+        ["git", "archive", "--format=tar", "HEAD", "plugins"],
+        cwd=repo,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        return repo / "plugins"
+    tar_path = scratch / "plugins.tar"
+    tar_path.write_bytes(proc.stdout)
+    with tarfile.open(tar_path) as tar:
+        tar.extractall(scratch, filter="tar")
+    return scratch / "plugins"
 
 
 def grok_registry_roots(home: Path) -> list[Path]:
@@ -256,26 +273,36 @@ def sync(
     dry_run: bool = False,
     cli: bool = False,
 ) -> list[str]:
+    with tempfile.TemporaryDirectory() as scratch:
+        return _sync(repo, home, committed_plugins(repo, Path(scratch)), dry_run=dry_run, cli=cli)
+
+
+def _sync(repo: Path, home: Path, plugins: Path, *, dry_run: bool, cli: bool) -> list[str]:
     names = plugin_names(repo)
     notes: list[str] = []
     roots = cache_roots(home)
+    clones: list[Path] = []
     if not dry_run:
         for root in roots:
             ff = git_ff_main(root, repo)
             if ff:
                 notes.append(ff)
+            if ff and ff.startswith("ff "):
+                clones.append(root.resolve())
     for name in names:
-        src = repo / "plugins" / name
+        src = plugins / name
         if not src.is_dir():
-            notes.append(f"skip missing {src}")
+            notes.append(f"skip missing {repo / 'plugins' / name}")
             continue
         dests = destinations_for(name, src, roots)
         if not dests:
             notes.append(f"no-cache {name}")
             continue
         for dest in dests:
-            if dest.resolve() == src.resolve():
+            if dest.resolve() == (repo / "plugins" / name).resolve():
                 continue
+            if any(dest.resolve().is_relative_to(c) for c in clones):
+                continue  # git-managed; the fast-forward already refreshed it
             if dry_run:
                 notes.append(f"would-mirror {name} -> {dest}")
                 continue

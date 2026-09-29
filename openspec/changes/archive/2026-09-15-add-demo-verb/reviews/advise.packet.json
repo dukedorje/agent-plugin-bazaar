@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-demo-verb-advise",
+  "node_id": "add-demo-verb-advise",
+  "capability": "verbs",
+  "change_id": "add-demo-verb",
+  "goal": "Read add-demo-verb. Blind pass then verdict. Write openspec/changes/add-demo-verb/reviews/2026-09-02-advise.md. You are Fable, other-family reader. Author is Grok. Do not implement.",
+  "non_goals": [
+    "Fold",
+    "Implement the demo skill",
+    "Staging or production deploy",
+    "Campaign walk next: demo (update-run-demo)"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/specs/default-loop/spec.md",
+      "invariant": "Loop is intend, steer, change, advise, act, fold. run is the campaign."
+    },
+    {
+      "symbol": "openspec/specs/verbs/spec.md",
+      "invariant": "act implements; fold archives; EYES is a mailbox face; deploy is do_not."
+    },
+    {
+      "symbol": "docs/LEARNINGS.md",
+      "invariant": "Batch fold of the same requirement block must union, not last-writer-wins."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "After a landed act, Duke can demo (try the feature) without folding and without a deploy; staging and production remain later rings.",
+    "if_false": "Demo is another EYES checkbox, or it deploys, or it is three verbs, or fold still follows act with no try-it stage."
+  },
+  "out_of_scope": [
+    {"item": "Staging deploy", "tracked_as": "bazaar-spi.2"},
+    {"item": "Production deploy", "tracked_as": "bazaar-spi.2"},
+    {"item": "Campaign next: demo", "tracked_as": "update-run-demo"}
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/add-demo-verb/reviews/",
+      "openspec/changes/add-demo-verb/tasks.md"
+    ],
+    "do_not": ["fold", "act", "deploy"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader",
+  "assignee": {
+    "id": "agt-fable-arch-review",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "fable-5.1",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-fable-arch-review"}
+  },
+  "requester": {
+    "id": "agt-grok",
+    "kind": "model",
+    "harness": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok"}
+  }
+}

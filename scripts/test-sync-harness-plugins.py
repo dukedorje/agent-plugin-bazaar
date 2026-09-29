@@ -211,6 +211,39 @@ def test_ff_marketplace_clone(tmp: Path) -> None:
     expect((cache / "README.md").read_text() == "two", (cache / "README.md").read_text())
 
 
+def test_mirrors_committed_tree_not_working_edits(tmp: Path) -> None:
+    repo = bazaar_repo(tmp)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    commit_all(repo, "base")
+    write(repo / "plugins" / "intention" / "skills" / "x" / "SKILL.md", "DIRTY")
+    home = tmp / "home"
+    cache = home / ".claude" / "plugins" / "cache" / "agent-plugin-bazaar" / "intention" / "0.5.0"
+    write(cache / ".claude-plugin" / "plugin.json", json.dumps({"name": "intention", "version": "0.5.0"}))
+    write(cache / "skills" / "x" / "SKILL.md", "OLD")
+    sync.sync(repo, home)
+    got = (cache / "skills" / "x" / "SKILL.md").read_text()
+    expect(got == "NEW", got)
+
+
+def test_dirty_clone_ffs_to_local_head(tmp: Path) -> None:
+    remote = tmp / "agent-plugin-bazaar.git"
+    subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    work = tmp / "work"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(work)], check=True)
+    write(work / "README.md", "one")
+    commit_all(work, "one")
+    git(work, "remote", "add", "origin", str(remote))
+    git(work, "push", "-u", "origin", "main")
+    cache = tmp / "cache"
+    subprocess.run(["git", "clone", "-q", str(remote), str(cache)], check=True)
+    write(cache / "README.md", "stray")  # an older sync copied edits in
+    write(work / "README.md", "two")
+    commit_all(work, "two")  # committed, not pushed
+    result = sync.git_ff_main(cache, work)
+    expect(result is not None and result.startswith("ff "), result)
+    expect((cache / "README.md").read_text() == "two", (cache / "README.md").read_text())
+
+
 def main() -> int:
     import tempfile
 
@@ -220,6 +253,8 @@ def main() -> int:
         test_dry_run_does_not_write,
         test_skips_this_clone,
         test_ff_marketplace_clone,
+        test_mirrors_committed_tree_not_working_edits,
+        test_dirty_clone_ffs_to_local_head,
     ]
     failed = 0
     for fn in tests:
