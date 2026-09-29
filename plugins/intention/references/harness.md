@@ -34,6 +34,11 @@ complete plugin. Claude and Grok should use their native plugin installers.
 Hermes and Prime should load the checkout's `.agents/skills/` symlinks until
 they have a bundle-aware installer.
 
+Then, once per target repo, run `setup` (`/setup`, `$setup`): it checks
+`bd`, runs `bd init`, registers the `node` issue type, lays out
+`openspec/`, and gitignores the conductor scratch dirs. `--check` reports
+without writing.
+
 ## Follow main
 
 Installed copies are versioned snapshots. They do **not** follow GitHub

@@ -203,6 +203,11 @@ if python3 "$REPO_ROOT/scripts/test-export-graph.py"; then
 else
     error "taskmaster graph export failed"
 fi
+if python3 "$REPO_ROOT/plugins/intention/scripts/test-setup.py" >/dev/null; then
+    ok "intention setup"
+else
+    error "intention setup failed"
+fi
 if python3 "$REPO_ROOT/scripts/test-sync-harness-plugins.py"; then
     ok "harness plugin sync"
 else

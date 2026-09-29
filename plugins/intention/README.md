@@ -129,6 +129,11 @@ globally copy only `skills/`: Intention verbs also load the sibling
 `references/`, `scripts/`, `workflows/`, and `agents/` directories. Matrix:
 [`references/harness.md`](references/harness.md).
 
+New repo: run `setup` once (`/setup`, `$setup`). It installs nothing
+into the repo it cannot explain: `bd init`, the `node` issue type,
+`openspec/` skeleton, `.worktrees/` + `.spawns/` in `.gitignore`, and a
+pointer in `AGENTS.md`/`CLAUDE.md`. `--check` reports only.
+
 Contracts: `docs/contracts/agent-surface.md`. Living specs:
 `openspec/specs/`. Verb bodies: `references/` (shared vocabulary;
 skills do not fork the surface).

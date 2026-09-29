@@ -14,7 +14,7 @@ SKILLS = PLUGIN / "skills"
 REFS = PLUGIN / "references"
 AGENTS = PLUGIN.parents[1] / ".agents" / "skills"
 VERBS = ("intend", "steer", "change", "advise", "act", "demo", "fold", "brief", "debrief", "map", "status", "ready", "run")
-EXTRA = ("consult", "run-wave")
+EXTRA = ("consult", "run-wave", "setup")
 REQUIRED_REFS = (
     "shared.md",
     "intend-dag.md",

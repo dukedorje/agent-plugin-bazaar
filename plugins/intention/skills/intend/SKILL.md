@@ -54,7 +54,8 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).
 6. **Write** the DAG in the shape in `intend-dag.md`. Chat is enough;
-   beads (`bd create --type node`) if they want a tracker. Title is
+   beads (`bd create --type node`) if they want a tracker. No
+   `.beads/`, or `node` rejected as a type → run `setup` first. Title is
    the kebab, not `nod-…`. No `.omc/`. No SHALLs in the DAG.
 7. **Stop.** Report ready-set, needs activation, and a **Decision
    briefing** (same section `map` prints). Pin this DAG
