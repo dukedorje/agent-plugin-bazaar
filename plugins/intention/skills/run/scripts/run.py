@@ -305,6 +305,82 @@ def load_beads() -> list[dict[str, Any]]:
     return [row for row in data if isinstance(row, dict)]
 
 
+def load_graph() -> list[dict[str, Any]]:
+    """Every bead with its edges: owed-work and scope resolution need parents."""
+    try:
+        proc = subprocess.run(
+            ["bd", "list", "--all", "-n", "0", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0:
+        return []
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    return [row for row in data if isinstance(row, dict)] if isinstance(data, list) else []
+
+
+def bead_parent(bead: dict[str, Any]) -> str | None:
+    nid = str(bead.get("id") or "")
+    for edge in bead.get("dependencies") or []:
+        if (
+            isinstance(edge, dict)
+            and edge.get("type") == "parent-child"
+            and str(edge.get("issue_id") or nid) == nid
+            and edge.get("depends_on_id")
+        ):
+            return str(edge["depends_on_id"])
+    return bead.get("parent") and str(bead["parent"])
+
+
+def owed_beads(change_id: str, graph: list[dict[str, Any]]) -> list[str]:
+    """Open descendants of the bead(s) landing on change_id.
+
+    tasks.md may be a pointer to beads rather than checkboxes, so an empty
+    markdown list is not proof of no owed work.
+    """
+    roots = {
+        str(b.get("id"))
+        for b in graph
+        if landing_from_title(str(b.get("title") or "")) == change_id
+    }
+    if not roots:
+        return []
+    kids: dict[str, list[dict[str, Any]]] = {}
+    for b in graph:
+        parent = bead_parent(b)
+        if parent:
+            kids.setdefault(parent, []).append(b)
+    owed: list[str] = []
+    seen: set[str] = set()
+    stack = list(roots)
+    while stack:
+        cur = stack.pop()
+        for child in kids.get(cur, []):
+            cid = str(child.get("id") or "")
+            if not cid or cid in seen:
+                continue
+            seen.add(cid)
+            if str(child.get("status") or "open") not in {"closed", "tombstone"}:
+                owed.append(cid)
+            stack.append(cid)
+    return sorted(owed)
+
+
+def scope_bead(scope: str, graph: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Beads named by scope: exact id, or a short alias (`ai0` for `mesh-ai0`)."""
+    exact = [b for b in graph if str(b.get("id") or "") == scope]
+    if exact:
+        return exact
+    return [b for b in graph if str(b.get("id") or "").endswith("-" + scope)]
+
+
 def fold_legal(
     openspec: Path | None,
     change_id: str,
@@ -412,6 +488,35 @@ def decide(
         }
     skip_set = set(skip or [])
     punt_set = set(punt or [])
+    raw_graph = data.get("graph")
+    graph_box: list[list[dict[str, Any]]] = []
+    if isinstance(raw_graph, list):
+        graph_box.append([b for b in raw_graph if isinstance(b, dict)])
+
+    def graph() -> list[dict[str, Any]]:
+        # Fixtures without a graph never call bd.
+        if not graph_box:
+            graph_box.append(load_graph() if data.get("beads") is None else [])
+        return graph_box[0]
+
+    # An epic / bead id is a scope, not a goal: resolve it to its landing
+    # instead of routing to a duplicate intend.
+    if scope and not is_change_id(scope):
+        named = scope_bead(scope, graph())
+        if len(named) > 1:
+            row = face("scope-ambiguous", scope, until, [], [], [], [])
+            row["diagnostic"] = "matches " + ", ".join(str(b.get("id")) for b in named)
+            return row
+        if named:
+            landing = landing_from_title(str(named[0].get("title") or ""))
+            if not landing:
+                row = face("scope-unresolved", str(named[0].get("id")), until, [], [], [], [])
+                row["diagnostic"] = (
+                    f"bead {named[0].get('id')} has no change landing in its title; "
+                    f"run /map {named[0].get('id')} or name a child change-id"
+                )
+                return row
+            scope = landing
     ready = ids(data.get("ready"))
     waiting = ids(data.get("waiting"))
     needs_advise = ids(data.get("needs_advise"))
@@ -444,9 +549,6 @@ def decide(
     if scope and scope in waiting:
         return face("activation", scope, until, ready, waiting, needs_advise, asks)
 
-    if scope and (scope in skip_set or scope in punt_set):
-        scope = None
-
     if data.get("send_back") is not None:
         send_ids = ids(data.get("send_back"))
         stuck = []
@@ -458,6 +560,25 @@ def decide(
         stuck = []
     needs_advise = unique(needs_advise + stuck)
 
+    # A refused or punted scope stays scoped. Skip never widens the
+    # named campaign to unrelated work; it still advises the same id.
+    if scope and (scope in skip_set or scope in punt_set):
+        if scope in skip_set and scope in needs_advise:
+            return {
+                "stop": None,
+                "next": "advise",
+                "focus": scope,
+                "until": until,
+                "workers_launched": 0,
+                "ready": ready,
+                "waiting": waiting,
+                "needs_advise": needs_advise,
+                "ask": asks,
+            }
+        row = face("skipped", scope, until, ready, waiting, needs_advise, asks)
+        row["diagnostic"] = f"{scope} is skipped/punted; drop the scope to walk other work"
+        return row
+
     if data.get("fold_legal") is not None:
         fold_ids = ids(data.get("fold_legal"))
     elif until in {"fold", "roll", "ask"}:
@@ -465,6 +586,8 @@ def decide(
     else:
         fold_ids = []
     fold_ids = [i for i in fold_ids if i not in needs_advise]
+    if fold_ids:
+        fold_ids = [i for i in fold_ids if not owed_beads(i, graph())]
 
     raw_beads = data.get("beads")
     if raw_beads is None:
@@ -599,6 +722,19 @@ def decide(
                 "needs_advise": needs_advise,
                 "ask": asks,
             }
+        owed = (
+            owed_beads(scope, graph())
+            if until in {"fold", "roll", "ask"} and fold_legal(openspec, scope, needs_advise)
+            else []
+        )
+        if owed:
+            row = face("owed-beads", scope, until, ready, waiting, needs_advise, asks)
+            row["owed"] = owed
+            row["diagnostic"] = (
+                f"{scope} has {len(owed)} open bead(s) under it; not fold-legal. "
+                "Run a child landing or /map the umbrella"
+            )
+            return row
         if (
             until in {"fold", "roll", "ask"}
             and not no_fold
@@ -745,6 +881,8 @@ def card(row: dict[str, Any]) -> str:
         f"eyes {len(eyes)}",
         "└───────────────────────────────────────────────",
     ]
+    if row.get("diagnostic"):
+        lines.insert(-1, "│ " + str(row["diagnostic"]))
     if stop == "eyes":
         lines.append("")
         lines.append("╔══ YOUR EYES ══════════════════════════════════")

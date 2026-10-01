@@ -1008,8 +1008,101 @@ def test_roll_send_back_with_boxes_is_change() -> None:
         expect("add-sheaf-type" in face["needs_advise"], face)
 
 
+def kat_bead(nid: str, title: str, status: str = "open", parent: str | None = None) -> dict:
+    deps = []
+    if parent:
+        deps.append({"issue_id": nid, "depends_on_id": parent, "type": "parent-child"})
+    return {"id": nid, "title": title, "status": status, "dependencies": deps}
+
+
+def kat_fixture(root: Path, child_status: str, **extra) -> Path:
+    write_change(root, "add-umbrella-net", tasks="Owed work lives in beads (mesh-ai0.*).")
+    payload = {
+        "ready": [], "waiting": [], "needs_advise": [], "ask": [], "send_back": [],
+        "beads": [],
+        "graph": [
+            kat_bead("mesh-ai0", "add-umbrella-net: household network"),
+            kat_bead("mesh-ai0.1", "add-trust-contract: trust", child_status, "mesh-ai0"),
+            kat_bead("mesh-ai0.2", "inventory devices", child_status, "mesh-ai0.1"),
+            kat_bead("mesh-plain", "plain epic without landing"),
+        ],
+    }
+    payload.update(extra)
+    return write_ready(root, payload)
+
+
+def test_umbrella_with_open_beads_is_not_fold_legal() -> None:
+    """bazaar-kat: no markdown boxes is not proof of no owed work."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = kat_fixture(root, "open")
+        scoped = json.loads(run(["add-umbrella-net", "--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(scoped["next"] != "fold", scoped)
+        expect(scoped["stop"] == "owed-beads", scoped)
+        expect(scoped["owed"] == ["mesh-ai0.1", "mesh-ai0.2"], scoped)
+        unscoped = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(unscoped["next"] != "fold", unscoped)
+
+
+def test_umbrella_with_closed_beads_folds() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = kat_fixture(root, "closed")
+        scoped = json.loads(run(["add-umbrella-net", "--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(scoped["next"] == "fold", scoped)
+        unscoped = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(unscoped["next"] == "fold" and unscoped["focus"] == "add-umbrella-net", unscoped)
+
+
+def test_epic_alias_resolves_to_landing() -> None:
+    """bazaar-kat: `run ai0` is the epic, not a goal for a duplicate intend."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = kat_fixture(root, "open")
+        for alias in ("ai0", "mesh-ai0"):
+            face = json.loads(run([alias, "--ready-json", str(fixture), "--json"], cwd=root).stdout)
+            expect(face["next"] != "intend", face)
+            expect(face["focus"] == "add-umbrella-net", face)
+        plain = json.loads(run(["plain", "--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(plain["next"] is None and plain["stop"] == "scope-unresolved", plain)
+        expect("mesh-plain" in plain["diagnostic"], plain)
+
+
+def test_scoped_skip_does_not_widen() -> None:
+    """bazaar-kat: --skip on the named scope never picks unrelated work."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = kat_fixture(root, "open", ready=["add-embedded-assert"])
+        face = json.loads(run([
+            "add-umbrella-net", "--skip", "add-umbrella-net",
+            "--ready-json", str(fixture), "--json",
+        ], cwd=root).stdout)
+        expect(face["focus"] == "add-umbrella-net", face)
+        expect(face["next"] is None and face["stop"] == "skipped", face)
+        unscoped = json.loads(run([
+            "--skip", "add-umbrella-net", "--ready-json", str(fixture), "--json",
+        ], cwd=root).stdout)
+        expect(unscoped["next"] == "act" and unscoped["focus"] == "add-embedded-assert", unscoped)
+
+
+def test_scoped_skip_still_advises_same_id() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = kat_fixture(root, "open", needs_advise=["add-umbrella-net"], ready=["add-other"])
+        face = json.loads(run([
+            "add-umbrella-net", "--skip", "add-umbrella-net",
+            "--ready-json", str(fixture), "--json",
+        ], cwd=root).stdout)
+        expect(face["next"] == "advise" and face["focus"] == "add-umbrella-net", face)
+
+
 def main() -> int:
     tests = [
+        test_umbrella_with_open_beads_is_not_fold_legal,
+        test_umbrella_with_closed_beads_folds,
+        test_epic_alias_resolves_to_landing,
+        test_scoped_skip_does_not_widen,
+        test_scoped_skip_still_advises_same_id,
         test_empty_ready_no_worker,
         test_until_advise_runs_read,
         test_until_advise_does_not_act,
