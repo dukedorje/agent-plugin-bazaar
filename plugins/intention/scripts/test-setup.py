@@ -65,7 +65,7 @@ def test_no_bd_scaffolds_rest() -> None:
             expect((root / "openspec" / rel).exists(), rel)
         gi = (root / ".gitignore").read_text(encoding="utf-8")
         expect(gi.startswith("node_modules\n\n"), gi)
-        expect(".worktrees/" in gi and ".spawns/" in gi, gi)
+        expect(all(g in gi for g in (".worktrees/", ".spawns/", "groups/")), gi)
         expect("openspec/" in (root / "AGENTS.md").read_text(encoding="utf-8"), "pointer")
         again = states(run(["--json"], cwd=root, env=env))
         for item in ("openspec layout", ".gitignore", "agent instructions"):

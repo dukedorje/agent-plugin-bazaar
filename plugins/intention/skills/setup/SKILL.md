@@ -3,8 +3,8 @@ name: setup
 description: >
   Make a repo ready for Intention: bd installed, beads initialized, the
   `node` issue type registered, OpenSpec-lite layout, scratch dirs
-  gitignored, agent instructions pointed at openspec. Idempotent. Use
-  in a new repository, when `bd create --type node` fails with an
+  (`.worktrees/`, `.spawns/`, `groups/`) gitignored, agent
+  instructions pointed at openspec. Idempotent. Use in a new repository, when `bd create --type node` fails with an
   invalid type, when `.beads/` or `openspec/` is missing, or when asked
   to set up / init / install / doctor intention.
 user-invocable: true
@@ -32,7 +32,7 @@ Default is apply. Print the command output. That is the report.
 | `.beads/` | `bd init --non-interactive -q` (`--prefix` if given) |
 | `types.custom` includes `node` | `bd config set types.custom <existing>,node` |
 | `openspec/{specs,changes,changes/archive}/`, `README.md`, `AGENTS.md`, `project.md`, `parked.md` | created only if absent |
-| `.gitignore` has `.worktrees/`, `.spawns/` | appended |
+| `.gitignore` has `.worktrees/`, `.spawns/`, `groups/` | appended |
 | `AGENTS.md` / `CLAUDE.md` mention `openspec/` | short Intention section appended (`--no-pointer` skips) |
 
 It never overwrites an existing file and never re-inits beads.

@@ -131,7 +131,7 @@ globally copy only `skills/`: Intention verbs also load the sibling
 
 New repo: run `setup` once (`/setup`, `$setup`). It installs nothing
 into the repo it cannot explain: `bd init`, the `node` issue type,
-`openspec/` skeleton, `.worktrees/` + `.spawns/` in `.gitignore`, and a
+`openspec/` skeleton, `.worktrees/`, `.spawns/`, `groups/` in `.gitignore`, and a
 pointer in `AGENTS.md`/`CLAUDE.md`. `--check` reports only.
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs:

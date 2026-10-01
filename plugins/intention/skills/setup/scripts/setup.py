@@ -15,9 +15,10 @@ from pathlib import Path
 
 # bd issue types Intention writes (`bd create --type node`).
 CUSTOM_TYPES = ("node",)
-# Scratch dirs conductor.py isolate / spawn.py stage write at the repo root.
-GITIGNORE = (".worktrees/", ".spawns/")
-GITIGNORE_HEADER = "# Intention scratch (conductor isolate, spawn stage)"
+# Scratch dirs Intention writes at the repo root: conductor isolate
+# worktrees, spawn stage prompts and leases, per-node group packets/results.
+GITIGNORE = (".worktrees/", ".spawns/", "groups/")
+GITIGNORE_HEADER = "# Intention scratch (conductor isolate, spawn stage, group packets)"
 POINTER = (
     "## Intention\n\n"
     "Work loop: intend → steer → change → advise → act → fold.\n"
