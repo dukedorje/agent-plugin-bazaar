@@ -467,6 +467,62 @@ def test_send_back_next_is_change() -> None:
         expect("`act`" not in nxt, nxt)
 
 
+def node(nid: str, title: str, body: str = "", deps: list[dict] | None = None) -> dict:
+    return {
+        "id": nid,
+        "title": title,
+        "status": "open",
+        "issue_type": "node",
+        "description": body,
+        "dependencies": deps or [],
+    }
+
+
+def test_gated_without_change_dir_is_not_ready() -> None:
+    """bazaar-mmq: a missing child change folder does not imply activation."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-parked-one", "PARKED")
+        fixture = {
+            "epic": {"id": "dag-g", "title": "gated", "status": "open"},
+            "children": [
+                node("n-arch", "add-trust-core: crypto", "- Rigor: architecture\n- Group: review-pair"),
+                node("n-gate", "add-net-wire: network", "- Rigor: change\n- Group: human-gate"),
+                node("n-sens", "add-keys: keys", "- Activation: needs human"),
+                node("n-park", "add-parked-one: later"),
+                node("n-brief", "inventory: read-only", "- Landing: brief\n- Rigor: brief"),
+                node("n-plain", "add-welcome-copy: draft", "- Rigor: change"),
+            ],
+        }
+        out = map_fixture(root, fixture)
+        ready = ids_in(section_after(out, "Ready-set"))
+        expect(sorted(ready) == ["n-brief", "n-plain"], out)
+        need = section_after(out, "Needs activation")
+        for nid in ("n-arch", "n-gate", "n-sens"):
+            expect(nid in need, need)
+        expect("n-park" in section_after(out, "Parked"), out)
+        nxt = section_after(out, "Next")
+        expect("`act`" not in nxt, nxt)
+        expect("`brief`: n-brief" in nxt, nxt)
+        expect("`change`: n-plain" in nxt, nxt)
+
+
+def test_blocked_gated_node_waits() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = {
+            "epic": {"id": "dag-w", "title": "waits", "status": "open"},
+            "children": [
+                node("n-a", "add-first: one", "- Rigor: change"),
+                node("n-b", "add-second: two", "- Rigor: architecture", [blocks("n-b", "n-a")]),
+            ],
+        }
+        out = map_fixture(root, fixture)
+        expect(ids_in(section_after(out, "Ready-set")) == ["n-a"], out)
+        expect("n-b" in section_after(out, "Waiting"), out)
+        expect("n-b" not in section_after(out, "Needs activation"), out)
+
+
 def main() -> int:
     tests = [
         test_fixture_epic,
@@ -483,6 +539,8 @@ def main() -> int:
         test_pending_unblocked_needs_activation,
         test_active_build_is_act,
         test_send_back_next_is_change,
+        test_gated_without_change_dir_is_not_ready,
+        test_blocked_gated_node_waits,
     ]
     failed = 0
     for fn in tests:

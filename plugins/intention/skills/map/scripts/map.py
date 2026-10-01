@@ -62,6 +62,38 @@ def landing_from_title(title: str) -> str | None:
     return head if CHANGE_ID_RE.match(head) else None
 
 
+def node_field(rec: dict[str, Any], name: str) -> str:
+    """`- Name: value` from the intend-dag node body in the bead description."""
+    pat = re.compile(rf"^\s*-\s*{re.escape(name)}:\s*(.+)$", re.I | re.M)
+    m = pat.search(str(rec.get("description") or ""))
+    return m.group(1).strip().strip("`").lower() if m else ""
+
+
+GATED_RIGOR = ("architecture", "instrument")
+
+
+def needs_activation(rec: dict[str, Any]) -> bool:
+    """Architecture / instrument / human-gate / sensitive work waits on a human."""
+    rigor = node_field(rec, "Rigor") or node_field(rec, "Lifecycle")
+    if any(r in rigor for r in GATED_RIGOR):
+        return True
+    if "human-gate" in node_field(rec, "Group"):
+        return True
+    act = node_field(rec, "Activation")
+    return "needs human" in act or "sensitive" in act
+
+
+def is_brief(rec: dict[str, Any]) -> str | None:
+    """`brief` or `direct fix` when the node lands without a change."""
+    landing = node_field(rec, "Landing")
+    rigor = node_field(rec, "Rigor") or node_field(rec, "Lifecycle")
+    if landing.startswith("brief") or rigor.startswith("brief"):
+        return "brief"
+    if landing.startswith("direct fix") or rigor.startswith("vibe"):
+        return "direct fix"
+    return None
+
+
 def first_banner(text: str) -> str | None:
     for i, line in enumerate(text.splitlines()):
         if i >= 40:
@@ -491,6 +523,8 @@ def render(
     by_id = {str(r.get("id") or ""): r for r in nodes if r.get("id")}
     ready, need_act, done, failed = [], [], [], []
     waiting, send_back, act_ready, change_ready = [], [], [], []
+    parked: list[str] = []
+    brief_ready: list[tuple[str, str]] = []
     waiting_on: dict[str, list[str]] = {}
     for rec in nodes:
         st = str(rec.get("status") or "open")
@@ -510,13 +544,23 @@ def render(
                 send_back.append(nid)
         elif blockers:
             waiting.append(nid)
+        elif banner == "PARKED":
+            parked.append(nid)
         elif banner == "PENDING":
             need_act.append(nid or landing or "")
         elif st == "open":
-            ready.append(nid)
             if banner == "ACTIVE BUILD":
+                ready.append(nid)
                 act_ready.append(nid)
+            elif dest is None and needs_activation(rec):
+                # No change folder is not activation. Gated work needs a
+                # human before change drafts it, and never act from here.
+                need_act.append(nid)
+            elif dest is None and is_brief(rec):
+                ready.append(nid)
+                brief_ready.append((nid, is_brief(rec) or "brief"))
             else:
+                ready.append(nid)
                 change_ready.append(nid)
     body: list[str] = []
     if pinned:
@@ -566,6 +610,9 @@ def render(
             "## Needs activation",
             ", ".join(need_act) if need_act else "(none)",
             "",
+            "## Parked",
+            ", ".join(parked) if parked else "(none)",
+            "",
             "## Done",
             ", ".join(done) if done else "(none)",
             "",
@@ -586,7 +633,7 @@ def render(
         )
     )
     body.extend(["## Next"])
-    dispatchable = bool(need_act or change_ready or act_ready or send_back)
+    dispatchable = bool(need_act or change_ready or act_ready or send_back or brief_ready)
     if need_act:
         body.append("- `change` / activate: " + ", ".join(need_act))
     if send_back:
@@ -595,6 +642,10 @@ def render(
         body.append("- `change`: " + ", ".join(change_ready))
     if act_ready:
         body.append("- `act` or `/run --until roll`: " + ", ".join(act_ready))
+    for verb in ("brief", "direct fix"):
+        ids = [n for n, v in brief_ready if v == verb]
+        if ids:
+            body.append(f"- `{verb}`: " + ", ".join(ids))
     if dispatchable:
         body.append("- `steer` first (default after intend); skip with `--go`")
     if waiting and not dispatchable:
