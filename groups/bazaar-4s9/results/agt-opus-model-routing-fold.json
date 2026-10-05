@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-4s9-fold-opus",
+  "packet_id": "pkt-bazaar-4s9-fold-1",
+  "signer": {
+    "id": "agt-opus-model-routing-fold",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "claude-opus-5-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-opus-model-routing-fold"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "openspec/specs/verbs/spec.md",
+      "role": "living specification"
+    },
+    {
+      "path": "openspec/changes/archive/2026-10-05-update-model-routing-health/",
+      "role": "archived change"
+    },
+    {
+      "path": "groups/bazaar-4s9/fold.packet.json",
+      "role": "fold packet"
+    }
+  ],
+  "evidence": {
+    "kind": "contrast",
+    "if_true": "The four complete routing requirements are living, the active change is absent, and the dated archive contains the corrected MODIFIED/ADDED delta without losing unrelated verbs edits.",
+    "if_false": "A claimed SHALL remains only in the archive, an old routing block survives, the active change remains, or unrelated verbs edits are lost.",
+    "observed": "if_true: all four requirements appear exactly once in openspec/specs/verbs/spec.md; active change directory is absent; corrected archive is present; unrelated run branch-policy edits remain in the worktree."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "2204c1a2d06ff1145d0efaef8e73713efe910613",
+    "paths": [
+      "groups/bazaar-4s9/fold.packet.json",
+      "openspec/specs/verbs/spec.md",
+      "openspec/changes/archive/2026-10-05-update-model-routing-health/"
+    ]
+  },
+  "summary": "Folded stable family routing and three-state model health into the living verbs spec, corrected the new health requirement to ADDED in the archive, and archived the completed change.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-opus-model-routing-fold",
+    "content_hash": "sha256:19c0b8b37ff6b04beaa5ebc52118f55d062e0883b7dbfbf415bf51520bb202d2"
+  },
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Model family routing and passive health are living truth and the change is archived.",
+    "verify_command": "contrast: four living requirements present; active directory absent; dated archive present",
+    "verify_exit": 0,
+    "commit_sha": "2204c1a2d06ff1145d0efaef8e73713efe910613",
+    "changed_files": [
+      "openspec/specs/verbs/spec.md",
+      "openspec/changes/archive/2026-10-05-update-model-routing-health/",
+      "groups/bazaar-4s9/fold.packet.json"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-4s9/results/agt-opus-model-routing-fold.json"
+  },
+  "raw_ref": "groups/bazaar-4s9/results/agt-opus-model-routing-fold.json"
+}
