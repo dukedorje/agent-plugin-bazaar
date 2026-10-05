@@ -5,7 +5,7 @@ description: >
   ARCHITECTURE.md when shape changed. Append LEARNINGS.md for surprises.
   Use when a change's work has landed and you are asked to fold, archive,
   or finish the change. May run in the background on the designated
-  folder (Opus 5), like advise.
+  folder (latest Opus), like advise.
 user-invocable: true
 argument-hint: "<change-id>"
 ---
@@ -36,7 +36,7 @@ Fold on current HEAD unless the human named a branch.
 2. **Load.** `proposal.md` banner, `tasks.md`, `specs/**/spec.md`,
    living `openspec/specs/` for those capabilities.
 3. **Assign.** `python3 plugins/intention/scripts/ladder.py assign --shape fold`
-   (folder). Default is Opus 5 (`opus-5-fold`). Human pick always
+   (folder). Default is latest Opus (`opus-fold`). Human pick always
    wins — Grok is allowed. Same session may fold inline only when it
    *is* that route.
 4. **Packet.** Folder receives `permission: write` on the living-spec
@@ -56,6 +56,6 @@ Handoff: report living spec paths and the archive path. If the shape
 changed, the ADR amendment is part of the deliverable. Surprises go to
 `docs/LEARNINGS.md`, one dated line each.
 
-The designated folder agent is `intention:folder` (Opus 5). Dispatch
+The designated folder agent is `intention:folder` (latest Opus). Dispatch
 `subagent_type="intention:folder"` when the host supports plugin
 agents; otherwise the ladder route + packet.

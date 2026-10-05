@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-model-routing-health-advise-1",
+  "node_id": "bazaar-4s9-advise",
+  "capability": "verbs",
+  "change_id": "update-model-routing-health",
+  "goal": "Independently review update-model-routing-health. First read only proposal.md Why/What, openspec/specs/verbs/spec.md, plugins/intention/references/ladder.json, plugins/intention/scripts/ladder.py, plugins/intention/scripts/spawn.py, and relevant docs/LEARNINGS.md lines. Write a 10-line independent take naming what you would pin, refuse, and one tradeoff. Only then open design.md, tasks.md, steer residue on bead bazaar-4s9 if needed, and the delta; compare and steelman. Write openspec/changes/update-model-routing-health/reviews/2026-10-05-advise.md with ADVISE accept or send-back, READER opus-4.8-arch-review, and SPAWN path. If send-back, add concrete owed boxes to tasks.md. Do not implement, fold, or change the banner.",
+  "non_goals": ["Implement routing code", "Fold living specs", "Preserve Fable as a fallback", "Use Sol for architecture review"],
+  "anchors": [
+    {"symbol": "openspec/changes/update-model-routing-health/proposal.md#Why", "invariant": "Configuration, executability, and recent infra health are distinct facts."},
+    {"symbol": "openspec/specs/verbs/spec.md:430", "invariant": "The living ladder requirement is the contract being replaced."},
+    {"symbol": "plugins/intention/references/ladder.json", "invariant": "The current table still contains Fable, Sol review, Opus 4.8, and Grok 4.6."},
+    {"symbol": "plugins/intention/scripts/ladder.py", "invariant": "Assignment priority, human selection, and environment-derived availability must remain deterministic."},
+    {"symbol": "plugins/intention/scripts/spawn.py", "invariant": "Concrete model ids, permissions, and infra outcomes meet at the launcher boundary."}
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The contract makes stable family routes, concrete versions, permission-aware executability, health TTLs, bounded fallback, migration aliases, and cross-family review implementable without Fable or Sol architecture review.",
+    "if_false": "The contract can self-review by default, treat API-only chat as write-capable, let health reorder priorities or override humans, or strand in-flight old route ids."
+  },
+  "out_of_scope": [{"item": "Paid recurring probes", "tracked_as": "explicitly out of scope"}],
+  "constraints": {
+    "permission": "write",
+    "paths": ["openspec/changes/update-model-routing-health/reviews/", "openspec/changes/update-model-routing-health/tasks.md"],
+    "do_not": ["act", "fold", "deploy", "change-banner"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "skill-host",
+  "role": "reader",
+  "assignee": {
+    "id": "agt-opus-routing-review",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "opus-4.8",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-opus-routing-review"}
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-codex-conductor"}
+  }
+}

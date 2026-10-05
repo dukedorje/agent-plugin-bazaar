@@ -14,60 +14,26 @@ import argparse
 import json
 import os
 import re
-import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
+import routing
+
 LADDER = Path(__file__).resolve().parents[1] / "references" / "ladder.json"
-OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
+def apply_env(data: dict, permission: str = "write", **kwargs) -> dict:
+    return {**data, "routes": [routing.resolve(r, data, permission, **kwargs) for r in data["routes"]]}
 
 
-def openai_api_key() -> str | None:
-    for name in OPENAI_KEY_VARS:
-        val = (os.environ.get(name) or "").strip()
-        if val:
-            return val
-    return None
-
-
-def codex_cli_present() -> bool:
-    binary = os.environ.get("CODEX_BIN", "codex")
-    return shutil.which(binary) is not None
-
-
-def requirement_met(req: str | None) -> bool:
-    if not req:
-        return True
-    if req == "codex-cli":
-        return codex_cli_present()
-    if req == "openai-key":
-        return bool(openai_api_key())
-    if req == "codex":
-        return codex_cli_present() or bool(openai_api_key())
-    return False
-
-
-def apply_env(data: dict) -> dict:
-    routes = []
-    for route in data.get("routes") or []:
-        if not isinstance(route, dict):
-            continue
-        row = dict(route)
-        req = row.get("requires")
-        if req:
-            row["available"] = bool(requirement_met(str(req)))
-        routes.append(row)
-    out = dict(data)
-    out["routes"] = routes
-    return out
-
-
-def load(path: Path | None = None) -> dict:
+def load(path: Path | None = None, permission: str = "write", **kwargs) -> dict:
     data = json.loads((path or LADDER).read_text(encoding="utf-8"))
     if not isinstance(data, dict) or not isinstance(data.get("routes"), list):
         raise SystemExit("ladder.json must have a routes array")
-    return apply_env(data)
+    return apply_env(data, permission, **kwargs)
+
+
+def canonical(data, route_id):
+    return data.get("migration_aliases", {}).get(route_id, route_id)
 
 
 def _priority(route: dict) -> int:
@@ -78,55 +44,49 @@ def _priority(route: dict) -> int:
 
 
 def candidates(
-    data: dict,
-    shape: str,
-    allow_unavailable: bool = False,
-    route_id: str | None = None,
-    not_harness: str | None = None,
-    after: str | None = None,
+    data: dict, shape: str, allow_unavailable: bool = False,
+    route_id: str | None = None, not_harness: str | None = None,
+    after: str | None = None, author_family: str | None = None,
+    fallback_hops: int = 0,
 ) -> list[dict[str, Any]]:
-    shape = shape.strip()
-    skip_harness = (not_harness or "").strip()
-    hits: list[dict[str, Any]] = []
-    for route in data["routes"]:
-        if not isinstance(route, dict):
-            continue
-        shapes = route.get("shapes") or []
-        if shape not in shapes:
-            continue
-        if route_id and route.get("id") != route_id:
-            continue
-        hits.append(route)
-    hits.sort(key=lambda r: (_priority(r), str(r.get("id") or "")))
+    explicit = bool(route_id)
+    route_id, after = canonical(data, route_id), canonical(data, after)
+    hits = sorted([r for r in data["routes"] if shape.strip() in (r.get("shapes") or [])],
+                  key=lambda r: (_priority(r), str(r.get("id") or "")))
+    if route_id:
+        hits = [r for r in hits if r["id"] == route_id]
     if after:
-        ids = [str(r.get("id") or "") for r in hits]
-        if after in ids:
-            hits = hits[ids.index(after) + 1 :]
-        else:
-            hits = []
-    if skip_harness:
-        hits = [r for r in hits if str(r.get("harness") or "") != skip_harness]
+        ids = [r["id"] for r in hits]
+        hits = hits[ids.index(after) + 1:] if after in ids else []
+        fallback_hops += 1
+    if fallback_hops > min(2, data.get("max_fallback_hops", 2)):
+        raise SystemExit("automatic fallback exhausted (maximum two hops)")
+    author = author_family or not_harness
+    if author and not explicit:
+        try:
+            vendor = routing.vendor_of(author, data)
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        hits = [r for r in hits if r.get("vendor") != vendor]
     if not allow_unavailable:
-        hits = [r for r in hits if r.get("available") is not False]
+        hits = [r for r in hits if r.get("executable", r.get("available")) and
+                (explicit or r.get("health") != "degraded")]
+    if explicit:
+        hits = [human_warning(r) for r in hits]
+    hits = [{**r, "fallback_hops": fallback_hops} for r in hits]
     return hits
 
 
-FAMILY_FROM_INTERFACE = {
-    "gpt-6-astra": "astra",
-    "gpt-5.6-sol": "sol",
-    "gpt-5.6-terra": "terra",
-    "fable-5.1": "fable",
-    "fable-5": "fable",
-    "opus-4.8": "opus",
-    "opus-5": "opus",
-    "sonnet-5": "sonnet",
-    "grok-4.6": "grok",
-    "claude-sonnet-5": "sonnet",
-    "claude-opus-5": "opus",
-    "claude-opus-4-8": "opus",
-    "claude-fable-5": "fable",
-    "claude-fable-5-1": "fable",
-}
+def human_warning(route):
+    row = dict(route)
+    warnings = []
+    if row.get("health") == "degraded":
+        warnings.append("human pick overrides degraded infrastructure health")
+    if not row.get("executable"):
+        warnings.append("human pick is not executable for the requested permission")
+    if warnings:
+        row["warnings"] = warnings
+    return row
 
 
 def nicknames(route: dict) -> set[str]:
@@ -142,9 +102,10 @@ def nicknames(route: dict) -> set[str]:
         alias = str(raw).strip().lower()
         if alias:
             out.add(alias)
-    family = FAMILY_FROM_INTERFACE.get(iface)
+    family = route.get("family")
     if family:
         out.add(family)
+        out.update(routing.registry()["families"].get(family, {}).get("aliases", []))
     for match in re.finditer(r"\d+\.\d+", f"{iface} {rid}"):
         out.add(match.group(0))
     return {n for n in out if n}
@@ -172,12 +133,9 @@ def resolve_who(
     """Resolve nicknames/ids for a shape. Unknown or ambiguous → error. Priority order."""
     if not tokens:
         raise SystemExit("empty --who")
-    rows = candidates(
-        data,
-        shape,
-        allow_unavailable=True,
-        not_harness=not_harness,
-    )
+    rows = candidates(data, shape, allow_unavailable=True)
+    for row in rows:
+        row["aliases"] = [*row.get("aliases", []), *[a for a, target in data.get("migration_aliases", {}).items() if target == row["id"]]]
     if not rows:
         raise SystemExit(f"no routes for shape {shape!r}")
     matched: list[dict[str, Any]] = []
@@ -201,7 +159,7 @@ def resolve_who(
                 raise SystemExit(
                     f"unavailable who {route.get('id')!r} for shape {shape!r}"
                 )
-    return matched
+    return [human_warning(r) for r in matched]
 
 
 def assign(
@@ -211,6 +169,8 @@ def assign(
     route_id: str | None = None,
     not_harness: str | None = None,
     after: str | None = None,
+    author_family: str | None = None,
+    fallback_hops: int = 0,
 ) -> dict:
     hits = candidates(
         data,
@@ -219,6 +179,8 @@ def assign(
         route_id=route_id,
         not_harness=not_harness,
         after=after,
+        author_family=author_family,
+        fallback_hops=fallback_hops,
     )
     if not hits:
         want = f"shape {shape!r}"
@@ -257,13 +219,17 @@ def main() -> int:
     pan.add_argument("--not-harness", dest="not_harness")
     pan.set_defaults(cmd="panel")
 
+    for parser in (a, pan):
+        parser.add_argument("--permission", choices=["read", "write", "sensitive"], default="write")
+        parser.add_argument("--author-family", help="deterministic author harness/family/vendor; automatic review skips it")
+        parser.add_argument("--fallback-hops", type=int, default=0, help="completed hops; carried across handoffs")
     args = p.parse_args()
-    data = load(args.file)
+    data = load(args.file, getattr(args, "permission", "write"))
     if args.cmd == "show":
         print(json.dumps(data, indent=2))
         return 0
     if args.cmd == "panel":
-        hits = candidates(data, args.shape, not_harness=getattr(args, "not_harness", None))
+        hits = candidates(data, args.shape, not_harness=getattr(args, "not_harness", None), author_family=args.author_family)
         print(json.dumps(hits, indent=2))
         return 0
     who = parse_who(getattr(args, "who", None))
@@ -295,6 +261,8 @@ def main() -> int:
             route_id=getattr(args, "route_id", None),
             not_harness=getattr(args, "not_harness", None),
             after=getattr(args, "after", None),
+            author_family=args.author_family,
+            fallback_hops=args.fallback_hops,
         )
         print(json.dumps(hits, indent=2))
         return 0
@@ -305,6 +273,8 @@ def main() -> int:
         route_id=getattr(args, "route_id", None),
         not_harness=getattr(args, "not_harness", None),
         after=getattr(args, "after", None),
+        author_family=args.author_family,
+        fallback_hops=args.fallback_hops,
     )
     print(json.dumps(route, indent=2))
     return 0

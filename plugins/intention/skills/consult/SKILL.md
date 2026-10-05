@@ -3,10 +3,10 @@ name: consult
 description: >
   Second opinion from architecture / plan / thinking readers. No intend
   node, no act unblock. Use when asked for a second opinion, another
-  pair of eyes, consult the architecture buddy, run this by Fable /
-  Astra / Sol / Opus 4.8, call several, or convoke a panel.
+  pair of eyes, consult the architecture buddy, run this by Opus /
+  Astra / Grok, call several, or convoke a panel.
 user-invocable: true
-argument-hint: "[--who astra,fable,sol | --panel] [--shape architecture-review] [<question>]"
+argument-hint: "[--who opus,astra,grok | --panel] [--shape architecture-review] [<question>]"
 ---
 
 # consult
@@ -31,27 +31,28 @@ a gated reader, use `advise` instead.
 2. **Shape first, then who.** Default shape is `architecture-review`.
    Plan/replan → `--shape plan`. Thinking → `--shape thinking`
    (still `permission: read`). Nicknames bind *inside* that shape
-   (`opus` is 4.8 on architecture-review, Opus 5 on thinking).
-   `4.8` is never Opus 5. `terra` is not a thinking reader.
+   (`opus` resolves the current registry version in every shape).
+   Sol is a thinking reader; Sol and Terra are refused for architecture review.
 
    Chat routing (not a classifier):
 
    | Utterance | Flag |
    |---|---|
-   | named models (“Astra”, “Sol”, “Fable and 4.8”) | `--who astra` / `--who sol` / `--who fable,4.8` |
-   | “compare Sol and Fable” | `--who sol,fable` (named wins; not the full panel) |
+   | named models (“Astra”, “Opus and Grok”) | `--who astra` / `--who opus,grok` |
+   | “compare Sol and Opus” | `--shape thinking --who sol,opus` (named wins) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
-   | nobody named | first spawnable (Astra on architecture, Fable without Codex) |
+   | nobody named | first executable different-vendor reader (Opus → Astra → Grok) |
 
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or
    ambiguous nickname → error, do not guess. Named unspawnable
    → hard fail. `--panel` skips unspawnable.
 
-   This session’s harness is skipped (`--not-harness`) **only if**
-   another spawnable reader exists, and **not** when they named
-   this harness. Do not skip Claude by default — that can leave
-   nobody to ask.
+   Supply `--author-family <harness/family/vendor>` for automatic architecture
+   review. The author's vendor is skipped deterministically, even when that
+   leaves no executable reader; report that condition. Human names override
+   the boundary. Health warnings accompany explicit degraded picks. Automatic
+   infra-red fallback preserves priority and takes at most two hops.
 3. **Spawn.** The script is `scripts/consult.py` **in this skill
    directory** (the folder that contains this SKILL.md — Grok lists
    that path). It locates plugin `spawn.py`. Do **not** run
@@ -61,8 +62,8 @@ a gated reader, use `advise` instead.
    ```bash
    python3 <this-skill-dir>/scripts/consult.py \
      --shape architecture-review \
-     [--who fable,astra,sol | --panel | --id <route>] \
-     [--not-harness <harness>] \
+     [--who opus,astra,grok | --panel | --id <route>] \
+     [--author-family <author>] \
      [--paths <p> ...] \
      --goal "<question>"
    ```
@@ -78,5 +79,6 @@ a gated reader, use `advise` instead.
    review file.
 
 Grok is `grok --prompt-file` when `grok` is on PATH (`GROK_BIN`).
-`--who grok` and `--panel` include it. Astra and Sol are `codex exec`
-(or OpenAI HTTP if no CLI). `--who astra` is `gpt-6-astra`.
+`--who grok` and `--panel` include it. Astra is `codex exec`
+(or read-only OpenAI HTTP if no CLI). Thinking may use Sol through the same
+adapter. Concrete model versions are resolved only from the family registry.

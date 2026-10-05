@@ -49,29 +49,29 @@ unrelated ASK/EYES work.
 
 1. **Target.** Change-id from the user, or `change_id` on a packet.
    Open `openspec/changes/<id>/` (not `archive/`).
-2. **Assign.** Author family is the harness that wrote the change
+2. **Assign.** Supply the recorded author harness/family/vendor explicitly
    (this session if you wrote it; else the packet / review identity).
    Resolve a reader that is **not** that family:
 
-   `python3 <this-skill-dir>/../../scripts/ladder.py assign --shape architecture-review --not-harness <author>`
+   `python3 <this-skill-dir>/../../scripts/ladder.py assign --shape architecture-review --permission write --author-family <author>`
 
-   Run `ladder.py show` / `assign` — never treat the static
-   `available: false` in `ladder.json` as physics. Env-presence
-   (`codex` on PATH, `OPENAI_API_KEY`) is a preflight, not a
-   successful spawn. If spawn infra-reds, `--after` the current id
-   and spawn the next. Do not skip Sol because the JSON file said
-   false.
+   Run `ladder.py show` / `assign`: configured, executable, and health
+   are separate. API-only OpenAI chat cannot write a review file.
+   Unknown health remains usable; degraded routes are automatically skipped.
+   On infra-red, pass `--after <route-id> --fallback-hops <completed hops>`
+   and carry the returned `fallback_hops` into the next attempt. Stop after
+   two automatic hops. The launcher records passive infrastructure evidence.
 
    Human pick (`--who` / `--id`) selects the spawned reader. It
    does not waive isolation.
 
-   Astra (`gpt-6-astra`) is the default architecture reader when
-   Codex is present. Fable 5.1 is the Claude backup, and a valid
-   *other-family* reader only when the author is not Claude.
-   Optional extra: `--shape plan` consult (Fable). Plan consult is
+   Latest Opus at high effort is first, then Astra, then Grok.
+   Claude authors skip Opus; Codex authors use Opus when executable.
+   Human picks may override the vendor boundary and degraded health with
+   a warning. Optional extra: `--shape plan` consult (Opus then Astra). Plan consult is
    **not** the sole accept.
 
-   If `assign --not-harness <author>` finds no spawnable route:
+   If `assign --author-family <author>` finds no executable route:
    park as ASK (`PUNT: second-family advise` on `tasks.md`).
    Never inline. Never fake a send-back. Grok is spawnable when
    `grok` is on PATH (`GROK_BIN`).

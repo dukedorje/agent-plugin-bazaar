@@ -21,7 +21,7 @@ Examples live in `docs/contracts/examples/`.
 
 ```bash
 python3 plugins/intention/scripts/conductor.py ready --campaign <root-id>
-python3 plugins/intention/scripts/conductor.py take --campaign <root-id> --node <id> --holder sonnet-5
+python3 plugins/intention/scripts/conductor.py take --campaign <root-id> --node <id> --holder sonnet-known
 python3 plugins/intention/scripts/conductor.py release --node <id>
 python3 plugins/intention/scripts/conductor.py lint-packet <packet.json>
 # isolate is PARKED (add-act-worktree-land). Wave children stay on HEAD.
@@ -124,7 +124,7 @@ files (`.spawns/`) stay for staging, not as the message channel.
 `--disable-slash-commands`. Override the binary with `CLAUDE_BIN`.
 The child env drops `ANTHROPIC_API_KEY`, `CLAUDE_API_KEY`,
 `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_MODEL*`
-so Fable / Opus / Sonnet use the Claude Code subscription login
+so Opus / Sonnet use the Claude Code subscription login
 instead of billing the API (Grok injects those keys; a set key
 wins over claude.ai login).
 
@@ -138,12 +138,13 @@ assignee harness is `codex` and `codex` is on PATH.
 
 `run --adapter grok` is live `grok --prompt-file` (headless). Grok
 does **not** read piped stdin; the staged `prompt.md` is the brief
-(no ARG_MAX). Model from the spec interface (`grok-4.6`). Shared
+(no ARG_MAX). Model from the spec interface (`grok-4.7`). Shared
 effort maps to `--effort`. `--output-format json`. Override the
 binary with `GROK_BIN`.
 
-`run --adapter openai` is the OpenAI HTTP API fallback for Sol
-when there is no Codex CLI but `OPENAI_API_KEY` is set. The prompt
+`run --adapter openai` is the OpenAI HTTP API read-only fallback for OpenAI families
+when there is no Codex CLI but `OPENAI_API_KEY` is set. It refuses write
+packets, including advise review-file writes, before making an HTTP request. The prompt
 is the chat body, not argv. Packet-only. Never a slash.
 
 `run` with no adapter prints `infra-red` / `adapter-none` and does
@@ -151,7 +152,7 @@ not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
 
 `consult` is a second opinion with no intend node and no act
-unblock. Default shape `architecture-review`. `--who fable,astra,sol`
+unblock. Default shape `architecture-review`. `--who opus,astra,grok`
 (nicknames or ids, several, ladder order). `--panel` is every
 spawnable reader. `--id` is exact-id only. `--who` / `--panel` /
 `--id` are mutually exclusive. Named unspawnable hard-fails;
@@ -161,7 +162,7 @@ not write `openspec/changes/*/reviews/`. Use `advise` when a
 change needs a gated accept.
 
 `oneshot` is the worker twin: no intend node. Default shape
-`known` (Terra, then Sonnet). `--who terra` / `--who sol`.
+`known` (Sonnet, then Terra). `--who terra` / `--who sol`.
 Stdin or `--goal`; JSON `results[]` on stdout.
 
 ## Foreign harness
@@ -181,17 +182,20 @@ python3 plugins/intention/scripts/ladder.py assign --shape design
 python3 plugins/intention/scripts/ladder.py assign --shape plan
 python3 plugins/intention/scripts/ladder.py assign --shape architecture-review
 python3 plugins/intention/scripts/ladder.py assign --shape architecture-review --not-harness grok
-python3 plugins/intention/scripts/ladder.py assign --shape known --after terra-known
+python3 plugins/intention/scripts/ladder.py assign --shape known --after sonnet-known
 python3 plugins/intention/scripts/ladder.py panel --shape architecture-review
 python3 plugins/intention/scripts/ladder.py assign --shape fold
 ```
 
-Source: `plugins/intention/references/ladder.json`. Priority
-(first available; `--after` handoff; `panel` fan-out): known →
-Codex Terra then Sonnet 5. Implementation/thinking → Sol then Opus
-5. Plan → Fable 5.1 then Sol. Architecture → Astra, Fable 5.1, Sol, Opus
-4.8, Grok. Fold → Opus 5. Human pick always wins. Same-family
-author uses `--not-harness <author>` and **spawns** — does not park.
+Source: `plugins/intention/references/ladder.json`. Configured priority (`--after` handoff; `panel` fan-out): known → Sonnet
+then Terra; implementation/thinking → Sol then Opus; plan → Opus then Astra;
+architecture → Opus-high then Astra then Grok; fold → Opus, optional Grok.
+Concrete models and verification dates live only in the family registry.
+Same-family author passes `--author-family <author>` (harness/family/vendor)
+and **spawns** an executable different-vendor reader. Advise needs write
+permission; API-only chat cannot write its review. Human pick always wins
+with a warning for degraded health. See `routing.md` for runtime health,
+credential epochs, and the two-hop fallback bound.
 
 A weaker worker may consult a stronger one for `explain` / `replan`.
 That is not a write handoff.

@@ -37,7 +37,7 @@ without a plugin install.
 | Cautious: no fold, no leftover beads | `run --no-fold --no-beads` |
 | Tidy only | `run --tidy` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
-| Second opinion (no change, no act unblock) | `consult` / `consult --who sol,fable` / `consult --panel` |
+| Second opinion (no change, no act unblock) | `consult` / `consult --who opus,astra` / `consult --panel` |
 | Dispatch a small task (no intend node) | `oneshot` / `oneshot --who terra` |
 
 `--wait` may still `act` until an elicitation. “Run it by me”
@@ -97,7 +97,7 @@ Bare `/run` walks away (roll). `--wait` is desk mode. `--tidy` folds.
 are one-release aliases.
 A refused fold is not a stop — `--skip` that id and still **advise**
 it. Same-family advise (ADR-005) **spawns** the other-family reader
-(Fable vs a Grok author; Grok/Sol vs a Claude author). `--punt` only
+(Opus vs a Codex/Grok author; Astra then Grok vs a Claude author). `--punt` only
 when no other-family route exists — not a fake send-back, not a halt.
 
 ## Install

@@ -354,11 +354,11 @@ def test_re_advise_numbered_beats_unnumbered() -> None:
         reviews = change / "reviews"
         reviews.mkdir()
         (reviews / "2026-09-10-re-advise.md").write_text(
-            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            "> **ADVISE:** send-back\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         (reviews / "2026-09-10-re-advise-2.md").write_text(
-            "> **ADVISE:** accept\n> **READER:** fable\n",
+            "> **ADVISE:** accept\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         expect(
@@ -374,11 +374,11 @@ def test_re_advise_ten_beats_two() -> None:
         reviews = change / "reviews"
         reviews.mkdir()
         (reviews / "2026-09-10-re-advise-2.md").write_text(
-            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            "> **ADVISE:** send-back\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         (reviews / "2026-09-10-re-advise-10.md").write_text(
-            "> **ADVISE:** accept\n> **READER:** fable\n",
+            "> **ADVISE:** accept\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         expect(
@@ -393,11 +393,11 @@ def test_advise_sendback_sorts_before_accept() -> None:
         reviews = change / "reviews"
         reviews.mkdir()
         (reviews / "2026-09-02-advise-sendback.md").write_text(
-            "> **ADVISE:** send-back\n> **READER:** fable\n",
+            "> **ADVISE:** send-back\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         (reviews / "2026-09-02-advise.md").write_text(
-            "> **ADVISE:** accept\n> **READER:** fable\n",
+            "> **ADVISE:** accept\n> **READER:** opus-arch-review\n",
             encoding="utf-8",
         )
         expect(

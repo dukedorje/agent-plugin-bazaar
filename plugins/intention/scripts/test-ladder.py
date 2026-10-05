@@ -1,352 +1,123 @@
 #!/usr/bin/env python3
-"""Focused verify for ladder.py."""
-
-from __future__ import annotations
-
+"""Focused, offline routing/health contract checks with injectable dependencies."""
+import copy
 import json
-import os
-import subprocess
-import sys
+import tempfile
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-LADDER = HERE / "ladder.py"
-DROP_SOL = ("OPENAI_API_KEY", "CODEX_BIN")
-MISSING_CODEX = "/nonexistent/codex-not-installed"
+import ladder
+import routing
 
 
-def run(
-    args: list[str],
-    env: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(LADDER), *args],
-        text=True,
-        capture_output=True,
-        env=env,
-    )
+def expect(condition, message):
+    if not condition:
+        raise AssertionError(message)
 
 
-def env_without_sol() -> dict[str, str]:
-    out = {k: v for k, v in os.environ.items() if k not in DROP_SOL}
-    out["CODEX_BIN"] = MISSING_CODEX
-    return out
-
-
-def env_with_openai(key: str = "sk-test-not-used") -> dict[str, str]:
-    out = env_without_sol()
-    out["OPENAI_API_KEY"] = key
-    return out
-
-
-def env_with_codex() -> dict[str, str]:
-    out = env_without_sol()
-    out["CODEX_BIN"] = sys.executable
-    return out
-
-
-def expect(cond: bool, msg: str) -> None:
-    if not cond:
-        raise AssertionError(msg)
-
-
-def assign(
-    shape: str,
-    extra: list[str] | None = None,
-    env: dict[str, str] | None = None,
-) -> dict:
-    proc = run(["assign", "--shape", shape, *(extra or [])], env=env)
-    expect(proc.returncode == 0, proc.stderr or proc.stdout)
-    return json.loads(proc.stdout)
-
-
-def main() -> int:
-    failed = 0
-    cases = [
-        ("known", "sonnet-5", "explicit"),
-        ("mechanical", "sonnet-5", "explicit"),
-        ("thinking", "opus-5", "standard"),
-        ("implementation", "opus-5", "standard"),
-        ("design", "opus-5-design", "standard"),
-        ("plan", "fable-5.1-plan", "lean"),
-        ("intend-consult", "fable-5.1-plan", "lean"),
-        ("architecture-review", "fable-5.1-arch-review", "lean"),
-        ("fold", "opus-5-fold", "standard"),
-    ]
-    for shape, route_id, density in cases:
+def main():
+    now = [10000.0]
+    health = routing.HealthStore(clock=lambda: now[0])
+    raw = routing.registry()
+    env = {"OPENAI_API_KEY": "secret-never-persist", "INTENTION_CREDENTIAL_ID_OPENAI": "account-a"}
+    def load(permission="write", which=lambda _: "/stub", env=env):
+        return ladder.apply_env(copy.deepcopy(raw), permission, store=health, env=env, which=which)
+    data = load()
+    orders = {"known": ["sonnet-known", "terra-known"], "implementation": ["sol-implement", "opus-implement"], "thinking": ["sol-implement", "opus-implement"], "design": ["opus-design"], "plan": ["opus-plan", "astra-plan"], "replan": ["opus-plan", "astra-plan"], "intend-consult": ["opus-plan", "astra-plan"], "fold": ["opus-fold"], "architecture-review": ["opus-arch-review", "astra-arch-review", "grok-arch-review"]}
+    for shape, expected in orders.items():
+        expect([r["id"] for r in ladder.candidates(data, shape)] == expected, shape)
+        expect(ladder.assign(data, shape)["health"] == "unknown", shape)
+    expect(ladder.assign(data, "architecture-review")["effort"] == "high", "Opus high")
+    expect(ladder.assign(data, "architecture-review", author_family="opus")["id"] == "astra-arch-review", "Claude author")
+    expect(ladder.assign(data, "architecture-review", author_family="codex")["id"] == "opus-arch-review", "Codex author")
+    no_codex = load(which=lambda binary: None if binary == "codex" else "/stub", env={})
+    expect(ladder.assign(no_codex, "architecture-review", author_family="claude")["id"] == "grok-arch-review", "Claude author fallback")
+    expect(ladder.assign(data, "architecture-review", route_id="opus-4.8-arch-review", author_family="opus")["id"] == "opus-arch-review", "explicit migration override")
+    for alias, target in raw["migration_aliases"].items():
+        route = next(r for r in data["routes"] if r["id"] == target)
+        expect(ladder.assign(data, route["shapes"][0], route_id=alias)["id"] == target, alias)
+    expect(ladder.assign(data, "known", after="sonnet-5")["id"] == "terra-known", "alias after")
+    expect(ladder.resolve_who(data, "plan", ["astra", "opus"])[0]["id"] == "opus-plan", "shape nicknames preserve priority")
+    for name in ("sol", "terra", "fable"):
         try:
-            got = assign(shape, env=env_without_sol())
-            expect(got["id"] == route_id, f"{shape} -> {got.get('id')} want {route_id}")
-            expect(got["density"] == density, f"{shape} density {got.get('density')}")
-            expect(got.get("available") is True, f"{shape} not available")
-            print(f"pass {shape} -> {route_id}")
-        except Exception as exc:  # noqa: BLE001
-            failed += 1
-            print(f"FAIL {shape}: {exc}")
-
+            ladder.resolve_who(data, "architecture-review", [name])
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError("forbidden architecture nickname " + name)
+    expect(all("verified_at" in f for f in raw["families"].values()), "verification dates")
+    expect(routing.model_of("opus-4.8") == raw["families"]["opus"]["model"], "launcher interface alias")
+    expect(routing.model_of("grok") == "grok-4.7", "Grok concrete model")
+    expect(all(r["family"] != "fable" for r in raw["routes"]), "no retired live family")
+    bad = {"id": "bad", "family": "sol", "harness": "codex", "shapes": ["architecture-review"]}
+    expect(not routing.resolve(bad, raw, store=health, which=lambda _: "/stub")["configured"], "policy validation")
+    pinned = {"id": "pin", "family": "opus", "model": "older", "harness": "claude"}
+    expect(not routing.resolve(pinned, raw, store=health)["configured"], "old model requires reason")
+    pinned["pin_reason"] = "controlled comparison"
+    expect(routing.resolve(pinned, raw, store=health)["configured"], "documented pin")
+    read_only = load("read", which=lambda _: None)
+    write_only = load("write", which=lambda _: None)
+    astra = next(r for r in read_only["routes"] if r["id"] == "astra-arch-review")
+    sol = next(r for r in write_only["routes"] if r["id"] == "sol-implement")
+    expect(astra["configured"] and astra["executable"] and astra["adapter"] == "openai", "API read")
+    expect(sol["configured"] and not sol["executable"], "API write refused")
+    first = ladder.assign(data, "architecture-review")
+    args = (first["adapter"], first["interface"], first["credential_identity"], first["mapping"])
+    health.record(*args, "success")
+    expect(health.state(*args) == "verified", "success")
+    now[0] += 3600
+    expect(health.state(*args) == "unknown", "success TTL")
+    for outcome, ttl in (("quota", 1800), ("auth", 86400)):
+        health.record(*args, outcome)
+        expect(health.state(*args) == "degraded", outcome)
+        if outcome == "auth":
+            expect(health.state(args[0], args[1], "new-identity", args[3]) == "unknown", "auth identity reset")
+        health.record(*args, "task-red")
+        health.record(*args, "baseline-red")
+        expect(health.state(*args) == "degraded", "task evidence ignored")
+        now[0] += ttl
+        expect(health.state(*args) == "unknown", outcome + " TTL")
+    health.record(*args, "model-not-found")
+    now[0] += 864000
+    expect(health.state(*args) == "degraded", "model failure persists")
+    expect(health.state(*args[:3], "registry-changed") == "unknown", "registry reset")
+    health.reset(*args[:3])
+    health.record(*args, "stall")
+    expect(health.state(*args) == "unknown", "one stall")
+    now[0] += 899
+    health.record(*args, "stall")
+    expect(health.state(*args) == "degraded", "two stalls")
+    now[0] += 900
+    expect(health.state(*args) == "unknown", "stall TTL")
+    health.reset(*args[:3])
+    health.record(*args, "stall")
+    now[0] += 901
+    health.record(*args, "stall")
+    expect(health.state(*args) == "unknown", "separated stalls")
+    health.record(*args, "quota")
+    current = load()
+    expect(ladder.assign(current, "architecture-review")["id"] == "astra-arch-review", "skip degraded in priority")
+    explicit = ladder.assign(current, "architecture-review", route_id="opus-arch-review")
+    expect(explicit["id"] == "opus-arch-review" and explicit["warnings"], "human health override")
+    expect(ladder.resolve_who(current, "architecture-review", ["opus"])[0]["warnings"], "human nickname warning")
     try:
-        design = assign("design")
-        expect("designer" in design.get("skills", []), design)
-        expect(design["effort"] in {"low", "medium"}, design)
-        print("pass design uses designer skills")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL design skills: {exc}")
-
-    try:
-        proc = run(["assign", "--shape", "architecture-review"], env=env_without_sol())
-        got = json.loads(proc.stdout)
-        expect(got["id"] == "fable-5.1-arch-review", got)
-        expect(got["harness"] == "claude", got)
-        expect(got["interface"] == "fable-5.1", got)
-        alt = run(
-            ["assign", "--shape", "architecture-review", "--include-unavailable"],
-            env=env_without_sol(),
-        )
-        expect(alt.returncode == 0, alt.stderr)
-        expect(json.loads(alt.stdout)["id"] == "astra-arch-review", alt.stdout)
-        show = json.loads(run(["show"], env=env_without_sol()).stdout)
-        grok = next(r for r in show["routes"] if r["id"] == "grok-arch-review")
-        expect(grok["available"] is True, grok)
-        sol = next(r for r in show["routes"] if r["id"] == "sol-arch-review")
-        expect(sol["available"] is False, sol)
-        print("pass arch-review default is fable without Codex; Astra first if listed")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL sol optional: {exc}")
-
-    try:
-        got = assign("fold")
-        expect(got["id"] == "opus-5-fold", got)
-        expect(got["role"] == "folder", got)
-        expect(got["interface"] == "opus-5", got)
-        show = json.loads(run(["show"]).stdout)
-        grok_fold = next(r for r in show["routes"] if r["id"] == "grok-fold")
-        expect(grok_fold["available"] is False, grok_fold)
-        print("pass fold is opus-5; grok-fold optional")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL fold route: {exc}")
-
-    try:
-        proc = run(["assign", "--shape", "not-a-shape"])
-        expect(proc.returncode != 0, "unknown shape should fail")
-        print("pass unknown shape fails")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL unknown: {exc}")
-
-    try:
-        off = json.loads(run(["show"], env=env_without_sol()).stdout)
-        sol_off = next(r for r in off["routes"] if r["id"] == "sol-arch-review")
-        expect(sol_off["available"] is False, sol_off)
-        on_key = json.loads(run(["show"], env=env_with_openai()).stdout)
-        expect(
-            next(r for r in on_key["routes"] if r["id"] == "sol-arch-review")["available"]
-            is True,
-            on_key,
-        )
-        on_cli = json.loads(run(["show"], env=env_with_codex()).stdout)
-        expect(
-            next(r for r in on_cli["routes"] if r["id"] == "sol-arch-review")["available"]
-            is True,
-            on_cli,
-        )
-        picked = json.loads(
-            run(
-                ["assign", "--shape", "architecture-review", "--id", "sol-arch-review"],
-                env=env_with_codex(),
-            ).stdout
-        )
-        expect(picked["id"] == "sol-arch-review", picked)
-        expect(picked["interface"] == "gpt-5.6-sol", picked)
-        default = json.loads(
-            run(["assign", "--shape", "architecture-review"], env=env_with_codex()).stdout
-        )
-        expect(default["id"] == "astra-arch-review", default)
-        expect(default["interface"] == "gpt-6-astra", default)
-        astra_off = next(r for r in off["routes"] if r["id"] == "astra-arch-review")
-        expect(astra_off["available"] is False, astra_off)
-        expect(
-            next(r for r in on_key["routes"] if r["id"] == "astra-arch-review")["available"]
-            is True,
-            on_key,
-        )
-        picked_astra = json.loads(
-            run(
-                ["assign", "--shape", "architecture-review", "--id", "astra-arch-review"],
-                env=env_with_codex(),
-            ).stdout
-        )
-        expect(picked_astra["id"] == "astra-arch-review", picked_astra)
-        expect(picked_astra["interface"] == "gpt-6-astra", picked_astra)
-        print("pass sol/astra available iff codex CLI or OPENAI_API_KEY; Astra is default")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL sol env: {exc}")
-
-    try:
-        grok_author = json.loads(
-            run(
-                [
-                    "assign",
-                    "--shape",
-                    "architecture-review",
-                    "--not-harness",
-                    "grok",
-                ],
-                env=env_without_sol(),
-            ).stdout
-        )
-        expect(grok_author["id"] == "fable-5.1-arch-review", grok_author)
-        expect(grok_author["harness"] == "claude", grok_author)
-        claude_author = json.loads(
-            run(
-                [
-                    "assign",
-                    "--shape",
-                    "architecture-review",
-                    "--not-harness",
-                    "claude",
-                ],
-                env=env_without_sol(),
-            ).stdout
-        )
-        expect(claude_author["id"] == "grok-arch-review", claude_author)
-        expect(claude_author["harness"] == "grok", claude_author)
-        claude_codex = json.loads(
-            run(
-                [
-                    "assign",
-                    "--shape",
-                    "architecture-review",
-                    "--not-harness",
-                    "claude",
-                ],
-                env=env_with_codex(),
-            ).stdout
-        )
-        expect(claude_codex["id"] == "astra-arch-review", claude_codex)
-        expect(claude_codex["harness"] == "codex", claude_codex)
-        print("pass --not-harness skips author family")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL not-harness: {exc}")
-
-    try:
-        got = assign("known", env=env_with_codex())
-        expect(got["id"] == "terra-known", got)
-        expect(got["interface"] == "gpt-5.6-terra", got)
-        nxt = assign("known", extra=["--after", "terra-known"], env=env_with_codex())
-        expect(nxt["id"] == "sonnet-5", nxt)
-        impl = assign("implementation", env=env_with_codex())
-        expect(impl["id"] == "sol-implement", impl)
-        impl_fb = assign(
-            "implementation", extra=["--after", "sol-implement"], env=env_with_codex()
-        )
-        expect(impl_fb["id"] == "opus-5", impl_fb)
-        think = assign("thinking", env=env_with_codex())
-        expect(think["id"] == "sol-implement", think)
-        think_fb = assign("thinking", extra=["--after", "sol-implement"], env=env_with_codex())
-        expect(think_fb["id"] == "opus-5", think_fb)
-        plan = assign("plan", env=env_with_codex())
-        expect(plan["id"] == "fable-5.1-plan", plan)
-        plan_fb = assign("plan", extra=["--after", "fable-5.1-plan"], env=env_with_codex())
-        expect(plan_fb["id"] == "sol-plan", plan_fb)
-        print("pass terra/sol primaries and --after handoff")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL priority handoff: {exc}")
-
-    try:
-        proc = run(
-            ["panel", "--shape", "architecture-review"],
-            env=env_with_codex(),
-        )
-        expect(proc.returncode == 0, proc.stderr)
-        panel = json.loads(proc.stdout)
-        ids = [r["id"] for r in panel]
-        expect(ids[:5] == [
-            "astra-arch-review",
-            "fable-5.1-arch-review",
-            "sol-arch-review",
-            "opus-4.8-arch-review",
-            "grok-arch-review",
-        ], ids)
-        print("pass architecture panel order Astra, Fable, Sol, 4.8, Grok")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL panel: {exc}")
-
-    try:
-        # Terra down: --after terra-known still reaches Sonnet.
-        nxt = assign("known", extra=["--after", "terra-known"], env=env_without_sol())
-        expect(nxt["id"] == "sonnet-5", nxt)
-        print("pass --after skips unavailable rungs")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL after skip-forward: {exc}")
-
-    try:
-        fable = json.loads(
-            run(["assign", "--shape", "architecture-review", "--who", "fable"]).stdout
-        )
-        expect(fable["id"] == "fable-5.1-arch-review", fable)
-        four = json.loads(
-            run(["assign", "--shape", "architecture-review", "--who", "4.8"]).stdout
-        )
-        expect(four["id"] == "opus-4.8-arch-review", four)
-        several = json.loads(
-            run(
-                ["assign", "--shape", "architecture-review", "--who", "sol,fable"],
-                env=env_with_codex(),
-            ).stdout
-        )
-        ids = [r["id"] for r in several]
-        expect(ids == ["fable-5.1-arch-review", "sol-arch-review"], ids)
-        astra = json.loads(
-            run(
-                ["assign", "--shape", "architecture-review", "--who", "astra"],
-                env=env_with_codex(),
-            ).stdout
-        )
-        expect(astra["id"] == "astra-arch-review", astra)
-        expect(astra["interface"] == "gpt-6-astra", astra)
-        expect(astra["harness"] == "codex", astra)
-        astra_fable = json.loads(
-            run(
-                ["assign", "--shape", "architecture-review", "--who", "astra,fable"],
-                env=env_with_codex(),
-            ).stdout
-        )
-        expect(
-            [r["id"] for r in astra_fable]
-            == ["astra-arch-review", "fable-5.1-arch-review"],
-            astra_fable,
-        )
-        terra_impl = run(["assign", "--shape", "implementation", "--who", "terra"])
-        expect(terra_impl.returncode != 0, terra_impl.stdout)
-        expect("unknown who" in terra_impl.stderr, terra_impl.stderr)
-        terra_think = run(["assign", "--shape", "thinking", "--who", "terra"])
-        expect(terra_think.returncode != 0, terra_think.stdout)
-        expect("unknown who" in terra_think.stderr, terra_think.stderr)
-        four_think = run(["assign", "--shape", "thinking", "--who", "4.8"])
-        expect(four_think.returncode != 0, four_think.stderr)
-        mixed = run(
-            ["assign", "--shape", "architecture-review", "--who", "fable", "--id", "sol-arch-review"]
-        )
-        expect(mixed.returncode != 0, mixed.stdout + mixed.stderr)
-        print("pass --who nicknames are shape-scoped")
-    except Exception as exc:  # noqa: BLE001
-        failed += 1
-        print(f"FAIL who: {exc}")
-
-    if failed:
-        print(f"FAIL {failed}")
-        return 1
-    print("pass ladder")
+        ladder.assign(current, "architecture-review", after="astra-arch-review", fallback_hops=2)
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("third fallback accepted")
+    expect(ladder.assign(current, "architecture-review", after="astra-arch-review", fallback_hops=1)["id"] == "grok-arch-review", "second fallback allowed")
+    ident = routing.credential_identity("openai", env)
+    expect(ident == routing.credential_identity("openai", {**env, "OPENAI_API_KEY": "rotated-secret"}), "identity never derives from key")
+    expect(ident != routing.credential_identity("openai", {**env, "INTENTION_CREDENTIAL_ID_OPENAI": "account-b"}), "nonsecret identity epoch")
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "health.json"
+        stored = routing.HealthStore(path, clock=lambda: now[0])
+        stored.record("openai", "model", ident, "mapping", "auth")
+        expect("secret" not in path.read_text(), "no secret in health store")
+        expect(routing.HealthStore(path, clock=lambda: now[0]).state("openai", "model", ident, "mapping") == "degraded", "scratch persistence")
+    print("pass approved routes, aliases, permission, cross-family review, priority, two-hop bound, TTLs and nonsecret scratch health")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

@@ -47,9 +47,10 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `docs/contracts/dispatch.md` (capability order is the inverse of
    depth). Blast raises density, never lowers it. Assign with
    `python3 plugins/intention/scripts/ladder.py assign --shape …`
-   (known → Terra then Sonnet 5, implementation/thinking → Sol then Opus 5, plan → Fable 5.1 then Sol, design →
-   Opus 5 + designer skills). Real architecture opens a review-pair
-   whose reader is Astra (Fable 5.1 without Codex; Grok when a second family is needed).
+   (known → Sonnet then Terra; implementation/thinking → Sol then Opus;
+   plan → Opus then Astra; design → Opus + designer skills). Real architecture
+   opens a review-pair: Opus-high → Astra → Grok, skipping the author's
+   vendor with `--author-family <author>`. Versions live only in ladder.json.
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).

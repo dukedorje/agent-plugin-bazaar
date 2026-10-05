@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-4s9-act-1",
+  "node_id": "bazaar-4s9",
+  "capability": "verbs",
+  "change_id": "update-model-routing-health",
+  "goal": "Implement the accepted model-routing redesign: stable family routes, centralized concrete versions, approved route order, permission-aware executability, passive infra health with TTLs, bounded fallback, migration aliases, cross-family architecture review, and complete removal of live Fable/Opus-4.8/Sol-architecture claims. Preserve unrelated dirty work and update only owed routing surfaces.",
+  "non_goals": ["Paid recurring probes", "Health overriding human choice", "Task failures affecting model health", "Folding or archiving the change", "Editing unrelated frontier-preparation or demo work"],
+  "anchors": [
+    {"symbol": "openspec/changes/update-model-routing-health/design.md", "invariant": "Approved route order and three-state semantics are fixed."},
+    {"symbol": "openspec/changes/update-model-routing-health/reviews/2026-10-05-advise.md", "invariant": "Carry deterministic author family, non-secret credential identity, migration compatibility at launcher boundary, and complete doc sweep."},
+    {"symbol": "plugins/intention/references/ladder.json", "invariant": "One family registry owns concrete versions and stable route ids."},
+    {"symbol": "plugins/intention/scripts/ladder.py", "invariant": "Human picks win; automatic selection preserves priority, skips degraded, and uses no more than two fallback hops."},
+    {"symbol": "plugins/intention/scripts/spawn.py", "invariant": "Execution records passive infra health keyed without exposing credentials and never treats API-only chat as write-capable."}
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-ladder.py && python3 plugins/intention/scripts/test-spawn.py",
+    "criteria": [
+      "Fable, pinned Opus 4.8, and Sol architecture-review are absent from live routing.",
+      "Sonnet→Terra, Sol→Opus, Opus→Astra planning, and Opus-high→Astra→Grok-4.7 review orders are deterministic.",
+      "Stable route ids resolve concrete family versions and old ids remain one-release aliases.",
+      "Configured, permission-aware executable, and verified/unknown/degraded health states are distinct and tested with an injectable clock/store.",
+      "Human picks override health with warnings; automatic fallback is priority-preserving and capped at two hops.",
+      "API-key-only OpenAI routes are read-only; infra outcomes update health without logging credentials.",
+      "All live skills, references, ADRs, and learning/catalog claims reflect the new policy."
+    ]
+  },
+  "out_of_scope": [{"item": "Cross-repository quota broker", "tracked_as": "future infrastructure"}],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/references/",
+      "plugins/intention/scripts/",
+      "plugins/intention/skills/",
+      "plugins/intention/README.md",
+      "openspec/changes/update-model-routing-health/",
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md",
+      "groups/bazaar-4s9/"
+    ],
+    "do_not": ["fold", "archive", "push", "deploy", "edit-living-spec"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "packet-only",
+  "role": "worker",
+  "assignee": {
+    "id": "agt-sol-model-routing",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-sol-model-routing"}
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-codex-conductor"}
+  }
+}

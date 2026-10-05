@@ -4,13 +4,13 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 
 - 2026-09-27 — `max_inflight` is campaign-local and lease-backed: only held leases tagged with the explicit pinned intention/root consume its slots. Collision ownership remains global across every held lease, including legacy and empty-path leases; bead `in_progress` is tracking, not capacity. (`plugins/intention/scripts/conductor.py`, ADR-009)
 
-- 2026-09-24 — Default architecture reader is Astra (`gpt-6-astra`, `astra-arch-review`) when Codex is present; Fable 5.1 is the backup. Panel order Astra, Fable, Sol, 4.8, Grok. (`plugins/intention/references/ladder.json`)
+- 2026-09-24 — **Historical routing; superseded 2026-10-05 below.** Default architecture reader is Astra (`gpt-6-astra`, `astra-arch-review`) when Codex is present; Fable 5.1 is the backup. Panel order Astra, Fable, Sol, 4.8, Grok. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-24 — After intend, default is steer (decision briefing, then menus). “Activate this set” is the campaign grant; `--go` / `--autonomous` skip the pause; `/run` already takes waves. (`plugins/intention/skills/intend/SKILL.md`, `map`)
 
-- 2026-09-24 — Terra is known/mechanical only. Implementation and thinking go Sol then Opus 5. (`plugins/intention/references/ladder.json`)
+- 2026-09-24 — **Historical routing; superseded 2026-10-05 below.** Terra is known/mechanical only. Implementation and thinking go Sol then Opus 5. (`plugins/intention/references/ladder.json`)
 
-- 2026-09-24 — Implementor is latest Terra (`gpt-5.6-terra`, `terra-implement`) then Sonnet 5. Thinking stays Sol then Opus 5. (`plugins/intention/references/ladder.json`)
+- 2026-09-24 — **Historical routing; superseded 2026-10-05 below.** Implementor is latest Terra (`gpt-5.6-terra`, `terra-implement`) then Sonnet 5. Thinking stays Sol then Opus 5. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-24 — Steer menus: recommended first and skip. No standalone decide-for-me; that is picking recommended. (`plugins/intention/skills/steer/SKILL.md`)
 
@@ -19,7 +19,7 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 
 - 2026-09-18 — `next: fold` is not a halt. Persist `act` on current HEAD; do not invent a branch because HEAD is not `main`. A failed `take` is a mutex, not a campaign stop. (`plugins/intention/skills/run/SKILL.md`)
 
-- 2026-09-15 — Architecture-review panel is Fable, Astra (`gpt-6-astra`), Sol, 4.8, Grok. Astra is spawnable when Codex CLI or `OPENAI_API_KEY` is set (`requires: codex`), same as Sol; default stays Fable. `--who astra`. (`plugins/intention/references/ladder.json`)
+- 2026-09-15 — **Historical routing; superseded 2026-10-05 below.** Architecture-review panel is Fable, Astra (`gpt-6-astra`), Sol, 4.8, Grok. Astra is spawnable when Codex CLI or `OPENAI_API_KEY` is set (`requires: codex`), same as Sol; default stays Fable. `--who astra`. (`plugins/intention/references/ladder.json`)
 
 - 2026-09-15 — conductor persist `git add --` the archive dest after `git mv` copies the change and leaves inflight in HEAD; `git add --` the old path fails once the worktree is gone. Commit both old and new paths while the rename is still in the index. (`plugins/intention/scripts/conductor.py` persist)
 - 2026-09-08 — Grok injects `ANTHROPIC_API_KEY` / `CLAUDE_API_KEY`. `claude -p` then bills the API ("Credit balance is too low") instead of the Claude Code subscription. `spawn.py` strips those plus `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` / `ANTHROPIC_MODEL*` for the claude adapter. (`plugins/intention/scripts/spawn.py`)
@@ -48,26 +48,26 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-08-15 — Conductor reads distilled; density is inverse of capability; persist at the worktree top. Never put “don’t commit” in a packet. (`docs/contracts/dispatch.md`)
 - 2026-08-16 — `bd list` hides closed issues, so a closed blocker looks missing and the child stays blocked. Conductor live ready uses `bd list --all`. (`plugins/intention/scripts/conductor.py`)
 - 2026-08-16 — Shared scratchpads and empty prompts fail closed: unique `.spawns/` dir, atomic write, hard-fail before Popen. Stall is infra-red, not task-red. (`plugins/intention/scripts/spawn.py`)
-- 2026-08-16 — Assignment is `ladder.json`, not a second table in act-io. CC is the coding pool; Grok is the architecture reader; Sol stays `available: false` until subscribed. (`plugins/intention/references/ladder.json`)
+- 2026-08-16 — **Historical routing; superseded 2026-10-05 below.** Assignment is `ladder.json`, not a second table in act-io. CC is the coding pool; Grok is the architecture reader; Sol stays `available: false` until subscribed. (`plugins/intention/references/ladder.json`)
 - 2026-08-16 — Mutex is `take` (in_progress + lease + write-set). Fan-out cap is `max_inflight` / `ACT_MAX_INFLIGHT`. Live workers are `claude -p`. (`conductor.py` · `spawn.py`)
 - 2026-08-16 — `conductor.py release` sets the bead back to `open`. Do not release after `bd close` — it undoes the close. (`bazaar-zmq`)
 - 2026-08-16 — Fold of `add-taskmaster-host` is what creates `openspec/specs/taskmaster/`. An accepted ADR is not a living capability. (`openspec/specs/taskmaster/spec.md`)
 - 2026-08-16 — A parent that ADDs a capability folds first. Children ADD onto the living spec. Folding the parent last leaves nothing to fold into. (`extract-working-method`)
 - 2026-09-02 — Advise success verdict is `accept`. Notes live in the body. Do not write `accept-with-nits` (old banners still parse as accept). (`plugins/intention/skills/advise/SKILL.md`)
-- 2026-09-02 — Ladder priority: Terra then Sonnet (known); Sol then Opus 5 (implement); Fable 5.1 then Sol (plan); Fable, Sol, 4.8, Grok (arch). `assign --all` / `panel` fan-out; `--after` handoff. (`plugins/intention/scripts/ladder.py`)
-- 2026-09-02 — Sol spawn prefers Codex CLI (`codex exec`, `--adapter codex`, `CODEX_BIN`) like `claude -p`. OpenAI HTTP is the fallback when there is no CLI. (`plugins/intention/scripts/spawn.py`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Ladder priority: Terra then Sonnet (known); Sol then Opus 5 (implement); Fable 5.1 then Sol (plan); Fable, Sol, 4.8, Grok (arch). `assign --all` / `panel` fan-out; `--after` handoff. (`plugins/intention/scripts/ladder.py`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Sol spawn prefers Codex CLI (`codex exec`, `--adapter codex`, `CODEX_BIN`) like `claude -p`. OpenAI HTTP is the fallback when there is no CLI. (`plugins/intention/scripts/spawn.py`)
 - 2026-09-02 — Harness CLI spawn (claude, codex) sends the prompt on stdin and captures stdout. Never argv (ARG_MAX). `claude -p` with no prompt arg; `codex exec -`. OpenAI stays HTTP body. (`plugins/intention/scripts/spawn.py`)
-- 2026-09-02 — Second opinion is `consult`, not advise. Same architecture-review ladder (Fable 5.1, Sol, Opus 4.8). No intend node, no review file, no act unblock. `spawn.py consult [--panel]`. (`plugins/intention/skills/consult/`)
-- 2026-09-02 — Consult routing: `--who` (nicknames/ids, several, shape-scoped), `--panel` (everyone spawnable), `--id` exact. Mutually exclusive. Named unspawnable hard-fails. Chat: shape first, named beats “compare”, skip own harness only if another spawnable exists. (`ladder.py` `resolve_who`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Second opinion is `consult`, not advise. Same architecture-review ladder (Fable 5.1, Sol, Opus 4.8). No intend node, no review file, no act unblock. `spawn.py consult [--panel]`. (`plugins/intention/skills/consult/`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Consult routing: `--who` (nicknames/ids, several, shape-scoped), `--panel` (everyone spawnable), `--id` exact. Mutually exclusive. Named unspawnable hard-fails. Chat: shape first, named beats “compare”, skip own harness only if another spawnable exists. (`ladder.py` `resolve_who`)
 - 2026-09-02 — Advise never accepts in the author tab. Spawn a fresh other-family reader every time. `accept` without `READER:` does not unblock act. Env-presence ≠ spawn-succeeds; no spawnable second family → ASK, never inline. Blind pass before design.md. (`skills/advise/SKILL.md`, `advise_status.py`)
 - 2026-09-02 — Advise readers write their own `reviews/*-advise.md`. Codex sandbox is `workspace-write` when the write-set includes `reviews/`. Consult stays read-only. Conductor does not transcribe. (`spawn.py` `sandbox_of`)
-- 2026-09-02 — Grok spawn adapter is `grok --prompt-file` (headless does not read stdin). `GROK_BIN`. Oneshot is `spawn.py oneshot` (default shape `known` / Terra then Sonnet). (`spawn.py`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Grok spawn adapter is `grok --prompt-file` (headless does not read stdin). `GROK_BIN`. Oneshot is `spawn.py oneshot` (default shape `known` / Terra then Sonnet). (`spawn.py`)
 - 2026-09-02 — Folded `add-steer-verb` after map/debrief were already archived. Living lists kept `consult`/`status`; the delta's older skill roster was not copied over them. (`openspec/specs/verbs`)
-- 2026-09-01 — Plan consult (`plan` / `replan` / `intend-consult`) is Fable 5.1 (`fable-5.1-plan`), same model as the architecture buddy. (`plugins/intention/references/ladder.json`)
-- 2026-09-01 — Architecture buddy / default `architecture-review` reader is Fable 5.1 in Claude Code (`fable-5.1-arch-review`). Opus 4.8 remains an alternate. (`plugins/intention/references/ladder.json`)
-- 2026-08-31 — Sol architecture-review is on when `OPENAI_API_KEY` is set. Packet-only via `spawn --adapter openai` (`gpt-5.6-sol`). Not a Codex slash. Default reader stays Opus 4.8. (`plugins/intention/scripts/ladder.py`, `spawn.py`)
-- 2026-08-31 — Architecture-review default reader is Opus 4.8 (`opus-4.8-arch-review`). Grok stays the cross-family pick (ADR-005). Sol still off. (`plugins/intention/references/ladder.json`)
-- 2026-08-31 — Fold is a designated-agent pass like advise: `--shape fold` → Opus 5 (`opus-5-fold`). Background spawn; Grok only if picked. (`plugins/intention/skills/fold/`, `references/ladder.json`)
+- 2026-09-01 — **Historical routing; superseded 2026-10-05 below.** Plan consult (`plan` / `replan` / `intend-consult`) is Fable 5.1 (`fable-5.1-plan`), same model as the architecture buddy. (`plugins/intention/references/ladder.json`)
+- 2026-09-01 — **Historical routing; superseded 2026-10-05 below.** Architecture buddy / default `architecture-review` reader is Fable 5.1 in Claude Code (`fable-5.1-arch-review`). Opus 4.8 remains an alternate. (`plugins/intention/references/ladder.json`)
+- 2026-08-31 — **Historical routing; superseded 2026-10-05 below.** Sol architecture-review is on when `OPENAI_API_KEY` is set. Packet-only via `spawn --adapter openai` (`gpt-5.6-sol`). Not a Codex slash. Default reader stays Opus 4.8. (`plugins/intention/scripts/ladder.py`, `spawn.py`)
+- 2026-08-31 — **Historical routing; superseded 2026-10-05 below.** Architecture-review default reader is Opus 4.8 (`opus-4.8-arch-review`). Grok stays the cross-family pick (ADR-005). Sol still off. (`plugins/intention/references/ladder.json`)
+- 2026-08-31 — **Historical routing; superseded 2026-10-05 below.** Fold is a designated-agent pass like advise: `--shape fold` → Opus 5 (`opus-5-fold`). Background spawn; Grok only if picked. (`plugins/intention/skills/fold/`, `references/ladder.json`)
 - 2026-08-28 — `/ready` unions OpenSpec and `bd list --ready`. JSON `ready` stays OpenSpec-only so `/run --until empty` does not act a bead. An empty OpenSpec lens is not an empty board. (`plugins/intention/skills/ready/`)
 - 2026-08-28 — Current intention is per session (`map --current <id>` → `~/.intention/sessions/<GROK_SESSION_ID>/`), not a repo file. Bare `map` is that DAG or an epic index, never every bead. (`plugins/intention/skills/map/`)
 - 2026-08-31 — The hole between intend and change on architecture is `steer`, not `/ask`. ASK is a run stop face (`update-run-ask`). Steer menus always include recommended, skip, and decide-for-me; residue is beads plus `steer.md` if a change dir exists. (`plugins/intention/skills/steer/SKILL.md`)
@@ -77,8 +77,12 @@ Append-only. One line per hard-won fact. Dated, with a file reference.
 - 2026-09-02 — Observe verb is `status` (`/ready` alias). Desk mode is `--wait`. Tidy is `--tidy`. (`plugins/intention/skills/status/`, `…/run/`)
 - 2026-09-02 — Morning pile is `/ready` (ASK / EYES / PUNT). Bare `/run` walks away. Desk mode is `--interrupt`. `--autonomous` is ignored. `--until *` is a one-release alias. (`plugins/intention/skills/ready/`, `…/run/`)
 - 2026-09-02 — `/run` default `--until` is `roll`. `--until empty` is the cautious no-fold no-beads walk. `--autonomous` alone follows that default. (`plugins/intention/skills/run/`)
-- 2026-09-02 — Same-family advise is spawn-the-other-family reader, not a campaign stop. `--punt` only when no other-family route exists. Sol off ≠ no second family while Fable is on the ladder. (`plugins/intention/skills/run/`, `…/advise/`)
+- 2026-09-02 — **Historical routing; superseded 2026-10-05 below.** Same-family advise is spawn-the-other-family reader, not a campaign stop. `--punt` only when no other-family route exists. Sol off ≠ no second family while Fable is on the ladder. (`plugins/intention/skills/run/`, `…/advise/`)
 - 2026-08-28 — A refused fold is skip-then-advise on that same id, not a campaign stop. `--punt` is last-resort when no other-family advise route exists. (`plugins/intention/skills/run/`)
 - 2026-08-18 — A parse face that maps categories independently drops ADR-007 provenance on a mixed paste. Restate the cite on the face. (`add-paste-objects`)
 - 2026-08-18 — `run.py` `stop: no-ready` meant “any missing key”. Missing `openspec/` is an owed `change` when a scope is named, not a missing observer. (`update-run-stages`)
 - 2026-09-02 — Folding a batch, three changes MODIFIED the same requirement blocks (`Default verbs`, `One skill tree`, `Ready-set is queryable`). Literal last-writer-wins silently dropped `debrief`, `map`, and the ASK/PUNT boxes that earlier changes in the same batch had just claimed. A batch fold owes a union pass on any block touched twice. (`openspec/specs/default-loop/`, `…/packaging/`, `…/living-specs/`)
+
+- 2026-10-05 — Routing policy supersedes all older routing records: Sonnet → Terra (known), Sol → Opus (implementation/thinking), Opus → Astra (plan), Opus-high → Astra → Grok (architecture); fold uses Opus with optional Grok. Stable ids and verified concrete versions live in the family registry; retired route/interface ids are one-release aliases only. (`plugins/intention/references/ladder.json`, ADR-005)
+- 2026-10-05 — Executability is permission-aware and independent of configured priority or passive health. API-only OpenAI cannot take writes or write an advise review. Unknown stays eligible; degraded automatic routes are skipped; human picks warn and win; infra fallback is capped at two hops. Recorded author vendor selects the different-family architecture reader. (`plugins/intention/scripts/routing.py`, `references/routing.md`)
+- 2026-10-05 — Passive health is runtime scratch keyed by adapter/model/non-secret credential epoch. Never fingerprint a raw API key: bump `INTENTION_CREDENTIAL_ID_<ADAPTER>` on credential change or reset. Task-red/baseline-red do not change health; TTL expiry returns unknown. No acceptance check makes a paid probe. (`plugins/intention/scripts/test-ladder.py`, `test-spawn.py`)

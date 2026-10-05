@@ -29,8 +29,8 @@ The packet is the only interface. Schema:
    instrument writes are not `dispatchable` while that change is in
    `needs_advise`.
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
-   Complementary → weave. Architecture → review-pair with a Grok
-   reader. Foreign harness → packet file, never a slash command.
+   Complementary → weave. Architecture → review-pair with the first executable different-vendor
+   reader (`--author-family <author>`); Opus-high → Astra → Grok. Foreign harness → packet file, never a slash command.
 3. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
    --holder <route-id>`.
    That is the mutex: `in_progress` + lease + write-set. A second

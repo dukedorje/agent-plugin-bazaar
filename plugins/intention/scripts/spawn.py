@@ -30,11 +30,13 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+import routing
+
 OPENAI_KEY_VARS = ("OPENAI_API_KEY",)
 
 # `claude -p` bills the Anthropic API (or a proxy) when these are set.
 # Grok injects ANTHROPIC_API_KEY / CLAUDE_API_KEY; DeepSeek-compat shells
-# set ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN. Strip them so Fable /
+# set ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN. Strip them so
 # Opus / Sonnet use the Claude Code subscription login, unless
 # CLAUDE_USE_API_KEY=1. spawn.py Popen's the binary, so it never sees
 # the interactive zsh wrapper that unsets these.
@@ -50,34 +52,6 @@ CLAUDE_SUBSCRIPTION_STRIP = (
 )
 
 SLASH = ("/act", "/intend", "/meta-execute", "/run")
-
-CLAUDE_MODELS = {
-    "sonnet-5": "claude-sonnet-5",
-    "opus-5": "claude-opus-5",
-    "opus-4.8": "claude-opus-4-8",
-    "fable-5": "claude-fable-5",
-    "fable-5.1": "claude-fable-5-1",
-    "claude-sonnet-5": "claude-sonnet-5",
-    "claude-opus-5": "claude-opus-5",
-    "claude-opus-4-8": "claude-opus-4-8",
-    "claude-fable-5": "claude-fable-5",
-    "claude-fable-5-1": "claude-fable-5-1",
-}
-
-# Shared ladder language: low | medium | high.
-# Claude → --effort. Codex → -c model_reasoning_effort="…".
-EFFORT = {
-    "sonnet-5": "low",
-    "opus-5": "medium",
-    "opus-4.8": "high",
-    "fable-5": "high",
-    "fable-5.1": "high",
-    "gpt-6-astra": "high",
-    "gpt-5.6-sol": "high",
-    "gpt-5.6-terra": "low",
-    "grok-4.6": "high",
-    "grok-4.5": "high",
-}
 
 
 def atomic_write(path: Path, text: str, allow_empty: bool = False) -> None:
@@ -301,23 +275,13 @@ def cmd_stage(args: argparse.Namespace) -> int:
     assert_prompt_ok(body, surface)
     atomic_write(prompt, body)
     harness = harness_of(packet)
-    if harness == "claude":
-        adapter = "claude"
-    elif harness == "grok":
-        adapter = "grok" if grok_cli_present() else "none"
-    elif harness in {"codex", "openai"}:
-        if codex_cli_present():
-            adapter = "codex"
-        elif openai_api_key():
-            adapter = "openai"
-        else:
-            adapter = "none"
-    else:
-        adapter = "none"
+    permission = "write" if writes_review(packet_paths(packet)) else permission_of(packet)
+    adapter = routing.adapter_for(harness, permission)
     spec = {
         "node_id": node,
         "surface": surface,
         "interface": interface_of(packet),
+        "family": routing.family_of(interface_of(packet)),
         "harness": harness,
         "packet_file": str(packet_copy),
         "prompt_file": str(prompt),
@@ -342,7 +306,8 @@ def cmd_stage(args: argparse.Namespace) -> int:
 
 def effort_of(spec: dict) -> str:
     interface = str(spec.get("interface") or "")
-    raw = spec.get("effort") or EFFORT.get(interface) or "medium"
+    family = routing.family_of(interface)
+    raw = spec.get("effort") or (routing.registry()["families"].get(family, {}).get("effort")) or "medium"
     return str(raw)
 
 
@@ -393,8 +358,7 @@ def remind_unset_claude_api_keys(keys: list[str], *, kept: bool) -> None:
 def claude_argv(spec: dict, prompt_file: Path) -> list[str]:
     """claude -p. Prompt is stdin, not argv (ARG_MAX)."""
     del prompt_file  # consumed by cmd_run via stdin
-    interface = str(spec.get("interface") or "sonnet-5")
-    model = CLAUDE_MODELS.get(interface, interface)
+    model = routing.model_of(str(spec.get("family") or spec.get("interface") or "sonnet"))
     effort = effort_of(spec)
     binary = os.environ.get("CLAUDE_BIN", "claude")
     argv = [
@@ -427,7 +391,7 @@ def codex_cli_present() -> bool:
 
 def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
     """codex exec -. Prompt is stdin (`-`), not argv (ARG_MAX)."""
-    interface = str(spec.get("interface") or "gpt-5.6-sol")
+    interface = routing.model_of(str(spec.get("family") or spec.get("interface") or "sol"))
     workspace = str(spec.get("workspace") or Path.cwd())
     sandbox = str(spec.get("sandbox") or sandbox_of(spec))
     last = prompt_file.parent / "last.md"
@@ -516,14 +480,21 @@ def openai_chat(model: str, prompt: str, timeout_sec: float | None) -> tuple[int
 
 
 def run_openai(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> int:
+    if sandbox_of(spec) != "read-only":
+        face = infra_face("OpenAI HTTP adapter cannot execute writes.", "openai-read-only", str(raw_path))
+        atomic_write(raw_path, "write permission refused before HTTP launch\n")
+        atomic_write(face_path, json.dumps(face, indent=2) + "\n")
+        print(json.dumps(face, indent=2))
+        return 0
     prompt = read_prompt(prompt_file)
-    model = str(spec.get("interface") or "gpt-5.6-sol")
+    model = routing.model_of(str(spec.get("family") or spec.get("interface") or "sol"))
     timeout = spec.get("timeout_sec")
     try:
         timeout_sec = float(timeout) if timeout is not None else 120.0
     except (TypeError, ValueError):
         timeout_sec = 120.0
     status, raw = openai_chat(model, prompt, timeout_sec)
+    routing.record_execution(spec, "openai", routing.infra_outcome(raw, status=status, success=status == 200))
     atomic_write(raw_path, raw, allow_empty=True)
     content = ""
     try:
@@ -645,7 +616,7 @@ def grok_cli_present() -> bool:
 
 def grok_argv(spec: dict, prompt_file: Path) -> list[str]:
     """grok --prompt-file. Grok headless does not read stdin (docs)."""
-    interface = str(spec.get("interface") or "grok-4.6")
+    interface = routing.model_of(str(spec.get("family") or spec.get("interface") or "grok"))
     effort = effort_of(spec)
     workspace = str(spec.get("workspace") or Path.cwd())
     argv = [
@@ -670,18 +641,8 @@ def grok_argv(spec: dict, prompt_file: Path) -> list[str]:
     return argv
 
 
-def adapter_for_harness(harness: str) -> str:
-    if harness == "claude":
-        return "claude"
-    if harness == "grok":
-        return "grok" if grok_cli_present() else "none"
-    if harness in {"codex", "openai"}:
-        if codex_cli_present():
-            return "codex"
-        if openai_api_key():
-            return "openai"
-        return "none"
-    return "none"
+def adapter_for_harness(harness: str, permission: str = "read") -> str:
+    return routing.adapter_for(harness, permission)
 
 
 def consult_agent_id(route: dict) -> str:
@@ -736,6 +697,10 @@ def consult_packet(goal: str, route: dict, paths: list[str]) -> dict[str, Any]:
     }
     if route.get("effort"):
         packet["assignee"]["effort"] = route["effort"]
+    if route.get("family"):
+        packet["assignee"]["family"] = route["family"]
+    if route.get("pin_reason"):
+        packet["assignee"]["pin_reason"] = route["pin_reason"]
     return packet
 
 
@@ -847,6 +812,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             out, _ = proc.communicate()
         raw = (out or "") + "\n[stall: timeout_sec={timeout}]\n".format(timeout=timeout_sec)
         atomic_write(raw_path, raw, allow_empty=True)
+        routing.record_execution(spec, str(adapter), "stall")
         face = infra_face(
             f"Worker stalled after {timeout_sec}s. Not a code failure.",
             "stall",
@@ -858,6 +824,13 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     atomic_write(raw_path, out or "", allow_empty=True)
     harvested = harvest_text(dest, out or "")
+    try:
+        worker_result = json.loads(harvested)
+    except (ValueError, TypeError):
+        worker_result = {}
+    task_failure = isinstance(worker_result, dict) and worker_result.get("disposition") in {"task-red", "baseline-red"}
+    if not task_failure:
+        routing.record_execution(spec, str(adapter), routing.infra_outcome(out or "", success=proc.returncode == 0))
     face = {
         "disposition": "pass" if proc.returncode == 0 else "infra-red",
         "summary": (harvested[:500] if harvested else "adapter exited"),
@@ -887,7 +860,8 @@ def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
         sys.path.insert(0, str(scripts))
     import ladder as ladder_mod  # noqa: WPS433
 
-    data = ladder_mod.load()
+    permission = "read" if args.cmd == "consult" or args.shape in READ_SHAPES else "write"
+    data = ladder_mod.load(permission=permission)
     who = ladder_mod.parse_who(getattr(args, "who", None))
     picked = sum(bool(x) for x in (who, args.panel, args.route_id))
     if picked > 1:
@@ -896,8 +870,8 @@ def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
         raise SystemExit("--after does not combine with --who or --panel")
 
     def spawnable_of(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-        yes = [r for r in rows if adapter_for_harness(str(r.get("harness") or "")) != "none"]
-        no = [r for r in rows if adapter_for_harness(str(r.get("harness") or "")) == "none"]
+        yes = [r for r in rows if adapter_for_harness(str(r.get("harness") or ""), permission) != "none"]
+        no = [r for r in rows if adapter_for_harness(str(r.get("harness") or ""), permission) == "none"]
         return yes, no
 
     if who:
@@ -920,6 +894,8 @@ def consult_routes(args: argparse.Namespace) -> list[dict[str, Any]]:
         route_id=args.route_id,
         not_harness=args.not_harness,
         after=args.after,
+        author_family=getattr(args, "author_family", None),
+        fallback_hops=getattr(args, "fallback_hops", 0),
     )
     spawnable, skipped = spawnable_of(hits)
     if args.route_id:
@@ -982,8 +958,8 @@ def dispatch_routes(
     opinions: list[dict[str, Any]] = []
     for route in routes:
         harness = str(route.get("harness") or "none")
-        adapter = adapter_for_harness(harness)
         packet = packet_fn(goal, route, paths)
+        adapter = adapter_for_harness(harness, permission_of(packet))
         dest = root / ".spawns"
         dest.mkdir(parents=True, exist_ok=True)
         pkt_path = dest / f"{packet['id']}.json"
@@ -1034,11 +1010,37 @@ def dispatch_routes(
             "raw_ref": face.get("raw_ref"),
             "blockers": face.get("blockers") or [],
             "exit": code,
+            "warnings": route.get("warnings") or [],
         }
         if is_consult(packet):
             row["verdict"] = parse_consult_verdict(body)
         opinions.append(row)
     return opinions
+
+
+def dispatch_with_fallback(args, routes, goal, packet_fn, node):
+    """Explicit picks/panels run exactly their selection; automatic runs have two hops."""
+    results = []
+    explicit = bool(args.panel or args.route_id or getattr(args, "who", None))
+    used = int(getattr(args, "fallback_hops", 0)) + bool(args.after)
+    while routes:
+        batch = dispatch_routes(routes, goal, list(args.paths or []), args.root.resolve(), args.timeout, packet_fn, node)
+        results.extend(batch)
+        if explicit or not batch or batch[-1].get("disposition") != "infra-red" or used >= 2:
+            break
+        # Re-resolve current executable/health state after the passive outcome.
+        import ladder
+        permission = "read" if node == "consult" or args.shape in READ_SHAPES else "write"
+        data = ladder.load(permission=permission)
+        try:
+            route = ladder.assign(data, args.shape, after=routes[-1]["id"],
+                                  not_harness=args.not_harness,
+                                  author_family=getattr(args, "author_family", None),
+                                  fallback_hops=used)
+        except SystemExit:
+            break
+        routes, used = [route], used + 1
+    return results
 
 
 def cmd_consult(args: argparse.Namespace) -> int:
@@ -1051,15 +1053,7 @@ def cmd_consult(args: argparse.Namespace) -> int:
     except SystemExit as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    opinions = dispatch_routes(
-        routes,
-        goal,
-        list(args.paths or []),
-        args.root.resolve(),
-        args.timeout,
-        consult_packet,
-        "consult",
-    )
+    opinions = dispatch_with_fallback(args, routes, goal, consult_packet, "consult")
     print(json.dumps({"shape": args.shape, "panel": bool(args.panel), "opinions": opinions}, indent=2))
     if not opinions:
         return 2
@@ -1076,15 +1070,7 @@ def cmd_oneshot(args: argparse.Namespace) -> int:
     except SystemExit as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    results = dispatch_routes(
-        routes,
-        goal,
-        list(args.paths or []),
-        args.root.resolve(),
-        args.timeout,
-        oneshot_packet,
-        "oneshot",
-    )
+    results = dispatch_with_fallback(args, routes, goal, oneshot_packet, "oneshot")
     print(json.dumps({"shape": args.shape, "oneshot": True, "results": results}, indent=2))
     if not results:
         return 2
@@ -1120,6 +1106,8 @@ def main() -> int:
     )
     consult.add_argument("--after", help="handoff: next spawnable route after this id")
     consult.add_argument("--not-harness", dest="not_harness", help="skip this harness (ADR-005)")
+    consult.add_argument("--author-family", help="author harness/family/vendor for cross-family automatic review")
+    consult.add_argument("--fallback-hops", type=int, default=0)
     consult.add_argument("--panel", action="store_true", help="every spawnable reader for the shape")
     consult.add_argument("--goal", help="brief; stdin is appended when piped")
     consult.add_argument("--paths", nargs="*", default=[], help="paths the reader should look at")
@@ -1137,6 +1125,8 @@ def main() -> int:
     )
     oneshot.add_argument("--after", help="handoff: next spawnable route after this id")
     oneshot.add_argument("--not-harness", dest="not_harness")
+    oneshot.add_argument("--author-family")
+    oneshot.add_argument("--fallback-hops", type=int, default=0)
     oneshot.add_argument("--panel", action="store_true")
     oneshot.add_argument("--goal", help="brief; else stdin")
     oneshot.add_argument("--paths", nargs="*", default=[])

@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
+import argparse
+import spawn
+import routing
 
 HERE = Path(__file__).resolve().parent
 SPAWN = HERE / "spawn.py"
@@ -126,7 +130,7 @@ def test_claude_adapter_argv() -> None:
         expect(staged.returncode == 0, staged.stderr)
         spec_path = json.loads(staged.stdout)["spec_file"]
         spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
-        spec["interface"] = "sonnet-5"
+        spec["interface"] = "sonnet"
         spec["surface"] = "packet-only"
         Path(spec_path).write_text(json.dumps(spec), encoding="utf-8")
         fake = root / "fake-claude"
@@ -155,7 +159,7 @@ def test_claude_adapter_argv() -> None:
         logged = json.loads(argv_log.read_text(encoding="utf-8"))
         argv, stdin = logged["argv"], logged["stdin"]
         expect("-p" in argv, argv)
-        expect("--model" in argv and "claude-sonnet-5" in argv, argv)
+        expect("--model" in argv and "claude-sonnet-5-5" in argv, argv)
         expect("--effort" in argv and "low" in argv, argv)
         expect("--disable-slash-commands" in argv, argv)
         expect(not any("You are executing ONE work node" in a for a in argv), argv)
@@ -178,7 +182,7 @@ def test_claude_adapter_strips_api_keys() -> None:
         expect(staged.returncode == 0, staged.stderr)
         spec_path = json.loads(staged.stdout)["spec_file"]
         spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
-        spec["interface"] = "sonnet-5"
+        spec["interface"] = "sonnet"
         spec["surface"] = "packet-only"
         Path(spec_path).write_text(json.dumps(spec), encoding="utf-8")
         fake = root / "fake-claude"
@@ -238,7 +242,7 @@ def test_codex_adapter_argv() -> None:
                 "id": "agt-sol",
                 "kind": "model",
                 "harness": "codex",
-                "interface": "gpt-5.6-sol",
+                "interface": "gpt-6.1-sol",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
             },
             "requester": {
@@ -287,7 +291,7 @@ def test_codex_adapter_argv() -> None:
         argv, stdin = logged["argv"], logged["stdin"]
         expect("exec" in argv, argv)
         expect(argv[-1] == "-", argv)
-        expect("-m" in argv and "gpt-5.6-sol" in argv, argv)
+        expect("-m" in argv and "gpt-6.1-sol" in argv, argv)
         expect("--sandbox" in argv and "read-only" in argv, argv)
         expect("--skip-git-repo-check" in argv, argv)
         expect("--ephemeral" in argv, argv)
@@ -313,7 +317,7 @@ def test_codex_fast_off_via_env() -> None:
                 "id": "agt-sol",
                 "kind": "model",
                 "harness": "codex",
-                "interface": "gpt-5.6-sol",
+                "interface": "gpt-6.1-sol",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
             },
             "requester": {
@@ -371,7 +375,7 @@ def test_openai_adapter_missing_key() -> None:
                 "id": "agt-sol",
                 "kind": "model",
                 "harness": "codex",
-                "interface": "gpt-5.6-sol",
+                "interface": "gpt-6.1-sol",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
             },
             "requester": {
@@ -412,55 +416,94 @@ def test_openai_adapter_missing_key() -> None:
         expect("openai-key-missing" in face["blockers"], face)
 
 
-def test_openai_adapter_sol_live() -> None:
-    key = (os.environ.get("OPENAI_API_KEY") or "").strip()
-    if not key:
-        print("skip test_openai_adapter_sol_live (no OPENAI_API_KEY)")
-        return
+def test_openai_adapter_permissions_and_passive_health() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
-        packet = {
-            "id": "pkt-sol-live",
-            "node_id": "nod-sol-live",
-            "goal": "Reply with the single word pong.",
-            "assignee": {
-                "id": "agt-sol",
-                "kind": "model",
-                "harness": "codex",
-                "interface": "gpt-5.6-sol",
-                "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
-            },
-            "requester": {
-                "id": "agt-conductor",
-                "kind": "group",
-                "harness": "none",
-                "signing": {"mode": "stand-in", "stand_in_id": "agt-conductor"},
-            },
-            "constraints": {"permission": "write", "paths": [], "do_not": ["deploy"]},
-            "acceptance": {"kind": "none"},
-            "load_class": "structure-clear",
-            "rigor": "architecture",
-            "density": "lean",
-            "surface": "packet-only",
-        }
+        prompt = root / "prompt.md"
+        prompt.write_text("read this", encoding="utf-8")
+        raw, face = root / "raw.txt", root / "face.json"
+        spec = {"interface": "astra", "permission": "write", "surface": "packet-only", "paths": ["src/"]}
+        with patch.object(spawn, "openai_chat") as chat:
+            spawn.capture_json(spawn.run_openai, spec, prompt, raw, face)
+            expect(not chat.called, "write must be rejected before HTTP")
+            expect("openai-read-only" in json.loads(face.read_text())["blockers"], face.read_text())
+        spec["permission"], spec["paths"] = "read", []
+        for status, body, outcome in ((200, '{"choices":[{"message":{"content":"ok"}}]}', "success"),
+                                      (429, '{"error":"rate limit"}', "quota"),
+                                      (401, '{"error":"unauthorized"}', "auth"),
+                                      (404, '{"error":"model_not_found"}', "model-not-found")):
+            with patch.object(spawn, "openai_chat", return_value=(status, body)) as chat, patch.object(routing, "record_execution") as record:
+                spawn.capture_json(spawn.run_openai, spec, prompt, raw, face)
+                expect(chat.call_args.args[0] == routing.model_of("astra"), "resolved API model")
+                expect(record.call_args.args[2] == outcome, (status, record.call_args))
+        packet = act_packet()
+        packet["constraints"] = {"permission": "write", "paths": ["src/x.py"]}
         pkt = root / "packet.json"
         pkt.write_text(json.dumps(packet), encoding="utf-8")
-        env = {**os.environ, "CODEX_BIN": "/nonexistent/codex-not-installed"}
-        staged = subprocess.run(
-            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
-            text=True,
-            capture_output=True,
-            env=env,
-        )
-        expect(staged.returncode == 0, staged.stderr + staged.stdout)
-        spec = json.loads(staged.stdout)
-        expect(spec["adapter"] == "openai", spec)
-        expect(spec["interface"] == "gpt-5.6-sol", spec)
-        proc = run(["run", "--spec", spec["spec_file"], "--adapter", "openai"])
-        expect(proc.returncode == 0, proc.stderr + proc.stdout)
-        face = json.loads(proc.stdout)
-        expect(face["disposition"] == "pass", face)
-        expect("pong" in (face.get("summary") or "").lower(), face)
+        env = {**os.environ, "CODEX_BIN": "/nonexistent/codex", "OPENAI_API_KEY": "test-unused"}
+        staged = subprocess.run([sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)], text=True, capture_output=True, env=env)
+        expect(json.loads(staged.stdout)["adapter"] == "none", staged.stdout)
+
+
+def test_launcher_migration_and_unknown_model():
+    prompt = Path("/unused/prompt.md")
+    for alias in ("opus-4.8", "opus-5", "claude-opus-4-8", "opus"):
+        argv = spawn.claude_argv({"interface": alias}, prompt)
+        expect(argv[argv.index("--model") + 1] == routing.model_of("opus"), alias)
+    for alias in ("gpt-5.6-sol", "sol"):
+        argv = spawn.codex_argv({"interface": alias}, prompt)
+        expect(argv[argv.index("-m") + 1] == routing.model_of("sol"), alias)
+    try:
+        spawn.claude_argv({"interface": "unconfigured-model"}, prompt)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unknown interface silently accepted")
+    argv = spawn.grok_argv({"interface": "grok"}, prompt)
+    expect(argv[argv.index("-m") + 1] == "grok-4.7", "offline Grok selection")
+
+
+def test_bounded_automatic_fallback():
+    args = argparse.Namespace(panel=False, route_id=None, who=None, fallback_hops=0, after=None,
+                              paths=[], root=Path("/unused"), timeout=1, shape="architecture-review",
+                              not_harness=None, author_family="codex")
+    def launch(rows, *unused):
+        return [{"id": rows[0]["id"], "disposition": "infra-red"}]
+    # An exaggerated ladder verifies the dispatcher stops after the second hop.
+    def next_route(data, shape, **kwargs):
+        return {"id": kwargs["after"] + "-next"}
+    with patch.object(spawn, "dispatch_routes", side_effect=launch), patch("ladder.load", return_value={}), patch("ladder.assign", side_effect=next_route):
+        results = spawn.dispatch_with_fallback(args, [{"id": "first"}], "goal", spawn.consult_packet, "consult")
+        expect(len(results) == 3, results)
+        args.who = ["opus"]
+        expect(len(spawn.dispatch_with_fallback(args, [{"id": "first"}], "goal", spawn.consult_packet, "consult")) == 1, "human pick must not fallback")
+
+
+def test_infra_evidence_only():
+    expect(routing.infra_outcome("test assertion failed") is None, "task failure")
+    expect(routing.infra_outcome("model_not_found") == "model-not-found", "model failure")
+    expect(routing.infra_outcome("Credit balance is too low") == "quota", "quota failure")
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        prompt = root / "prompt.md"
+        prompt.write_text("brief")
+        spec = root / "spec.json"
+        spec.write_text(json.dumps({"prompt_file": str(prompt), "interface": "opus", "workspace": td, "timeout_sec": .01}))
+        child = patch.object(spawn.subprocess, "Popen")
+        with child as popen, patch.object(routing, "record_execution") as record:
+            process = popen.return_value
+            process.communicate.return_value = ('{"disposition":"task-red"}', None)
+            process.returncode = 0
+            spawn.capture_json(spawn.cmd_run, argparse.Namespace(spec=spec, adapter="claude", argv=None))
+            expect(not record.called, "task-red must not change health")
+            process.communicate.return_value = ('quota exceeded', None)
+            process.returncode = 1
+            spawn.capture_json(spawn.cmd_run, argparse.Namespace(spec=spec, adapter="claude", argv=None))
+            expect(record.call_args.args[2] == "quota", record.call_args)
+            process.communicate.return_value = ('ok', None)
+            process.returncode = 0
+            spawn.capture_json(spawn.cmd_run, argparse.Namespace(spec=spec, adapter="claude", argv=None))
+            expect(record.call_args.args[2] == "success", record.call_args)
 
 
 def test_read_permission_prompt_is_reader_brief() -> None:
@@ -471,11 +514,11 @@ def test_read_permission_prompt_is_reader_brief() -> None:
             "node_id": "nod-advise",
             "goal": "Read add-x. Verdict accept or send-back.",
             "assignee": {
-                "id": "agt-fable",
+                "id": "agt-opus",
                 "kind": "model",
                 "harness": "claude",
-                "interface": "fable-5.1",
-                "signing": {"mode": "stand-in", "stand_in_id": "agt-fable"},
+                "interface": "opus",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-opus"},
             },
             "requester": {
                 "id": "agt-conductor",
@@ -519,7 +562,7 @@ def act_packet(change_id: str | None = "add-x") -> dict:
             "id": "agt-sol",
             "kind": "model",
             "harness": "codex",
-            "interface": "gpt-5.6-sol",
+            "interface": "gpt-6.1-sol",
             "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
         },
         "requester": {
@@ -585,7 +628,7 @@ def test_codex_advise_sandbox_is_writable() -> None:
                 "id": "agt-sol",
                 "kind": "model",
                 "harness": "codex",
-                "interface": "gpt-5.6-sol",
+                "interface": "gpt-6.1-sol",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-sol"},
             },
             "requester": {
@@ -648,11 +691,11 @@ def test_consult_prompt_is_not_advise() -> None:
             "goal": "Second-opinion this architecture: keep spawn cwd as workspace.",
             "role": "consultant",
             "assignee": {
-                "id": "agt-fable-5-1-arch-review",
+                "id": "agt-opus-arch-review",
                 "kind": "model",
                 "harness": "claude",
-                "interface": "fable-5.1",
-                "signing": {"mode": "stand-in", "stand_in_id": "agt-fable-5-1-arch-review"},
+                "interface": "opus",
+                "signing": {"mode": "stand-in", "stand_in_id": "agt-opus-arch-review"},
             },
             "requester": {
                 "id": "agt-conductor",
@@ -710,7 +753,7 @@ def test_consult_cli_fake_claude() -> None:
                 "--shape",
                 "architecture-review",
                 "--id",
-                "fable-5.1-arch-review",
+                "opus-arch-review",
                 "--goal",
                 "Should spawn cwd be the workspace?",
                 "--paths",
@@ -748,7 +791,7 @@ def test_grok_adapter_argv() -> None:
                 "id": "agt-grok",
                 "kind": "model",
                 "harness": "grok",
-                "interface": "grok-4.6",
+                "interface": "grok-4.7",
                 "signing": {"mode": "stand-in", "stand_in_id": "agt-grok"},
             },
             "requester": {
@@ -796,7 +839,7 @@ def test_grok_adapter_argv() -> None:
         argv = json.loads(argv_log.read_text(encoding="utf-8"))
         expect("--prompt-file" in argv, argv)
         expect("-p" not in argv, argv)
-        expect("-m" in argv and "grok-4.6" in argv, argv)
+        expect("-m" in argv and "grok-4.7" in argv, argv)
         expect("--effort" in argv and "high" in argv, argv)
         expect("--output-format" in argv and "json" in argv, argv)
         expect(not any("You are executing ONE work node" in a for a in argv), argv)
@@ -845,7 +888,7 @@ def test_oneshot_cli_fake() -> None:
         out = json.loads(proc.stdout)
         expect(out.get("oneshot") is True, out)
         expect(len(out["results"]) == 1, out)
-        expect(out["results"][0]["id"] == "sonnet-5", out)
+        expect(out["results"][0]["id"] == "sonnet-known", out)
         logged = json.loads(argv_log.read_text(encoding="utf-8"))
         expect("-p" in logged["argv"], logged["argv"])
         expect("You are executing ONE work node" in logged["stdin"], logged["stdin"][:200])
@@ -857,7 +900,7 @@ def test_consult_who_exclusive() -> None:
             "consult",
             "--panel",
             "--who",
-            "fable",
+            "opus",
             "--goal",
             "x",
         ]
@@ -934,7 +977,10 @@ def main() -> int:
         test_codex_adapter_argv,
         test_codex_fast_off_via_env,
         test_openai_adapter_missing_key,
-        test_openai_adapter_sol_live,
+        test_openai_adapter_permissions_and_passive_health,
+        test_launcher_migration_and_unknown_model,
+        test_bounded_automatic_fallback,
+        test_infra_evidence_only,
         test_read_permission_prompt_is_reader_brief,
         test_codex_advise_sandbox_is_writable,
         test_act_packet_with_change_id_is_worker,
@@ -948,6 +994,8 @@ def main() -> int:
         test_consult_shim_finds_spawn_from_foreign_cwd,
         test_empty_packet_fails,
     ]
+    scratch = tempfile.TemporaryDirectory()
+    os.environ["INTENTION_HEALTH_FILE"] = str(Path(scratch.name) / "health.json")
     failed = 0
     for fn in tests:
         try:

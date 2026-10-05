@@ -38,8 +38,8 @@ no flag (blank-page observe still happened).
 - Density: lean | standard | explicit   ← from ladder.py; inverse of capability
 - Surface: skill-host | packet-only
 - Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
-- Consult: plan/replan → Fable 5.1; write stays here
-- Architecture: review-pair, reader = Astra (`gpt-6-astra`; Fable 5.1 without Codex; Grok for second family)
+- Consult: plan/replan → Opus then Astra; write stays here
+- Architecture: review-pair, reader = Opus-high then Astra then Grok; skip author's vendor with `--author-family`
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 

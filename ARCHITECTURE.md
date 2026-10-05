@@ -151,33 +151,40 @@ runners (`add-act-conductor`, `add-act-runners`).
 
 ---
 
-### ADR-005: Claude Code coding pool; Grok architecture reader ✅
+### ADR-005: Stable family routing and cross-vendor review ✅
 
-**Status:** Accepted 2026-08-16 (`update-act-ladder` activated).
+**Status:** Accepted 2026-08-16; amended 2026-10-05 by the activated,
+independently accepted `update-model-routing-health` contract.
 **Blast:** assignment. Who gets the packet.
 
-**Decision.** Default coding agents are Claude Code, which holds the
-high usage limits, except Codex Terra is the known/mechanical
-worker when the CLI is present, and Sol takes implementation and
-thinking:
+**Decision.** Assign stable family routes by task shape. Concrete versions
+and verification dates live only in `references/ladder.json`:
 
 | Shape | Assignee |
 |---|---|
-| Known / mechanical | Codex Terra (`gpt-5.6-terra`) then Sonnet 5 · `explicit` |
-| Implementation / thinking | GPT-5.6 Sol · `standard` · effort medium; Opus 5 backup |
-| Design | Opus 5 · effort low/medium · CC designer skills |
-| Planning helper / replan consult | Fable 5.1 · `lean` · no write |
-| Real architecture review | Astra (`gpt-6-astra`) then Fable 5.1. **Grok** when a second family is needed |
+| Known / mechanical | Sonnet then Terra · `explicit` |
+| Implementation / thinking | Sol then Opus · `standard` · effort medium |
+| Design | Opus · effort low/medium · CC designer skills |
+| Planning helper / replan consult | Opus then Astra · `lean` · no write |
+| Real architecture review | Opus-high then Astra then Grok; skip author's vendor |
+| Fold | Opus then optional Grok |
 
-Same-family review still cannot promote. Grok reading an Opus design
-is the cross-family gate. Astra/Terra/Sol stay `available: false`
-until Codex is present. Human pick always wins.
+Same-vendor review still cannot promote. The resolver takes an explicit
+author harness/family/vendor: Claude authors use Astra, otherwise Grok;
+Codex authors use Opus first. Human picks can explicitly override routing.
+Configuration, permission-aware executability, and passive health are separate.
+API-only OpenAI is read-only. Unknown and verified health stay eligible;
+degraded routes are skipped without reordering, at most two fallback hops.
+Human health overrides return warnings. Only infrastructure evidence updates
+runtime scratch health; keys and transcripts are excluded. Retired route and
+interface ids remain migration aliases for one release, resolving current models.
 
 Source of truth: `plugins/intention/references/ladder.json`.
 Resolve: `plugins/intention/scripts/ladder.py assign --shape …`.
 
-**Why.** The previous ladder assumed Grok was the default coder and
-Codex was in the pool. That is not the subscription set.
+**Why.** Version pins and scattered launcher maps drifted, while a static
+availability flag conflated local adapters with recent infrastructure health.
+One shared resolver preserves operator choice and fails open when evidence expires.
 
 ---
 

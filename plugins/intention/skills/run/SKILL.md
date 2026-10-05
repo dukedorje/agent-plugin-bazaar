@@ -188,16 +188,18 @@ while waves < max_waves:
       continue
     # else single act below
   if card.next is fold:
-    assign ladder --shape fold          # opus-5-fold unless human picked Grok
+    assign ladder --shape fold          # opus-fold unless human picked Grok
     if this session is not that route:
       spawn designated folder in background (packet + spawn.py)
       waves += 1
       continue                          # tab keeps moving
     # else inline fold/SKILL.md below
   if card.next is advise:
-    author = harness that wrote the change (this session if you wrote it)
-    route = ladder assign --shape architecture-review --not-harness <author>
-    if assign failed:                   # no spawnable other-family
+    author = recorded change-author harness/family (this session if you wrote it)
+    route = ladder assign --shape architecture-review --permission write --author-family <author>
+    # On infra-red, pass --after <route-id> --fallback-hops <completed hops>.
+    # Carry route.fallback_hops across attempts; never exceed two automatic hops.
+    if assign failed:                   # no executable other-family
       add owed box "ASK: second-family advise" on tasks.md if missing
       punt += [focus]
       continue                          # never inline accept
