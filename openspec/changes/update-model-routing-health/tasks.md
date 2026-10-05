@@ -5,7 +5,7 @@
 - [x] Add shared configured/executable/health resolution with permission-aware adapter checks and bounded fallback.
 - [x] Record and consume infra-only health evidence with the approved TTLs and injectable clock/store tests.
 - [x] Update spawn adapters to use resolved concrete models and remove silent stale-model fallbacks.
-- [ ] Remove Fable, Opus 4.8, Sol architecture-review, and stale routing claims from live skills, references, specs, ADRs, and tests.
+- [x] Remove Fable, Opus 4.8, Sol architecture-review, and stale routing claims from live skills, references, ADRs, and tests; prepare the living-spec delta for fold.
 - [x] Verify Grok 4.7 model selection without requiring a paid recurring probe.
 - [x] Preserve unrelated dirty work and commit only this change's files.
 
