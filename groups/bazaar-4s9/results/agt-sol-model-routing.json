@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-4s9-sol",
+  "packet_id": "pkt-bazaar-4s9-act-1",
+  "signer": {
+    "id": "agt-sol-model-routing",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-sol-model-routing"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/intention/references/ladder.json",
+      "role": "family registry and routes"
+    },
+    {
+      "path": "plugins/intention/scripts/routing.py",
+      "role": "shared executable and health resolver"
+    },
+    {
+      "path": "plugins/intention/scripts/ladder.py",
+      "role": "assignment"
+    },
+    {
+      "path": "plugins/intention/scripts/spawn.py",
+      "role": "launcher and passive health"
+    },
+    {
+      "path": "plugins/intention/scripts/test-ladder.py",
+      "role": "routing verification"
+    },
+    {
+      "path": "plugins/intention/scripts/test-spawn.py",
+      "role": "launcher verification"
+    },
+    {
+      "path": "openspec/changes/update-model-routing-health/",
+      "role": "change contract"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "role": "architecture"
+    },
+    {
+      "path": "docs/LEARNINGS.md",
+      "role": "operational learning"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-ladder.py && python3 plugins/intention/scripts/test-spawn.py",
+    "exit_code": 0,
+    "output_tail": "Routing and health checks passed; all 25 offline spawn tests passed."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "0ef9ab0ad4f68b69f38b0d89e9b578f1b2a1aef6",
+    "paths": [
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md",
+      "groups/bazaar-4s9/",
+      "openspec/changes/update-model-routing-health/",
+      "plugins/intention/README.md",
+      "plugins/intention/references/",
+      "plugins/intention/scripts/",
+      "plugins/intention/skills/"
+    ]
+  },
+  "summary": "Implemented stable family routing, centralized concrete versions, permission-aware executability, passive infra health TTLs, bounded fallback, migration aliases, cross-family review, and the approved latest model order without disturbing unrelated dirty work.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "agt-sol-model-routing",
+    "content_hash": "sha256:53f758337579f74ca0aea1191a97ad892a5a9f3398b8f2c7d5a73c4d8cd854e6"
+  },
+  "distilled": {
+    "disposition": "pass",
+    "summary": "Family routing and three-state health are implemented and focused tests pass.",
+    "verify_command": "python3 plugins/intention/scripts/test-ladder.py && python3 plugins/intention/scripts/test-spawn.py",
+    "verify_exit": 0,
+    "commit_sha": "0ef9ab0ad4f68b69f38b0d89e9b578f1b2a1aef6",
+    "changed_files": [
+      "plugins/intention/references/ladder.json",
+      "plugins/intention/scripts/routing.py",
+      "plugins/intention/scripts/ladder.py",
+      "plugins/intention/scripts/spawn.py",
+      "plugins/intention/scripts/test-ladder.py",
+      "plugins/intention/scripts/test-spawn.py",
+      "openspec/changes/update-model-routing-health/",
+      "ARCHITECTURE.md",
+      "docs/LEARNINGS.md"
+    ],
+    "blockers": [],
+    "raw_ref": "groups/bazaar-4s9/results/agt-sol-model-routing.json"
+  },
+  "raw_ref": "groups/bazaar-4s9/results/agt-sol-model-routing.json"
+}
