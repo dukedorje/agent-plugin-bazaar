@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-4s9-fold-1",
+  "node_id": "bazaar-4s9-fold",
+  "capability": "verbs",
+  "goal": "Fold the completed ACTIVE BUILD change update-model-routing-health into the living verbs specification and archive it under the 2026-10-05 prefix. Apply only the named MODIFIED requirement blocks, preserve unrelated dirty living-spec edits, confirm all claimed SHALLs are living, and do not implement new behavior.",
+  "non_goals": ["Implement routing code", "Alter unrelated run branch-policy edits", "Push or deploy"],
+  "anchors": [
+    {"symbol": "openspec/changes/update-model-routing-health/specs/verbs/spec.md", "invariant": "Three complete MODIFIED blocks replace their matching living requirements."},
+    {"symbol": "openspec/specs/verbs/spec.md", "invariant": "Unrelated requirements and dirty edits remain unchanged."},
+    {"symbol": "plugins/intention/references/fold-steps.md", "invariant": "Confirm living truth and archive atomically."}
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The three complete routing requirements are living, the active change directory is absent, and the full change is archived under 2026-10-05 without disturbing unrelated verbs edits.",
+    "if_false": "Any claimed SHALL remains only in the change/archive, an old routing block survives, the active change remains, or unrelated living-spec edits are lost."
+  },
+  "out_of_scope": [],
+  "constraints": {
+    "permission": "write",
+    "paths": ["openspec/specs/verbs/spec.md", "openspec/changes/update-model-routing-health/", "openspec/changes/archive/2026-10-05-update-model-routing-health/", "groups/bazaar-4s9/"],
+    "do_not": ["act", "implement", "push", "deploy"]
+  },
+  "load_class": "structure-clear",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "skill-host",
+  "role": "folder",
+  "assignee": {
+    "id": "agt-opus-model-routing-fold",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "claude-opus-5-5",
+    "family": "opus",
+    "effort": "medium",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-opus-model-routing-fold"}
+  },
+  "requester": {
+    "id": "agt-codex-conductor",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-codex-conductor"}
+  }
+}

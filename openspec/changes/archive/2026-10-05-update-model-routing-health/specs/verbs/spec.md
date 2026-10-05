@@ -49,6 +49,8 @@ Grok 4.7.
 - THEN it skips that route and selects the first executable different-family reader
 - AND a human may explicitly override the skip
 
+## ADDED Requirements
+
 ### Requirement: model routes separate configuration, executability, and health
 
 The shared resolver SHALL distinguish configured routes, executable routes for
@@ -98,6 +100,8 @@ NOT degrade model health.
 - WHEN assignment runs
 - THEN it returns that route with a health warning
 - AND it does not silently substitute another model
+
+## MODIFIED Requirements
 
 ### Requirement: claude adapter is live print mode
 
