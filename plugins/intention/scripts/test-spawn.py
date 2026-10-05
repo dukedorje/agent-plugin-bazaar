@@ -483,6 +483,11 @@ def test_infra_evidence_only():
     expect(routing.infra_outcome("test assertion failed") is None, "task failure")
     expect(routing.infra_outcome("model_not_found") == "model-not-found", "model failure")
     expect(routing.infra_outcome("Credit balance is too low") == "quota", "quota failure")
+    expect(
+        routing.infra_outcome("Successful review discusses quota limits", success=True)
+        == "success",
+        "successful model content must not be parsed as infra failure",
+    )
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         prompt = root / "prompt.md"

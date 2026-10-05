@@ -142,6 +142,11 @@ def resolve(route, data, permission="write", *, store=None, env=None, which=None
 
 
 def infra_outcome(text, *, status=None, success=False):
+    # Successful adapter execution is positive health evidence regardless of
+    # words in the model's response (which may legitimately discuss quota,
+    # authentication, or missing-model failure modes).
+    if success:
+        return "success"
     low = text.lower()
     if status in {401, 403} or any(s in low for s in ("invalid api key", "authentication failed", "unauthorized", "not logged in")):
         return "auth"
@@ -149,7 +154,7 @@ def infra_outcome(text, *, status=None, success=False):
         return "quota"
     if any(s in low for s in ("model_not_found", "model not found", "unknown model", "model does not exist")):
         return "model-not-found"
-    return "success" if success else None
+    return None
 
 
 def record_execution(spec, adapter, outcome, *, store=None, env=None):
