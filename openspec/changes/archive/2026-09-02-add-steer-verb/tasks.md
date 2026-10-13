@@ -5,4 +5,4 @@
 - [x] Catalogs and check-skills list `steer`
 - [x] verbs / packaging / default-loop deltas
 - [x] Focused verify: `python3 plugins/intention/scripts/check-skills.py`
-- [ ] Fold living specs when this change folds (map/debrief still inflight)
+- [x] Fold living specs when this change folds (map/debrief already archived)

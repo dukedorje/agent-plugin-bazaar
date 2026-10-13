@@ -26,7 +26,12 @@ intend → steer → change → advise → act → fold
 
 PENDING or PARKED → stop. Do not fold. Do not implement leftover
 tasks — send them back to `act`. Branch name is not a skip.
-Fold on current HEAD unless the human named a branch.
+Fold on current HEAD by default. A branch transition is allowed when the user
+requests it, the task explicitly targets one, or the workflow requires a known
+transition. Resolve the exact target and protect dirty worktree changes first;
+never invent a branch merely to fold. Before persisting, check whether the
+current branch backs an open PR. Do not add an unrelated fold commit to that PR
+branch; move to the task's appropriate branch first.
 
 ## Procedure
 

@@ -19,6 +19,15 @@ Do not invent a second layout.
 
 If `shared.md` says direct fix: edit the file, stop, do not scaffold.
 
+## Frontier preparation
+
+Load `../../references/preparation.md`. When preparing an existing node,
+read upstream results and reconcile its contract before activation or act.
+A still-valid contract is a valid outcome; do not manufacture delta edits.
+Record the preparation note, apply step 4 activation policy to existing
+PENDING proposals as well, and return to the conductor. For a new node,
+use the procedure below after reconciling the inputs.
+
 ## Procedure
 
 1. Search `openspec/specs/` and in-flight `openspec/changes/` (not
@@ -26,8 +35,10 @@ If `shared.md` says direct fix: edit the file, stop, do not scaffold.
 2. Verb-led `change-id`. If `intend` already named one, use that id.
 3. Scaffold `openspec/changes/<id>/` using the templates. `design.md`
    only when the templates say so.
-4. Banner is `> **PENDING**` unless the human already said activate
-   (then `> **ACTIVE BUILD**`).
+4. Banner is `> **PENDING**` unless the human already activated this scope
+   or recorded campaign authority covers this dependency-ready, prepared
+   node (then `> **ACTIVE BUILD**`). Follow preparation.md limits; changed
+   commitments require a human decision, not automatic activation.
 5. Journey section is mandatory: real surfaces, or
    `No new UI because <reason>`.
 6. Deltas: `ADDED` / `MODIFIED` / `REMOVED`, each with a `#### Scenario:`.

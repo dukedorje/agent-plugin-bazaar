@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-lgr-4",
+  "packet_id": "pkt-bazaar-lgr-4",
+  "signer": {
+    "id": "grp-lgr-4-review",
+    "kind": "group",
+    "harness": "none",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "grp-lgr-4-review"
+    }
+  },
+  "topology": "review-pair",
+  "members": [
+    {
+      "id": "agt-opus-5-design",
+      "kind": "model",
+      "harness": "claude",
+      "interface": "opus-5",
+      "signing": {
+        "mode": "stand-in",
+        "stand_in_id": "agt-opus-5-design"
+      }
+    },
+    {
+      "id": "agt-grok-reader",
+      "kind": "model",
+      "harness": "grok",
+      "signing": {
+        "mode": "stand-in",
+        "stand_in_id": "agt-grok-reader"
+      }
+    }
+  ],
+  "member_results": [
+    "res-bazaar-lgr-4-opus"
+  ],
+  "artifacts": [
+    {
+      "path": "ARCHITECTURE.md",
+      "role": "adr"
+    },
+    {
+      "path": "openspec/changes/add-taskmaster-host/",
+      "role": "change"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "command": "python3 scripts/check-hygiene.py",
+    "exit_code": 0,
+    "output_tail": "pass 1 in-flight change(s)"
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "b7077a1",
+    "paths": [
+      "ARCHITECTURE.md",
+      "openspec/changes/add-taskmaster-host/proposal.md",
+      "openspec/changes/add-taskmaster-host/tasks.md",
+      "openspec/changes/add-taskmaster-host/specs/taskmaster/spec.md",
+      "docs/taskmaster/ARCHITECTURE.md",
+      "docs/from-intention-to-running.md"
+    ]
+  },
+  "summary": "ADR-006 accepted: Taskmaster is a sibling host. Stack stays out of living specs. Fold still owed.",
+  "raw_ref": ".spawns/bazaar-lgr.4-1786874658-84207-d324cb61/raw.txt",
+  "distilled": {
+    "disposition": "pass",
+    "summary": "ADR-006 accepted: Taskmaster is a sibling host. Stack stays out of living specs. Fold still owed.",
+    "verify_command": "python3 scripts/check-hygiene.py",
+    "verify_exit": 0,
+    "commit_sha": "b7077a1",
+    "changed_files": [
+      "ARCHITECTURE.md",
+      "openspec/changes/add-taskmaster-host/"
+    ],
+    "blockers": [],
+    "raw_ref": ".spawns/bazaar-lgr.4-1786874658-84207-d324cb61/raw.txt"
+  },
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "grp-lgr-4-review",
+    "content_hash": "sha256:adc4c1ff4d16f5907141fd8cfe95f3e13cc5a977258d1ed4d86fc3be61975325",
+    "signed_at": "2026-08-16T03:10:00Z"
+  }
+}

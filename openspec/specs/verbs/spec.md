@@ -213,9 +213,17 @@ It SHALL NOT flip a PENDING banner. Foreign harnesses SHALL receive
 a task packet and SHALL NOT receive `/run`. `workers_launched` SHALL
 stay 0. The conductor SHALL persist `act` on current HEAD and SHALL
 follow `next: fold` when fold is legal. It SHALL NOT halt `act` or
-`fold` because the branch is not `main`. It SHALL NOT `git checkout`
-or create a branch unless the human named one. A failed `take` or
-empty wave SHALL NOT be a campaign stop.
+`fold` because the branch is not `main`. Current HEAD SHALL be the
+default, not an absolute restriction. The conductor MAY switch or create a
+branch when the user requests it, the task explicitly targets one, or the
+workflow requires a known branch transition. Before transitioning it SHALL
+resolve the exact target and protect dirty worktree changes. Before persisting,
+it SHALL determine whether the current branch backs an open pull request. If it
+does and the task is not explicitly follow-up work for that pull request, the
+conductor SHALL NOT append commits to that branch; it SHALL move the work to an
+appropriate task branch after protecting the worktree. It SHALL NOT invent a
+branch solely to implement an `act` when the current branch is otherwise an
+appropriate target. A failed `take` or empty wave SHALL NOT be a campaign stop.
 
 #### Scenario: Fold is not skipped for a feature branch
 
@@ -224,6 +232,22 @@ empty wave SHALL NOT be a campaign stop.
 - WHEN `run` observes `next: fold`
 - THEN the conductor folds on that HEAD
 - AND does not invent a checkout or a halt
+
+#### Scenario: Explicit branch transition is allowed
+
+- GIVEN the task targets a named branch or its workflow requires a known branch transition
+- AND dirty worktree changes are protected
+- WHEN the conductor executes the task
+- THEN it may create or switch to the resolved branch
+- AND it does not invent an unrelated implementation branch
+
+#### Scenario: Unrelated task does not extend an existing pull request
+
+- GIVEN the current branch backs an open pull request
+- AND the current task is not explicitly follow-up work for that pull request
+- WHEN the conductor prepares to persist the task
+- THEN it protects dirty work and moves the task to an appropriate branch
+- AND it does not append commits to the pull request branch
 
 `stop: no-ready` SHALL mean the observe script is missing. A missing
 `openspec/` tree with a named verb-led change-id SHALL be
@@ -299,6 +323,94 @@ that subject and SHALL NOT stop unrelated dispatchable nodes unless
 - GIVEN `run` assigns a node to Codex
 - WHEN it dispatches
 - THEN Codex is given a packet, not `/run` or `/act`
+
+### Requirement: Execution frontier preparation
+
+Before dispatch, the conductor SHALL reconcile each candidate with its
+upstream results and usable artifacts, current code and living specs, and
+relevant learnings. Activation SHALL NOT establish preparedness. Blocked
+descendants SHALL remain provisional goals, dependencies, assumptions, and
+intended acceptance rather than require fully designed contracts up front.
+
+Change/architecture/instrument nodes SHALL use `change`; brief nodes SHALL
+use `brief`; direct fixes SHALL use a lightweight check. A preparation note
+in the existing bead or proposal SHALL identify input references, outcome,
+and authority. Unchanged inputs and contracts MAY reuse preparation after
+checking them, including on resume; unrelated commits SHALL NOT invalidate
+it. Still-valid contracts SHALL NOT require manufactured delta edits.
+
+Routine refinements within authority SHALL continue. Changed scope or
+architectural commitments SHALL return through intend/steer for a human
+decision; stale nodes SHALL NOT dispatch. Revised architecture/instrument
+contracts SHALL add the owed task `Fresh advise after preparation`.
+An unchecked marker SHALL make `needs_advise` true despite historical
+acceptance; only a fresh accepting reader SHALL close that marker, recording
+the reviewed contract reference. Send-back SHALL leave it open.
+
+The conductor SHALL re-observe after contract, dependency, activation, or
+review changes. Every parallel candidate SHALL be prepared before packets
+are refreshed and disjointness computed; dispatch SHALL be restricted to
+prepared, authorized, in-scope candidates. The run card SHALL expose
+`prepare_before_act` candidates for act decisions and an empty list for
+non-act decisions. This metadata SHALL NOT claim semantic preparation or
+grant authority; direct act and older cards SHALL obey the same policy.
+
+#### Scenario: Activated downstream design is stale
+
+- GIVEN an activated node whose upstream result changes its assumptions
+- WHEN it becomes dispatchable
+- THEN change reconciles the contract before act and revised architecture
+  requires fresh advise even when an old accept exists
+
+#### Scenario: No design change needed
+
+- GIVEN prepared inputs and contract remain unchanged
+- WHEN the conductor checks again
+- THEN it may dispatch without rewriting deltas or repeating a change loop
+
+#### Scenario: Parallel preparation
+
+- GIVEN two disjoint ready candidates and an unrelated global wave candidate
+- WHEN run selects a wave
+- THEN every selected member has current preparation and refreshed packets
+  and the unrelated candidate is excluded
+
+### Requirement: Bounded campaign activation
+
+A human instruction to run a whole named intention SHALL grant continuing
+activation/write authority within its agreed goals, non-goals, and
+architectural commitments. The conductor SHALL record the instruction and
+bounds on the existing root bead or chat DAG. Bare run SHALL NOT invent
+this grant. Only change SHALL apply it after preparation to dependency-ready
+PENDING nodes, including existing proposals; blocked descendants SHALL NOT
+be pre-activated by the conductor. Explicit activation SHALL remain valid
+within its approved scope but SHALL NOT waive preparation.
+
+Run SHALL consider eligible PENDING nodes covered by that recorded grant
+before treating activation as terminal, follow change, then re-observe.
+Explicit plan/ask/advise/wait/tidy/pause boundaries and skip/punt policy
+SHALL take precedence. PARKED, sensitive permission, unresolved ambiguity,
+explicit human gates, and ASK/EYES SHALL NOT be bypassed. Missing authority
+SHALL leave PENDING. Changed commitments SHALL require a human decision.
+
+#### Scenario: Existing draft within campaign bounds
+
+- GIVEN a recorded whole-intention grant and a dependency-ready PENDING draft
+- WHEN change confirms or refines its contract within the grant
+- THEN change may activate it and run re-observes before execution
+
+#### Scenario: No grant or explicit stopping boundary
+
+- GIVEN bare run without campaign authority, or run with an explicit wait gate
+- WHEN a PENDING node is encountered
+- THEN existing activation and stopping rules apply without automatic activation
+
+#### Scenario: Discovery changes commitments
+
+- GIVEN a whole-intention grant
+- WHEN preparation discovers a scope or architectural commitment change
+- THEN the affected branch returns to the human and unrelated eligible work
+  can continue under existing campaign policy
 
 ### Requirement: intend emits density
 

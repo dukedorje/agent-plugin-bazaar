@@ -14,7 +14,8 @@ Instructions for agents. The durable copy of the rules is
 - [ ] New behavior: verb-led `change-id`, `proposal.md` + `tasks.md` + deltas.
       `design.md` only when cross-cutting.
 - [ ] Do not start write work on PENDING or PARKED. Wait for ACTIVE BUILD
-      (human activation) unless the rigor is vibe/brief and permission is already write.
+      (human activation or change applying recorded, bounded campaign authority
+      after preparation) unless the rigor is vibe/brief and permission is already write.
 - [ ] Packets at change / architecture / instrument rigor set `capability`
       to a spec id.
 

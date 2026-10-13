@@ -90,6 +90,12 @@ def needs_advise(change_dir: Path) -> bool:
     rigor = change_rigor(change_dir)
     if rigor not in NEEDS_RIGOR:
         return False
+    tasks = change_dir / "tasks.md"
+    if tasks.is_file() and any(
+        line.strip() == "- [ ] Fresh advise after preparation"
+        for line in tasks.read_text(encoding="utf-8").splitlines()
+    ):
+        return True
     return last_advise_verdict(change_dir) not in ACCEPTING
 
 

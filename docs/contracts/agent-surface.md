@@ -63,7 +63,10 @@ validates.
    needs a fresh reader, a live oracle, a discriminating contrast, or a human.
 8. **Permission is on the packet, not the identity.** `read` / `write` /
    `sensitive`. A plan is not permission. Architecture and instrument nodes
-   sit behind a `human-gate` until activated.
+   sit behind a `human-gate` until activated. Recorded whole-intention
+   authority may cover routine activation within approved commitments
+   (verbs / Bounded campaign activation); it never bypasses explicit human
+   gates, sensitive permission, or current-contract preparation.
 9. **Status lives in the file.** Packet, result, and agent records carry
    their own disposition and identity. Paths are not status.
 10. **Schema is forward-compatible with a real key.** `stand-in` today, `key`

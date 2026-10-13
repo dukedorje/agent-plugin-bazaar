@@ -131,10 +131,15 @@ paraphrase it into `stop: empty`. Refusing fold must not end the
 campaign. Same-family advise must not end the campaign.
 `stop: empty` is not stuck while `needs_advise` remains and an
 other-family route exists. `next: fold` is not a halt. Persist
-`act` on **current HEAD**; do not `git checkout`, invent a
-branch, or skip fold because the branch is not `main`. A failed
-`take` or empty wave is a mutex, not a campaign stop. The human
-naming a branch is the only checkout.
+`act` on **current HEAD** by default; do not skip fold because the branch is
+not `main`. A branch transition is allowed when the user requests it, the task
+explicitly targets one, or the workflow requires a known transition. Resolve
+the exact target and protect dirty worktree changes first. Before persist,
+check whether the current branch backs an open PR. If this task is not
+explicitly follow-up work for that PR, do not append commits there; move the
+work to an appropriate task branch after protecting the worktree. Never invent
+a branch solely for an `act` when the current branch is otherwise appropriate.
+A failed `take` or empty wave is a mutex, not a campaign stop.
 
 Conductor loop:
 
@@ -310,4 +315,7 @@ Mailbox is `/status` (ASK / EYES / PUNT faces) — not a ninth verb. `/ready` is
 - Write a fake send-back so you can skip the read
 - Halt `act` persist or `fold` because HEAD is a feature branch
   or not `main`
-- `git checkout` or create a branch unless the human named one
+- Invent a branch solely for an `act`, or switch/create without a user request,
+  an explicit task target, or a known workflow transition
+- Change branches before resolving the exact target and protecting dirty work
+- Append unrelated commits to a branch that already backs an open PR

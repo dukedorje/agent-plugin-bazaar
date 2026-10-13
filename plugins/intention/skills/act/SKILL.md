@@ -17,10 +17,14 @@ The packet is the only interface. Schema:
 
 ## Procedure
 
-1. **Admit.** Resolve `campaign_id` explicitly: use the pinned
-   intention/root id when this act belongs to a campaign, or the node id for a
-   direct one-node act. Then run `python3
-   plugins/intention/scripts/conductor.py ready --campaign <campaign_id>`.
+1. **Prepare, then admit.** Load `../../references/preparation.md`.
+   Verify current preparation even for a directly invoked or previously
+   activated node. Follow change/brief if missing or stale; re-observe after
+   amendments. Do not take a lease or emit a packet for an unreconciled
+   contract. Resolve `campaign_id` explicitly: use the pinned intention/root
+   id when this act belongs to a campaign, or the node id for a direct
+   one-node act. Then **admit:** `python3 plugins/intention/scripts/conductor.py
+   ready --campaign <campaign_id>`.
    Dispatch only a `dispatchable` id. Overlap is deferred. `capped`
    means `max_inflight` is full (`ACT_MAX_INFLIGHT` or
    `ladder.json`). If rigor is `change` / `architecture` /
@@ -56,8 +60,15 @@ The packet is the only interface. Schema:
    HEAD). Workers edit and stop.
 8. **Persist** as conductor: `conductor.py persist --paths … -m …`
    on **current HEAD**. After a wave, persist each owned set
-   sequentially. Do not `git checkout` or create a branch unless
-   the human named one. `--worktree` is PARKED. Persistence ≠
+   sequentially. Current HEAD is the default, not an absolute restriction:
+   switch or create a branch when the user requests it, the task explicitly
+   targets one, or the workflow requires a known transition. Resolve the exact
+   target and protect dirty worktree changes first. Before persist, determine
+   whether the current branch backs an open PR. Unless this task is explicitly
+   follow-up work for that PR, do not append commits there; move the work to an
+   appropriate task branch after protecting the worktree. Never invent a branch
+   solely for this act when the current branch is otherwise appropriate.
+   `--worktree` is PARKED. Persistence ≠
    acceptance. Uncommitted writes are not a reason to skip the
    next wave (`fold` / `demo`).
 9. **Focused verify** once. Distill. Classify with

@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-lgr-4",
+  "node_id": "bazaar-lgr.4",
+  "capability": "taskmaster",
+  "change_id": "add-taskmaster-host",
+  "requester": {
+    "id": "agt-duke",
+    "kind": "human",
+    "harness": "human",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-duke" }
+  },
+  "assignee": {
+    "id": "agt-opus-5-design",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "opus-5",
+    "signing": { "mode": "stand-in", "stand_in_id": "agt-opus-5-design" }
+  },
+  "goal": "Taskmaster is named as a sibling host in an accepted ADR. Capability taskmaster exists only after fold. No SvelteKit SHALLs in this marketplace living specs.",
+  "non_goals": [
+    "Implementing or changing /taskmaster-web",
+    "IdentiKey login",
+    "Snapshot deploy",
+    "Storybook / Playwright",
+    "Forking the agent surface",
+    "Absorbing MetaDev or MetaCoding"
+  ],
+  "anchors": [
+    {
+      "symbol": "docs/taskmaster/ARCHITECTURE.md",
+      "invariant": "Sketch of decided host facts; not an accepted ADR until this node lands"
+    },
+    {
+      "symbol": "ARCHITECTURE.md",
+      "invariant": "ADRs are amended in place; this node adds an accepted host ADR"
+    },
+    {
+      "symbol": "docs/from-intention-to-running.md",
+      "invariant": "taskmaster.dev is a host: ready-set as a product"
+    },
+    {
+      "symbol": "openspec/specs/agent-surface/spec.md",
+      "invariant": "Pointer spec, not a second field table"
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c \"from pathlib import Path; t=Path('ARCHITECTURE.md').read_text(); assert 'ADR-006' in t or 'Taskmaster host' in t; assert 'Accepted' in t\"",
+    "criteria": [
+      "ARCHITECTURE.md has an accepted ADR naming Taskmaster as a sibling host",
+      "openspec/changes/add-taskmaster-host/ exists with ACTIVE BUILD, journey, and a taskmaster spec delta that SHALLs no SvelteKit",
+      "Living specs under openspec/specs/ do not gain SvelteKit requirements in this node"
+    ]
+  },
+  "out_of_scope": [
+    { "item": "Guest vite / DNS (lgr.1 / lgr.2)", "tracked_as": "bazaar-lgr.2" },
+    { "item": "MetaDev copy", "tracked_as": "bazaar-zmq" }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "ARCHITECTURE.md",
+      "openspec/changes/add-taskmaster-host/",
+      "docs/taskmaster/ARCHITECTURE.md",
+      "docs/from-intention-to-running.md"
+    ],
+    "do_not": ["deploy", "push", "fold"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "skill-host",
+  "consult": {
+    "allowed": true,
+    "purposes": ["explain", "replan"],
+    "ceiling": "lean"
+  },
+  "inherited": [
+    "Briefs are disposable; architecture is amended, not deleted.",
+    "Taskmaster consumes the agent surface; if the SaaS needs a different object model, change the founding doc.",
+    "Worker edits and stops; the conductor persists."
+  ],
+  "role": "builder"
+}

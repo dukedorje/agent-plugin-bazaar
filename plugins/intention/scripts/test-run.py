@@ -14,6 +14,8 @@ RUN = HERE.parents[0] / "skills" / "run" / "scripts" / "run.py"
 
 
 def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    if cwd is None and "--ready-json" in args:
+        cwd = Path(args[args.index("--ready-json") + 1]).parent
     return subprocess.run(
         [sys.executable, str(RUN), *args],
         text=True,
@@ -1008,6 +1010,59 @@ def test_roll_send_back_with_boxes_is_change() -> None:
         expect("add-sheaf-type" in face["needs_advise"], face)
 
 
+def test_preparation_obligation_tracks_act_candidates() -> None:
+    """A wave prepares every eligible node; scoped execution prepares its pick."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-y", tasks="- [ ] implement")
+        fixture = write_ready(root, {
+            "ready": ["add-x", "add-y", "add-z", "add-punted", "add-eyes"],
+            "waiting": [], "needs_advise": [], "ask": [],
+            "eyes": ["add-eyes"], "fold_legal": [], "send_back": [], "beads": [],
+        })
+        for scope, until, expected in (
+            ([], "roll", ["add-x", "add-y"]),
+            ([], "empty", ["add-x", "add-y"]),
+            (["add-y"], "roll", ["add-y"]),
+        ):
+            args = [*scope, "--until", until, "--skip", "add-z", "--punt", "add-punted",
+                    "--ready-json", str(fixture)]
+            proc = run([*args, "--json"], cwd=root)
+            expect(proc.returncode == 0, proc.stderr)
+            face = json.loads(proc.stdout)
+            expect(face["next"] == "act", face)
+            expect(face["prepare_before_act"] == expected, face)
+            expect(face["workers_launched"] == 0, face)
+            rendered = run(args, cwd=root)
+            expect("prepare before act: " + ", ".join(expected) in rendered.stdout,
+                   rendered.stdout)
+
+
+def test_non_act_has_no_preparation_candidates() -> None:
+    """Preparation metadata cannot make a stop or another stage actionable."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        for extra, args, expected_next in (
+            ({"needs_advise": ["add-x"]}, [], "advise"),
+            ({"send_back": ["add-x"]}, [], "change"),
+            ({"fold_legal": ["add-x"]}, [], "fold"),
+            ({"waiting": ["add-y"]}, ["--wait"], None),
+            ({"eyes": ["add-x"]}, [], None),
+            ({}, ["--until", "advise"], None),
+            ({}, ["a new goal"], "intend"),
+        ):
+            fixture = write_ready(root, {
+                "ready": ["add-x"], "waiting": [], "needs_advise": [],
+                "ask": [], "eyes": [], "fold_legal": [], "send_back": [],
+                "beads": [], **extra,
+            })
+            proc = run([*args, "--ready-json", str(fixture), "--json"], cwd=root)
+            expect(proc.returncode == 0, proc.stderr)
+            face = json.loads(proc.stdout)
+            expect(face["next"] == expected_next, face)
+            expect(face["prepare_before_act"] == [], face)
+
+
 def kat_bead(nid: str, title: str, status: str = "open", parent: str | None = None) -> dict:
     deps = []
     if parent:
@@ -1103,6 +1158,8 @@ def main() -> int:
         test_epic_alias_resolves_to_landing,
         test_scoped_skip_does_not_widen,
         test_scoped_skip_still_advises_same_id,
+        test_preparation_obligation_tracks_act_candidates,
+        test_non_act_has_no_preparation_candidates,
         test_empty_ready_no_worker,
         test_until_advise_runs_read,
         test_until_advise_does_not_act,

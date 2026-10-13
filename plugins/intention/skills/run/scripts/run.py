@@ -649,6 +649,7 @@ def decide(
                 "stop": None,
                 "next": "act",
                 "focus": pick_ready[0],
+                "prepare_before_act": unique(pick_ready),
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -790,6 +791,7 @@ def decide(
             "stop": None,
             "next": "act",
             "focus": ready_ids[0],
+            "prepare_before_act": unique(ready_ids),
             "until": until,
             "workers_launched": 0,
             "ready": ready,
@@ -865,6 +867,12 @@ def apply_eyes_stop(
             row["stop"] = "eyes"
             row["focus"] = eyes[0]
             row["next"] = None
+    # This is a conductor obligation, not semantic reconciliation or permission.
+    row["prepare_before_act"] = (
+        without(row.get("prepare_before_act", []), set(eyes))
+        if row.get("next") == "act" and row.get("stop") is None
+        else []
+    )
     return row
 
 
@@ -881,6 +889,8 @@ def card(row: dict[str, Any]) -> str:
         f"eyes {len(eyes)}",
         "└───────────────────────────────────────────────",
     ]
+    if row.get("prepare_before_act"):
+        lines.insert(-1, "│ prepare before act: " + ", ".join(row["prepare_before_act"]))
     if row.get("diagnostic"):
         lines.insert(-1, "│ " + str(row["diagnostic"]))
     if stop == "eyes":

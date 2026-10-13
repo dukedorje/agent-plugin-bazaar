@@ -22,6 +22,16 @@ Or install directly:
 /plugin install intention@agent-plugin-bazaar
 ```
 
+For Codex, add this local checkout as a marketplace and install the
+Codex-compatible intention plugin:
+
+```bash
+codex plugin marketplace add /path/to/agent-plugin-bazaar
+codex plugin add intention@agent-plugin-bazaar
+```
+
+Start a new Codex thread after installing so the intention skills are loaded.
+
 Default verbs: `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `status`, `run`.
 
 How to use them — “run it by me”, current DAG, ready vs beads, `/run` (roll): [plugins/intention/README.md](plugins/intention/README.md).
