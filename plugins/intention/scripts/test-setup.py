@@ -65,11 +65,37 @@ def test_no_bd_scaffolds_rest() -> None:
             expect((root / "openspec" / rel).exists(), rel)
         gi = (root / ".gitignore").read_text(encoding="utf-8")
         expect(gi.startswith("node_modules\n\n"), gi)
-        expect(all(g in gi for g in (".worktrees/", ".spawns/", "groups/")), gi)
+        expect(all(g in gi for g in (".worktrees/", ".spawns/", ".omc/", ".omx/")), gi)
+        expect("groups/" not in {ln.strip() for ln in gi.splitlines()}, gi)
         expect("openspec/" in (root / "AGENTS.md").read_text(encoding="utf-8"), "pointer")
         again = states(run(["--json"], cwd=root, env=env))
         for item in ("openspec layout", ".gitignore", "agent instructions"):
             expect(again[item] == "ok", again)
+
+
+def test_gitignore_keeps_group_records() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        git_init(root)
+        (root / ".gitignore").write_text(
+            "node_modules/\n\n"
+            "# Intention scratch (conductor isolate, spawn stage, group packets)\n"
+            ".worktrees/\n"
+            ".spawns/\n"
+            "groups/\n",
+            encoding="utf-8",
+        )
+        env = {**os.environ, "PATH": str(Path(shutil.which("git")).parent)}
+        proc = run(["--json", "--no-pointer"], cwd=root, env=env)
+        gi = (root / ".gitignore").read_text(encoding="utf-8")
+        expect("groups/" not in {ln.strip() for ln in gi.splitlines()}, gi)
+        expect("group packets" not in gi, gi)
+        for item in (".worktrees/", ".spawns/", ".omc/", ".omx/"):
+            expect(item in gi, gi)
+        expect(states(proc)[".gitignore"] == "fixed", proc.stdout)
+        again = run(["--json", "--no-pointer"], cwd=root, env=env)
+        expect(states(again)[".gitignore"] == "ok", again.stdout)
+        expect(gi == (root / ".gitignore").read_text(encoding="utf-8"), "second run rewrote gitignore")
 
 
 def test_full_with_bd() -> None:

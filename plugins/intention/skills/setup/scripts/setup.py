@@ -15,10 +15,10 @@ from pathlib import Path
 
 # bd issue types Intention writes (`bd create --type node`).
 CUSTOM_TYPES = ("node",)
-# Scratch dirs Intention writes at the repo root: conductor isolate
-# worktrees, spawn stage prompts and leases, per-node group packets/results.
-GITIGNORE = (".worktrees/", ".spawns/", "groups/")
-GITIGNORE_HEADER = "# Intention scratch (conductor isolate, spawn stage, group packets)"
+# Scratch at the repo root. Group packets and results stay tracked.
+GITIGNORE = (".worktrees/", ".spawns/", ".omc/", ".omx/")
+GITIGNORE_HEADER = "# Intention scratch (conductor isolate, spawn stage, harness session)"
+GITIGNORE_OLD_HEADER = "# Intention scratch (conductor isolate, spawn stage, group packets)"
 POINTER = (
     "## Intention\n\n"
     "Work loop: intend → steer → change → advise → act → fold.\n"
@@ -229,19 +229,48 @@ def step_openspec(root: Path, rep: Report) -> None:
         rep.add("openspec layout", "ok", "openspec/")
 
 
+def rewrite_gitignore(text: str) -> tuple[str, list[str]]:
+    """Append scratch ignores. Drop `groups/` when this header added it."""
+    intention = GITIGNORE_HEADER in text or GITIGNORE_OLD_HEADER in text
+    lines: list[str] = []
+    dropped = False
+    for line in text.splitlines():
+        if intention and line.strip() in {"groups/", "groups"}:
+            dropped = True
+            continue
+        if line.strip() == GITIGNORE_OLD_HEADER:
+            lines.append(GITIGNORE_HEADER)
+            continue
+        lines.append(line)
+    have = {line.strip() for line in lines}
+    need = [g for g in GITIGNORE if g not in have and g.rstrip("/") not in have]
+    if need:
+        if not any(line.strip() == GITIGNORE_HEADER for line in lines):
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.append(GITIGNORE_HEADER)
+        lines.extend(need)
+    body = "\n".join(lines)
+    if body:
+        body += "\n"
+    actions: list[str] = []
+    if dropped:
+        actions.append("drop groups/")
+    if need:
+        actions.append("add " + ", ".join(need))
+    return body, actions
+
+
 def step_gitignore(root: Path, rep: Report) -> None:
     path = root / ".gitignore"
     text = path.read_text(encoding="utf-8") if path.exists() else ""
-    have = {line.strip() for line in text.splitlines()}
-    need = [g for g in GITIGNORE if g not in have and g.rstrip("/") not in have]
-    if not need:
+    body, actions = rewrite_gitignore(text)
+    if not actions:
         rep.add(".gitignore", "ok", ", ".join(GITIGNORE))
         return
-    if not rep.fix(".gitignore", "add " + ", ".join(need)):
+    if not rep.fix(".gitignore", "; ".join(actions)):
         return
-    sep = "" if not text else ("\n" if text.endswith("\n") else "\n\n")
-    block = sep + GITIGNORE_HEADER + "\n" + "\n".join(need) + "\n"
-    path.write_text(text + block, encoding="utf-8")
+    path.write_text(body, encoding="utf-8")
 
 
 def step_pointer(root: Path, rep: Report) -> None:

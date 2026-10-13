@@ -11,6 +11,7 @@ Thumbs.db
 # Claude Code local state
 .claude/settings.local.json
 .omc/
+.omx/
 
 # Node (for plugins with MCP servers)
 node_modules/
