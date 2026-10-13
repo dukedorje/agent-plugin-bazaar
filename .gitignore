@@ -36,3 +36,6 @@ __pycache__/
 
 # act spawn scratch (spawn.py stage)
 .spawns/
+
+# Intention scratch (conductor isolate, spawn stage, harness session)
+groups/*/inventory.json

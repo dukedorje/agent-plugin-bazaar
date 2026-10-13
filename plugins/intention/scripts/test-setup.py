@@ -65,7 +65,10 @@ def test_no_bd_scaffolds_rest() -> None:
             expect((root / "openspec" / rel).exists(), rel)
         gi = (root / ".gitignore").read_text(encoding="utf-8")
         expect(gi.startswith("node_modules\n\n"), gi)
-        expect(all(g in gi for g in (".worktrees/", ".spawns/", ".omc/", ".omx/")), gi)
+        expect(
+            all(g in gi for g in (".worktrees/", ".spawns/", ".omc/", ".omx/", "groups/*/inventory.json")),
+            gi,
+        )
         expect("groups/" not in {ln.strip() for ln in gi.splitlines()}, gi)
         expect("openspec/" in (root / "AGENTS.md").read_text(encoding="utf-8"), "pointer")
         again = states(run(["--json"], cwd=root, env=env))
@@ -90,12 +93,32 @@ def test_gitignore_keeps_group_records() -> None:
         gi = (root / ".gitignore").read_text(encoding="utf-8")
         expect("groups/" not in {ln.strip() for ln in gi.splitlines()}, gi)
         expect("group packets" not in gi, gi)
-        for item in (".worktrees/", ".spawns/", ".omc/", ".omx/"):
+        for item in (".worktrees/", ".spawns/", ".omc/", ".omx/", "groups/*/inventory.json"):
             expect(item in gi, gi)
         expect(states(proc)[".gitignore"] == "fixed", proc.stdout)
         again = run(["--json", "--no-pointer"], cwd=root, env=env)
         expect(states(again)[".gitignore"] == "ok", again.stdout)
         expect(gi == (root / ".gitignore").read_text(encoding="utf-8"), "second run rewrote gitignore")
+
+
+def test_gitignore_short_header_drops_groups() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        git_init(root)
+        (root / ".gitignore").write_text(
+            "# Intention scratch (conductor isolate, spawn stage)\n"
+            ".worktrees/\n"
+            "groups/\n"
+            "groups/*/inventory.json\n",
+            encoding="utf-8",
+        )
+        env = {**os.environ, "PATH": str(Path(shutil.which("git")).parent)}
+        proc = run(["--json", "--no-pointer"], cwd=root, env=env)
+        gi = (root / ".gitignore").read_text(encoding="utf-8")
+        expect(states(proc)[".gitignore"] == "fixed", proc.stdout + gi)
+        expect("\ngroups/\n" not in f"\n{gi}", gi)
+        expect("groups/*/inventory.json" in gi, gi)
+        expect(".spawns/" in gi and ".omc/" in gi and ".omx/" in gi, gi)
 
 
 def test_full_with_bd() -> None:

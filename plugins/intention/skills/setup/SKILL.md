@@ -33,7 +33,7 @@ Default is apply. Print the command output. That is the report.
 | `.beads/` | `bd init --non-interactive -q` (`--prefix` if given) |
 | `types.custom` includes `node` | `bd config set types.custom <existing>,node` |
 | `openspec/{specs,changes,changes/archive}/`, `README.md`, `AGENTS.md`, `project.md`, `parked.md` | created only if absent |
-| `.gitignore` has `.worktrees/`, `.spawns/`, `.omc/`, `.omx/` | appended. A `groups/` line under the Intention header is removed. Group packets stay tracked |
+| `.gitignore` has `.worktrees/`, `.spawns/`, `.omc/`, `.omx/`, `groups/*/inventory.json` | appended. A blanket `groups/` line next to that block is removed. Packets and results stay tracked. Live inventory stays local |
 | `AGENTS.md` / `CLAUDE.md` mention `openspec/` | short Intention section appended (`--no-pointer` skips) |
 
 It never overwrites an existing file and never re-inits beads.

@@ -16,7 +16,8 @@ from pathlib import Path
 # bd issue types Intention writes (`bd create --type node`).
 CUSTOM_TYPES = ("node",)
 # Scratch at the repo root. Group packets and results stay tracked.
-GITIGNORE = (".worktrees/", ".spawns/", ".omc/", ".omx/")
+# Live wave inventory is machine-local and goes stale.
+GITIGNORE = (".worktrees/", ".spawns/", ".omc/", ".omx/", "groups/*/inventory.json")
 GITIGNORE_HEADER = "# Intention scratch (conductor isolate, spawn stage, harness session)"
 GITIGNORE_OLD_HEADER = "# Intention scratch (conductor isolate, spawn stage, group packets)"
 POINTER = (
@@ -229,29 +230,60 @@ def step_openspec(root: Path, rep: Report) -> None:
         rep.add("openspec layout", "ok", "openspec/")
 
 
+def _intention_header(line: str) -> bool:
+    stripped = line.strip()
+    return stripped.startswith("# Intention scratch") or stripped.startswith("# Intention spawn")
+
+
+def _scratch_satisfied(have: set[str], entry: str) -> bool:
+    return entry in have or entry.rstrip("/") in have
+
+
 def rewrite_gitignore(text: str) -> tuple[str, list[str]]:
-    """Append scratch ignores. Drop `groups/` when this header added it."""
-    intention = GITIGNORE_HEADER in text or GITIGNORE_OLD_HEADER in text
+    """Append scratch ignores. Drop a blanket `groups/` line next to them.
+
+    `groups/*/inventory.json` stays ignored. Packet and result files stay tracked.
+    """
+    raw = text.splitlines()
     lines: list[str] = []
     dropped = False
-    for line in text.splitlines():
-        if intention and line.strip() in {"groups/", "groups"}:
-            dropped = True
-            continue
+    for line in raw:
+        if line.strip() in {"groups/", "groups"}:
+            window: list[str] = []
+            for prev in reversed(lines):
+                if prev.strip():
+                    window.append(prev.strip())
+                if len(window) >= 5:
+                    break
+            if any(_intention_header(item) or _scratch_satisfied(set(GITIGNORE), item) for item in window):
+                dropped = True
+                continue
         if line.strip() == GITIGNORE_OLD_HEADER:
             lines.append(GITIGNORE_HEADER)
             continue
         lines.append(line)
     have = {line.strip() for line in lines}
-    need = [g for g in GITIGNORE if g not in have and g.rstrip("/") not in have]
+    need = [entry for entry in GITIGNORE if not _scratch_satisfied(have, entry)]
     if need:
-        if not any(line.strip() == GITIGNORE_HEADER for line in lines):
+        insert_at = None
+        header_at = None
+        for index, line in enumerate(lines):
+            if _intention_header(line):
+                header_at = index
+            if header_at is not None and _scratch_satisfied(set(GITIGNORE), line.strip()):
+                insert_at = index + 1
+        if insert_at is None and header_at is not None:
+            insert_at = header_at + 1
+        if insert_at is None:
             if lines and lines[-1] != "":
                 lines.append("")
             lines.append(GITIGNORE_HEADER)
-        lines.extend(need)
+            lines.extend(need)
+        else:
+            for offset, entry in enumerate(need):
+                lines.insert(insert_at + offset, entry)
     body = "\n".join(lines)
-    if body:
+    if body and not body.endswith("\n"):
         body += "\n"
     actions: list[str] = []
     if dropped:
