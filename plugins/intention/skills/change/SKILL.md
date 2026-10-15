@@ -42,9 +42,26 @@ use the procedure below after reconciling the inputs.
 5. Journey section is mandatory: real surfaces, or
    `No new UI because <reason>`.
 6. Deltas: `ADDED` / `MODIFIED` / `REMOVED`, each with a `#### Scenario:`.
-   MODIFIED pastes the entire living requirement.
+   MODIFIED pastes the entire living requirement. On every MODIFIED or
+   REMOVED requirement, record the living file you pasted from:
+
+   ```bash
+   python3 <this-skill-dir>/../fold/scripts/fold_base.py stamp openspec/changes/<id>
+   ```
+
+   The stamp writes `<!-- base: <blob> openspec/specs/<capability>/spec.md -->`
+   under the requirement heading. The blob is the living spec file as it
+   is now. Do not hand-write a commit you did not just hash.
 7. Checkboxes = owed work. Out-of-scope = bullets.
-8. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
+8. **Stale base.** When `run` says `reason: stale-base`, do not fold.
+   Re-paste each named requirement from the living spec as it is now,
+   then re-apply only this change's own edits on top. Keep clauses that
+   exist now and that this change did not mean to remove. Stamp again.
+   If this change is architecture or instrument and that rewrite changes
+   the contract, add the owed task `Fresh advise after preparation`.
+   A change-rigor union that only restores upstream clauses does not.
+   Then return to the conductor. The same run folds after the paste matches.
+9. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
    already granted). Do not fold. Handoff: `act` after activation,
    `fold` after act has landed.
 

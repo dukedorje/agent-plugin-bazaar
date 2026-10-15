@@ -61,6 +61,18 @@ The system SHALL …
 
 `MODIFIED` pastes the **entire** living requirement, then edits. Fold
 replaces that block wholesale. `REMOVED` names the requirement only.
+Every MODIFIED or REMOVED requirement carries a base comment on the
+line under its heading, written by `fold_base.py stamp`:
+
+```markdown
+### Requirement: <name>
+<!-- base: <blob> openspec/specs/<capability>/spec.md -->
+```
+
+The blob is the living spec file at paste time. Fold refuses the change
+when that requirement's text now differs. A missing comment does not
+refuse during the release that adds the check; the folder diffs by hand
+and stamps before applying.
 
 `design.md` only when cross-cutting, new deps, security, or genuine
 ambiguity.

@@ -86,7 +86,9 @@ Decision table, not a preference order: a verb-led kebab
 change-id. Any other scope is a goal → `intend`. Named change-id
 with no directory → `change`. `--until fold` / `--until roll` / `--until ask` and
 fold is legal (ACTIVE BUILD, no open owed box, not PARKED, **not**
-`needs_advise`) → `fold` (unscoped scans inflight). Then `advise`
+`needs_advise`, **not** a stale base) → `fold` (unscoped scans inflight).
+A stale base (`reason: stale-base`) → `change` for a union re-paste in
+this same run. Do not `--skip` it. Then `advise`
 before `act`. `--until roll` and `--until ask` then: send-back
 **with open owed boxes** → `change`; send-back with **no** open
 boxes → `needs_advise` (re-advise or park), not `change`, not
@@ -100,7 +102,9 @@ architecture / instrument change that still `needs_advise`. Do not
 is `stop: empty`.
 
 A refused pick is a skip, not a stop. Fold refusal is “not fold
-yet,” not stuck — more advise loops often unstick it.
+yet,” not stuck — more advise loops often unstick it. A stale base is
+not that refusal: the card already says `next: change`. Follow `change`,
+re-paste, stamp, and re-observe. Do not skip it into advise.
 
 Illegal for `focus`: `fold` + `needs_advise`; `act` +
 `needs_advise`; `change` + last advise send-back + no open owed
@@ -160,6 +164,11 @@ while waves < max_waves:
     print the card (YOUR EYES + Next command). Halt.
     Do not check the box. Do not skip past it into leftover beads.
   elif card.stop: halt
+  if card.reason is stale-base:        # next is change; same run re-pastes
+    follow change (union re-paste, stamp)
+    if architecture/instrument contract changed: fresh advise owed
+    waves += 1
+    continue                            # re-observe → fold when the paste matches
   if card.next is fold and illegal:     # fold + needs_advise
     skip += [focus]
     continue                            # re-observe → advise that id
@@ -249,7 +258,7 @@ replace this whole loop with Rhai — the workflow is one act fan-out.
 
 | Token | Means |
 |---|---|
-| (none) | **default = roll.** fold → send-back amend → advise → act → beads; park ASK/EYES; see `/status` for the pile; stop when empty |
+| (none) | **default = roll.** fold → stale-base re-paste → send-back amend → advise → act → beads; park ASK/EYES; see `/status` for the pile; stop when empty |
 | `--wait` | same walk; stop at the first elicitation (ASK, PENDING, EYES). Desk mode. |
 | `--tidy` | fold-legal only |
 | `--no-fold` | skip fold picks |
@@ -262,7 +271,8 @@ replace this whole loop with Rhai — the workflow is one act fan-out.
 `--autonomous` does **not** change the observe walk (still roll). It
 skips the post-intend steer pause and does not halt the campaign to
 wait for steer. It does **not** flip PENDING without a recorded grant
-(“activate this set” / “run this whole intention”). It does **not**
+(“activate this set” pauses after contracts; “run this whole intention”
+and “and run” enter this walk). It does **not**
 check EYES. Review afterwards is `map` / `demo` / `status`. Mailbox
 is `/status`, not this card.
 

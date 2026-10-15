@@ -142,13 +142,16 @@ skills do not fork the surface).
 
 ### Learning as the DAG advances
 
-Say “run this whole intention” or “activate this set” to grant continuing
-authority within the intention's agreed scope. The conductor records that
-grant on the root bead (or existing chat DAG), prepares and activates
-nodes as dependencies land, walks `change`/`advise`, then pauses for
-review unless you said `--go` / `--autonomous`. Then `/run` (waves
-when two+ disjoint writes are ready). Bare `/run` uses existing
-authority; it does not invent a grant.
+Say “activate this set” to grant continuing authority within the
+intention's agreed scope, prepare contracts, and pause so you can read
+them. Say “activate this set and run” or “run this whole intention” for
+that same grant without the second pause: after `change`/`advise` the
+session enters `/run`. The conductor records the grant on the root bead
+(or existing chat DAG) and prepares nodes as dependencies land. Explicit
+`--ask`, `--plan`, `--advise`, `--wait`, `--tidy`, and `--pause-before`
+still win. `--go` / `--autonomous` skip the steer pause and are not
+themselves a grant. Bare `/run` uses existing authority; it does not
+invent a grant. `/run` waves when two+ disjoint writes are ready.
 
 Before dispatch, `change` reconciles each node with upstream results and
 current specs. “Still valid” is enough; routine refinements proceed, while

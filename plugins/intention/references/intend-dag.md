@@ -45,7 +45,8 @@ no flag (blank-page observe still happened).
 
 ## Campaign authority
 User instruction and agreed scope / non-goals / architectural commitments,
-or none. “Activate this set” / “run this whole intention” fills this.
+or none. “Activate this set” fills this and still pauses after contracts.
+“Run this whole intention” and “and run” fill this and continue into `run`.
 This grants permission, not preparation of downstream designs.
 
 ## Ready-set
@@ -61,7 +62,9 @@ Enough to prime a context switch. Same section `map` prints.
 ## Next
 - Default: `steer` (briefing + menus). `--go` / `--autonomous` skips.
 - Grant (“activate this set”) → `change` then `advise` until ready,
-  then pause unless `--go` / autonomous, then `/run`
+  then pause. “And run” or “run this whole intention” skips that pause
+  and enters `/run`. Explicit ask / wait / advise / plan / tidy /
+  pause-before still win. `--go` / autonomous skip steer and are not a grant.
 - `change <id>` for each activated (or just-drafted) change node
 - `advise <id>` after architecture / instrument `change`
 - `brief` for brief nodes

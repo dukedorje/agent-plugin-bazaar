@@ -12,6 +12,7 @@ openspec/. Does not require the project to vendor ready.py.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import subprocess
@@ -227,6 +228,34 @@ def open_owed_for(change_dir: Path) -> list[str]:
     if not tasks.is_file():
         return []
     return open_owed(tasks.read_text(encoding="utf-8"))
+
+
+def fold_base_module():
+    path = Path(__file__).resolve().parents[2] / "fold" / "scripts" / "fold_base.py"
+    if not path.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("fold_base", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def stale_base_ids(openspec: Path | None, candidates: list[str]) -> list[str]:
+    """Fold-legal ids whose pasted requirements no longer match their base."""
+    module = fold_base_module()
+    if module is None or openspec is None:
+        return []
+    stale: list[str] = []
+    for change_id in candidates:
+        dest = find_change_dir(openspec, change_id)
+        if dest is None:
+            continue
+        report = module.classify(dest)
+        if report.get("stale"):
+            stale.append(change_id)
+    return stale
 
 
 def fold_legal_ids(
@@ -601,21 +630,20 @@ def decide(
     pick_fold = without(fold_ids, blocked)
     pick_send = without(send_ids, blocked)
     # Fold-skip still advises — that is how a refused fold unsticks.
+    # A stale base is not that skip. It is change, in this same run.
     pick_advise = without(needs_advise, punt_set)
     pick_ready = without(ready, blocked)
+    stale = [] if no_fold else stale_base_ids(openspec, pick_fold)
+    pick_fold = without(pick_fold, set(stale))
 
     if until in {"fold", "roll", "ask"} and not scope and pick_fold and not no_fold:
-        return {
-            "stop": None,
-            "next": "fold",
-            "focus": pick_fold[0],
-            "until": until,
-            "workers_launched": 0,
-            "ready": ready,
-            "waiting": waiting,
-            "needs_advise": needs_advise,
-            "ask": asks,
-        }
+        return fold_row(
+            pick_fold[0], until, ready, waiting, needs_advise, asks, openspec
+        )
+    if until in {"fold", "roll", "ask"} and not scope and stale and not no_fold:
+        return stale_row(
+            stale[0], stale, until, ready, waiting, needs_advise, asks
+        )
     if until == "fold" and not scope:
         return face("empty", None, until, ready, waiting, needs_advise, asks)
 
@@ -741,17 +769,14 @@ def decide(
             and not no_fold
             and fold_legal(openspec, scope, needs_advise)
         ):
-            return {
-                "stop": None,
-                "next": "fold",
-                "focus": scope,
-                "until": until,
-                "workers_launched": 0,
-                "ready": ready,
-                "waiting": waiting,
-                "needs_advise": needs_advise,
-                "ask": asks,
-            }
+            scoped_stale = stale_base_ids(openspec, [scope])
+            if scoped_stale:
+                return stale_row(
+                    scope, scoped_stale, until, ready, waiting, needs_advise, asks
+                )
+            return fold_row(
+                scope, until, ready, waiting, needs_advise, asks, openspec
+            )
         if until == "fold":
             return face("empty", scope, until, ready, waiting, needs_advise, asks)
         if until in WALK and scope in pick_send:
@@ -800,6 +825,70 @@ def decide(
             "ask": asks,
         }
     return face("empty", scope, until, ready, waiting, needs_advise, asks)
+
+
+def fold_row(
+    focus: str,
+    until: str,
+    ready: list[str],
+    waiting: list[str],
+    needs_advise: list[str],
+    asks: list[str],
+    openspec: Path | None,
+) -> dict[str, Any]:
+    row = {
+        "stop": None,
+        "next": "fold",
+        "focus": focus,
+        "until": until,
+        "workers_launched": 0,
+        "ready": ready,
+        "waiting": waiting,
+        "needs_advise": needs_advise,
+        "ask": asks,
+    }
+    module = fold_base_module()
+    dest = find_change_dir(openspec, focus)
+    if module is not None and dest is not None:
+        report = module.classify(dest)
+        names = [
+            f"{item['capability']}: {item['requirement']}"
+            for item in report.get("unstamped") or []
+        ]
+        if names:
+            row["unstamped_base"] = names
+            row["diagnostic"] = (
+                "unstamped base; diff by hand and stamp before applying"
+            )
+    return row
+
+
+def stale_row(
+    focus: str,
+    stale: list[str],
+    until: str,
+    ready: list[str],
+    waiting: list[str],
+    needs_advise: list[str],
+    asks: list[str],
+) -> dict[str, Any]:
+    return {
+        "stop": None,
+        "next": "change",
+        "focus": focus,
+        "reason": "stale-base",
+        "stale_base": stale,
+        "until": until,
+        "workers_launched": 0,
+        "ready": ready,
+        "waiting": waiting,
+        "needs_advise": needs_advise,
+        "ask": asks,
+        "diagnostic": (
+            f"{focus} paste is stale; re-paste from the living requirement "
+            "and stamp the base. Do not fold it."
+        ),
+    }
 
 
 def face(
@@ -891,6 +980,8 @@ def card(row: dict[str, Any]) -> str:
     ]
     if row.get("prepare_before_act"):
         lines.insert(-1, "│ prepare before act: " + ", ".join(row["prepare_before_act"]))
+    if row.get("reason"):
+        lines.insert(-1, "│ reason " + str(row["reason"]))
     if row.get("diagnostic"):
         lines.insert(-1, "│ " + str(row["diagnostic"]))
     if stop == "eyes":

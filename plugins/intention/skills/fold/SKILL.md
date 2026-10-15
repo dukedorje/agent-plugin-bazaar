@@ -50,7 +50,11 @@ branch; move to the task's appropriate branch first.
    the tab moving (`spawn.py stage` then `spawn.py run --adapter claude`
    when the route is Claude). Do not inline fold on a Grok tab unless
    the human picked Grok.
-5. **Apply** `fold-steps.md` in order.
+5. **Apply** `fold-steps.md` in order. The base check is step 3.
+   A stale paste applies nothing and returns to the conductor as
+   `change` (union re-paste), not as advise. An unstamped paste is
+   diffed by hand and stamped before apply. A missing comment does
+   not by itself refuse during this release.
 6. **Signed result** (`permission: write`): living spec paths +
    archive path. `disposition: pass` when every SHALL this change
    claimed is in `openspec/specs/` and `openspec/changes/<id>/` is

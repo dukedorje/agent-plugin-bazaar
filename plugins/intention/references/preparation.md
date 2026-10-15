@@ -6,16 +6,21 @@ Python observes eligibility; the conductor performs the semantic check.
 
 ## Authority
 
-“Run this whole intention” and “activate this set” (or “activate what we
-just intended”) grant continuing write/activation authority for that named
-intention within its agreed goals, non-goals, and architectural
-commitments. Record the user's instruction and those bounds on the root
-bead (or the existing DAG in chat when there is no tracker). Do not invent
-a campaign store. Bare `/run`, an old ACTIVE BUILD banner, and “activate
-all” do not grant authority to broaden scope. Existing activation remains
-valid only within the scope approved. `--autonomous` / `--go` skip the
-steer pause; they are not themselves a grant. ASK/EYES boxes stay
-unchecked — review afterwards is `map` / `demo` / `status`.
+“Activate this set” and “activate what we just intended” grant continuing
+write/activation authority for that named intention within its agreed
+goals, non-goals, and architectural commitments, then pause after
+`change`/`advise` so the human can read the contracts. “Run this whole
+intention” and a grant followed by “and run” (including “activate this set
+and run”) are that same grant and also imply `--go` for that intention:
+after contracts are ready, enter `run` and do not wait for another
+utterance. Explicit `--ask`, `--plan`, `--advise`, `--wait`, `--tidy`, and
+`--pause-before` still win. Record the user's instruction and those bounds
+on the root bead (or the existing DAG in chat when there is no tracker).
+Do not invent a campaign store. Bare `/run`, an old ACTIVE BUILD banner,
+and “activate all” do not grant authority to broaden scope. Existing
+activation remains valid only within the scope approved. `--autonomous` /
+`--go` skip the steer pause; they are not themselves a grant. ASK/EYES
+boxes stay unchecked — review afterwards is `map` / `demo` / `status`.
 
 Only `change` applies delegated activation, after preparation. It may set
 ACTIVE BUILD for a dependency-ready node covered by the recorded grant.

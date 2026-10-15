@@ -80,7 +80,8 @@ is the same pause with no act. Skip the pause only when they said
 | `--advise` | After steer (or skip), `change` then `advise` on architecture / instrument. Do not `act`. |
 | `--ask` | Present DAG + briefing. Stop. Wait. Next conversation is `steer`. Do not `act`. |
 | `--go` / “don't pause” | Skip steer menus; auto-log remaining forks lean. Not a grant. |
-| “activate this set” / “activate what we just intended” / “run this whole intention” | Record **campaign authority** on the root bead (or chat DAG). Then `change` → `advise` until contracts are ready. **Pause** (map + briefing) unless `--go` / `--autonomous`. Then `/run` (which waves when two+ disjoint writes are ready). |
+| “activate this set” / “activate what we just intended” | Record **campaign authority** on the root bead (or chat DAG). Then `change` → `advise` until contracts are ready. **Pause** (map + briefing). | 
+| “activate this set and run” / “run this whole intention” / a grant followed by “and run” | Same grant, and it implies `--go` for that intention. After contracts are ready, enter `/run` (waves when two+ disjoint writes are ready). Do not pause for another utterance. Explicit `--ask`, `--plan`, `--advise`, `--wait`, `--tidy`, and `--pause-before` still win. |
 | `--autonomous` / “I'll review after” | `--go` plus, if a grant is recorded, `/run` (roll). Do not halt for steer. Do not flip PENDING without the grant. Do not check EYES. Review afterwards is `map` / `demo` / `status`. |
 
 Do not treat “run it by me” as `/run` or `/run --wait`. Those act.

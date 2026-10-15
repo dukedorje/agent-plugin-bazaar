@@ -64,8 +64,11 @@ The system SHALL …
 - THEN …
 ```
 
-`MODIFIED` pastes the entire living requirement, then edits. `REMOVED`
-names the requirement only. `fold` applies deltas to `specs/` and moves the
+`MODIFIED` pastes the entire living requirement, then edits, and stamps
+a base blob with `fold_base.py`. `REMOVED` names the requirement and
+stamps the same way. `fold` refuses a stale base and applies nothing.
+A missing base is diffed by hand once, not a hard fail. `fold` applies
+deltas to `specs/` and moves the
 change to `changes/archive/YYYY-MM-DD-<id>/`.
 """
 
