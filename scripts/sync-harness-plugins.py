@@ -106,11 +106,22 @@ def mirror_tree(src: Path, dest: Path) -> bool:
     return True
 
 
+def skip_git_ff(path: Path) -> bool:
+    """Grok installed copies are mirrored; ff there re-enters this hook."""
+    parts = path.resolve().parts
+    for i, part in enumerate(parts):
+        if part == ".grok" and i + 1 < len(parts) and parts[i + 1] == "installed-plugins":
+            return True
+    return False
+
+
 def git_ff_main(path: Path, source_repo: Path) -> str | None:
     git_dir = path / ".git"
     if not git_dir.exists():
         return None
     if path.resolve() == source_repo.resolve():
+        return None
+    if skip_git_ff(path):
         return None
     ident = subprocess.run(
         ["git", "remote", "get-url", "origin"],
@@ -121,10 +132,26 @@ def git_ff_main(path: Path, source_repo: Path) -> str | None:
     url = (ident.stdout or "").strip().lower()
     if MARKETPLACE_ID not in url and "agent-plugin-bazaar" not in url:
         return None
-    def git(*args: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(["git", *args], cwd=path, capture_output=True, text=True)
 
-    if git("fetch", "--quiet", "origin").returncode != 0:
+    env = os.environ.copy()
+    env["SYNC_HARNESS_PLUGINS"] = "0"
+    env["SYNC_HARNESS_PLUGINS_ACTIVE"] = "1"
+
+    def git(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", "-c", "core.hooksPath=/dev/null", *args],
+            cwd=path,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=60,
+        )
+
+    try:
+        fetch = git("fetch", "--quiet", "origin")
+    except subprocess.TimeoutExpired:
+        return f"fetch-timeout {path}"
+    if fetch.returncode != 0:
         return f"fetch-fail {path}"
     # The clone is a cache we own. Stray edits (older syncs copied the
     # working tree in) would block the fast-forward, so drop them.
@@ -278,47 +305,53 @@ def sync(
 
 
 def _sync(repo: Path, home: Path, plugins: Path, *, dry_run: bool, cli: bool) -> list[str]:
-    names = plugin_names(repo)
-    notes: list[str] = []
-    roots = cache_roots(home)
-    clones: list[Path] = []
-    if not dry_run:
-        for root in roots:
-            ff = git_ff_main(root, repo)
-            if ff:
-                notes.append(ff)
-            if ff and ff.startswith("ff "):
-                clones.append(root.resolve())
-    for name in names:
-        src = plugins / name
-        if not src.is_dir():
-            notes.append(f"skip missing {repo / 'plugins' / name}")
-            continue
-        dests = destinations_for(name, src, roots)
-        if not dests:
-            notes.append(f"no-cache {name}")
-            continue
-        for dest in dests:
-            if dest.resolve() == (repo / "plugins" / name).resolve():
+    if os.environ.get("SYNC_HARNESS_PLUGINS_ACTIVE") == "1":
+        return ["skip nested sync"]
+    os.environ["SYNC_HARNESS_PLUGINS_ACTIVE"] = "1"
+    try:
+        names = plugin_names(repo)
+        notes: list[str] = []
+        roots = cache_roots(home)
+        clones: list[Path] = []
+        if not dry_run:
+            for root in roots:
+                ff = git_ff_main(root, repo)
+                if ff:
+                    notes.append(ff)
+                if ff and ff.startswith("ff "):
+                    clones.append(root.resolve())
+        for name in names:
+            src = plugins / name
+            if not src.is_dir():
+                notes.append(f"skip missing {repo / 'plugins' / name}")
                 continue
-            if any(dest.resolve().is_relative_to(c) for c in clones):
-                continue  # git-managed; the fast-forward already refreshed it
-            if dry_run:
-                notes.append(f"would-mirror {name} -> {dest}")
+            dests = destinations_for(name, src, roots)
+            if not dests:
+                notes.append(f"no-cache {name}")
                 continue
-            mirror_tree(src, dest)
-            notes.append(f"mirror {name} -> {dest}")
-    if cli and not dry_run:
-        for cmd in (
-            ["grok", "plugin", "marketplace", "update", MARKETPLACE_ID],
-            ["grok", "plugin", "update"],
-            ["codex", "plugin", "marketplace", "upgrade"],
-        ):
-            try:
-                notes.append(run_cli(cmd))
-            except FileNotFoundError:
-                notes.append(f"skip {cmd[0]}: not installed")
-    return notes
+            for dest in dests:
+                if dest.resolve() == (repo / "plugins" / name).resolve():
+                    continue
+                if any(dest.resolve().is_relative_to(c) for c in clones):
+                    continue  # git-managed; the fast-forward already refreshed it
+                if dry_run:
+                    notes.append(f"would-mirror {name} -> {dest}")
+                    continue
+                mirror_tree(src, dest)
+                notes.append(f"mirror {name} -> {dest}")
+        if cli and not dry_run:
+            for cmd in (
+                ["grok", "plugin", "marketplace", "update", MARKETPLACE_ID],
+                ["grok", "plugin", "update"],
+                ["codex", "plugin", "marketplace", "upgrade"],
+            ):
+                try:
+                    notes.append(run_cli(cmd))
+                except FileNotFoundError:
+                    notes.append(f"skip {cmd[0]}: not installed")
+        return notes
+    finally:
+        os.environ.pop("SYNC_HARNESS_PLUGINS_ACTIVE", None)
 
 
 def install_hooks(repo: Path) -> str:

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -151,6 +152,24 @@ def test_dry_run_does_not_write(tmp: Path) -> None:
     expect(any(n.startswith("would-mirror") for n in notes), notes)
 
 
+def test_does_not_ff_grok_installed_copies(tmp: Path) -> None:
+    repo = bazaar_repo(tmp)
+    copy = tmp / "home" / ".grok" / "installed-plugins" / "agent-plugin-bazaar-copy"
+    subprocess.run(["git", "init", "-b", "main", str(copy)], check=True, capture_output=True)
+    write(copy / "README.md", "copy")
+    git(copy, "remote", "add", "origin", str(tmp / "agent-plugin-bazaar.git"))
+    expect(sync.git_ff_main(copy, repo) is None, "installed copy must not ff")
+
+
+def test_nested_sync_is_noop(tmp: Path) -> None:
+    os.environ["SYNC_HARNESS_PLUGINS_ACTIVE"] = "1"
+    try:
+        notes = sync.sync(bazaar_repo(tmp), tmp / "home", dry_run=False, cli=False)
+        expect(notes == ["skip nested sync"], notes)
+    finally:
+        os.environ.pop("SYNC_HARNESS_PLUGINS_ACTIVE", None)
+
+
 def test_skips_this_clone(tmp: Path) -> None:
     repo = bazaar_repo(tmp)
     notes = sync.sync(repo, tmp / "empty-home", dry_run=False, cli=False)
@@ -252,6 +271,8 @@ def main() -> int:
         test_mirrors_marketplace_clone_and_grok_install,
         test_dry_run_does_not_write,
         test_skips_this_clone,
+        test_does_not_ff_grok_installed_copies,
+        test_nested_sync_is_noop,
         test_ff_marketplace_clone,
         test_mirrors_committed_tree_not_working_edits,
         test_dirty_clone_ffs_to_local_head,
