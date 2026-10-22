@@ -3,7 +3,7 @@
   "human_override": "always wins",
   "max_inflight": 2,
   "max_fallback_hops": 2,
-  "notes": "Versions verified by approved 2026-10-05 consultation. Priority is independent of executability and passive health.",
+  "notes": "Versions verified by approved 2026-10-05 consultation. Priority is independent of executability and passive health. Gating architecture advise uses vary-reader: high blast prefers Astra, otherwise rotate eligible readers. assign stays first-by-priority.",
   "families": {
     "sonnet": {
       "model": "claude-sonnet-5-5",

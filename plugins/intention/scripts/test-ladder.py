@@ -115,6 +115,31 @@ def main():
         stored.record("openai", "model", ident, "mapping", "auth")
         expect("secret" not in path.read_text(), "no secret in health store")
         expect(routing.HealthStore(path, clock=lambda: now[0]).state("openai", "model", ident, "mapping") == "degraded", "scratch persistence")
+    expect(ladder.vary_reader(data, "grok")["id"] == "opus-arch-review", "vary starts at Opus")
+    expect(ladder.vary_reader(data, "grok", last_reader="opus-arch-review")["id"] == "astra-arch-review", "vary rotates off Opus")
+    expect(ladder.vary_reader(data, "grok", last_reader="astra-arch-review")["id"] == "opus-arch-review", "Astra turn returns to Opus")
+    hard = ladder.vary_reader(data, "grok", blast="schema", last_reader="opus-arch-review")
+    expect(hard["id"] == "astra-arch-review" and hard["vary_reason"] == "high-blast", "high blast is Astra")
+    expect(ladder.vary_reader(data, "astra", blast="deletion")["vary_reason"] == "high-blast-author-skipped", "Astra author cannot self-review")
+    expect(ladder.vary_reader(data, "claude", last_reader="astra-arch-review")["id"] == "grok-arch-review", "Claude author rotates to Grok")
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = root / "openspec" / "changes" / "add-x"
+        reviews = change / "reviews"
+        reviews.mkdir(parents=True)
+        (reviews / "2026-10-22-advise.md").write_text(
+            "> **ADVISE:** send-back\n> **READER:** astra-arch-review\n",
+            encoding="utf-8",
+        )
+        back = ladder.vary_reader(data, "grok", change_dir=change, last_reader="opus-arch-review")
+        expect(back["id"] == "astra-arch-review" and back["vary_reason"] == "send-back", "send-back stays")
+        other = root / "openspec" / "changes" / "archive" / "old" / "reviews"
+        other.mkdir(parents=True)
+        (other / "2026-10-21-advise.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** opus-arch-review\n",
+            encoding="utf-8",
+        )
+        expect(ladder.last_accepting_reader(root / "openspec", skip_change="add-x") == "opus-arch-review", "last accept skips current")
     print("pass approved routes, aliases, permission, cross-family review, priority, two-hop bound, TTLs and nonsecret scratch health")
     return 0
 

@@ -162,6 +162,120 @@ def resolve_who(
     return [human_warning(r) for r in matched]
 
 
+_ADVISE_LINE = re.compile(
+    r"^>\s*\*\*ADVISE:\*\*\s*(accept-with-nits|accept|send-back)\b",
+    re.I,
+)
+_READER_LINE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
+_TRAILING_SEQ = re.compile(r"^(.*)-(\d+)$")
+_ACCEPTING = {"accept", "accept-with-nits"}
+_HIGH_BLAST = {"high", "schema", "deletion", "protocol", "durability", "challenging"}
+
+
+def _review_sort_key(path: Path) -> tuple[str, int]:
+    stem = path.name[:-3] if path.name.endswith(".md") else path.name
+    if stem.endswith("-sendback"):
+        return (stem[: -len("-sendback")], 0)
+    match = _TRAILING_SEQ.match(stem)
+    if match:
+        return (match.group(1), int(match.group(2)))
+    return (stem, 1)
+
+
+def _review_face(path: Path) -> tuple[str | None, str | None]:
+    verdict = None
+    reader = None
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()[:40]
+    except OSError:
+        return None, None
+    for line in lines:
+        stripped = line.strip()
+        advise = _ADVISE_LINE.match(stripped)
+        if advise:
+            verdict = advise.group(1).lower()
+        named = _READER_LINE.match(stripped)
+        if named:
+            reader = named.group(1)
+    if verdict in _ACCEPTING and not reader:
+        return None, None
+    return verdict, reader
+
+
+def _latest_review(change_dir: Path) -> tuple[str | None, str | None]:
+    reviews = change_dir / "reviews"
+    if not reviews.is_dir():
+        return None, None
+    files = sorted(
+        (p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")),
+        key=_review_sort_key,
+    )
+    if not files:
+        return None, None
+    return _review_face(files[-1])
+
+
+def last_accepting_reader(openspec: Path, *, skip_change: str | None = None) -> str | None:
+    """Latest accepting READER across inflight changes and the archive."""
+    root = openspec / "changes"
+    found: list[tuple[float, str, str]] = []
+    if root.is_dir():
+        for reviews in root.rglob("reviews"):
+            if not reviews.is_dir():
+                continue
+            change_id = reviews.parent.name
+            if skip_change and change_id == skip_change:
+                continue
+            for path in reviews.glob("*.md"):
+                verdict, reader = _review_face(path)
+                if verdict in _ACCEPTING and reader:
+                    found.append((path.stat().st_mtime, str(path), reader))
+    if not found:
+        return None
+    found.sort()
+    return found[-1][2]
+
+
+def vary_reader(
+    data: dict,
+    author_family: str | None = None,
+    *,
+    blast: str | None = None,
+    last_reader: str | None = None,
+    change_dir: Path | None = None,
+    shape: str = "architecture-review",
+) -> dict:
+    """Gating architecture reader. Priority order stays the fallback list.
+
+    High blast prefers Astra. A send-back on this change returns to that
+    reader. Otherwise rotate to the next eligible reader after the last
+    accept, skipping the author's vendor.
+    """
+    eligible = candidates(data, shape, author_family=author_family)
+    if not eligible:
+        raise SystemExit(f"no available route for shape {shape!r}")
+    if change_dir is not None:
+        verdict, reader = _latest_review(change_dir)
+        if verdict == "send-back" and reader:
+            same = next((route for route in eligible if route["id"] == reader), None)
+            if same is not None:
+                return {**same, "vary_reason": "send-back", "last_reader": last_reader}
+    high = (blast or "").strip().lower() in _HIGH_BLAST
+    if high:
+        astra = next((route for route in eligible if route.get("family") == "astra"), None)
+        chosen = astra or eligible[0]
+        reason = "high-blast" if astra else "high-blast-author-skipped"
+    else:
+        ids = [route["id"] for route in eligible]
+        if last_reader in ids and len(ids) > 1:
+            chosen = eligible[(ids.index(last_reader) + 1) % len(ids)]
+            reason = "rotate"
+        else:
+            chosen = eligible[0]
+            reason = "first"
+    return {**chosen, "vary_reason": reason, "last_reader": last_reader}
+
+
 def assign(
     data: dict,
     shape: str,
@@ -219,7 +333,18 @@ def main() -> int:
     pan.add_argument("--not-harness", dest="not_harness")
     pan.set_defaults(cmd="panel")
 
-    for parser in (a, pan):
+    vary = sub.add_parser(
+        "vary-reader",
+        help="gating architecture reader: Astra on high blast, else rotate",
+    )
+    vary.add_argument("--shape", default="architecture-review")
+    vary.add_argument("--blast", default="", help="high, schema, deletion, protocol, or durability")
+    vary.add_argument("--last-reader", help="route id of the previous accepting reader")
+    vary.add_argument("--openspec", type=Path, help="scan changes and archive for the last accept")
+    vary.add_argument("--change-dir", type=Path, help="this change; a send-back returns to that reader")
+    vary.set_defaults(cmd="vary-reader")
+
+    for parser in (a, pan, vary):
         parser.add_argument("--permission", choices=["read", "write", "sensitive"], default="write")
         parser.add_argument("--author-family", help="deterministic author harness/family/vendor; automatic review skips it")
         parser.add_argument("--fallback-hops", type=int, default=0, help="completed hops; carried across handoffs")
@@ -231,6 +356,29 @@ def main() -> int:
     if args.cmd == "panel":
         hits = candidates(data, args.shape, not_harness=getattr(args, "not_harness", None), author_family=args.author_family)
         print(json.dumps(hits, indent=2))
+        return 0
+    if args.cmd == "vary-reader":
+        last = getattr(args, "last_reader", None)
+        openspec = getattr(args, "openspec", None)
+        if last is None and openspec is not None:
+            skip = None
+            change_dir = getattr(args, "change_dir", None)
+            if change_dir is not None:
+                skip = change_dir.name
+            last = last_accepting_reader(openspec, skip_change=skip)
+        try:
+            route = vary_reader(
+                data,
+                args.author_family,
+                blast=getattr(args, "blast", None),
+                last_reader=last,
+                change_dir=getattr(args, "change_dir", None),
+                shape=args.shape,
+            )
+        except SystemExit as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(json.dumps(route, indent=2))
         return 0
     who = parse_who(getattr(args, "who", None))
     if who and (getattr(args, "route_id", None) or getattr(args, "after", None)):

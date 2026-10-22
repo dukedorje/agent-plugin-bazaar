@@ -189,7 +189,7 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 
 Source: `plugins/intention/references/ladder.json`. Configured priority (`--after` handoff; `panel` fan-out): known → Sonnet
 then Terra; implementation/thinking → Sol then Opus; plan → Opus then Astra;
-architecture → Opus-high then Astra then Grok; fold → Opus, optional Grok.
+architecture gating → `vary-reader` (Astra on high blast, else rotate; fallback list stays Opus then Astra then Grok); fold → Opus, optional Grok.
 Concrete models and verification dates live only in the family registry.
 Same-family author passes `--author-family <author>` (harness/family/vendor)
 and **spawns** an executable different-vendor reader. Advise needs write

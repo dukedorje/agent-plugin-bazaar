@@ -49,8 +49,10 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    `python3 plugins/intention/scripts/ladder.py assign --shape …`
    (known → Sonnet then Terra; implementation/thinking → Sol then Opus;
    plan → Opus then Astra; design → Opus + designer skills). Real architecture
-   opens a review-pair: Opus-high → Astra → Grok, skipping the author's
-   vendor with `--author-family <author>`. Versions live only in ladder.json.
+   opens a review-pair. Gating advise uses `vary-reader`
+   (`references/reviewers.md`): Astra when the blast is schema, deletion,
+   protocol, or durability; otherwise rotate eligible readers and skip
+   the author's vendor. Versions live only in ladder.json.
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).

@@ -53,7 +53,12 @@ unrelated ASK/EYES work.
    (this session if you wrote it; else the packet / review identity).
    Resolve a reader that is **not** that family:
 
-   `python3 <this-skill-dir>/../../scripts/ladder.py assign --shape architecture-review --permission write --author-family <author>`
+   `python3 <this-skill-dir>/../../scripts/ladder.py vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id> [--blast high]`
+
+   Load `../../references/reviewers.md`. High blast (schema, deletion,
+   protocol, durability) passes `--blast high` and prefers Astra.
+   Ordinary reads rotate. A send-back on this change returns to that
+   `READER`. `assign` without `vary-reader` is the fallback list only.
 
    Run `ladder.py show` / `assign`: configured, executable, and health
    are separate. API-only OpenAI chat cannot write a review file.
@@ -65,8 +70,9 @@ unrelated ASK/EYES work.
    Human pick (`--who` / `--id`) selects the spawned reader. It
    does not waive isolation.
 
-   Latest Opus at high effort is first, then Astra, then Grok.
-   Claude authors skip Opus; Codex authors use Opus when executable.
+   Eligible order stays Opus, then Astra, then Grok. Varying walks that
+   list; it does not always start at Opus. Claude authors skip Opus;
+   Codex authors skip Astra.
    Human picks may override the vendor boundary and degraded health with
    a warning. Optional extra: `--shape plan` consult (Opus then Astra). Plan consult is
    **not** the sole accept.

@@ -41,7 +41,7 @@ a gated reader, use `advise` instead.
    | named models (“Astra”, “Opus and Grok”) | `--who astra` / `--who opus,grok` |
    | “compare Sol and Opus” | `--shape thinking --who sol,opus` (named wins) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
-   | nobody named | first executable different-vendor reader (Opus → Astra → Grok) |
+   | nobody named | first executable different-vendor reader (Opus → Astra → Grok). Consult does not rotate and does not call `vary-reader`. |
 
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or

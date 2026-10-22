@@ -120,7 +120,7 @@ Split the refusal:
   on that same id. Follow the new `next`.
 - **Advise, any session:** do not inline `accept`. Do not write a
   fake send-back with no architecture boxes — that retriggers
-  `change`. Assign `architecture-review --not-harness <author>`
+  `change`. Assign with `vary-reader` (`references/reviewers.md`),
   and **spawn** that reader (packet + `spawn.py`) even if this
   tab is the other family — fresh context. Wait this wave.
   `--punt` only when no spawnable other-family route exists, or
@@ -210,7 +210,7 @@ while waves < max_waves:
     # else inline fold/SKILL.md below
   if card.next is advise:
     author = recorded change-author harness/family (this session if you wrote it)
-    route = ladder assign --shape architecture-review --permission write --author-family <author>
+    route = ladder vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id> [--blast high]
     # On infra-red, pass --after <route-id> --fallback-hops <completed hops>.
     # Carry route.fallback_hops across attempts; never exceed two automatic hops.
     if assign failed:                   # no executable other-family
