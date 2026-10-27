@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-8hs.1",
+  "packet_id": "pkt-bazaar-8hs.1",
+  "signer": {
+    "id": "sol-implement",
+    "kind": "model",
+    "harness": "codex",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "sol-implement"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/morphist-tools/skills/sprint-plan/SKILL.md",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "note": "Frontmatter keeps disable-model-invocation, drops PARKED, and names openspec/changes. Old plan-store paths appear only on prohibition lines."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "b288406",
+    "paths": [
+      "plugins/morphist-tools/skills/sprint-plan/"
+    ]
+  },
+  "summary": "sprint-plan now writes a named intake into one OpenSpec change directory. Generic planning stays on intend.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "sol-implement",
+    "signed_at": "2026-10-27T21:30:00Z",
+    "content_hash": "sha256:e998da69cbc8a434c445367c584f5d55a4cdc4ef0dd09aa678dfc6472d8d2fde"
+  }
+}
