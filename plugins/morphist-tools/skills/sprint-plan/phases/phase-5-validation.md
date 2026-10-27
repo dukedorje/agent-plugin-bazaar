@@ -1,410 +1,46 @@
-# Phase 5: Validation Gate
-
-**Purpose**: Adversarial review of the complete artifact chain, including epic health metrics from Phase 3.
-
-**Agents**:
-- `verifier` (sonnet): FR coverage audit, dependency validation, and mechanical correctness checks
-
-**Input**: All artifacts from the current sprint directory:
-- `current/requirements.md`
-- `current/architecture-decisions.md`
-- `current/epics.md`
-- `current/stories/*.md` (all story files)
-- `current/phase-state.json` (epic health metrics from Phase 3)
-
----
-
-## Ceremony: Inline Form
-
-The full verifier pass and `readiness-report.md` below are `full` ceremony. At `lean` or `standard`, do **not** write `readiness-report.md`. Run an **inline sanity check** instead:
-
-- Every epic has ≥1 story.
-- Every story has ≥1 acceptance criterion.
-- No orphaned FRs — only if requirements were captured (i.e. `requirements_inline` / `requirements.md` exists); skip this check when requirements were folded directly into stories.
-
-Record the outcome in `STATE_DIR/phase-state.json` — set `validation_status` (`pass` | `pass-with-warnings` | `fail`) plus a 1–3 line `validation_summary` noting what was checked and any gaps. No standalone document.
-
-Only `full` ceremony runs the full verifier and writes `readiness-report.md` as described below.
-
----
-
-## Process
-
-### Step 1: Fire Verifier
-
-```python
-verifier_task = Agent(
-    subagent_type="oh-my-claudecode:verifier",
-    model="sonnet",
-    prompt=VERIFIER_PROMPT  # see below
-)
-```
-
----
-
-### Step 2: Verifier Agent Checks (sonnet)
-
-The verifier performs both coverage/dependency validation and mechanical correctness checks.
-
-#### 2a. FR Coverage Audit
-
-- Load every FR from `requirements.md` (FR1, FR2, ..., FRN)
-- Load the FR Coverage Map from `epics.md`
-- For each FR, confirm at least one story exists that implements it
-- **Orphan FR**: An FR that appears in requirements.md but is not covered by any story
-- Output: FR coverage table with status per FR (Covered / Orphan)
-
-#### 2b. Architecture Compliance Audit
-
-- Load every decision from `architecture-decisions.md` (D-001, D-002, ...)
-- For each decision, check whether at least one story's `## Architecture Compliance` section references it
-- **Uncovered decision**: A decision with no story implementation coverage
-- Note: Not every decision needs a story reference — only decisions with downstream implementation consequences. Use judgment here.
-- Output: Decision coverage table with status
-
-#### 2c. Dependency Validation
-
-- For each story, extract any dependencies it implies (e.g., "requires Story 1.2 to be complete first")
-- Check: No story has a forward dependency within its own epic (e.g., Story 1.3 cannot depend on Story 1.4)
-- Check: No story has a cross-epic forward dependency (e.g., a story in Epic 2 cannot depend on a story in Epic 3)
-- **Forward dependency**: A story that requires a later story to be completed first
-- Output: Dependency graph with any violations flagged
-
-#### 2d. Story Quality Assessment
-
-For each story file, verify all of the following:
-
-| Check | Criterion |
-|-------|-----------|
-| Agent-completable | Story can be completed by a single dev agent without requiring human judgment mid-story |
-| BDD acceptance criteria | At least 2 Given/When/Then acceptance criteria present and testable |
-| Scope boundaries | Both "This story DOES" and "This story does NOT" sections present and non-empty |
-| Technical requirements | Libraries/frameworks listed with versions (or "none required") |
-| References | `frs` and `decisions` frontmatter fields populated |
-
-#### 2e. Epic Health Assessment
-
-Using story counts from `epics.md` and complexity data from `phase-state.json`:
-
-| Flag | Condition | Advisory |
-|------|-----------|---------|
-| Too Large | Epic has >8 stories | Recommend splitting into two epics |
-| Too Small | Epic has <2 stories | Recommend merging with adjacent epic |
-| Cross-Epic Coupling | >30% of an epic's stories reference stories in another epic | Review dependency direction |
-| Complexity Mismatch | High-complexity epic early in sequence | Review sequencing |
-
-Epic health flags are **advisory only** — they appear in the readiness report but do not block a pass verdict unless the severity warrants it.
-
-#### 2f. Sprint Size Compliance
-
-If `sprint-scope.md` exists, validate the actual sprint against the scoping decisions from Phase 1B.
-
-Read `sprint_size` from `phase-state.json` and count actual stories across all epics.
-
-**Sprint size guardrails**:
-
-| Sprint Size | Story Range | Epic Range | Over Threshold | Under Threshold |
-|-------------|-------------|------------|----------------|-----------------|
-| `focused` | 3-8 | 1-2 | >8 stories or >2 epics | <3 stories |
-| `standard` | 8-18 | 2-4 | >18 stories or >4 epics | <8 stories |
-| `ambitious` | 15-30 | 4-6 | >30 stories or >6 epics | <15 stories |
-
-**Checks**:
-1. Compare actual story count against the sprint size guardrail range
-2. Compare actual epic count against the sprint size epic range
-3. Compare actual stories against the `estimated_stories` from `sprint_scope` in `phase-state.json` — flag if >30% divergence (planning accuracy indicator)
-4. Verify all in-scope FRs from `sprint-scope.md` have story coverage (no scoped-in FRs left unplanned)
-5. Verify no deferred FRs have story coverage (scope creep — stories were created for FRs that were explicitly deferred)
-
-**Classification**:
-
-| Finding | Classification |
-|---------|---------------|
-| Over sprint size threshold | Warning — "Sprint has {N} stories but sprint size is {size} (max {max}). Consider deferring lower-priority epics or re-scoping with `/sprint-plan --restart-from=sprint-scoping`" |
-| Under sprint size threshold | Warning — "Sprint has only {N} stories for a {size} sprint (min {min}). Consider including stretch clusters or switching to `--sprint-size=focused`" |
-| >30% divergence from estimate | Warning — "Actual stories ({N}) diverge {pct}% from Phase 1B estimate ({est}). Planning accuracy is low — note for next sprint's velocity calibration" |
-| Deferred FR has story coverage | Warning — "FR{X} was deferred in sprint scoping but has story coverage. Either update sprint-scope.md or remove the story" |
-| In-scope FR missing coverage | Critical — "FR{X} was scoped IN but has no story coverage" |
-
-Sprint size compliance findings appear in the readiness report under a **Sprint Size** section:
-
-```
-Sprint Size: {size}
-  Stories: {actual} (target: {min}-{max}) — {OK|OVER|UNDER}
-  Epics: {actual} (target: {epic_min}-{epic_max}) — {OK|OVER|UNDER}
-  vs Estimate: {actual}/{estimated} ({divergence}%) — {OK|HIGH DIVERGENCE}
-  Scope integrity: {all in-scope FRs covered|N gaps}
-```
-
-If `sprint-scope.md` does not exist (Phase 1B was skipped in `--fast` mode), skip this section and note: "Sprint size compliance: skipped (no sprint scoping phase)."
-
----
-
-### Step 3: Merge Findings
-
-After the verifier completes, classify findings into a single unified list:
-
-```python
-findings = {
-    "critical": [],    # Blocks readiness verdict
-    "warnings": [],    # Advisory, does not block
-    "auto_fixable": [] # Can be corrected without user input
-}
-```
-
-**Classification rules**:
-
-| Finding Type | Classification |
-|-------------|---------------|
-| Orphan FR (no story coverage) | Critical |
-| Architecture decision with no implementation reference | Warning (unless decision is CRITICAL significance → Critical) |
-| Forward dependency violation | Critical |
-| Story missing BDD criteria | Critical |
-| Story missing scope boundaries | Warning |
-| Story missing technical requirements | Warning |
-| Broken D-NNN reference | Critical |
-| Frontmatter mismatch (frs/decisions) | Auto-fixable |
-| Placeholder text in story section | Auto-fixable if minor, Warning if major |
-| File naming violation | Auto-fixable |
-| Map-file mismatch | Critical |
-| Duplicate story number | Critical |
-| Epic health flag (too large/small) | Warning |
-
----
-
-### Step 4: Auto-Fix Loop
-
-**Trigger**: One or more `auto_fixable` findings exist.
-
-**Max iterations**: 2. After 2 iterations, remaining auto-fixable issues are reclassified as warnings and presented to the user.
-
-**Auto-fixable actions**:
-- Correct frontmatter `frs` and `decisions` fields to match story body content
-- Fix file naming violations (rename files to match pattern)
-- Fill placeholder text in minor sections (e.g., add "No specific decisions apply" to Architecture Compliance when no D-NNN refs exist in story body)
-- Correct Map-file references after file renames
-
-**Not auto-fixable** (requires user):
-- Missing story for an orphan FR (scope decision — must a new story be created, or is the FR out of scope?)
-- Forward dependency violations (requires restructuring the epic or story sequence)
-- Missing BDD acceptance criteria (requires domain knowledge to write correctly)
-- Architecture decisions with no story coverage (may indicate an architectural gap)
-
-After auto-fixes are applied, the verifier re-runs its mechanical checks to confirm fixes are clean.
-
----
-
-### Step 5: Final Verdict and Readiness Report
-
-**If critical findings remain after auto-fix loop**:
-- Status: `fail`
-- Present unresolved critical issues to user with actionable guidance
-- User must address them and re-run Phase 5 (`refine validation` not applicable here — re-run the phase)
-
-**If only warnings remain (no criticals)**:
-- Status: `pass-with-warnings`
-- Present readiness report with warnings highlighted
-
-**If no findings remain**:
-- Status: `pass`
-- Present readiness report
-
-**Decision Steering**: Dormant. The final readiness report is ALWAYS shown to the user regardless of steering mode (GUIDED or AUTONOMOUS). This is the final user checkpoint before implementation begins.
-
----
-
-## Output: `current/readiness-report.md`
-
-```markdown
----
-sprint: sprint-[NNN]
-validation_status: pass | pass-with-warnings | fail
-timestamp: [datetime]
----
-
-# Sprint Readiness Report
-
-## Summary
-- **Status**: [READY / READY WITH WARNINGS / NOT READY]
-- **Epics**: [count]
-- **Stories**: [count]
-- **Total FRs**: [count]
-- **FR Coverage**: [percentage]%
-- **Architecture Compliance**: [percentage]%
-
-## FR Coverage Audit
-| FR | Description | Epic | Story | Status |
-|----|-------------|------|-------|--------|
-| FR1 | [brief description] | Epic 1 | Story 1.1 | Covered |
-| FR2 | [brief description] | Epic 1 | Story 1.2 | Covered |
-| FR3 | [brief description] | - | - | ORPHAN — no story coverage |
-
-## Architecture Decision Audit
-| Decision | Significance | Stories Implementing | Status |
-|----------|-------------|---------------------|--------|
-| D-001 | HIGH | Story 1.1, Story 2.1 | Covered |
-| D-002 | CRITICAL | Story 1.2 | Covered |
-| D-003 | MEDIUM | (none) | Not referenced — verify intentional |
-
-## Epic Health
-| Epic | Stories | Complexity | Flags |
-|------|---------|------------|-------|
-| Epic 1: [Title] | 4 | Medium | None |
-| Epic 2: [Title] | 9 | High | TOO LARGE — recommend splitting |
-| Epic 3: [Title] | 1 | Low | TOO SMALL — recommend merging |
-
-## Dependency Graph
-[Textual map of epic ordering and cross-epic dependencies]
-
-Epic 1 (Foundation)
-  └─> Epic 2 (Core Features) [depends on: 1.2, 1.3]
-        └─> Epic 3 (Advanced Features) [depends on: 2.1]
-
-No circular dependencies detected.
-
-## Issues Found
-
-### Critical (blocks readiness)
-[List or "None"]
-
-### Warnings (advisory)
-[List or "None"]
-
-### Auto-Fixed
-[List of issues that were automatically corrected, or "None"]
-
-## Recommendations
-[Any suggestions for improvement before starting implementation. Omit section if none.]
-
-## Next Steps
-- [ ] Review this report
-- [ ] Address any critical issues listed above
-- [ ] For epic health warnings, consider `ral epics` to restructure if warranted
-- [ ] Begin implementation with `/team ralph` or equivalent
-```
-
----
-
-## Verifier Prompt Template
-
-```
-You are performing validation of a sprint planning artifact chain. Your tasks cover both coverage/dependency analysis (which requires judgment) and mechanical correctness checks (binary pass/fail).
-
-Flag only REAL problems that would cause a developer agent to fail or produce incorrect output. Do not invent problems. Do not flag style preferences.
-
-## Artifacts Provided
-- requirements.md: [contents]
-- architecture-decisions.md: [contents]
-- epics.md: [contents]
-- stories/: [all story file contents with filenames]
-- phase-state.json: [sprint state]
-- sprint-scope.md: [if present]
-
-## Your Tasks
-
-### Coverage and Dependency Checks
-
-1. FR COVERAGE: List every FR from requirements.md. For each, identify whether a story implements it. Output a table with status (Covered / Orphan).
-
-2. ARCHITECTURE COMPLIANCE: List every decision from architecture-decisions.md. For each, assess whether any story's Architecture Compliance section reflects it. Decisions with no implementation consequences may be marked "Not applicable." Use judgment.
-
-3. DEPENDENCY VALIDATION: For each story, identify any implied prerequisites. Flag any forward dependencies (story requires a later story to be complete first).
-
-4. STORY QUALITY: For each story, check: (a) completable by single agent, (b) has BDD criteria, (c) has scope boundaries, (d) has technical requirements. Flag failures.
-
-5. EPIC HEALTH: Count stories per epic. Flag epics with >8 stories (too large) or <2 stories (too small). Flag cross-epic coupling concerns where >30% of an epic's stories reference another epic.
-
-6. SPRINT SIZE COMPLIANCE: If sprint-scope.md exists, validate actual story and epic counts against sprint size guardrails from phase-state.json. Flag over/under threshold and >30% divergence from estimated_stories.
-
-### Mechanical Correctness Checks
-
-7. FRONTMATTER: Does `frs` match FRs discussed in body? Does `decisions` match D-NNN refs in Architecture Compliance? Do epic/story numbers match filename?
-
-8. COMPLETENESS: Are all template sections present and non-placeholder ("TODO", empty string, "TBD")?
-
-9. FILE NAMING: Does filename match `{epic_num}-{story_num}-{slug}.md`?
-
-10. FR MAP CONSISTENCY: Does every story in epics.md FR Coverage Map have a file? Does every story file appear in the map?
-
-11. DECISION REFERENCES: Does every D-NNN ref in any story point to a real decision in architecture-decisions.md?
-
-12. DUPLICATE STORY NUMBERS: Are story numbers unique within each epic?
-
-13. MAP-FILE CONSISTENCY: Are all story files in stories/ referenced in epics.md? Are all stories in epics.md present as files?
-
-## Output Format
-Return a JSON object:
-{
-  "fr_coverage": [...],
-  "architecture_compliance": [...],
-  "dependency_violations": [...],
-  "story_quality_issues": [...],
-  "epic_health_flags": [...],
-  "sprint_size_compliance": [...],
-  "frontmatter_issues": [...],
-  "completeness_issues": [...],
-  "naming_violations": [...],
-  "fr_map_inconsistencies": [...],
-  "broken_decision_refs": [...],
-  "duplicate_story_numbers": [...],
-  "map_file_mismatches": [...],
-  "summary": {
-    "critical_count": N,
-    "warning_count": N
-  }
-}
-
-IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
-```
-
----
-
-## Decision Graph Generation
-
-After a passing verdict (before state updates), build the decision graph at `current/decision-graph.md`.
-
-This is the initial seed — maintain it by editing the beads directly as the plan evolves.
-
-### Process
-
-1. Read all story files from `current/stories/`
-2. Read all decisions from `current/architecture-decisions.md`
-3. For each decision (D-NNN):
-   - Find all stories whose `decisions` frontmatter field references this ID
-   - Also scan story body `## Architecture Compliance` sections for the decision ID
-4. Write the graph:
-
-```markdown
-# Decision Graph
-
-Maps architecture decisions to dependent stories. Updated by /sprint-plan, /refine, /replan.
-
-## D-001: {decision title}
-- 1.1: {story title}
-- 1.3: {story title}
-- 2.2: {story title}
-
-## D-003: {decision title}
-- 2.1: {story title}
-- 2.3: {story title}
-```
-
-Decisions with no story references are included with an empty list and a note: `(no stories reference this decision)`.
-
-Skip this step if the verdict is `fail` (the sprint needs fixes first).
-
----
-
-## State Updates
-
-On phase completion, update `current/phase-state.json`:
-
-```json
-{
-  "current_phase": "validation",
-  "validation_status": "pass | pass-with-warnings | fail",
-  "validation_iterations": 1
-}
-```
-
-If status is `pass` or `pass-with-warnings`, the sprint is ready for implementation.
+# Phase 5: Intake Validation
+
+Inputs: `SPEC_DIR/proposal.md`, `SPEC_DIR/tasks.md`, optional design, spec
+deltas, and references to bounded ADR/child handoffs. Validate the intake
+that exists; story generation is deferred to `update-sprint-plan-beads`.
+
+## Checks
+
+- Why and What address the user's goal; requirements have testable scenarios.
+- MODIFIED deltas contain the full living requirement with the intended
+  amendment. Capability ids, references, and codebase anchors resolve.
+- Every included outcome is covered by a delta and planned implementation
+  task or an explicit child handoff. Deferred scope is not silently included.
+- Architecture and UI journey (when applicable) agree with requirements;
+  significant choices and conflicts are resolved or visibly outstanding.
+- Child handoffs have coherent boundaries and acyclic dependencies.
+- All plan narrative and phase progress are in the current change directory.
+  An ADR exists only for a shape change; child artifacts are handoffs.
+- Checked intake boxes have evidence or explicit conditional skip reasons.
+  Unfinished implementation, story handoff, activation, and fold work stay open.
+
+## Findings and review
+
+Record findings, evidence, and remaining work in `SPEC_DIR/tasks.md`.
+Use checkboxes for actionable findings. Correct mechanical reference errors
+within scope, at most two repair passes, then report remaining gaps. Do not
+fix scope/architecture conflicts by silently adding work. Reopen the affected
+phase and downstream boxes when their conclusions change.
+
+At architecture rigor, route the prepared change through `advise` using a
+fresh reader. For a foreign harness, send a review packet rather than a host
+slash command. Record the verdict/evidence in `tasks.md`; self-verification
+does not supply independent acceptance. An outstanding required review
+keeps validation open. Do not expand permissions to run the review.
+
+## Completion
+
+Finish the remaining intake/finding boxes only when their evidence supports
+completion. Check Phase 5 when validation passes and required review accepts.
+Show pass, pass-with-warnings, or fail with supporting paths and remaining
+boxes. Do not create a readiness report or decision graph file.
+
+Always present the outcome, including in automatic modes. Identify the
+change directory, child handoffs, and deferred story work. Intake readiness
+is not implementation completion; keep implementation and fold boxes open.
+Do not edit living specs, fold, or archive from this phase.

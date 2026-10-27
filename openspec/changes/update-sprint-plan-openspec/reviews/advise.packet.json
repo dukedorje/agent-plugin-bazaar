@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-sprint-plan-openspec-advise-1",
+  "node_id": "bazaar-8hs.1-advise",
+  "capability": "default-loop",
+  "change_id": "update-sprint-plan-openspec",
+  "goal": "Independently review update-sprint-plan-openspec. Blind pass first: read only proposal.md Why and What, openspec/specs/default-loop/spec.md (the requirement titled sprint-plan is parked), and plugins/morphist-tools/skills/sprint-plan/SKILL.md lines 1-13 and 102-120. Write a 10-line independent take: what you would pin, what you would refuse, and one tradeoff. Only then open design.md, tasks.md, and the spec delta. Compare and steelman against that take. Write openspec/changes/update-sprint-plan-openspec/reviews/2026-10-27-advise.md. Banner lines must include ADVISE accept or send-back, READER astra-arch-review, and the SPAWN directory you are given. If you accept, check the open preparation task on tasks.md and record the living-file blob you reviewed. If you send it back, add concrete owed boxes on tasks.md and leave the preparation task open. Do not implement, fold, or change the banner.",
+  "non_goals": [
+    "Edit the sprint-plan skill",
+    "Fold the living spec",
+    "Activate the bead or prd sibling changes",
+    "Create a sprint folder or a harness session directory"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-sprint-plan-openspec/proposal.md#Why",
+      "invariant": "A planning session's documents are the OpenSpec change directory."
+    },
+    {
+      "symbol": "openspec/specs/default-loop/spec.md:43",
+      "invariant": "The living requirement still says the skill carries a PARKED banner and points strangers at the verb loop."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/sprint-plan/SKILL.md:106",
+      "invariant": "Initialization still creates STATE_DIR under .omc/sprint-plan and SPEC_DIR under docs/sprints."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The delta can be folded onto the parked requirement without dropping the rule that an unrelated task does not auto-start the factory, and without leaving a second plan store.",
+    "if_false": "The delta deletes the phase files, auto-starts intake, or keeps docs/sprints or .omc/sprint-plan as a plan document."
+  },
+  "out_of_scope": [
+    {"item": "Story beads", "tracked_as": "update-sprint-plan-beads"},
+    {"item": "PRD and vision paths", "tracked_as": "update-prd-vision-openspec"}
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/update-sprint-plan-openspec/reviews/",
+      "openspec/changes/update-sprint-plan-openspec/tasks.md"
+    ],
+    "do_not": ["implement", "fold", "change-banner"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "packet-only",
+  "role": "reader",
+  "assignee": {
+    "id": "astra-arch-review",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6-astra",
+    "effort": "high",
+    "signing": {"mode": "stand-in", "stand_in_id": "astra-arch-review"}
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok-conductor"}
+  }
+}

@@ -1,334 +1,141 @@
 ---
 name: sprint-plan
 description: >
-  PARKED (D1, 2026-08-15). Default planning is /intend (then change, act, fold).
-  Do not auto-invoke. Revive only when the user explicitly asks for the
-  multi-week 10-phase factory or --thorough batch planning.
+  Named sprint-plan intake factory whose plan is openspec/changes/<change-id>/.
+  Use only when the user asks for /sprint-plan or names the factory in a planning
+  session. Route generic planning requests to intend.
 user-invocable: true
 disable-model-invocation: true
-argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--write-stories] [--skip-stories] [--continue[=phase]] [--restart-from=phase] [--sprint=ID] [--product=<name>] [--beads]"
+argument-hint: "[product-idea-or-prd-path] [--fast] [--thorough] [--auto] [--step] [--sprint-size=SIZE] [--skip-ux] [--continue[=phase]] [--restart-from=phase] [--change=ID] [--product=NAME] [--lean|--standard|--full]"
 ---
 
-> **PARKED** — revive when the user explicitly wants the 10-phase /
-> `--thorough` factory (multi-week batch plan). Default is `intend`.
+# Sprint Plan — OpenSpec Intake Factory
 
-# Sprint Plan — Thin Orchestrator
+Start this factory only on a user request for `/sprint-plan` or a planning
+session that names sprint-plan. For generic planning, use `intend` and do
+not start Phase 0. Mode flags alone do not select this factory.
 
-**Parked.** If the user did not explicitly ask for this factory, stop and
-run `intend` instead. Do not start Phase 0. The body below is the revive
-path only.
+The plan is one `openspec/changes/<change-id>/` directory. All plan narrative
+and phase progress belong there: `proposal.md`, `tasks.md`, optional
+`design.md`, and `specs/<capability>/spec.md` deltas. Keep the phase files
+under `phases/`; load the relevant file when its phase runs.
 
-Coordinates a multi-phase planning workflow. Each phase is defined in its own file under `${CLAUDE_SKILL_DIR}/phases/`. This orchestrator handles argument parsing, initialization, phase routing, state management, and inter-phase pauses. Phase files are authoritative for agent prompts and dispatch logic.
+Never create `docs/sprints/`, `.omc/sprint-plan/`, or `phase-state.json`.
+Do not use OMC sessions, state tools, symlinks, continuation hooks, numbered
+sprints, standalone phase reports, or cross-session decision logs as plan
+storage. An ADR in `ARCHITECTURE.md` is allowed only when the shape changes.
+A child bead or child change id from epic split is a handoff. Neither is
+a substitute for the plan in the current change directory.
 
-**OMC persistence**: Sprint-plan automatically activates ralph state on initialization (step 2c), so the OMC Stop hook handles continuation across phases without manual "continue" prompts. The ralph state is deactivated on completion. No explicit `ralph` wrapping is needed.
+## Arguments and modes
 
----
+Product input may be a brief path or inline text. If missing, ask what the
+user wants to build before creating a change directory.
 
-## 1. Argument Parsing
-
-Parse `$ARGUMENTS` for:
-
-1. **Product input**: Remaining text after flags. May be a file path (PRD, brief), inline text, or empty (prompt: "What would you like to build?").
-
-2. **Flags**:
-
-| Flag | Effect |
-|------|--------|
-| `--fast` | Single-pass, no RALPLAN-DR, AUTONOMOUS steering, implies `--auto`, skip story-writing |
-| `--thorough` | Full consensus, GUIDED steering, refinement loops, write full stories for all |
-| `--write-stories` | Force Phase 4 story-writing regardless of size gate |
-| `--skip-stories` | Force-skip Phase 4 even if size gate would recommend it |
-| `--auto` | No inter-phase pauses (only Decision Steering can pause) |
+| Argument | Effect |
+|---|---|
+| `--fast` | Single pass, AUTONOMOUS steering, `--auto`, lean detail |
+| `--thorough` | GUIDED steering, architecture consensus and refinement, full detail |
+| `--auto` | Continue between phases; GUIDED decision questions still apply |
 | `--step` | Pause after every phase |
-| `--sprint-size=SIZE` | `focused` (3-8 stories), `standard` (8-18, default), `ambitious` (15-30) |
-| `--skip-ux` | Skip Phase 1.5 even if frontend detected |
-| `--continue[=phase]` | Resume from next incomplete phase (or after specified phase) |
-| `--restart-from=phase` | Re-run a phase and mark all downstream stale |
-| `--sprint=ID` | Target a specific sprint (e.g., `--sprint=sprint-002`). For `--continue`/`--restart-from`, operates on this sprint instead of the most recent. For new sprints, ignored. |
-| `--product=<name>` | Associate this sprint with a product dimension. Writes `product` field to phase-state.json and requirements.md frontmatter. If omitted and the product input is a PRD path under `docs/products/{name}/`, auto-infer the product from the path. |
-| `--beads` | After planning completes, materialize the sprint (epics, stories, ADRs) into the beads tracker (`bd`) via the `sprint-to-beads` skill — beads becomes the single source of truth for work items. Sets `beads_mode: true` in phase-state.json. See Phase 6. |
-| `--lean` / `--standard` / `--full` | Force the **ceremony** level (override auto-derivation). Controls how much process and how many documents the sprint produces. See Section 1.5. `--ceremony=<level>` is an equivalent long form. |
+| `--sprint-size=SIZE` | Scope appetite: focused, standard, or ambitious; no sprint number |
+| `--skip-ux` | Skip UX elaboration and record why in `tasks.md` |
+| `--continue[=phase]` | Resume the next unchecked phase, or after the named completed phase |
+| `--restart-from=phase` | Reopen that phase and all downstream phase checkboxes |
+| `--change=ID` | Select an existing change for continuation or restart |
+| `--product=NAME` | Record the product association in `proposal.md` |
+| `--lean`, `--standard`, `--full` | Pin detail level; `--ceremony=LEVEL` is equivalent |
 
-**Precedence**: `--thorough` > `--fast`. `--restart-from` > `--continue`. `--step` > `--auto`. `--fast` implies `--auto` + `--skip-stories`. `--thorough` implies `--write-stories`. `--write-stories` > `--skip-stories` (explicit opt-in wins). For ceremony: an explicit `--lean`/`--standard`/`--full` wins over auto-derivation; `--fast` implies `lean`, `--thorough` implies `full`.
+`--thorough` wins over `--fast`; `--restart-from` wins over `--continue`;
+`--step` wins over `--auto`. Explicit detail level wins over mode defaults.
+Default: single pass with GUIDED steering and pauses at requirements,
+scoping, architecture, and validation. Lean means short sections in the
+same change files, standard adds relevant rationale, full adds alternatives
+and deeper validation. Detail level never changes the output destinations.
+Escalate detail when HIGH/CRITICAL decisions demand it and record the reason
+in `tasks.md`; do not silently downgrade an established level.
 
-**Default mode** (neither `--fast` nor `--thorough`): Single-pass architecture and epic design, GUIDED steering at key decision points. The amount of process and documentation is governed by the **ceremony level** (Section 1.5), which is **auto-derived from the size and risk of the work** — small sprints stay lean, complex ones get the full treatment. Phase 4 "write stories" is **size-gated** by default:
+Story writing and story-bead materialization belong to
+`update-sprint-plan-beads`. Do not execute legacy `--write-stories`,
+`--skip-stories`, or `--beads` materialization paths here; explain the deferred
+handoff if requested. Do not invoke sprint-to-beads. `--sprint=ID` no longer
+selects a numbered sprint; use `--change=ID`.
 
-- ≤ 5 stories AND no `large`/`thorough`/3+-decision stories → skip (stubs fine)
-- 6–15 stories OR any flagged story → prompt the user at Phase 3.5 (elaborated below)
-- 16+ stories OR any `sprint-size=ambitious` → default to write-all (user can opt out with `--skip-stories`)
+## Initialization
 
-This is the huddle-driven workflow: plan light when the sprint is small, write proper stories when complexity warrants, execute an epic, huddle, repeat.
+1. Read the relevant living specs and repository instructions. For an
+   existing change, read its disposition banner before editing it; intake
+   does not grant activation or implementation authority.
+2. For new intake, mint one verb-led kebab-case change id from the goal,
+   such as `add-account-recovery`. Check for collisions; never overwrite an
+   unrelated change. Set `CHANGE_ID` to that id and `SPEC_DIR` to
+   `openspec/changes/<change-id>/`. All later phases reuse this directory.
+3. Create `proposal.md` with a PENDING disposition and sections Why, What,
+   Impact, User journey & surfaces, and Out of scope. Preserve an existing
+   change's disposition; factory progress does not activate it.
+4. Create `tasks.md` with the phase checklist below. Keep implementation
+   and fold tasks separate from these intake phase boxes. Add mode, steering,
+   detail level, product, and scope appetite as short notes in this file.
+5. Add spec delta directories as requirements identify capabilities. Create
+   `design.md` only for UI journeys or architecture that warrants it.
 
----
-
-## 1.5. Ceremony Tiering
-
-**Ceremony scales the process and document load to the size and risk of the work.** The goal is to never spend more planning effort than the work warrants — a three-task epic should not produce a PRD, an architecture document, and a readiness report.
-
-### Levels
-
-| Level | Trigger (auto) | What it produces |
-|-------|----------------|------------------|
-| `lean` | ≤5 stories AND no CRITICAL/HIGH decision | **Work items only.** Epic + stories (stubs with ACs + test_tier). No requirements/architecture/readiness docs. Discovery, scoping, UX, and validation collapse to inline checks. Decisions that matter are one-line notes on the epic. In `--beads` mode this is pure beads, zero docs. |
-| `standard` | 6–15 stories, OR any HIGH decision | **Work items + one lightweight planning doc** (goal, key decisions, scope — a thin PRD). Lean story template. Full ADR-lite only for CRITICAL/HIGH decisions; MEDIUM → one-liners; LOW dropped. |
-| `full` | 16+ stories, OR any CRITICAL decision, OR `--thorough` | **Today's complete process** — all phases, full story template, full ADR-lite, readiness report. Nothing is lost for the cases that warrant it. |
-
-### Derivation
-
-Ceremony is resolved in two steps because its inputs (story count, decision significance) are discovered mid-pipeline:
-
-1. **Tentative** (at init): seed from `--sprint-size` if given (`focused`→`lean`, `standard`→`standard`, `ambitious`→`full`) and from mode (`--fast`→`lean`, `--thorough`→`full`). Default tentative = `lean` (optimistic — most sprints are small). An explicit `--lean`/`--standard`/`--full` **pins** the level and skips auto-derivation entirely.
-2. **Finalized** (after Phase 2A architecture + Phase 2B epic-design, when decisions and story count are known): recompute via the trigger table. **Ceremony may only escalate, never silently downgrade** — once a higher-ceremony artifact is written, stay there. Record the final level and the reason in `phase-state.json`.
-
-If finalization escalates the level (e.g. a CRITICAL decision surfaced in a sprint that looked lean), surface it: *"Escalated to `full` ceremony — D-002 is CRITICAL."* This is an informational note, not a pause (unless `--step`).
-
-### What each lever gates
-
-| Lever | lean | standard | full |
-|-------|------|----------|------|
-| Discovery (Phase 0) | inline note | inline note | `discovery.md` |
-| Requirements (Phase 1) | inline brief | thin doc | `requirements.md` |
-| Sprint scoping (Phase 1B) | skip | skip unless scope-cut needed | as today |
-| UX design (Phase 1.5) | skip | conditional | conditional |
-| Architecture (Phase 2A) | only if CRITICAL/HIGH; else skip | ADR-lite for CRITICAL/HIGH only | full RALPLAN-DR |
-| Epic design (Phase 2B) | brief, in beads/epics.md | as today | as today |
-| Story template (Phase 4) | stub (Story + ACs + tier) | lean template | full template |
-| Validation (Phase 5) | inline sanity check | inline + report | `readiness-report.md` |
-
-The lean story template and significance-tiered decisions are detailed in the Phase 4 and Phase 2A files respectively; this table is the routing contract the orchestrator enforces.
-
----
-
-## 2. Initialization
-
-### 2a. New Sprint (skip if `--continue` or `--restart-from`)
-
-1. Determine sprint number: find highest `sprint-NNN/` in `.omc/sprint-plan/`, increment (or start at `sprint-001`).
-2. **Derive sprint slug**: From the product input, generate a short kebab-case slug (e.g., `auth-overhaul`, `api-pagination`). If no input yet, use `planning` as a placeholder (can be renamed later). Combine: `{NNN}-{slug}` (e.g., `001-auth-overhaul`).
-3. Create directories:
-   - `STATE_DIR` = `.omc/sprint-plan/sprint-{NNN}/` — operational state (gitignored)
-   - `SPEC_DIR` = `docs/sprints/{NNN}-{slug}/stories/` (creates stories/ and parent)
-4. Update symlink: `rm -f .omc/sprint-plan/current && ln -s sprint-{NNN} .omc/sprint-plan/current`.
-5. Write `.omc/sprint-plan/AGENTS.md` — static pointer: "Sprint specs in `docs/sprints/{NNN}-{slug}/`. Sprint state in `.omc/sprint-plan/current/`".
-
-### 2b. Initialize phase-state.json
-
-```json
-{
-  "sprint": "sprint-{NNN}",
-  "spec_dir": "docs/sprints/{NNN}-{slug}/",
-  "product": null,
-  "mode": "default|thorough|fast",
-  "active": true,
-  "current_phase": "discovery",
-  "steering_mode": "GUIDED|AUTONOMOUS",
-  "significance_calibration": [],
-  "decisions_log": [],
-  "sprint_size": null,
-  "sprint_scope": null,
-  "refinement_loops": { "requirements_architecture": { "count": 0, "max": 3 } },
-  "refine_passes": {},
-  "stale_phases": [],
-  "epics_count": 0,
-  "stories_total": 0,
-  "stories_enriched": 0,
-  "validation_status": "pending",
-  "beads_mode": false,
-  "ceremony": "lean",
-  "ceremony_pinned": false,
-  "ceremony_reason": "tentative: default"
-}
+```markdown
+## Intake phases
+- [ ] Phase 0: Discovery — proposal.md Why
+- [ ] Phase 1: Requirements — proposal.md What and spec deltas
+- [ ] Phase 1B: Scoping — proposal.md Out of scope
+- [ ] Phase 1.5: UX — design.md journey, only for UI; otherwise record skip reason
+- [ ] Phase 2A: Architecture — design.md; ADR only if shape changes
+- [ ] Phase 2B: Epics — child bead/change handoff references
+- [ ] Phase 5: Validation — remaining tasks.md boxes and findings
 ```
 
-Set `steering_mode` to `GUIDED` if thorough, `AUTONOMOUS` if fast. Set `beads_mode: true` if `--beads`.
+## Phase routing
 
-Set the tentative `ceremony` per Section 1.5 derivation step 1. If `--lean`/`--standard`/`--full` was passed, set `ceremony` to that level and `ceremony_pinned: true` (finalization will not change a pinned level). Otherwise `ceremony_pinned: false` and finalization recomputes after Phase 2B.
+| Phase | Instruction file | Output |
+|---|---|---|
+| 0 Discovery | [phase-0-discovery.md](phases/phase-0-discovery.md) | `proposal.md` Why |
+| 1 Requirements | [phase-1-requirements.md](phases/phase-1-requirements.md) | spec deltas and `proposal.md` What |
+| 1B Scoping | [phase-1b-sprint-scoping.md](phases/phase-1b-sprint-scoping.md) | `proposal.md` Out of scope |
+| 1.5 UX | [phase-1.5-ux-design.md](phases/phase-1.5-ux-design.md) | `design.md` journey, only for UI |
+| 2A Architecture | [phase-2a-architecture.md](phases/phase-2a-architecture.md) | `design.md`; bounded ADR if shape changes |
+| 2B Epics | [phase-2b-epic-design.md](phases/phase-2b-epic-design.md) | child bead or child change id handoffs |
+| 3–4 Stories | [phase-3-story-decomposition.md](phases/phase-3-story-decomposition.md), [phase-4-write-stories.md](phases/phase-4-write-stories.md) | deferred to `update-sprint-plan-beads` |
+| 5 Validation | [phase-5-validation.md](phases/phase-5-validation.md) | remaining `tasks.md` boxes; `advise` at architecture rigor |
 
-When `beads_mode` is true, the task/doc boundary applies:
-- **Work items** (epics, stories) live in **beads only** — the `docs/sprints/.../stories/*.md` story specs are not the committed deliverable; their content collapses into bead fields (see Phase 6). Beads is the single source of truth for epics, stories, and status.
-- **Planning narrative** (PRD/requirements, architecture-decisions) is **kept as committed docs** at whatever ceremony level produced it — it is supplementary documentation, not a competing work-item store. Architecture decisions remain doc-sourced; any `decision` bead is a lightweight pointer to the doc (see `sprint-to-beads`).
+Execute in phase order. Read each prior output from the change directory,
+then edit the mapped file in place, preserving other sections. If delegating,
+send a task packet with `CHANGE_ID`, `SPEC_DIR`, input anchors, exact allowed
+outputs, and acceptance. Foreign harnesses receive packets, never host slash
+commands. Require a final response containing outputs, paths, and blockers.
 
-In other words, beads mode redirects only the *story spec* role to beads; it does not suppress the narrative docs. (At `lean` ceremony there simply are no narrative docs to keep — that is the ceremony level's doing, not beads mode's.)
+Check the matching phase box only after its output exists and required
+steering is resolved. For a skipped conditional phase, record the reason next
+to its checked box; no output file is needed. Do not create story markdown
+or story beads, even as stubs. Read the retained phase 3–4 boundary notes
+and continue to Phase 5 without claiming story work complete.
 
-### 2c. OMC State & Auto-Continuation (optional)
+## Steering and continuation
 
-If `state_write` available:
-1. Register `{ mode: "sprint-plan", active: true, current_sprint: "sprint-{NNN}" }`. Skip if unavailable.
-2. Write session-scoped sprint binding: key `morphist.active_sprint`, value `sprint-{NNN}`. This allows other skills in the same session to auto-resolve to this sprint without relying on the `current` symlink.
-3. **Activate auto-continuation**: Write a ralph state file to `.omc/state/ralph-state.json` (or session-scoped `.omc/state/sessions/{sessionId}/ralph-state.json` if session ID is available):
-   ```json
-   {
-     "active": true,
-     "iteration": 1,
-     "max_iterations": 20,
-     "started_at": "{ISO 8601}",
-     "prompt": "/sprint-plan --continue",
-     "session_id": "{sessionId if available}",
-     "project_path": "{absolute working directory path}",
-     "source": "sprint-plan"
-   }
-   ```
-   This piggybacks on OMC's existing Stop hook to auto-continue if Claude stops mid-planning. The `source: "sprint-plan"` field distinguishes it from user-initiated ralph loops.
+Use [decision-steering.md](phases/decision-steering.md) for significant
+choices. Store steering settings and calibration notes in `tasks.md` and
+rationale in the phase's mapped narrative file. Present pending decisions
+before marking a phase complete. At a pause report the change id, phase,
+file paths, decisions, blockers, and next phase; wait for requested input.
 
-### 2d. Handle --continue
+For continuation, resolve `--change=ID` or the unambiguous current change
+from session context. If ambiguous, ask which change; do not guess the most
+recent folder. Read its files and resume at the first unchecked phase.
+A named `--continue=phase` requires that phase's box and output to be valid;
+do not skip earlier unchecked phases.
 
-1. If `--sprint=<id>` provided, use `.omc/sprint-plan/<id>/`. Otherwise find most recent `sprint-NNN/`.
-2. Read `phase-state.json`. Set `STATE_DIR` = `.omc/sprint-plan/<resolved>/`. Set `SPEC_DIR` from `phase-state.json`'s `spec_dir` field.
-3. Without phase arg: resume from next phase after `current_phase`.
-4. With phase arg (`--continue=<phase>`): verify artifact exists, resume from next phase.
-5. Update symlink and `current_phase`. Register in OMC session state (step 2c). Report: "Resuming sprint {NNN} from {phase}."
+For restart, uncheck the selected phase and every downstream phase in
+`tasks.md`, recording why. Keep existing narrative as input and reconcile it
+in place. Reopen affected implementation/validation tasks when conclusions
+change. A failed phase stays unchecked. Retry an agent failure once, then
+report the blocker with recovery options. No separate state store is needed.
 
-### 2e. Handle --restart-from
-
-1. If `--sprint=<id>` provided, use `.omc/sprint-plan/<id>/`. Otherwise find most recent `sprint-NNN/`.
-2. Read `phase-state.json`. Set `STATE_DIR` = `.omc/sprint-plan/<resolved>/`. Set `SPEC_DIR` from `phase-state.json`'s `spec_dir` field.
-3. Mark specified phase + all downstream as stale.
-4. Update symlink and `current_phase`. Register in OMC session state (step 2c). Report: "Restarting from {phase}. Downstream marked stale."
-
----
-
-## 3. Phase Orchestration
-
-Execute phases sequentially. For each phase:
-1. Read phase instruction file from `${CLAUDE_SKILL_DIR}/phases/`.
-2. Load previous phase's output artifact (context shedding — read from disk, not memory).
-3. Dispatch agent(s) per the phase file. Include in the agent prompt: **"For this execution, `SPEC_DIR` = `{spec path}` and `STATE_DIR` = `{state path}`."** Phase files use `SPEC_DIR` for committed spec artifacts and `STATE_DIR` for operational state.
-4. Write spec outputs (requirements, architecture-decisions, epics, stories, discovery) to `SPEC_DIR/`. Write state (phase-state, logs) to `STATE_DIR/`.
-5. Update `current_phase` and metrics in `STATE_DIR/phase-state.json`.
-6. Run Decision Steering if active for this phase.
-7. Inter-phase summary & pause (if applicable).
-
-### Phase Chain
-
-The **Ceremony** column shows the lowest level at which the phase runs as a full standalone phase producing its document. At lower levels the phase still happens, but collapses to an inline check (no separate document). See Section 1.5.
-
-| Phase | File | Ceremony | Pause? | Steering | Output |
-|-------|------|----------|--------|----------|--------|
-| 0: Discovery | `phase-0-discovery.md` | full (else inline) | step only | Dormant | `discovery.md` |
-| 1: Requirements | `phase-1-requirements.md` | standard+ (lean: inline brief) | **Yes** | Active | `requirements.md` |
-| 1B: Scoping | `phase-1b-sprint-scoping.md` | full (or when scope-cut needed) | **Yes** | Active (CRITICAL) | `sprint-scope.md` |
-| 1.5: UX Design | `phase-1.5-ux-design.md` | conditional (any level, if frontend) | Conditional | Active | `ux-design.md` |
-| 2A: Architecture | `phase-2a-architecture.md` | standard+ (lean: only if CRITICAL/HIGH) | **Yes** | **Max Active** | `architecture-decisions.md` |
-| 2B: Epic Design | `phase-2b-epic-design.md` | all (brief at lean) | step only | Active | `epics.md` |
-| — | *ceremony finalization (after 2B)* | all | — | — | recompute `ceremony` in phase-state |
-| 3: Stories | `phase-3-story-decomposition.md` | all | step only | Dormant | Updates `epics.md` |
-| 3.5: Write-Stories Gate | *(inline — see Phase-Specific Notes)* | standard+ | **Yes** | Dormant | user choice → feeds Phase 4 or skips |
-| 4: Write Stories | `phase-4-write-stories.md` | standard (lean template) / full (full template) | step only | Dormant | `stories/*.md` | **Size-gated** — lean→stubs, skipped if ≤5 simple stories, prompted at 6–15, default-write at 16+ |
-| 5: Validation | `phase-5-validation.md` | full (else inline sanity check) | Informational | Dormant | `readiness-report.md` |
-
-### Phase-Specific Notes
-
-- **Ceremony gating (applies to every phase)**: Before running a phase, check the resolved `ceremony` against the Ceremony column. If the level is below the threshold, run the phase's **inline** form — a brief check whose result is captured in `phase-state.json` (or as a note on the epic in `--beads` mode) rather than a standalone document — and do not write the phase's document. The phase files describe both their full and inline forms.
-- **Ceremony finalization**: After Phase 2B completes (story count and decision significance now known), recompute `ceremony` per Section 1.5 unless `ceremony_pinned`. Escalate-only. If escalated, re-run any now-required phase that was previously run inline (e.g. lean→standard means Phase 1 requirements now needs its document). Record `ceremony_reason`.
-
-- **Phase 1.5 trigger**: Run if `has_frontend: true` AND `has_ux_artifacts: false` AND not `--skip-ux` AND not `--fast`. Otherwise skip (`ux_design_phase: "skipped"`).
-- **Phase 2A refinement loop** (thorough only): If decisions create new requirements, loop back to Phase 1 (incremental), then re-run 2A. Max 3 iterations via `refinement_loops.requirements_architecture.count`.
-- **Phase 2B**: Single planner pass with inline validation (default and fast modes). Full RALPLAN-DR consensus only in `--thorough` mode.
-- **Phase 3**: All epics decompose in parallel (each planner gets full `epics.md` for context). BDD writers fire in parallel across all stories. Post-decomposition reconciliation scan catches cross-epic issues. Each story gets a `test_tier` (yolo/smoke/thorough) based on risk — defaults to smoke.
-
-- **Phase 3.5 — Write-Stories Gate (size-gated, inline prompt)**: After Phase 3 decomposition, count stories and flag risky ones. "Flagged" = `complexity=large` OR `test_tier=thorough` OR references ≥3 architecture decisions OR references any decision marked `research-backed` without a prior spike artifact (see `/spike` skill).
-
-  Present the user with:
-
-  ```
-  Sprint {NNN} decomposition: {N} stories across {M} epics.
-
-  Flagged for story-writing (stub alone may not be enough):
-    {list each flagged story with reason}
-
-  Write full stories before execution?
-
-  [write-all]     Expand every story as a full spec (~30s each × {N} stories)
-  [write-flagged] Expand only the {K} flagged stories (recommended)  ← default for 6–15 stories
-  [keep-stubs]    Proceed with stubs (risky if flagged stories exist)
-  [iterate-plan]  Go back to Phase 2B or 3 before committing
-
-  Default (auto-continues in 15s): [write-flagged] if any flagged; else [keep-stubs]
-  ```
-
-  Override behavior:
-  - `--fast` / `--skip-stories` → skip this gate, keep stubs
-  - `--thorough` / `--write-stories` → skip this gate, [write-all]
-  - `--auto` / `--full-auto` → apply the default without prompting
-  - `--step` → always prompt regardless of size
-
-  Record user choice in `phase-state.json`: `stories_gate_decision: "write-all"|"write-flagged"|"keep-stubs"` with `stories_gate_reason` noting the auto-default vs. explicit override.
-
-- **Phase 4**: Runs only if Phase 3.5 gate chose `write-all` or `write-flagged`. When `write-flagged`, fan out only for flagged stories (not all). Unflagged stories ship as stubs.
-
-- **Phase 5**: Sonnet verifier only (no opus critic). Auto-fix loop (max 2 iterations). Readiness report always shown.
-
-### Inter-Phase Summary & Pause
-
-**Pause modes**: Default pauses at decision points (Phases 1, 1B, 2A, 5). `--step` pauses after every phase. `--auto`/`--fast` never pause (only Decision Steering elicitations in GUIDED mode can pause).
-
-When pausing, show: phase name, artifact path, 2-4 bullet summary of outputs, key decisions made, 1-3 "things to consider" (high-significance decisions, open questions, health flags), and options (continue, review, edit, `--restart-from`).
-
-Wait for user input before proceeding.
-
----
-
-## 4. Decision Steering
-
-Read `${CLAUDE_SKILL_DIR}/phases/decision-steering.md` for the complete system.
-
-**Orchestrator rules**:
-- `thorough` → GUIDED. `fast` → AUTONOMOUS.
-- GUIDED: HIGH/CRITICAL decisions trigger user elicitation.
-- AUTONOMOUS: all decisions auto-decided with `[AUTO-DECIDED]` markers.
-- "Choose for me and automate the rest" transitions to AUTONOMOUS.
-- Store first 3 user significance overrides in `significance_calibration`.
-- Active in Phases 1, 1B, 1.5, 2A, 2B. Dormant in 0, 3, 4, 5.
-
----
-
-## 5. State Management
-
-### phase-state.json
-
-Single source of truth. Update after every phase transition:
-- `current_phase`, `steering_mode`, `significance_calibration`, `decisions_log`
-- `refinement_loops`, `refine_passes`, `stale_phases`
-- `epics_count`, `stories_total`, `stories_enriched`, `validation_status`
-
-### Stale Phase Tracking
-
-When a phase is re-run, mark all downstream phases stale. Re-run stale phases in order before proceeding.
-
-**Propagation chain**: `discovery` → `requirements` → `sprint-scoping` → `ux-design` → `architecture` → `epic-design` → `story-decomposition` → `write-stories` → `validation`
-
-(Prior versions used `story-enrichment` at this position; the field is renamed to `write-stories` but readers should accept both names for back-compat when processing existing `phase-state.json` files.)
-
-### OMC State (optional)
-
-Use `state_write`/`state_read` with `mode="sprint-plan"` if available. Skip if not. **Boundary**: `phase-state.json` and OMC state are independent — never cross-read.
-
----
-
-## 6. Progress Reporting
-
-After each phase: report phase name, artifacts, decisions, next phase. Present Decision Steering elicitations BEFORE reporting phase complete.
-
-At completion:
-1. **Deactivate auto-continuation**: Delete the ralph state file written in step 2c (or set `active: false`). This prevents the Stop hook from blocking after planning is done.
-2. **Phase 6 — Beads Materialization** (only if `beads_mode: true`): After validation passes, invoke the `sprint-to-beads` skill to push epics, stories, and architecture decisions into the beads tracker. This is the terminal phase in beads mode — beads becomes the single source of truth for work items.
-   - Invoke: `/sprint-to-beads --sprint={sprint-NNN}` (pass `--swarm` only if the user requested swarm setup).
-   - The skill is idempotent, so re-running `sprint-plan --continue` followed by `/sprint-to-beads` re-syncs safely.
-   - If `bd` is unavailable or has no database, `sprint-to-beads` halts with guidance; surface that to the user rather than failing the whole plan.
-   - After materialization, the recommended execution path is `bd ready` / `bd swarm` (bd-native) or `/sprint-exec --beads` (OMC executors synced to bd).
-3. Report sprint number, mode, epic/story counts, decision counts, validation status, readiness report path, and next steps. In beads mode, report the bead counts and `bd ready` / `/sprint-exec --beads` as next steps instead of the `docs/sprints/` paths.
-
----
-
-## 7. Error Recovery
-
-- **Idempotency**: Any phase can be re-run. Downstream phases marked stale.
-- **Resume**: `--continue` auto-detects next phase. `--restart-from` re-runs a specific phase.
-- **Agent failure**: Retry once. If still failing, present error with options (retry, skip if optional, abort).
-- **Stale recovery**: After current phase, check `stale_phases`, re-run in order.
-
----
-
-## 8. Refine Interface
-
-Refinement is now done by editing the plan artifacts or the beads directly; the orchestrator tracks phase state in `phase-state.json` so a re-run picks up the change.
+At completion, report the change directory, completed intake phases,
+remaining implementation/fold boxes, child handoffs, deferred story work,
+and validation evidence. Intake completion does not mean implementation,
+activation, or fold. Never edit the living spec or archive as part of intake.

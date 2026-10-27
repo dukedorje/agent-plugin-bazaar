@@ -1,6 +1,26 @@
 # update-sprint-plan-openspec
 
-> **PENDING**
+> **ACTIVE BUILD**
+
+## Preparation
+
+2026-10-27. Outcome: still valid. Authority: user said "activate and run"
+on `bazaar-8hs` (grant plus `--go`). Bounds: this intention's three
+nodes, the recorded non-goals, and the plan-store commitment. Blocked
+descendants stay PENDING.
+
+Upstream: no prior act result. Park fold is
+`openspec/changes/archive/2026-08-15-park-sprint-plan`. Living file
+`openspec/specs/default-loop/spec.md` blob
+`459f6878d71d86bd1942d5da911655decc864828` matches the stamped
+requirement "sprint-plan is parked".
+
+Revised 2026-10-27 after `astra-arch-review` send-back. Outcome:
+revised wording, same commitment. The factory starts only when named.
+An ADR and a child bead are non-plan outputs. Code anchor:
+`plugins/morphist-tools/skills/sprint-plan/SKILL.md` still carries the
+PARKED banner, `STATE_DIR` `.omc/sprint-plan/sprint-{NNN}/`, and
+`SPEC_DIR` `docs/sprints/{NNN}-{slug}/stories/`. Change commit `8b8ec87`.
 
 ## Why
 
@@ -31,11 +51,11 @@ produces have to be the OpenSpec change itself. `docs/sprints/` and
 No new UI because the surfaces are `/sprint-plan`, the change directory,
 and `intend` for work that is not a factory intake.
 
-Working: the user asks for a planning session or `/sprint-plan`. The
+Working: the user asks for `/sprint-plan` or names the factory. The
 factory writes one change directory. Empty: no product input yet, so it
 asks and still does not create a sprint folder. Failed: a phase tries to
-write `docs/sprints/` or `.omc/`. Off: the user does not ask for the
-factory, and models still do not auto-start it.
+write `docs/sprints/` or `.omc/`. Off: a generic planning request stays
+on `intend`, and models still do not auto-start the factory.
 
 ## Out of scope
 
