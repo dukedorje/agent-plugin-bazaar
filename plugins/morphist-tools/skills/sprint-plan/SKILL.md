@@ -55,10 +55,12 @@ and deeper validation. Detail level never changes the output destinations.
 Escalate detail when HIGH/CRITICAL decisions demand it and record the reason
 in `tasks.md`; do not silently downgrade an established level.
 
-Story writing and story-bead materialization belong to
-`update-sprint-plan-beads`. Do not execute legacy `--write-stories`,
-`--skip-stories`, or `--beads` materialization paths here; explain the deferred
-handoff if requested. Do not invoke sprint-to-beads. `--sprint=ID` no longer
+Phases 3 and 4 record stories directly as beads with acceptance criteria,
+parented to the intake epic. Mirror each acceptance as an open checkbox in
+`SPEC_DIR/tasks.md`. Never create a stories directory, story markdown, or a
+story template. `sprint-to-beads` runs at the end of intake without a separate
+flag. Legacy `--write-stories`, `--skip-stories`, and `--beads` flags do not
+select or bypass story intake or materialization. `--sprint=ID` no longer
 selects a numbered sprint; use `--change=ID`.
 
 ## Initialization
@@ -87,6 +89,8 @@ selects a numbered sprint; use `--change=ID`.
 - [ ] Phase 1.5: UX — design.md journey, only for UI; otherwise record skip reason
 - [ ] Phase 2A: Architecture — design.md; ADR only if shape changes
 - [ ] Phase 2B: Epics — child bead/change handoff references
+- [ ] Phase 3: Story decomposition — beads with acceptance, parented to intake epic
+- [ ] Phase 4: Story elaboration — bead fields and tasks.md acceptance checkboxes
 - [ ] Phase 5: Validation — remaining tasks.md boxes and findings
 ```
 
@@ -100,7 +104,8 @@ selects a numbered sprint; use `--change=ID`.
 | 1.5 UX | [phase-1.5-ux-design.md](phases/phase-1.5-ux-design.md) | `design.md` journey, only for UI |
 | 2A Architecture | [phase-2a-architecture.md](phases/phase-2a-architecture.md) | `design.md`; bounded ADR if shape changes |
 | 2B Epics | [phase-2b-epic-design.md](phases/phase-2b-epic-design.md) | child bead or child change id handoffs |
-| 3–4 Stories | [phase-3-story-decomposition.md](phases/phase-3-story-decomposition.md), [phase-4-write-stories.md](phases/phase-4-write-stories.md) | deferred to `update-sprint-plan-beads` |
+| 3 Stories | [phase-3-story-decomposition.md](phases/phase-3-story-decomposition.md) | story beads with acceptance and intake epic parent |
+| 4 Elaboration | [phase-4-write-stories.md](phases/phase-4-write-stories.md) | enriched bead fields and acceptance checkboxes in `tasks.md` |
 | 5 Validation | [phase-5-validation.md](phases/phase-5-validation.md) | remaining `tasks.md` boxes; `advise` at architecture rigor |
 
 Execute in phase order. Read each prior output from the change directory,
@@ -111,9 +116,9 @@ commands. Require a final response containing outputs, paths, and blockers.
 
 Check the matching phase box only after its output exists and required
 steering is resolved. For a skipped conditional phase, record the reason next
-to its checked box; no output file is needed. Do not create story markdown
-or story beads, even as stubs. Read the retained phase 3–4 boundary notes
-and continue to Phase 5 without claiming story work complete.
+to its checked box; no output file is needed. Story content lives in bead
+fields; acceptance checkboxes and bead references live in `tasks.md`. Run
+Phases 3 and 4 before Phase 5; do not skip them as a deferred handoff.
 
 ## Steering and continuation
 
@@ -136,6 +141,6 @@ change. A failed phase stays unchecked. Retry an agent failure once, then
 report the blocker with recovery options. No separate state store is needed.
 
 At completion, report the change directory, completed intake phases,
-remaining implementation/fold boxes, child handoffs, deferred story work,
+remaining implementation/fold boxes, intake epic and story bead ids,
 and validation evidence. Intake completion does not mean implementation,
 activation, or fold. Never edit the living spec or archive as part of intake.

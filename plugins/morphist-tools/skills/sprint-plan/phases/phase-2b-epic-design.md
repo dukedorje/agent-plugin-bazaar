@@ -21,13 +21,16 @@ and architecture decisions. Keep the current change id as the intake plan.
    creation, record the proposed handoff and leave its task unchecked.
    When no split is needed, record that explicitly instead of inventing one.
 
-Do not write an epics markdown document. Do not decompose or materialize
-story beads: those belong to `update-sprint-plan-beads`. Child epic beads
-are handoffs, not an alternate plan store.
+Do not write an epics markdown document. Record or reuse the intake epic
+bead id in `SPEC_DIR/tasks.md`; create an epic for the current change when
+none exists, even when no child split is needed. Use the stable epic
+external-ref and initialization checks from sprint-to-beads to avoid
+duplicates. Child epic handoffs
+remain references; every story in this intake is parented to its intake epic.
+Story decomposition follows in Phase 3.
 
 ## Completion
 
 Check Phase 2B once split decisions and child handoffs (or no-split rationale)
 are recorded. Leave unresolved handoff tasks open. Reassess detail level
-from actual risk and record any escalation in `tasks.md`. Read the phase
-3–4 boundary notes, then continue to Phase 5.
+from actual risk and record any escalation in `tasks.md`. Next: Phase 3.

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-8hs.2",
+  "node_id": "bazaar-8hs.2",
+  "capability": "default-loop",
+  "change_id": "update-sprint-plan-beads",
+  "goal": "Make story intake record each story as a bead with acceptance criteria, parented to the intake epic, and add one open checkbox per acceptance in that change's tasks.md. Phases 3 and 4 of sprint-plan are this work, not a deferred boundary. Do not write stories markdown, a stories directory, or a story template. Beads materialization runs at the end of intake without a separate flag. Retarget sprint-to-beads off docs/sprints and stories files onto the current openspec/changes/<change-id>/ plus bd create. Keep the existing phase and materializer detail; replace destinations in place. Keep disable-model-invocation true on sprint-plan. Check the four implementation boxes in the beads change tasks.md. Leave the living-spec fold box open. Do not edit the living spec. Do not fold. Do not change the ACTIVE BUILD banner. Do not edit prd, vision, retro, sprint-exec, or sprint-from-beads.",
+  "non_goals": [
+    "Update the living default-loop spec",
+    "Retarget prd or vision",
+    "Retarget retro, sprint-exec, or sprint-from-beads",
+    "Migrate old story trees"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-sprint-plan-beads/specs/default-loop/spec.md",
+      "invariant": "A story is a bead plus a tasks.md checkbox. No stories directory. Materialization is not a separate flag."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/sprint-plan/phases/phase-3-story-decomposition.md",
+      "invariant": "Phase 3 is still a deferred handoff. Replace that with bead creation."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/sprint-to-beads/SKILL.md",
+      "invariant": "Materializer still reads docs/sprints stories files. Point it at the change directory."
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c 'from pathlib import Path; import re,sys; roots=[Path(\"plugins/morphist-tools/skills/sprint-plan\"),Path(\"plugins/morphist-tools/skills/sprint-to-beads\")]; bad=re.compile(r\"stories/\\*\\.md|stories/\\{|SPEC_DIR/stories|docs/sprints/\"); ok=re.compile(r\"not |never |forbid|do not|shall not|must not|does not\", re.I); text=(roots[0]/\"SKILL.md\").read_text(); assert \"disable-model-invocation: true\" in text; assert \"sprint-to-beads\" in text; hits=[f\"{p}:{i}:{line}\" for root in roots for p in root.rglob(\"*.md\") for i,line in enumerate(p.read_text().splitlines(),1) if bad.search(line) and not ok.search(line)]; sys.exit(chr(10).join(hits)) if hits else print(\"ok\")'"
+  },
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/morphist-tools/skills/sprint-plan/",
+      "plugins/morphist-tools/skills/sprint-to-beads/",
+      "openspec/changes/update-sprint-plan-beads/tasks.md"
+    ],
+    "do_not": ["push", "fold", "edit-living-spec"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "change",
+  "density": "standard",
+  "surface": "packet-only",
+  "role": "worker",
+  "assignee": {
+    "id": "sol-implement",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "effort": "medium",
+    "signing": {"mode": "stand-in", "stand_in_id": "sol-implement"}
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok-conductor"}
+  }
+}

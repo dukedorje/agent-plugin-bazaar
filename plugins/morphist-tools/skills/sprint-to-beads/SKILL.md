@@ -1,38 +1,38 @@
 ---
 name: sprint-to-beads
 description: >
-  Materialize a planned sprint (epics, stories, architecture decisions) into the beads
+  Materialize an OpenSpec intake change (epics, stories, architecture decisions) into the beads
   issue tracker (`bd` binary) as the single source of truth. Emits ADRs as decision beads,
   epics as epic beads, and stories as task beads with acceptance criteria, design notes, and
   dependency edges. Idempotent — re-runs update existing beads rather than duplicating.
   Triggers on: sprint to beads, materialize to beads, push sprint to bd, beads from sprint.
 user-invocable: true
-argument-hint: "[--sprint=ID] [--swarm] [--dry-run] [--prune] [--db=PATH]"
+argument-hint: "[--change=ID] [--swarm] [--dry-run] [--prune] [--db=PATH]"
 model: sonnet
 ---
 
-# sprint-to-beads: Sprint → Beads Materializer
+# sprint-to-beads: Intake Change → Beads Materializer
 
-Reads a planned sprint and writes its epics, stories, and architecture decisions directly into
-[beads](https://github.com/steveyegge/beads) (`bd`) as the durable, single source of truth for **work
-items**. After materialization, **beads owns the task & epic information** — the `docs/sprints/.../stories/*.md`
-story specs (if any) collapse into bead fields and are no longer a second system of reference for work
-items. Planning **narrative** docs (PRD, requirements, architecture-decisions) are *kept* as committed
-supplementary documentation — they are the "why," not a competing work-item store. Architecture rationale
-stays doc-sourced; decision beads are lightweight pointers to it.
+Reads the current `openspec/changes/<change-id>/` plan and writes its epics,
+stories, and architecture decisions directly into beads (`bd`). Beads owns
+story descriptions, acceptance criteria, and design notes. The change's
+`tasks.md` mirrors one checkbox per acceptance, linked to the story bead.
+Never create a stories directory, story markdown, or a story template.
+Planning narrative stays in `proposal.md`, optional `design.md`, spec deltas,
+and bounded ADRs in `ARCHITECTURE.md` when the shape changes.
 
-This skill is the integration seam between morphist-tools (the planning *what/why*) and beads (the
-execution *where*). It is invoked automatically by `sprint-plan --beads`, or run standalone against any
-already-planned sprint.
+This skill is the integration seam between morphist-tools (the planning
+what/why) and beads (the execution where). `sprint-plan` invokes it at the
+end of intake without a separate flag. It can also re-sync an existing change.
 
 ---
 
 ## When to Use
 
-- **Automatically** — `sprint-plan --beads` calls this skill as its terminal phase.
-- **On-demand** — materialize an existing sprint that was planned without `--beads`:
-  `/sprint-to-beads --sprint=sprint-003`
-- **Re-sync** — after a sprint's plan changes, re-run to update the beads (idempotent).
+- **Automatically** — `sprint-plan` calls this skill at the end of intake, without a separate flag.
+- **On-demand** — materialize an existing intake change:
+  `/sprint-to-beads --change=add-account-recovery`
+- **Re-sync** — after a change's plan changes, re-run to update the beads (idempotent).
 
 Do **not** use this skill to:
 - Plan a sprint (that's `/sprint-plan`)
@@ -42,48 +42,48 @@ Do **not** use this skill to:
 
 ## Core Principle: Single Source of Truth
 
-When a sprint is materialized to beads, **beads holds the task & epic content** — not a parallel set of
-markdown story specs. Concretely:
+When intake is materialized, beads holds task and epic content:
 
-- A story's description, acceptance criteria, and design notes live **in the bead's fields**
-  (`--description`, `--acceptance`, `--design`), not in a `docs/sprints/.../stories/*.md` file that the
-  bead merely points at. There is no `--spec-id` pointer to a competing story document.
-- **Architecture decisions are the exception** — their rationale is *supplementary documentation*, which
-  beads does not own. The full ADR rationale lives in `architecture-decisions.md` / `docs/decisions/`
-  (the source of truth). The `decision` bead is a **lightweight pointer**: title + one-line decision +
-  a reference to the doc, linked `related` to the stories it constrains. Beads carries enough to surface
-  the decision in `bd show`; the doc carries the *why*. This mirrors the task/doc boundary: work items in
-  beads, planning narrative in docs.
-- The only retained out-of-band state is a tiny **ephemeral** id-map in `STATE_DIR` used purely for
-  reporting; idempotency itself is derived from beads via `--external-ref` keys, so beads remains
-  self-describing even if the map is deleted.
+- A story's description, acceptance criteria, and design notes live in bead
+  fields (`--description`, `--acceptance`, `--design`). `tasks.md` carries the
+  acceptance checkboxes and bead references, not a competing story narrative.
+- Architecture decisions are supplementary documentation. Their rationale
+  stays in the change's `design.md` or a referenced `ARCHITECTURE.md` ADR.
+  A decision bead is a lightweight pointer: title, one-line decision, source
+  anchor, and `related` links to the stories it constrains.
+- Idempotency comes from beads' stable `--external-ref` keys and the ids in
+  `SPEC_DIR/tasks.md`. Keep the working id-map in memory; do not use OMC,
+  phase-state files, symlinks, or an external cache as plan storage.
 
 ---
 
 ## 1. Initialization
 
-### 1a. Sprint Resolution
+### 1a. Change Resolution
 
-Resolve the target sprint directories (per `templates/sprint-resolution.md`):
-1. If `--sprint=<id>` was provided in `$ARGUMENTS`, set `STATE_DIR` = `.omc/sprint-plan/<id>/`
-2. Else if `state_read` is available, read key `morphist.active_sprint`. If set, `STATE_DIR` = `.omc/sprint-plan/<value>/`
-3. Else if `.omc/sprint-plan/current` symlink exists, `STATE_DIR` = `.omc/sprint-plan/current/`
-4. Otherwise halt: "No active sprint found. Run `/sprint-plan` first, or pass `--sprint=<id>`."
+1. Use `--change=<id>` if supplied; otherwise use the unambiguous current
+   change passed by sprint-plan or established in session context. If
+   ambiguous, ask which change rather than choosing the newest folder.
+2. Set `CHANGE_ID` to that id and `SPEC_DIR` to
+   `openspec/changes/<change-id>/`. Verify `proposal.md`, `tasks.md`, and
+   applicable spec deltas exist. Read the disposition banner; materialization
+   records intake work and does not grant implementation or activation authority.
+3. Read phase progress, intake epic id, child handoffs, story bead ids and
+   acceptance rows from `SPEC_DIR/tasks.md`. Resume there on re-sync.
 
-Verify `STATE_DIR/phase-state.json` exists. Read it and set `SPEC_DIR` from the `spec_dir` field.
-Verify `SPEC_DIR` exists. If not, halt: "Sprint spec directory not found at {spec_dir}."
-
-Extract `sprint_number` (e.g. `sprint-003` → the canonical sprint id used in external-refs and labels).
+Never read or write OMC sessions, an active-sprint key, or phase-state files.
+If the change is missing, halt with its expected path and request the change
+id or completed intake inputs.
 
 ### 1b. Parse Arguments
 
 | Flag | Default | Behavior |
 |------|---------|----------|
-| `--sprint=ID` | resolved | Target a specific sprint |
+| `--change=ID` | current change | Target an existing OpenSpec change |
 | `--swarm` | off | After materializing, run `bd swarm create` per epic so coordinators can pick up parallel work |
 | `--dry-run` | off | Print the full bead plan (every `bd` command) without executing |
-| `--prune` | off | Close beads whose external-ref belongs to this sprint but no longer appears in the plan (handles deleted stories on re-sync). Without it, stale beads are left open and reported. |
-| `--db=PATH` | auto | Pass `--db PATH` to every `bd` call. Default: bd auto-discovers `.beads/*.db`. |
+| `--prune` | off | Close beads whose external-ref belongs to this change but no longer appears in the plan (handles deleted stories on re-sync). Without it, stale beads are left open and reported. |
+| `--db=PATH` | auto | Pass `--db PATH` to every `bd` call. Default: bd auto-discovers the project database. |
 
 ### 1c. Ensure Beads Database
 
@@ -96,17 +96,21 @@ If the db exists, capture its issue prefix for reporting.
 
 ## 2. Load the Plan
 
-Read the sprint artifacts from `SPEC_DIR`. These are the planner's outputs; this skill is the consumer.
+Read `SPEC_DIR/proposal.md`, `tasks.md`, optional `design.md`, and spec deltas.
+Use the story beads referenced by tasks.md as the authoritative story content.
+During initial decomposition, accept the in-memory story records from Phases
+3–4; write them directly to beads, never to an intermediate story file.
 
 ### 2a. Architecture Decisions → decision beads
 
-Read `SPEC_DIR/architecture-decisions.md`. For each ADR block (`## D-{NNN}: {Title}`), extract:
+Read decision sections in `SPEC_DIR/design.md` and any explicitly referenced
+`ARCHITECTURE.md` ADRs. For each decision block, extract:
 - `id` (e.g. `D-001`), `title`
 - `significance` (CRITICAL/HIGH/MEDIUM → priority mapping below)
 - The one-line **Decision** statement (NOT the full Context/Alternatives/Consequences body)
 
 The `decision` bead is a **pointer, not a copy**: its description holds only the one-line decision plus a
-reference to the source doc (`See architecture-decisions.md#D-{NNN}` or the `docs/decisions/` path). The
+reference to the source doc (`See openspec/changes/{change-id}/design.md#D-{NNN}` or the referenced `ARCHITECTURE.md` anchor). The
 full rationale stays in the doc — beads does not duplicate it. This keeps the architecture narrative
 single-sourced in the doc while letting `bd show` surface the decision against the stories it governs.
 
@@ -116,7 +120,9 @@ stories). MEDIUM/LOW decisions stay in the doc only — they don't earn a bead. 
 
 ### 2b. Epics → epic beads
 
-Read `SPEC_DIR/epics.md`. For each `## Epic {N}: {Title}` section, extract:
+Read the intake epic and child handoff references in `SPEC_DIR/tasks.md`,
+with scope and goals from `proposal.md`. Reuse the recorded intake epic;
+if absent, create one for this change and record its id. For each epic, extract:
 - `id` (`E{N}`), `title`, goal statement (→ description)
 - Architecture constraints (decision IDs this epic references → linked later)
 - `Depends on:` epic list (→ epic-level dependency edges)
@@ -124,13 +130,13 @@ Read `SPEC_DIR/epics.md`. For each `## Epic {N}: {Title}` section, extract:
 
 ### 2c. Stories → task beads
 
-Stories come from one of two places (check enriched first, fall back to stubs):
-1. **Enriched** — `SPEC_DIR/stories/{epic}-{story}-{slug}.md` files. Parse frontmatter
-   (`epic`, `story`, `status`, `decisions`, `test_tier`) and body sections (Story, Acceptance Criteria,
-   Architecture Compliance / design notes, Tasks).
-2. **Stubs** — if no enriched files exist, read the per-story stubs inside `SPEC_DIR/epics.md`
-   (Phase 3 decomposition output). Extract title, ACs, `test_tier`, `complexity`, referenced `decisions`,
-   and any declared cross-story dependencies.
+Resolve story ids and stable acceptance ids from `SPEC_DIR/tasks.md`, then
+read their bead fields with `bd show <id> --json`. For initial Phase 3 input,
+consume the decomposed story records directly from the caller's current
+context. Existing beads remain authoritative on standalone re-sync; a
+checkbox alone is not enough to reconstruct or overwrite story narrative.
+If required content is missing, report the gap and leave intake unchecked.
+Do not fall back to old story trees, stubs in epic documents, or templates.
 
 For each story capture: `id` (`{epic}.{story}`), `title`, parent epic id, description (the user story +
 scope), acceptance criteria (BDD text), design notes (Architecture Compliance + Technical Requirements),
@@ -144,7 +150,7 @@ Assemble an ordered plan. **Order matters** — referents must exist before refe
 
 1. **Decision beads** (no dependencies on epics/stories)
 2. **Epic beads**
-3. **Story beads** (need their parent epic to exist → use real `--parent`)
+3. **Story beads** (need the intake epic to exist → use real `--parent`)
 4. **Epic→epic dependency edges**
 5. **Story→story dependency edges** (`blocks`)
 6. **Story→decision links** (`related`, non-blocking)
@@ -155,26 +161,29 @@ Every bead gets a stable `--external-ref` so re-runs update instead of duplicate
 
 | Kind | external-ref |
 |------|--------------|
-| Decision | `morphist:{sprint}:D-{NNN}` |
-| Epic | `morphist:{sprint}:E{N}` |
-| Story | `morphist:{sprint}:{epic}.{story}` |
+| Decision | `morphist:{change-id}:D-{NNN}` |
+| Epic | `morphist:{change-id}:E{N}` |
+| Story | `morphist:{change-id}:{epic}.{story}` |
 
-Before creating any bead, load the existing map: run `bd list --json` (with `--db`) and index issues by
+Before creating any bead, load the existing map: run `bd list --all --limit 0 --json` (with `--db`) and index issues by
 `external_ref`. For each plan item:
-- **ref exists** → `bd update <id> ...` with the current fields (content may have changed since last sync)
+- **ref exists** → `bd update <id> ...` with explicitly revised intake fields; otherwise preserve bead content, status, and ownership
 - **ref absent** → `bd create ...`, capture the new bead id, add it to the in-memory map
 
-This makes the skill safe to run repeatedly.
+Reuse a Phase 2B epic recorded by id even if its external-ref is missing;
+attach the change key to that same bead instead of creating a duplicate.
+If an id and external-ref resolve to different beads, stop and report the
+conflict. Never silently reparent unrelated work. This makes re-runs safe.
 
 ### Field Mapping
 
 **Decision bead** (pointer only — CRITICAL/HIGH decisions only):
 ```
 bd create "{D-NNN}: {title}" -t decision \
-  --description "{one-line decision}. Rationale: see architecture-decisions.md#D-{NNN}" \
+  --description "{one-line decision}. Rationale: see {source-path}#{decision-anchor}" \
   --priority {sig→pri} \
-  --external-ref "morphist:{sprint}:D-{NNN}" \
-  --labels "adr,{sprint}" --silent
+  --external-ref "morphist:{change-id}:D-{NNN}" \
+  --labels "adr,{change-id}" --silent
 ```
 The full Context/Alternatives/Consequences stays in the doc; the bead does not copy it.
 
@@ -183,25 +192,46 @@ The full Context/Alternatives/Consequences stays in the doc; the bead does not c
 bd create "Epic {N}: {title}" -t epic \
   --description "{goal statement}" \
   --priority {complexity→pri} \
-  --external-ref "morphist:{sprint}:E{N}" \
-  --labels "epic,{sprint},complexity:{low|med|high}" --silent
+  --external-ref "morphist:{change-id}:E{N}" \
+  --labels "epic,{change-id},complexity:{low|med|high}" --silent
 ```
 
 **Story bead:**
 ```
 bd create "Story {epic}.{story}: {title}" -t task \
-  --parent {epic-bead-id} \
+  --parent {intake-epic-id} \
   --description "{user story + scope boundaries}" \
   --acceptance "{full BDD acceptance criteria text}" \
   --design "{architecture compliance + technical requirements}" \
   --priority {derived} \
-  --external-ref "morphist:{sprint}:{epic}.{story}" \
-  --labels "story,{sprint},tier:{test_tier},complexity:{complexity}" --silent
+  --external-ref "morphist:{change-id}:{epic}.{story}" \
+  --labels "story,{change-id},tier:{test_tier},complexity:{complexity}" --silent
 ```
 
 **Significance / complexity → priority** (bd priority is an int, 0=highest..4=lowest):
 - CRITICAL → 0, HIGH → 1, MEDIUM → 2, (LOW/unspecified) → 3
 - Epic/story complexity high → 1, medium → 2, low → 3
+
+### Acceptance Checkboxes
+
+After a story create/update succeeds, reconcile its acceptance criteria in
+`SPEC_DIR/tasks.md`. Record the intake epic, story bead id, and external-ref.
+Give each criterion a stable local id; a row can use this form:
+
+```markdown
+### Story {bead-id} — {title} (`morphist:{change-id}:{epic}.{story}`)
+- [ ] {bead-id}/AC1: {complete acceptance criterion}
+- [ ] {bead-id}/AC2: {complete acceptance criterion}
+```
+
+Write exactly one checkbox per criterion, including multiline BDD text in
+that row. New criteria are open. On re-sync, match by bead id + acceptance id,
+preserve unchanged checked rows, and reopen substantively revised criteria.
+Record removals explicitly outside the active checklist rather than silently
+losing history. Preserve unrelated intake, implementation, and fold tasks.
+If the write fails after bead creation, retry by external-ref and reconcile
+rows; do not mint another bead or mark the phase complete. No stories means
+no story beads or acceptance rows; record the empty-scope reason.
 
 ### Dependency Edges
 
@@ -221,7 +251,9 @@ report it instead (`bd dep cycles` can confirm post-hoc).
 
 If `--dry-run`: print the assembled plan as the literal ordered list of `bd` commands (with resolved
 parent ids shown as `{ref}` placeholders for not-yet-created beads), plus a summary count
-(`N decisions, M epics, K stories, J dep edges`). Do not execute. Stop.
+(`N decisions, M epics, K stories, J dep edges`) and the proposed acceptance
+checkbox changes. Do not execute bd writes or edit tasks.md. Stop. Dry-run
+is a preview, not intake completion.
 
 ---
 
@@ -230,6 +262,8 @@ parent ids shown as `{ref}` placeholders for not-yet-created beads), plus a summ
 Run the plan in the order from Section 3. For each `bd create`, capture the returned id (use `--silent`
 so the id is the only output) and store it in the map keyed by external-ref before emitting any edge that
 references it.
+
+Reconcile acceptance checkboxes after each successful story write as above.
 
 Batch sensibly but keep it observable — emit a progress line per kind
 (`✓ 3 decisions, ✓ 4 epics, ✓ 14 stories, ✓ 9 dependency edges`).
@@ -241,8 +275,8 @@ If any `bd` call fails:
 
 ### 5a. Prune (if `--prune`)
 
-Query `bd list --json` for issues whose `external_ref` matches `morphist:{sprint}:*` but whose key is not
-in the current plan. For each, `bd close <id> --reason "pruned: removed from sprint plan on re-sync"`.
+Query `bd list --all --limit 0 --json` for issues whose `external_ref` matches `morphist:{change-id}:*` but whose key is not
+in the current plan. For each, `bd close <id> --reason "pruned: removed from change intake on re-sync"`.
 Report what was pruned. Without `--prune`, list these as "stale (left open)" and recommend `--prune`.
 
 ### 5b. Swarm (if `--swarm`)
@@ -252,33 +286,22 @@ For each materialized epic, run `bd swarm validate {epic-id}` and, if swarmable,
 
 ---
 
-## 6. Persist the ID Map & Report
+## 6. Record References & Report
 
-Write `STATE_DIR/beads-map.json` (ephemeral, gitignored) for reporting and fast re-sync:
-```json
-{
-  "sprint": "sprint-003",
-  "db_prefix": "auth",
-  "materialized_at": "{ISO 8601}",
-  "decisions": { "D-001": "auth-8qv" },
-  "epics": { "E1": "auth-rw6" },
-  "stories": { "1.1": "auth-rw6.1" }
-}
-```
-This file is a convenience cache, **not** a source of truth — it can be regenerated at any time from
-`bd list --json` by reading `external_ref` values. Do not write story/epic *content* here.
-
-If `state_write` is available, record `{ mode: "sprint-to-beads", sprint, epic_count, story_count }`
-(non-blocking; skip if unavailable).
+Keep the id-map in memory and record the intake epic, story ids, stable
+external-refs, and acceptance checkboxes in `SPEC_DIR/tasks.md`. Rebuild the
+map on continuation from `bd list --all --limit 0 --json` and those references; do not
+write an additional map file or use state tools. Beads owns story content.
+Record materialization failures next to the unchecked intake phase.
 
 ### Final Report
 
 ```
-Sprint {NNN} → beads ({db_prefix})
+Change {change-id} → beads ({db_prefix})
 
   Decisions:  {n}  (decision beads, linked to constraining stories)
   Epics:      {m}  → {epic ids}
-  Stories:    {k}  ({enriched|stub} source)
+  Stories:    {k}  (bead fields; acceptance mirrored in tasks.md)
   Dep edges:  {j}  ({story-story blocks} + {epic-epic} + {story-decision related})
   {if --swarm}  Swarms:  {created epic ids with wave counts}
   {if stale}    Stale:   {refs left open — pass --prune to close}
@@ -286,19 +309,18 @@ Sprint {NNN} → beads ({db_prefix})
 Next:
   bd ready                  # see unblocked work
   bd swarm status           # if --swarm was used
-  /sprint-exec --beads      # drive execution via OMC executors, synced to bd
+  # Return the change path, bead ids, acceptance count, and any failures
 ```
 
 ---
 
 ## 7. Known Limitations
 
-- **One-way push.** This skill writes plan → beads. It does not read bead status back into sprint
-  artifacts (that's `/sprint-exec --beads`'s job). Editing a bead's content in
-  `bd` and then re-running this skill will **overwrite** that field from the plan — beads is downstream of
-  the plan for content, source-of-truth for *status*.
-- **Stub fidelity.** Materializing from story stubs (Phase 4 skipped) yields thinner `--acceptance`/
-  `--design` fields than enriched stories. Run `sprint-plan --write-stories` first for richer beads.
+- **Intake sync only.** This skill records work and acceptance; it does not
+  execute stories, mark acceptance complete, activate changes, or fold living
+  specs. Re-sync preserves bead content unless intake explicitly revises it.
+  A standalone run needs existing bead content or current decomposed records;
+  it cannot infer missing stories from acceptance checkboxes alone.
 - **Decision link direction.** Story→decision uses `related` (non-blocking). A decision is not a gate on
   the story; it's reference context surfaced in `bd show`.
 - **Requires `bd`.** If the `bd` binary is absent, halt with an install pointer — this skill has no

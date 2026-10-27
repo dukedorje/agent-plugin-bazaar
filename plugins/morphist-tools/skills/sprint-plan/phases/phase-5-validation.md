@@ -2,7 +2,7 @@
 
 Inputs: `SPEC_DIR/proposal.md`, `SPEC_DIR/tasks.md`, optional design, spec
 deltas, and references to bounded ADR/child handoffs. Validate the intake
-that exists; story generation is deferred to `update-sprint-plan-beads`.
+that exists, including the story beads and their acceptance checkboxes.
 
 ## Checks
 
@@ -14,10 +14,13 @@ that exists; story generation is deferred to `update-sprint-plan-beads`.
 - Architecture and UI journey (when applicable) agree with requirements;
   significant choices and conflicts are resolved or visibly outstanding.
 - Child handoffs have coherent boundaries and acyclic dependencies.
+- Every story bead has acceptance criteria and the recorded intake epic parent.
+  Each acceptance has one matching checkbox in `SPEC_DIR/tasks.md`; new
+  criteria are open. Story ids and dependencies resolve without cycles.
 - All plan narrative and phase progress are in the current change directory.
   An ADR exists only for a shape change; child artifacts are handoffs.
 - Checked intake boxes have evidence or explicit conditional skip reasons.
-  Unfinished implementation, story handoff, activation, and fold work stay open.
+  Unfinished implementation, activation, and fold work stay open.
 
 ## Findings and review
 
@@ -35,12 +38,19 @@ keeps validation open. Do not expand permissions to run the review.
 
 ## Completion
 
+Run `sprint-to-beads` against this `CHANGE_ID` and `SPEC_DIR` as the normal
+end of intake, without a separate flag. Re-sync the existing beads and
+acceptance rows using their stable ids; do not duplicate them. Confirm the
+materializer succeeds and `bd ready` lists unblocked stories. On failure,
+leave Phase 5 unchecked and report the failing item and recovery path.
+An empty story list is valid and mints no story beads.
+
 Finish the remaining intake/finding boxes only when their evidence supports
 completion. Check Phase 5 when validation passes and required review accepts.
 Show pass, pass-with-warnings, or fail with supporting paths and remaining
 boxes. Do not create a readiness report or decision graph file.
 
 Always present the outcome, including in automatic modes. Identify the
-change directory, child handoffs, and deferred story work. Intake readiness
+change directory, intake epic, child handoffs, and story bead ids. Intake readiness
 is not implementation completion; keep implementation and fold boxes open.
 Do not edit living specs, fold, or archive from this phase.
