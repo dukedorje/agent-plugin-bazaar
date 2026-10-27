@@ -4,7 +4,7 @@
 - [x] Map each phase onto `proposal.md`, `design.md`, spec deltas, or `tasks.md` as in `design.md`.
 - [x] Remove writes to `docs/sprints/` and `.omc/sprint-plan/`, including `phase-state.json`.
 - [x] Replace the PARKED banner and description with the OpenSpec intake contract. Keep `disable-model-invocation: true`.
-- [ ] Update the default-loop living spec when this change folds.
+- [x] Update the default-loop living spec when this change folds.
 - [x] Fresh advise after preparation
 
 ## Owed by advise — 2026-10-27

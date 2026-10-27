@@ -17,10 +17,15 @@ requirement "sprint-plan is parked".
 
 Revised 2026-10-27 after `astra-arch-review` send-back. Outcome:
 revised wording, same commitment. The factory starts only when named.
-An ADR and a child bead are non-plan outputs. Code anchor:
-`plugins/morphist-tools/skills/sprint-plan/SKILL.md` still carries the
-PARKED banner, `STATE_DIR` `.omc/sprint-plan/sprint-{NNN}/`, and
-`SPEC_DIR` `docs/sprints/{NNN}-{slug}/stories/`. Change commit `8b8ec87`.
+An ADR and a child bead are non-plan outputs.
+
+Act landed 2026-10-27. Outcome: still valid. Authority unchanged.
+Implementation `b288406` retargets
+`plugins/morphist-tools/skills/sprint-plan/SKILL.md` onto the change
+directory and keeps `disable-model-invocation: true`. Result
+`21e8656` records that commit. Living blob
+`459f6878d71d86bd1942d5da911655decc864828` still matches. Fold applies
+the delta.
 
 ## Why
 
