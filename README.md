@@ -28,6 +28,7 @@ Codex-compatible intention plugin:
 ```bash
 codex plugin marketplace add /path/to/agent-plugin-bazaar
 codex plugin add intention@agent-plugin-bazaar
+codex plugin add morphist-tools@agent-plugin-bazaar
 ```
 
 Start a new Codex thread after installing so the intention skills are loaded.

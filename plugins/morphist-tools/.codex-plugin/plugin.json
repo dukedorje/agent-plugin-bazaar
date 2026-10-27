@@ -1,0 +1,36 @@
+{
+  "name": "morphist-tools",
+  "version": "2.0.0",
+  "description": "PRD, vision, research, and beads bridges. Sprint-plan stays parked; the default loop is intention.",
+  "author": {
+    "name": "Duke Jones",
+    "url": "https://github.com/dukejones"
+  },
+  "repository": "https://github.com/dukejones/agent-plugin-bazaar",
+  "license": "MIT",
+  "keywords": [
+    "sprint",
+    "planning",
+    "prd",
+    "research",
+    "beads"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Morphist Tools",
+    "shortDescription": "PRD, vision, research, and beads bridges.",
+    "longDescription": "Workshops for a product vision, a PRD, a research pass, and a beads import or export. The parked sprint-plan factory stays out of the default loop.",
+    "developerName": "Duke Jones",
+    "category": "Productivity",
+    "capabilities": [
+      "Planning",
+      "Research",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Write a PRD for this product.",
+      "Research this question and synthesize the findings.",
+      "Spike the smallest test of this hypothesis."
+    ]
+  }
+}
