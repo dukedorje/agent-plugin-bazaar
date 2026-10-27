@@ -4,4 +4,4 @@
 - [x] Create a bead per story, with acceptance, parented to the intake epic.
 - [x] Add one `tasks.md` checkbox per story acceptance.
 - [x] Make beads materialization the normal end of intake.
-- [ ] Update the default-loop living spec when this change folds.
+- [x] Update the default-loop living spec when this change folds.
