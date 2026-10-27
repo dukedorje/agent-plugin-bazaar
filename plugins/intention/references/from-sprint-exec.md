@@ -6,21 +6,52 @@ That skill dispatched `oh-my-claudecode` executors over story files in
 `act` / `run` and `bd ready` already execute beads. Do not rebuild a
 second dispatcher, a phase-state file, or a Dev Agent Record beside the bead.
 
-## Spike before landing an unvalidated hypothesis
+## Unverified hypothesis
 
-An ultraresearch synthesis can read like a prescription while its
-hypothesis is still `confidence` below `high` or `verification` other
-than `empirically-tested`. Landing that recipe in product code is the
-expensive way to find out.
+A hypothesis is unverified when a synthesis block has any of:
 
-Before `act` on a bead whose decision cites such a hypothesis, run
-`spike`. On **go**, the synthesis records `spike-artifact` and the bead
-can proceed. On **no-go**, leave the decision open
-(`bd update {id} --status open` plus a note that names the finding) and
-do not land the recipe. An explicit human override is a `bd note` on
-that decision, not a silent proceed.
+- `spike-required: true`
+- `confidence` other than `high`
+- `verification` other than `empirically-tested`
+- `spike-artifact` missing or empty
 
-`act` does not call `spike` by itself. The caller does.
+A goal that bets on a library or a mechanism, with no `synthesis.md`
+and no `docs/spikes/<id>/finding.md`, is the same offer. Say that no
+synthesis exists yet.
+
+Look in the goal, `docs/research/*/synthesis.md`,
+`openspec/changes/*/research/*/synthesis.md`, and any decision the
+node cites. Do not look in `.omc/`.
+
+## When to offer spike
+
+Offer it. Do not start it unless they choose **spike now**.
+
+| Moment | Who |
+|---|---|
+| Intend, while the decision briefing is written | `intend` |
+| The next steer menu, when a spike line is still open | `steer` |
+| `design.md` names a decision that cites one | `change` |
+| Advise has a verdict and the design list is still open | `advise` |
+| Before `take`, if the node would land the recipe | `act` |
+
+Three choices, recommended first:
+
+1. **Spike now.** Hand off to the morphist `spike` skill. It blocks the landing until `docs/spikes/<id>/finding.md` says `go`.
+2. **Spike before act.** Planning continues. `act` stops on this node until a `go` or a skip.
+3. **Skip.** They accept the risk. `bd note` on the decision, and the spike line becomes `skipped`.
+
+On **go**, the synthesis sets `spike-artifact`, `confidence: high`, and `verification: empirically-tested`. The spike line becomes `go`. On **no-go**, leave the decision open (`bd update {id} --status open` plus a note that names the finding) and do not land the recipe.
+
+`act` does not run the spike. It refuses the launch while a line is still open. `--go` does not mark that line skipped.
+
+### Residue
+
+Beads and the change directory are the record. No new store.
+
+- On the node description, one line: `- Spike: <id> <claim> — unverified (<confidence>, <verification>)`. Later values are `go` or `skipped`.
+- In `design.md`, when architecture cites one: `## Unverified hypotheses`, one bullet per hypothesis (id, claim, confidence, verification, synthesis path).
+- `map` reprints open lines in the decision briefing. `go` and `skipped` stay off that briefing.
 
 ## Beads is the only status record
 

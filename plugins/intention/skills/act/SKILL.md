@@ -36,19 +36,25 @@ The packet is the only interface. Schema:
    Complementary → weave. Architecture advise uses `vary-reader`
    (`references/reviewers.md`): Astra on high blast, otherwise rotate,
    skip the author's vendor. Foreign harness → packet file, never a slash command.
-3. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
+3. **Spike gate.** Load `../../references/from-sprint-exec.md`. If
+   this node still has an open unverified hypothesis (a `- Spike:`
+   line that is not `go` or `skipped`, or `design.md` `## Unverified
+   hypotheses`), do not take and do not spawn. Spike is the option:
+   run the morphist `spike` skill, or record a skip as a `bd note`
+   and set the line to `skipped`. A `go` finding clears the gate.
+4. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
    --holder <route-id>`.
    That is the mutex: `in_progress` + lease + write-set. A second
    take fails. Do not spawn without a take.
-4. **Write the packet** to the path in `act-io.md`. Lint:
+5. **Write the packet** to the path in `act-io.md`. Lint:
    `python3 plugins/intention/scripts/conductor.py lint-packet <packet>`.
    `capability` required at change+. Anchors, not file bodies. Never a
    commit exemption.
-5. **Isolate** is PARKED (`add-act-worktree-land`). Wave children
+6. **Isolate** is PARKED (`add-act-worktree-land`). Wave children
    stay on HEAD and write only `constraints.paths`. Single `act`
    may still stay on HEAD (the default). Do not call
    `conductor.py isolate` until that park is revived.
-6. **Launch.** If this host has `spawn_subagent` and the assignee
+7. **Launch.** If this host has `spawn_subagent` and the assignee
    harness is `grok`, spawn `general-purpose` with the packet path
    (the worker reads `act` and the packet). If the host has
    `workflow` and this node is one of a disjoint wave, the
@@ -57,9 +63,9 @@ The packet is the only interface. Schema:
    <packet>`) and `spawn.py run --adapter claude` or `codex`.
    Empty/missing prompt is a hard fail. Stall → `infra-red`. On
    infra-red / park, `release` the node.
-7. **Do the work** only on `constraints.paths` (owned fileset on
+8. **Do the work** only on `constraints.paths` (owned fileset on
    HEAD). Workers edit and stop.
-8. **Persist** as conductor: `conductor.py persist --paths … -m …`
+9. **Persist** as conductor: `conductor.py persist --paths … -m …`
    on **current HEAD**. After a wave, persist each owned set
    sequentially. Current HEAD is the default, not an absolute restriction:
    switch or create a branch when the user requests it, the task explicitly
@@ -72,14 +78,17 @@ The packet is the only interface. Schema:
    `--worktree` is PARKED. Persistence ≠
    acceptance. Uncommitted writes are not a reason to skip the
    next wave (`fold` / `demo`).
-9. **Focused verify** once. Distill. Classify with
+10. **Focused verify** once. Distill. Classify with
    `conductor.py classify <result>`. `repair` parks the implicated
    branch (`conductor.py implicated --node <id>`) and keeps unrelated
    dispatchable nodes moving. `baseline-red` completes. Spawn stall
    is already `infra-red` — retry once, then report.
-10. **Write the result** after persist. Hash + distill. Conductor reads
-    the face; `raw_ref` keeps the full report.
-11. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
+11. **Write the result** after persist. Hash + distill. Conductor reads
+    the face; `raw_ref` keeps the full report. Beads are the status
+    record (`../../references/from-sprint-exec.md`): close with a
+    one-line reason, file list on `bd note`. A blocker stays open,
+    labeled, and noted. Do not close it by working around it.
+12. **Stop.** Do not fold. Self-check does not promote. Handoff: `fold`
     when the change's owed work has landed; `intend` if surprise splits
     a new node.
 

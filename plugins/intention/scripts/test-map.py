@@ -523,6 +523,43 @@ def test_blocked_gated_node_waits() -> None:
         expect("n-b" not in section_after(out, "Needs activation"), out)
 
 
+def test_open_spike_stays_in_the_briefing() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-live-act", "ACTIVE BUILD")
+        design = root / "openspec" / "changes" / "add-live-act" / "design.md"
+        design.write_text(
+            "# design\n\n## Unverified hypotheses\n"
+            "- H3 canvas hash — unverified (medium, inferred-from-source)\n"
+            "- H9 old claim — go\n\n## Other\n- ignore\n",
+            encoding="utf-8",
+        )
+        fixture = {
+            "epic": {"id": "dag-spike", "title": "spike", "status": "open"},
+            "children": [
+                {
+                    "id": "n-live",
+                    "title": "add-live-act: go",
+                    "status": "open",
+                    "issue_type": "task",
+                    "description": (
+                        "- Spike: H3 canvas hash — unverified "
+                        "(medium, inferred-from-source)\n"
+                        "- Spike: skipped — user accepted a different bet\n"
+                    ),
+                    "dependencies": [],
+                }
+            ],
+        }
+        out = map_fixture(root, fixture)
+        brief = section_after(out, "Decision briefing")
+        expect("Spike is an option" in brief, brief)
+        expect("H3 canvas hash" in brief, brief)
+        expect("skipped" not in brief, brief)
+        expect("H9 old claim" not in brief, brief)
+        expect("`act`" in section_after(out, "Next"), out)
+
+
 def main() -> int:
     tests = [
         test_fixture_epic,
@@ -541,6 +578,7 @@ def main() -> int:
         test_send_back_next_is_change,
         test_gated_without_change_dir_is_not_ready,
         test_blocked_gated_node_waits,
+        test_open_spike_stays_in_the_briefing,
     ]
     failed = 0
     for fn in tests:

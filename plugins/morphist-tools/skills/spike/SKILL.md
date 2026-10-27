@@ -19,7 +19,7 @@ Spikes exist to invert the cost curve: a 30-minute isolated test is cheaper than
 
 ## When to Use
 
-- **Before landing** — when a bead's decision cites an unvalidated hypothesis (`spike-required: true`, or confidence below `high`, or verification other than `empirically-tested`). `act` does not call this skill. The caller does. See `plugins/intention/references/from-sprint-exec.md`.
+- **When intention offers it** — `intend` names an unverified hypothesis in the decision briefing, `steer` menus it, `change` lists it under `design.md`, and `act` will not launch that node until this skill returns `go` or the human skips. See `plugins/intention/references/from-sprint-exec.md`.
 - **On-demand** — any time a user wants to prove out a claim before committing to it. ("Can we actually animate splats in PC 2.17?" → spike.)
 - **When an approach changes** — spike the new approach before landing it.
 

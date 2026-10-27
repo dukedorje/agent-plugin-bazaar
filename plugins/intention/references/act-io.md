@@ -239,4 +239,8 @@ Do not copy `planctl`. Beads are the graph. `.omc/` is off.
 ## Verify before close
 
 Focused `acceptance.command` must run **before** `bd close` or flipping
-an owed checkbox. Self-check does not promote.
+an owed checkbox. Self-check does not promote. On success,
+`bd close --reason` is one line and the file list goes on `bd note`.
+On a blocker, leave the bead open, label it blocked, and note the
+type and detail. Do not close it by working around the blocker.
+Detail: `plugins/intention/references/from-sprint-exec.md`.
