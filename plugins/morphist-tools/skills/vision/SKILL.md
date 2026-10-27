@@ -2,17 +2,25 @@
 name: vision
 description: Strategic product vision — create, evolve, and align project and product-level vision documents. The strategic layer above sprint planning.
 user-invocable: true
-argument-hint: "[create|update|align|archive|merge|split] [--product=<name>] [path]"
+argument-hint: "[create|update|align|archive|merge|split] [--product=<name>] [--change=<change-id>] [path]"
 ---
 
 # Vision — Strategic Product Layer
 
-Manages the vision and product dimension artifacts in `docs/`. This is the strategic counterpart to `/sprint-plan` (tactical) and `/prd` (requirements).
+Manages strategic vision and product dimensions within one `openspec/changes/<change-id>/` per workshop. This is the strategic counterpart to `/sprint-plan` (tactical) and `/prd` (requirements).
 
 **Artifact locations:**
-- Umbrella vision: `docs/vision.md`
-- Product dimensions: `docs/products/{name}/` (vision.md, prd.md, architecture.md)
-- Standalone PRDs: `docs/prd-{slug}.md`
+- Vision: `openspec/changes/<change-id>/proposal.md`, in `## Why` and `## What`.
+- PRD: the same proposal, with requirements in `specs/<capability>/spec.md` deltas when present.
+- Architecture: `openspec/changes/<change-id>/design.md` only when the vision changes the architecture.
+- Never create or write `docs/vision.md`, `docs/products/`, or `docs/prd-*.md`.
+
+**Change selection and write rules (all modes):**
+- `--change=<change-id>` selects an existing change. A positional path inside a change selects that id; resolve conflicting selectors before writing. Otherwise derive a verb-led kebab-case id from the workshop topic, such as `add-billing`. Resolve collisions before writing rather than overwriting another change.
+- `--product=<name>` is product metadata and a section label within the selected proposal, not another directory. Multiple dimensions remain sections of the same proposal.
+- New proposals are `PENDING`. Preserve existing disposition banners, PRD content, and unrelated sections. Do not activate, fold, move a change into the archive, or edit living specs.
+- Every writing mode saves vision material into the proposal's Why and What: problem, users, insight, and motivation in Why; solution, differentiators, success, scope boundaries, anti-vision, and product relationships in What. Retain workshop headings as subsections and keep the changelog in the proposal.
+- Create or update design.md only for architectural changes, recording decisions and rationale. Otherwise keep the vision in proposal.md.
 
 ---
 
@@ -27,9 +35,10 @@ Parse `$ARGUMENTS` for:
 | Flag | Effect |
 |------|--------|
 | `--product=<name>` | Target a product dimension (kebab-case) |
-| `--into=<name>` | Target for merge/split operations |
+| `--into=<name>` | Target product section(s) for merge/split operations within the selected change |
+| `--change=<change-id>` | Select the OpenSpec change to read or update |
 
-3. **Positional path** (optional): Path to an existing vision or PRD file to operate on.
+3. **Positional path** (optional): An existing proposal path selects its containing change; another vision or PRD file is read-only seed context. Outputs always use the selected change directory.
 
 ---
 
@@ -49,16 +58,15 @@ Parse `$ARGUMENTS` for:
 
 ## 3. Landscape Mode (default)
 
-Scan the `docs/` directory to build a product map.
+Scan `openspec/changes/` (excluding `archive/`) to build a product map from change proposals.
 
 ### 3a. Discovery
 
 Check for:
-- `docs/vision.md` — umbrella vision
-- `docs/products/*/` — product dimensions (check each for: vision.md, prd.md, architecture.md)
-- `docs/prd-*.md` — standalone PRDs not in a product dimension
-- `docs/sprints/*/requirements.md` — scan frontmatter for `product` field to map sprints → products
-- `docs/decisions/` — cross-cutting ADRs
+- `openspec/changes/*/proposal.md` — vision in Why and What, product metadata, and PRD sections
+- `openspec/changes/*/specs/*/spec.md` — requirement deltas
+- `openspec/changes/*/design.md` — architectural decisions, when present
+- `openspec/changes/*/sprint.md` — sprint plans associated with each change
 
 ### 3b. Render Landscape
 
@@ -66,31 +74,31 @@ Display a structured overview:
 
 ```
 Project: {repo name}
-Vision: {docs/vision.md status — exists/missing, last modified}
+Vision: {selected change id, proposal disposition, last modified}
 
 Products:
-  {name}/
+  {name} (change: {change-id})
     Vision: {exists/missing, date}
     PRD: {exists/missing, title, version}
     Architecture: {exists/missing}
-    Sprints: {list of sprint slugs referencing this product}
+    Sprint: {sprint.md exists/missing in this change}
 
-  {name}/
+  {name} (change: {change-id})
     ...
 
-Standalone PRDs:
-  {path} — {title} (not in a product dimension)
+Other change proposals:
+  {change-id} — {title}
 
-Decisions: {count} cross-cutting ADRs in docs/decisions/
+Decisions: {count} changes with design.md
 ```
 
 After the landscape, display available actions:
 
 ```
 Actions:
-  /vision create                    — Create umbrella vision
-  /vision create --product=<name>   — Create a new product dimension
-  /vision update [product]          — Evolve a vision
+  /vision create                    — Seed a change with a project vision
+  /vision create --product=<name>   — Seed a change with a product vision
+  /vision update --change=<change-id> — Evolve a vision in that change
   /vision align                     — Check alignment across all levels
 ```
 
@@ -100,16 +108,16 @@ Actions:
 
 ### 4a. Determine Target
 
-- With `--product=<name>`: target is `docs/products/{name}/vision.md`. Create `docs/products/{name}/` if it doesn't exist.
-- Without `--product`: target is `docs/vision.md`.
-- If the target file already exists, suggest `update` instead and halt.
+- Resolve the change id using the shared selection rules. The target is `openspec/changes/<change-id>/proposal.md`.
+- With `--product=<name>`, label the product dimension within that proposal. Without it, write the project-level vision there.
+- If the target already contains the requested vision, suggest `update --change=<change-id>` instead and halt. An existing PRD alone can receive vision sections without being replaced. A preserved revision alone is seed context, not a current vision.
 
 ### 4b. Context Gathering
 
 Before the interview, silently gather context:
 
-1. If creating a product vision, read `docs/vision.md` (umbrella) if it exists — the product vision should serve the umbrella vision.
-2. Read any existing PRDs in `docs/` or `docs/products/{name}/` — they may contain problem/user context.
+1. If creating a product vision, read any project-level vision in the selected proposal; other explicitly identified change proposals may supply read-only umbrella context.
+2. Read the PRD and requirement deltas in the selected change, plus any supplied seed file — they may contain problem/user context.
 3. Dispatch an `explore` agent (haiku) to scan the codebase for a 1-paragraph project summary (tech stack, structure, what it does).
 
 ### 4c. Vision Interview
@@ -144,7 +152,7 @@ You are writing a product vision document from an interview transcript.
 {if product vision}
 Umbrella Vision:
 ---
-{contents of docs/vision.md}
+{project-level vision from the selected proposal or explicitly identified context proposal}
 ---
 
 This product dimension ({name}) should serve and align with the umbrella vision above.
@@ -205,15 +213,16 @@ IMPORTANT — final message contract: Your final message IS your return value. T
 
 ### 4e. Save and Report
 
-Write the generated vision to the target path. Report:
+Merge the generated vision into Why and What in the selected proposal using the shared write rules. Save design.md only if architecture changes. Report:
 
 ```
-Vision saved to {path}
+Vision saved to openspec/changes/<change-id>/proposal.md
 
-Next steps:
-  /prd {path}                   — Create a PRD seeded from this vision
-  /vision align                 — Check alignment (after PRD exists)
+Next step:
+  /sprint-plan <change-id>       — Begin sprint planning for this change
 ```
+
+If requirements need further refinement first, `/prd --change=<change-id>` continues in this same change.
 
 ---
 
@@ -221,14 +230,13 @@ Next steps:
 
 ### 5a. Resolve Target
 
-- If `--product=<name>`: target is `docs/products/{name}/vision.md`
-- If positional path: use that
-- Otherwise: target is `docs/vision.md`
-- If target doesn't exist, suggest `create` instead and halt.
+- Resolve the selected change; target `openspec/changes/<change-id>/proposal.md` and its Why/What vision sections.
+- If `--product=<name>`, select that product's subsections within the proposal.
+- If the requested vision doesn't exist, suggest `create` with the same change id instead and halt.
 
 ### 5b. Read Current Vision
 
-Read the current vision document in full.
+Read the current proposal in full, including its vision, PRD, and disposition, plus design.md if present.
 
 ### 5c. Update Interview
 
@@ -276,13 +284,15 @@ Keep the same voice and style as the original. Don't rewrite sections that haven
 IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
+Merge the updated vision into the same proposal using the shared write rules. Synchronize design.md only if architecture changes. Report `/sprint-plan <change-id>` as the next step.
+
 ### 5e. Drift Check
 
 After updating, check the changelog length. If there are 3+ entries, or any entry is marked as a major revision:
 
 ```
 This vision has evolved significantly. Consider:
-  /vision archive {--product=<name>}  — Archive current version and start fresh
+  /vision archive --change=<change-id> {--product=<name>} — Preserve current revision and start fresh
 ```
 
 ---
@@ -291,12 +301,7 @@ This vision has evolved significantly. Consider:
 
 ### 6a. Build Artifact Manifest
 
-Scan `docs/` to build a manifest of paths (do NOT read file contents yet — pass paths to the analyst):
-
-- `docs/vision.md` (umbrella)
-- All `docs/products/*/vision.md` (product visions)
-- All `docs/products/*/prd.md` and `docs/prd-*.md` (PRDs)
-- All `docs/sprints/*/requirements.md` (sprint requirements)
+Scan `openspec/changes/` (excluding `archive/`) to build a manifest of proposal, requirement delta, design, and sprint paths (do NOT read file contents yet — pass paths to the analyst). Identify project and product visions by their sections in each proposal; keep the report read-only.
 
 ### 6b. Dispatch Alignment Analysis
 
@@ -307,22 +312,16 @@ You are checking strategic alignment across a project's vision and product artif
 
 Read the following files (skip any that don't exist):
 
-Umbrella Vision: docs/vision.md
-
-Product Dimensions:
-{for each product dimension found}
-- docs/products/{name}/vision.md
-- docs/products/{name}/prd.md
+Project and Product Visions / PRDs:
+{for each discovered change}
+- openspec/changes/{change-id}/proposal.md (vision in Why/What, PRD and product metadata)
+- openspec/changes/{change-id}/specs/{capability}/spec.md (each requirement delta, if present)
+- openspec/changes/{change-id}/design.md (if present)
 {end for}
 
-Standalone PRDs:
-{for each standalone PRD path}
-- {path}
-{end for}
-
-Sprint Requirements (read frontmatter only — look for `product` field):
-{for each sprint}
-- docs/sprints/{slug}/requirements.md
+Sprint Plans:
+{for each discovered change with a sprint plan}
+- openspec/changes/{change-id}/sprint.md
 {end for}
 
 Read each file, then run these alignment checks:
@@ -340,7 +339,7 @@ Read each file, then run these alignment checks:
 
 **3. Drift Detection**
 - Do any vision changelogs suggest fundamental drift from original intent?
-- Are any PRDs significantly newer than their vision (vision may be stale)?
+- Does proposal content or its changelog show PRD updates that the vision has not incorporated?
 
 **4. Orphan Detection**
 - Standalone PRDs without product dimensions
@@ -383,9 +382,9 @@ Display the alignment report. Suggest specific actions:
 
 ```
 Recommended actions:
-  /vision update --product=auth     — Auth vision is stale (PRD is 3 months newer)
-  /vision create --product=billing  — Standalone PRD docs/prd-billing.md has no product dimension
-  /vision update                    — Umbrella vision doesn't mention the mobile product
+  /vision update --change=<change-id> --product=auth — Refresh stale Auth vision
+  /vision create --change=<change-id> --product=billing — Add vision to a billing PRD
+  /vision update --change=<change-id> — Include the mobile product in the project vision
 ```
 
 ---
@@ -398,25 +397,25 @@ Same resolution as Update mode (section 5a).
 
 ### 7b. Archive
 
-1. Determine version number: count existing archived versions (`vision-v1.md`, `vision-v2.md`, etc.) and increment.
-2. Move current file: `vision.md` → `vision-v{N}.md` (or `prd.md` → `prd-v{N}.md`).
-3. Report: "Archived to {path}. Run `/vision create` to write a fresh vision with the archived version as context."
+1. Determine the next unused vision revision number within the selected proposal.
+2. Preserve the current vision as a dated `Vision revision {N}` subsection in that proposal; retain its PRD, requirements, and disposition. This is a vision version rollover, not an OpenSpec fold or change archive.
+3. Report: "Vision revision preserved in openspec/changes/<change-id>/proposal.md. Run `/vision create --change=<change-id>` to write a fresh vision using that revision as context."
 
-The next `create` will detect the archived version and use it as seed context — inheriting lessons without carrying the changelog burden.
+The next `create` uses the preserved revision as seed context — inheriting lessons without carrying the changelog burden. After saving a replacement vision, the next planning step is `/sprint-plan <change-id>`.
 
 ---
 
 ## 8. Merge Mode
 
-Usage: `/vision merge <from> --into=<to>`
+Usage: `/vision merge <from> --into=<to> --change=<change-id>`
 
 ### 8a. Validate
 
-Verify both `docs/products/<from>/` and `docs/products/<to>/` exist.
+Verify both source product sections exist in the selected proposal, or are explicitly identified read-only context in other proposals. The output remains in the single selected change.
 
 ### 8b. Read Both Dimensions
 
-Read all artifacts from both product dimensions.
+Read both product visions, their PRD sections, and associated requirement deltas.
 
 ### 8c. Merge Interview
 
@@ -428,20 +427,20 @@ Ask the user:
 ### 8d. Execute Merge
 
 1. Dispatch `writer` (sonnet) to produce a merged vision from both visions + interview.
-2. Write merged vision to `docs/products/{to}/vision.md`.
-3. If both have PRDs, flag: "Both dimensions have PRDs. You'll need to reconcile these manually or run `/prd --product={to}` to generate a merged PRD."
-4. Archive `docs/products/{from}/` to `docs/products/{from}-v{N}/` where N is the next unused version number (don't delete — archive).
-5. Update any sprint requirements that reference the old product name (via `product` frontmatter field in `docs/sprints/*/requirements.md` — no-op if sprints don't have this field yet).
+2. Merge the vision into Why and What under the target product label in the selected proposal, following the shared write rules. Update design.md only for architectural changes.
+3. If both have PRDs, flag: "Both dimensions have PRDs. Reconcile them in this proposal or run `/prd --change=<change-id> --product={to}`."
+4. Preserve prior source vision sections as dated revisions in the selected proposal; leave any external source changes intact.
+5. Record product mapping changes in the proposal for sprint planning to consume. Report `/sprint-plan <change-id>` as the next step.
 
 ---
 
 ## 9. Split Mode
 
-Usage: `/vision split <product> --into=<a>,<b>`
+Usage: `/vision split <product> --into=<a>,<b> --change=<change-id>`
 
 ### 9a. Validate
 
-Verify `docs/products/<product>/` exists. Verify neither `<a>` nor `<b>` exist as product dimensions.
+Verify the source product section exists in the selected proposal. Verify neither `<a>` nor `<b>` already exists as a product section there.
 
 ### 9b. Split Interview
 
@@ -452,11 +451,11 @@ Ask the user:
 
 ### 9c. Execute Split
 
-1. Create `docs/products/{a}/` and `docs/products/{b}/`.
-2. Dispatch `writer` (sonnet) to draft two vision documents from the original vision + interview.
-3. Write both visions.
-4. Archive the original: `docs/products/{product}/` → `docs/products/{product}-v{N}/` where N is the next unused version number.
-5. Report: "Split complete. Review both visions and run `/prd --product={a}` and `/prd --product={b}` when ready."
+1. Add product labels `{a}` and `{b}` within the selected proposal.
+2. Dispatch `writer` (sonnet) to draft two vision sections from the original vision + interview.
+3. Merge both visions into Why and What in that same proposal; update design.md only for architectural changes.
+4. Preserve the original vision as a dated revision in the proposal. Do not create additional change directories for the split.
+5. Report: "Split complete in openspec/changes/<change-id>/proposal.md. Review both product sections, then run `/sprint-plan <change-id>`. Refine requirements with `/prd --change=<change-id> --product=<name>` if needed."
 
 ---
 

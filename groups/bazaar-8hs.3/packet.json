@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-8hs.3",
+  "node_id": "bazaar-8hs.3",
+  "capability": "default-loop",
+  "change_id": "update-prd-vision-openspec",
+  "goal": "Retarget plugins/morphist-tools/skills/prd and plugins/morphist-tools/skills/vision so a workshop writes one openspec/changes/<change-id>/. A PRD lands in that change's proposal.md and, when it has requirements, specs/<capability>/spec.md deltas. A vision lands in that proposal's Why and What, and in design.md only when the vision changes the architecture. Neither skill creates docs/prd-*.md, docs/products/, or docs/vision.md. The next-step line names sprint-plan with the change id, not a docs path. Keep the interview and workshop bodies; replace save paths and next-step lines in place. Old doc-store paths may appear only on a line that forbids them. Check the four implementation boxes in tasks.md. Leave the living-spec fold box open. Do not edit the living spec. Do not fold. Do not change the ACTIVE BUILD banner.",
+  "non_goals": [
+    "Update the living default-loop spec",
+    "Implement story beads",
+    "Migrate existing docs/prd or docs/products trees",
+    "Retarget sprint-plan, retro, or ultraresearch"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-prd-vision-openspec/specs/default-loop/spec.md",
+      "invariant": "PRD and vision seed one change directory. The next step is sprint-plan with that change id."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/prd/SKILL.md",
+      "invariant": "Save path is still docs/prd or docs/products. That is the code to replace."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/vision/SKILL.md",
+      "invariant": "Artifact locations are still docs/vision.md and docs/products. That is the code to replace."
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c 'from pathlib import Path; import re,sys; roots=[Path(\"plugins/morphist-tools/skills/prd\"),Path(\"plugins/morphist-tools/skills/vision\")]; bad=re.compile(r\"docs/prd-|docs/products/|docs/vision.md\"); ok=re.compile(r\"not |never |forbid|do not|shall not|must not\", re.I); hits=[]; [(hits.append(root.name) if \"openspec/changes/\" not in (root/\"SKILL.md\").read_text() else None) for root in roots]; [hits.extend(f\"{p}:{i}:{line}\" for i,line in enumerate(p.read_text().splitlines(),1) if bad.search(line) and not ok.search(line)) for root in roots for p in root.rglob(\"*.md\")]; sys.exit(chr(10).join(hits)) if hits else print(\"ok\")'"
+  },
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/morphist-tools/skills/prd/",
+      "plugins/morphist-tools/skills/vision/",
+      "openspec/changes/update-prd-vision-openspec/tasks.md"
+    ],
+    "do_not": ["push", "fold", "edit-living-spec"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "change",
+  "density": "standard",
+  "surface": "packet-only",
+  "role": "worker",
+  "assignee": {
+    "id": "sol-implement",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "effort": "medium",
+    "signing": {"mode": "stand-in", "stand_in_id": "sol-implement"}
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok-conductor"}
+  }
+}
