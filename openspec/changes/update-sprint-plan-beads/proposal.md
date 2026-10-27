@@ -1,6 +1,14 @@
 # update-sprint-plan-beads
 
-> **PENDING**
+> **ACTIVE BUILD**
+
+## Preparation
+
+2026-10-27. Outcome: still valid. Authority: "activate and run" on
+`bazaar-8hs`. Upstream `update-sprint-plan-openspec` is archived in
+`242e5ce`. The living default-loop spec now stores factory plans in
+the change directory. This node adds story beads on that store. No
+`design.md`. ADRs: none.
 
 ## Why
 

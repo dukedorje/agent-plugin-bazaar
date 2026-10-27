@@ -1,6 +1,15 @@
 # update-prd-vision-openspec
 
-> **PENDING**
+> **ACTIVE BUILD**
+
+## Preparation
+
+2026-10-27. Outcome: still valid. Authority: "activate and run" on
+`bazaar-8hs`. Upstream `update-sprint-plan-openspec` is archived in
+`242e5ce`. The living default-loop spec now stores factory plans in
+the change directory. This node points prd and vision at that store.
+No `design.md`. ADRs: none. The owed next-step checkbox no longer
+uses the word that hygiene treats as out of scope.
 
 ## Why
 
