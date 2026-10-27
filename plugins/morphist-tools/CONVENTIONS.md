@@ -124,8 +124,9 @@ Removed from morphist-tools 2026-07-28 (recoverable from git history):
 | `status`, `update-status`, `log`, `exec-report`, `sprint-review`, `sprint-validate`, `backlog`, `scope` | A tracker with real state makes status-reporting skills redundant. `bd list`/`ready`/`show`/`dep tree` do this natively. |
 | `refine`, `replan`, `audit`, `reconcile`, `post-mortem` | Drift-repair tooling. With beads as the source of truth and smaller units of work, drift is cheaper to just fix than to orchestrate a repair pass over. |
 | `doc`, `blocker-triage`, `help` | Absorbed into the surviving skills, or obsolete once the skill count is small enough to read. |
+| `sprint-exec` (2026-10-27) | OMC is uninstalled. Execution is intention `act` / `run` and `bd ready`. Habits worth keeping are in `plugins/intention/references/from-sprint-exec.md`. |
 
-Kept: `sprint-exec`, `sprint-to-beads`, `sprint-from-beads`, `prd`,
+Kept: `sprint-to-beads`, `sprint-from-beads`, `prd`,
 `vision`, `ultraresearch`, `retro`, `review-fix`, `verify`, `done-validate`, `spike`,
 `release`, and `brief`.
 

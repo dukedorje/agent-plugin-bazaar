@@ -1,32 +1,31 @@
 ---
 name: sprint-from-beads
 description: >
-  Reverse-migrate an existing beads (`bd`) corpus into a structured sprint: cluster loose beads
+  Reverse-migrate an existing beads (`bd`) corpus onto one OpenSpec change: cluster loose beads
   into epics, infer architecture decisions and a product narrative, and backfill acceptance criteria
-  and design notes on tasks that lack them. Emits enriched work-item beads (in place) AND the planning
-  narrative docs (PRD, architecture) you'd get from the full process. Additive by default; rewrites of
-  existing bead content are proposed through an approval gate, never applied silently.
+  and design notes on tasks that lack them. Enriches beads in place. Writes proposal.md, design.md,
+  and tasks.md under openspec/changes/<change-id>/. Additive by default; rewrites of existing bead
+  content are proposed through an approval gate, never applied silently.
   Triggers on: sprint from beads, migrate beads to sprint, reverse migrate, plan over existing beads,
   beads to prd, structure my beads.
 user-invocable: true
-argument-hint: "[--scope=<epic-id|label|open|all|query>] [--into=sprint-NNN] [--ceremony=lean|standard|full] [--accept-rewrites] [--no-rewrites] [--dry-run] [--db=PATH]"
+argument-hint: "[--scope=<epic-id|label|open|all|query>] [--into=<change-id>] [--ceremony=lean|standard|full] [--accept-rewrites] [--no-rewrites] [--dry-run] [--db=PATH]"
 model: opus
 ---
 
-# sprint-from-beads: Reverse Migration (Beads → Sprint)
+# sprint-from-beads: Reverse Migration (Beads → Change)
 
-The inverse of `sprint-to-beads`. Where that skill pushes a *planned sprint* into beads, this one reads an
-*existing beads corpus* and reverse-engineers the planning structure over it — grouping loose work into
+The inverse of `sprint-to-beads`. Where that skill pushes a planned change into beads, this one reads an
+existing beads corpus and reverse-engineers the planning structure over it — grouping loose work into
 epics, inferring the architecture decisions and product story implied by the beads, and backfilling the
 acceptance criteria and design notes that hand-authored beads usually lack.
 
-It produces **both** outputs, honoring the task/doc boundary:
-- **Work items** (epics, stories) → enriched **in place in beads** (the single source of truth for *what*)
-- **Planning narrative** (PRD, requirements, architecture decisions) → committed **docs/** (the *why*) —
-  the same documents the forward `sprint-plan` process would generate
+It produces both outputs:
+- **Work items** (epics, stories) stay in beads, enriched in place.
+- **Planning narrative** goes to one `openspec/changes/<change-id>/` (`proposal.md`, `design.md`, `tasks.md`).
 
-Use this when you already live in `bd`, have a pile of beads, and want the planning artifacts (a PRD, an
-architecture doc, structured epics with ACs) without re-entering everything by hand.
+Use this when you already live in `bd`, have a pile of beads, and want that narrative without re-entering
+everything by hand. Do not create `docs/sprints/`, `.omc/`, or `phase-state.json`.
 
 ---
 
@@ -58,7 +57,7 @@ this skill has nothing to do without an existing db.)
 | Flag | Default | Behavior |
 |------|---------|----------|
 | `--scope=<...>` | `open` | Which beads form the corpus. One of: an **epic id** (that epic + its children), a **label**, `open` (all non-closed beads), `all`, or a raw `bd query` string. See 1c. |
-| `--into=sprint-NNN` | new sprint | Associate the migrated work with this sprint id (for labels + doc paths). If omitted, allocate the next `sprint-NNN` and derive a slug from the corpus. |
+| `--into=<change-id>` | confirm | OpenSpec change that receives the narrative (`openspec/changes/<change-id>/`). If omitted, derive a verb-led id from the corpus and confirm it before writing. |
 | `--ceremony=<level>` | auto | Force ceremony (`lean`/`standard`/`full`). Default: auto-derive from corpus size per `sprint-plan` Section 1.5. A beads-only project with a handful of items lands at `lean` — beads enriched, minimal docs. |
 | `--accept-rewrites` | off | Apply proposed rewrites of existing fields without the interactive gate. |
 | `--no-rewrites` | off | Skip rewrites entirely — additive changes only. |
@@ -120,8 +119,8 @@ ADRs in the architecture doc (the source of truth). Only **CRITICAL/HIGH** decis
 ### 3c. Infer the product narrative → PRD/requirements doc
 
 From the corpus, synthesize the product story: what is being built, for whom, the functional requirements
-the beads collectively imply. This becomes the PRD/requirements narrative doc (`standard`+ ceremony; at
-`lean`, fold a 2–4 sentence goal into the sprint's epic descriptions instead of a standalone doc).
+the beads collectively imply. This becomes `proposal.md` (`standard`+ ceremony; at
+`lean`, fold a 2–4 sentence goal into the epic descriptions instead of a standalone proposal).
 
 ### 3d. Backfill ACs & design
 
@@ -136,19 +135,20 @@ field is a rewrite (gated).
 Assemble an ordered, labeled plan separating **additive** from **rewrite** actions:
 
 **Additive (auto-apply unless `--dry-run`):**
-1. Create proposed epic beads (`bd create -t epic ... --external-ref morphist:{sprint}:E{n}`).
+1. Create proposed epic beads (`bd create -t epic ... --external-ref morphist:{change-id}:E{n}`).
 2. Re-parent orphans into their epic (`bd update <id> --parent <epic-id>`).
 3. Fill empty `acceptance_criteria` / `design` fields (`bd update <id> --acceptance ... --design ...`).
 4. Create CRITICAL/HIGH `decision` pointer beads and `related` links.
-5. Apply sprint labels (`{sprint}`) and `--external-ref` keys so the migrated set is self-describing and
+5. Apply the change label (`{change-id}`) and `--external-ref` keys so the migrated set is self-describing and
    idempotent on re-run (same external-ref scheme as `sprint-to-beads`).
 
 **Rewrites (proposed → gated):**
 - Any change to a non-empty existing field. Each is collected as a `{bead, field, old, new, why}` proposal.
 
 **Docs (written on apply):**
-- PRD/requirements + architecture decisions under `docs/sprints/{NNN}-{slug}/` (or `docs/`), per ceremony.
-  These are committed narrative — never duplicated into bead content.
+- `proposal.md`, `design.md`, and `tasks.md` under `openspec/changes/<change-id>/`, per ceremony.
+  These are committed narrative — never duplicated into bead content. Create the change directory
+  if it does not exist. Do not archive it and do not edit a change that is already under `archive/`.
 
 Preserve all existing dependency edges. Never close or delete beads (this skill only adds and, with
 approval, refines).
@@ -169,32 +169,32 @@ Report any `bd` failures with the failing command; continue with independent ite
 
 ---
 
-## 6. Write Docs & State
+## 6. Write the Change
 
-1. Write the narrative docs (PRD/requirements, architecture-decisions) per ceremony to the sprint's
-   `SPEC_DIR` (`docs/sprints/{NNN}-{slug}/`). At `lean`, there may be none.
-2. Initialize a `STATE_DIR` (`.omc/sprint-plan/sprint-{NNN}/`) with a `phase-state.json` describing the
-   migrated sprint (`ceremony`, `beads_mode: true`, `source: "sprint-from-beads"`, `spec_dir`), so the
-   normal `bd ready` / `/sprint-exec --beads` flows can pick it up.
-3. Write `STATE_DIR/beads-map.json` (the ephemeral id-map, regenerable from `external_ref`).
+1. Write the narrative into `openspec/changes/<change-id>/`:
+   - `proposal.md` — the product story (omit at `lean`; the epic descriptions hold the goal).
+   - `design.md` — architecture decisions (omit at `lean` when section 3b skipped the doc).
+   - `tasks.md` — one open checkbox per backfilled acceptance, naming the bead id.
+2. Keep the id map in memory. Rebuild it from `--external-ref` on a later run.
+   Do not write `beads-map.json`, `phase-state.json`, or a state directory.
 
 ### Final Report
 
 ```
-Beads → Sprint {NNN}  (ceremony: {level})
+Beads → openspec/changes/{change-id}/  (ceremony: {level})
 
   Corpus:     {n} beads ({e} epics, {s} structured, {o} orphans)
   Created:    {k} epics
   Re-parented:{j} orphans
   Backfilled: {a} acceptance criteria, {d} design notes  (additive)
-  Decisions:  {c} CRITICAL/HIGH → doc + pointer beads
+  Decisions:  {c} CRITICAL/HIGH → design.md + pointer beads
   Rewrites:   {r} proposed → {applied} applied, {skipped} skipped
-  Docs:       {list of narrative docs written, or "none (lean)"}
+  Docs:       {list of files written, or "none (lean)"}
 
 Next:
   bd ready                 # unblocked work, now structured
   bd list --status open    # dashboard over the migrated beads
-  /sprint-exec --beads     # execute, synced to bd
+  sprint-plan {change-id}  # only if they asked for the factory
 ```
 
 ---

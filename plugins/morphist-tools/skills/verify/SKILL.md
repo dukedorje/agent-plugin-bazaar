@@ -27,7 +27,7 @@ If no arguments provided, default to the **most recently completed epic** — th
 
 If no completed epics exist:
 ```
-No completed epics found. Run /sprint-exec first.
+No completed epics found. Pass --epic, or verify closed beads with bd show.
 ```
 
 ---
@@ -184,8 +184,7 @@ After the verifier returns, display a clear summary:
     Review concerns — may be fine, or dispatch a reviewer agent for deep analysis
     {/if}
     {if failures}
-    /sprint-exec --story={N.M}     # Re-run failed stories
-    bd show {issue-id}       # Re-read the spec before re-running
+    bd show {issue-id}       # Re-read the spec, then act that bead
     {/if}
   {/if}
 ═══════════════════════════════════════════════════
@@ -243,20 +242,18 @@ When `--all` is specified, verify every done story across all epics. Group outpu
 
 ## 7. Integration Points
 
-### With `/sprint-exec`
+### After an epic's children close
 
-`/sprint-exec` auto-dispatches `/verify --epic=N` after each epic completes (section 4f-post). The verification runs inline (not background) so the results are visible before the next epic starts.
+Nothing auto-dispatches `/verify`. Call it when you want a smoke check before retro or fold.
 
-- If all stories PASS: proceed to next epic automatically
-- If CONCERNS: show results, proceed to next epic (concerns are non-blocking)
-- If any FAIL in non-`--full-auto` mode: pause and ask the user whether to proceed or fix first
-- If any FAIL in `--full-auto` mode: log the failures and proceed
+- PASS: proceed
+- CONCERNS: show the results and proceed
+- FAIL: pause. `bd show` the bead and act that unit again
 
 ### When `/verify` finds concerns
 
 `/verify` is a smoke test, not an investigation. When it flags something, dispatch a
-`code-reviewer` or `verifier` agent scoped to that story, then re-run
-`/sprint-exec --story=N.M` for whatever needs fixing.
+`code-reviewer` or `verifier` agent scoped to that story, then act the failed bead.
 
 ### With `/retro`
 

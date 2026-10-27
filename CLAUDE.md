@@ -64,17 +64,17 @@ Skills should be **small, single-purpose, and focused**. Avoid monolithic skill 
 - **Thin dispatchers over monoliths**: Orchestration skills should read state, determine what to do next, and delegate to agents — not embed full agent prompts inline. Each agent runs in its own context window.
 - **Pass file paths, not file contents**: When dispatching agents, pass the path to read rather than injecting the full content into the prompt. Agents can read files themselves. This saves thousands of tokens from the orchestrator's context.
 - **Extract reusable concerns into separate skills**: If a skill contains an inline sub-workflow (verification, blocker triage, review), extract it into its own skill that can be invoked independently. This enables progressive disclosure — users see only the skills they need.
-- **Lean on OMC for execution infrastructure**: Don't reimplement parallelism, persistence loops, or verification pipelines. Use OMC's executor agents, ralph/ultrawork for persistence, and team for multi-agent coordination. Morphist-tools' remaining value is PRD, vision, research, beads bridges, and parked batch planning — not a second execution engine. Default loop is `intend`.
+- **Do not add an execution engine**: Parallelism and persistence belong to intention `act` and `run`, and to `bd ready`. Morphist-tools owns PRD, vision, research, beads bridges, and the sprint-plan factory. Default loop is `intend`.
 - **Default to autonomy**: Elicitation gates should default to `high` severity threshold, not `all`. Most decisions are low-severity and should auto-resolve. Users who want maximum control can opt in with `--stop-at=all`.
 - **Context checkpointing**: Long-running skills should checkpoint progress after each major unit of work so that resume is seamless if the context window is exhausted.
 
-### OMC Integration Strategy
+### Execution
 
-Morphist-tools depends on OMC for execution infrastructure. The integration boundary is:
+Morphist-tools does not dispatch work.
 
-- **Morphist-tools owns**: Sprint planning, PRD generation, story specs, architecture decisions, verification criteria, retrospectives — the *what* and *why*
-- **OMC owns**: Agent dispatch, parallelism, persistence loops, model routing, verification execution — the *how*
-- **Integration point**: Sprint-exec translates story specs into task definitions that OMC's execution primitives (executor, team, ultrapilot) can process
+- **Morphist-tools owns**: Sprint planning, PRDs, vision, research, spikes, retrospectives — the *what* and *why*
+- **Intention and beads own**: Dispatch, status, and the record of what landed — the *how*
+- **Integration point**: `sprint-to-beads` writes an intake change into `bd`. Execution is `bd ready` and intention `act` / `run`
 
 ## Sprint Artifact Layout
 
@@ -90,7 +90,7 @@ intends, packets, or project memory there. Use `bd` and `docs/`.
 - Agent .md files use YAML frontmatter with `name`, `description`, `model`, and optional `disallowedTools`
 - Skill SKILL.md files use YAML frontmatter with `name`, `description`, and optional `user-invocable`, `argument-hint`, `model`
 - Do not create `STATE_DIR` / `.omc/`. Sprint-plan is parked.
-- OMC agent types (e.g., `oh-my-claudecode:executor`) are acceptable dependencies. Make OMC infrastructure calls (state_write, etc.) graceful — skip if unavailable.
+- Do not spawn `oh-my-claudecode`. Intention routes work through packets and `bd`. `review-fix` still names those agent types; that skill is stale until it is rewritten.
 - **Final-message contract**: a subagent's final message is the ONLY thing returned to the orchestrator that spawned it — mid-run turns and tool calls are invisible to the caller. Every dispatch prompt must therefore end by instructing the agent to put the complete deliverable in its final message (or, for agents whose work product is files on disk, the exact file paths plus a status summary) — never a bare sign-off like "Done" or "see above".
 
 ## Skills Reference
@@ -128,11 +128,10 @@ Operator how-to: `plugins/intention/README.md`.
 | `vision` | Strategic product vision |
 | `ultraresearch` | Multi-agent research swarm |
 | `spike` | Smallest empirical test of a hypothesis |
-| `sprint-exec` | Execute validated stories via OMC |
-| `sprint-to-beads` | Materialize a planned sprint into `bd` |
-| `sprint-from-beads` | Reverse-migrate a beads corpus into a sprint |
+| `sprint-to-beads` | Materialize a planned change into `bd` |
+| `sprint-from-beads` | Reverse-migrate a beads corpus onto an OpenSpec change |
 | `verify` | Independent epic completion check |
 | `done-validate` | File existence, Dev Agent Record, AC coverage |
 | `review-fix` | Validate and fix review findings |
-| `retro` | Sprint retrospective |
+| `retro` | Body-of-work retrospective from the change, beads, git, and optional Conduit chat |
 | `release` | Version bump, notes, tag, GitHub release |

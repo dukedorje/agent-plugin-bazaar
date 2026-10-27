@@ -19,12 +19,12 @@ Spikes exist to invert the cost curve: a 30-minute isolated test is cheaper than
 
 ## When to Use
 
-- **Automatically** — `sprint-exec`'s spike-gate (section 3f) invokes this skill when a story's referenced decision cites an unvalidated hypothesis.
+- **Before landing** — when a bead's decision cites an unvalidated hypothesis (`spike-required: true`, or confidence below `high`, or verification other than `empirically-tested`). `act` does not call this skill. The caller does. See `plugins/intention/references/from-sprint-exec.md`.
 - **On-demand** — any time a user wants to prove out a claim before committing to it. ("Can we actually animate splats in PC 2.17?" → spike.)
-- **When an approach changes mid-sprint** — spike the new approach before landing it.
+- **When an approach changes** — spike the new approach before landing it.
 
 Do **not** use this skill for:
-- Production implementation (that's `sprint-exec` + executors)
+- Production implementation (that is intention `act` on a ready bead)
 - Broad research (that's `ultraresearch`)
 - Debugging already-shipped code (that's the `debugger` agent)
 
@@ -43,7 +43,7 @@ Do **not** use this skill for:
 
 ### Resolution Rules
 
-- If invoked with a bare hypothesis id (e.g. `/spike H3`), look up the most recent `.omc/sprint-plan/current/research_artifacts/*/synthesis.md` that mentions `H3` and pull its `spike-prompt`.
+- If invoked with a bare hypothesis id (e.g. `/spike H3`), look up the newest `synthesis.md` that mentions `H3` under `openspec/changes/*/research/` and then `docs/research/`. Pull its `spike-prompt`. Do not look in `.omc/`.
 - If invoked with a freeform claim, the skill enters **interview mode**: asks the user to refine the claim + agree on the minimal test criteria, then proceeds.
 
 ---
@@ -175,7 +175,7 @@ Spike could not reach a verdict. See {OUT_DIR/finding.md} § "What Blocked Valid
 Options:
   [retry with larger time-box] /spike {id} --time-box=120
   [escalate to human expert]   (no automation path — user must investigate manually)
-  [override the gate]          /sprint-exec with spike-gate [override] option
+  [override the gate]          bd note on the decision, then land only if the human accepts the risk
 ```
 
 ---
@@ -190,7 +190,7 @@ Other skills invoke `/spike` by spawning an agent with these parameters in the p
 - SOURCE: <path to synthesis.md>
 - TIME_BOX_MIN: <minutes>
 - OUT_DIR: <path>
-- CALLER: <skill name — sprint-exec, replan, etc.>
+- CALLER: <skill or verb name — act, ultraresearch, a human>
 
 Follow the spike skill workflow. Return structured output per the schema above.
 
@@ -248,9 +248,9 @@ Inspired by the three sprint-004 LoGAvatar spikes (`/spike/splat-anim`, `/spike/
 ## Integration Points
 
 - **`ultraresearch`** — outputs `spike-prompt` field in hypothesis metadata; this skill consumes it.
-- **`sprint-exec`** — section 3f spike-gate invokes this skill automatically; consumes `VERDICT:` line.
-- **decision beads** — on `no-go`, this skill's finding.md is attached to the reopened decision bead.
-- **`sprint-plan`** — Phase 3.5 write-stories gate may suggest spikes for flagged research-backed stories.
+- **Callers** — parse the final `VERDICT:` line. Nothing invokes this skill automatically.
+- **decision beads** — on `no-go`, attach `finding.md` to the reopened decision bead.
+- **`sprint-plan`** — Phase 3.5 may suggest spikes for flagged research-backed stories.
 
 ---
 

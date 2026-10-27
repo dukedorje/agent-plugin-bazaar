@@ -138,7 +138,8 @@ pointer in `AGENTS.md`/`CLAUDE.md`.
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs:
 `openspec/specs/`. Verb bodies: `references/` (shared vocabulary;
-skills do not fork the surface).
+skills do not fork the surface). Execution habits kept from the removed
+morphist dispatcher: [`references/from-sprint-exec.md`](references/from-sprint-exec.md).
 
 ### Learning as the DAG advances
 

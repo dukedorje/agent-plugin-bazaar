@@ -21,6 +21,7 @@ disagree, the contract wins.
 | Conductor ready-set / persist | `plugins/intention/scripts/conductor.py` |
 | Spawn / prompt-file / stall | plugin `scripts/spawn.py` (from a skill: `../../scripts/spawn.py`; consult: `scripts/consult.py`) |
 | Assignment ladder | `plugins/intention/references/ladder.json` |
+| Execution habits kept when sprint-exec was removed | `plugins/intention/references/from-sprint-exec.md` |
 
 ## Verb boundaries
 

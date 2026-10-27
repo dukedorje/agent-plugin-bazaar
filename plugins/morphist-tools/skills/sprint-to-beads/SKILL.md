@@ -36,7 +36,7 @@ end of intake without a separate flag. It can also re-sync an existing change.
 
 Do **not** use this skill to:
 - Plan a sprint (that's `/sprint-plan`)
-- Execute work (that's `bd swarm` / `bd ready`, or `/sprint-exec --beads`)
+- Execute work (that's `bd ready`, or intention `act` / `run`)
 
 ---
 
