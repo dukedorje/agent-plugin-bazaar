@@ -141,6 +141,28 @@ def test_mirrors_marketplace_clone_and_grok_install(tmp: Path) -> None:
     expect((grok / ".claude-plugin" / "plugin.json").read_text().find("0.5.0") > 0, "manifest copied")
 
 
+def test_does_not_mirror_into_foreign_grok_marketplaces(tmp: Path) -> None:
+    repo = bazaar_repo(tmp)
+    home = tmp / "home"
+    foreign = home / ".grok" / "marketplace-cache" / "other-market"
+    write(
+        foreign / ".claude-plugin" / "marketplace.json",
+        json.dumps({"name": "other-market", "plugins": []}),
+    )
+    write(foreign / "plugins" / "keep" / "README.md", "stay")
+    bazaar = home / ".grok" / "marketplace-cache" / "bazaar-cache"
+    write(
+        bazaar / ".grok-plugin" / "marketplace.json",
+        json.dumps({"name": "agent-plugin-bazaar", "plugins": []}),
+    )
+    write(bazaar / "plugins" / "intention" / "skills" / "x" / "SKILL.md", "OLD")
+    notes = sync.sync(repo, home, dry_run=False, cli=False)
+    expect(not (foreign / "plugins" / "intention").exists(), notes)
+    expect(not (foreign / "plugins" / "morphist-tools").exists(), notes)
+    expect((foreign / "plugins" / "keep" / "README.md").read_text() == "stay", "foreign plugin kept")
+    expect((bazaar / "plugins" / "intention" / "skills" / "x" / "SKILL.md").read_text() == "NEW", notes)
+
+
 def test_dry_run_does_not_write(tmp: Path) -> None:
     repo = bazaar_repo(tmp)
     home = tmp / "home"
@@ -269,6 +291,7 @@ def main() -> int:
     tests = [
         test_mirrors_versioned_claude_and_codex,
         test_mirrors_marketplace_clone_and_grok_install,
+        test_does_not_mirror_into_foreign_grok_marketplaces,
         test_dry_run_does_not_write,
         test_skips_this_clone,
         test_does_not_ff_grok_installed_copies,
