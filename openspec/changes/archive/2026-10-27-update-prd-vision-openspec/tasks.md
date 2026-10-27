@@ -4,4 +4,4 @@
 - [x] Point `/vision` at that change's Why, What, and `design.md` when the shape changes.
 - [x] Remove writes to `docs/prd-*.md` and `docs/products/`.
 - [x] Point the next-step line at `sprint-plan <change-id>`, not a `docs/` path.
-- [ ] Update the default-loop living spec when this change folds.
+- [x] Update the default-loop living spec when this change folds.
