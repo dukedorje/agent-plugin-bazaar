@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "id": "res-bazaar-8hs.2",
+  "packet_id": "pkt-bazaar-8hs.2",
+  "signer": {
+    "id": "sol-implement",
+    "kind": "model",
+    "harness": "codex",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "sol-implement"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "plugins/morphist-tools/skills/sprint-plan/phases/phase-3-story-decomposition.md",
+      "role": "edit"
+    },
+    {
+      "path": "plugins/morphist-tools/skills/sprint-to-beads/SKILL.md",
+      "role": "edit"
+    }
+  ],
+  "evidence": {
+    "kind": "command",
+    "note": "sprint-plan keeps disable-model-invocation and names sprint-to-beads. Story-file paths appear only on prohibition lines. Acceptance printed ok."
+  },
+  "disposition": "pass",
+  "promoted": true,
+  "commit": {
+    "sha": "7632a20",
+    "paths": [
+      "plugins/morphist-tools/skills/sprint-plan/",
+      "plugins/morphist-tools/skills/sprint-to-beads/"
+    ]
+  },
+  "summary": "Intake stories are beads with acceptance checkboxes. Materialization runs at the end of intake.",
+  "signature": {
+    "mode": "stand-in",
+    "stand_in_id": "sol-implement",
+    "signed_at": "2026-10-27T21:29:57Z",
+    "content_hash": "sha256:9c90660dad45610e28c2317678413a532505f7dfdd886c26fcbe6da9c4cc0de1"
+  }
+}
