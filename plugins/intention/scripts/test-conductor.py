@@ -406,6 +406,28 @@ def test_advise_sendback_sorts_before_accept() -> None:
         )
 
 
+def test_blind_take_does_not_mask_accept() -> None:
+    """A later note with no ADVISE line is not the verdict."""
+    with tempfile.TemporaryDirectory() as td:
+        change = _arch_change(Path(td))
+        reviews = change / "reviews"
+        reviews.mkdir()
+        (reviews / "2026-10-27-advise.md").write_text(
+            "> **ADVISE:** send-back\n> **READER:** astra-arch-review\n",
+            encoding="utf-8",
+        )
+        (reviews / "2026-10-27-advise-2.md").write_text(
+            "> **ADVISE:** accept\n> **READER:** astra-arch-review\n",
+            encoding="utf-8",
+        )
+        (reviews / "2026-10-27-blind-take.md").write_text(
+            "ten lines and no verdict banner\n",
+            encoding="utf-8",
+        )
+        expect(last_advise_verdict(change) == "accept", last_advise_verdict(change))
+        expect(needs_advise(change) is False, "blind take masked the accept")
+
+
 def test_advise_gate() -> None:
     with tempfile.TemporaryDirectory() as td:
         repo = Path(td)
@@ -693,6 +715,7 @@ def main() -> int:
         test_re_advise_numbered_beats_unnumbered,
         test_re_advise_ten_beats_two,
         test_advise_sendback_sorts_before_accept,
+        test_blind_take_does_not_mask_accept,
         test_advise_gate,
     ]
     failed = 0
