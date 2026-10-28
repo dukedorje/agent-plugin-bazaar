@@ -2,7 +2,7 @@
 name: prd
 description: Interactive PRD workshop — conducts a structured interview, researches existing codebase context, generates a validated, scope-tiered PRD consumable by /sprint-plan.
 user-invocable: true
-argument-hint: "[<topic-text-or-file-path>] [--fast] [--product=<name>]"
+argument-hint: "[<topic-text-or-file-path>] [--fast] [--product=<name>] [--change=<change-id>]"
 ---
 
 # PRD: Product Requirements Document Workshop
@@ -19,7 +19,8 @@ Parse `$ARGUMENTS` for:
    - Inline text: a brief description of the problem or feature idea
    - File path: path to an existing document (requirements doc, brief, etc.) — read it before beginning
 2. **`--fast` flag** (optional): Skips blocker promotion to warnings; sets final status to `validated-with-warnings`
-3. **`--product=<name>` flag** (optional): Associates this PRD with a product dimension. Saves to `docs/products/{name}/prd.md` instead of `docs/prd-{slug}.md`. Creates the product directory if it doesn't exist. If a product vision exists at `docs/products/{name}/vision.md`, reads it as additional seed context.
+3. **`--product=<name>` flag** (optional): Associates this PRD with a product dimension in proposal metadata, without selecting another artifact store. Read any vision in the selected change's proposal as additional seed context.
+4. **`--change=<change-id>` flag** (optional): Selects an existing OpenSpec change to update. An input path inside a change directory selects that same change. Resolve conflicting selectors before writing. Otherwise derive a verb-led kebab-case change id from the topic/title and reuse it throughout the workshop.
 
 Store parsed values for use in Phase A.
 
@@ -299,18 +300,19 @@ Wait for user response. Apply any requested adjustments to the PRD before procee
 
 **In AUTONOMOUS mode:** The writer's default tier assignment stands. Proceed to Phase D automatically.
 
-### C.3. Generate Slug and Save Path
+### C.3. Resolve Change ID and Save Path
 
-Generate a slug from the PRD title:
-- Lowercase, hyphens replacing spaces and special characters
-- Max 40 characters
-- Example: "User Authentication System" → `user-authentication-system`
+Use the selected change id, or derive a verb-led kebab-case id from the PRD title, for example `add-user-authentication`. If that id already exists and was not explicitly selected, resolve whether to update it or choose a distinct id before writing.
 
-**Save path:**
-- If `--product=<name>` was provided: `docs/products/{name}/prd.md`. Ensure `docs/products/{name}/` exists.
-- Otherwise: `docs/prd-{slug}.md`. Ensure `docs/` exists.
+**Save path:** `openspec/changes/<change-id>/proposal.md`.
 
-Write the PRD to the save path.
+- Create only the selected change directory. A new proposal starts with a `PENDING` disposition banner and `## Why` and `## What` sections.
+- Merge the problem statement into Why and the scope summary into What. Keep the complete generated PRD, including numbered FRs, tiers, journeys, and validation status, under `## PRD` in the same proposal. Preserve existing vision content, unrelated sections, and any existing disposition banner.
+- When the PRD has requirements, write deltas to `openspec/changes/<change-id>/specs/<capability>/spec.md`. Use `## ADDED Requirements`, `## MODIFIED Requirements`, or `## REMOVED Requirements`, with `### Requirement:` blocks and `#### Scenario:` acceptance examples. MODIFIED includes the entire existing requirement. Match capabilities to affected behavior; keep deferred Growth/Vision scope in the proposal rather than making it current requirements.
+- Synchronize proposal and deltas after validation fixes. Do not edit living specs, activate, or fold the change.
+- Never create or write `docs/prd-*.md`, `docs/products/`, or `docs/vision.md`.
+
+Write the PRD into the proposal at the save path. Merge its frontmatter metadata into proposal metadata without replacing the disposition banner.
 
 ---
 
@@ -399,7 +401,7 @@ Apply ONLY the auto-fix findings. Do not change anything else. Return the comple
 IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
 ```
 
-Write the updated PRD back to the save path.
+Update the PRD in the proposal at the save path and synchronize affected requirement deltas, preserving surrounding proposal content and its disposition banner.
 
 Re-dispatch `critic` (opus) once to re-validate. This is the maximum — do not loop further.
 
@@ -415,9 +417,9 @@ Determine the final status:
 | Blockers remain (normal mode) | `draft-with-issues` |
 | `--fast` flag present (any blockers downgraded to warnings) | `validated-with-warnings` |
 
-Update the PRD frontmatter `status` field to the final status.
+Update the PRD `status` metadata in the proposal to the final status; validation does not change the proposal disposition.
 
-Write the final PRD to the save path.
+Write the final PRD into the proposal at the save path and synchronize its requirement deltas.
 
 ### D.4. Present Results to User
 
@@ -425,31 +427,31 @@ Display the validation summary and next step:
 
 **If status is `validated`:**
 ```
-PRD saved to docs/prd-{slug}.md
+PRD saved to openspec/changes/<change-id>/proposal.md
 
 Validation: PASSED
 - Auto-fixes applied: {count}
 - Warnings: {count}
 - Blockers: 0
 
-Run `/sprint-plan docs/prd-{slug}.md` to begin sprint planning.
+Run `/sprint-plan <change-id>` to begin sprint planning.
 ```
 
 **If status is `validated-with-warnings` (--fast mode):**
 ```
-PRD saved to docs/prd-{slug}.md
+PRD saved to openspec/changes/<change-id>/proposal.md
 
 Validation: PASSED WITH WARNINGS (--fast mode)
 - Auto-fixes applied: {count}
 - Warnings: {count} (including {blocker-count} downgraded from blocker)
 
-Run `/sprint-plan docs/prd-{slug}.md` to begin sprint planning.
+Run `/sprint-plan <change-id>` to begin sprint planning.
 Note: Resolve warnings before production use.
 ```
 
 **If status is `draft-with-issues`:**
 ```
-PRD saved to docs/prd-{slug}.md
+PRD saved to openspec/changes/<change-id>/proposal.md
 
 Validation: ISSUES FOUND
 - Auto-fixes applied: {count}
@@ -459,7 +461,7 @@ Validation: ISSUES FOUND
 Blocking issues:
 {list each blocker with a 1-line description}
 
-Resolve these issues manually by editing docs/prd-{slug}.md, then re-run `/prd` on the updated file or proceed to `/sprint-plan` at your own discretion.
+Resolve these issues in openspec/changes/<change-id>/proposal.md, then re-run `/prd --change=<change-id>` or proceed to `/sprint-plan <change-id>` at your own discretion.
 ```
 
 ---
@@ -496,7 +498,7 @@ Resolve these issues manually by editing docs/prd-{slug}.md, then re-run `/prd` 
 
 ## Notes on PRD Consumption by /sprint-plan
 
-When `/sprint-plan` Phase 1 reads a PRD produced by this skill:
+Pass `/sprint-plan <change-id>` the selected change id. The PRD and requirement deltas live together in that change directory. When sprint planning reads the PRD in its proposal:
 
 - `status: validated` → light-touch processing (focus on expansion and story decomposition, not re-validation)
 - `status: draft` or `draft-with-issues` → full validation run as part of requirements expansion

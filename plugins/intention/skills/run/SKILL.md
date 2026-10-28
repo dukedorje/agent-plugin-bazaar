@@ -66,6 +66,13 @@ Explicit --ask, --plan, --advise, --wait, --tidy, and --pause-before limits
 win: do not use delegated activation to step past their boundaries. Do not
 prepare or activate --skip/--punt nodes on this pass.
 
+A dry-run prints this card and stops. No `take`. A closed bead is not
+dispatched again; re-running one takes an explicit id. When the next
+`act` is a single node and an earlier node in this campaign has
+closed, put that node's close reason and latest `bd note` into the
+next packet. A parallel wave does not copy sibling notes. Load
+`../../references/from-sprint-exec.md`.
+
 Material scope/architecture changes return to the human via intend/steer;
 routine refinements continue. Preparation-triggered fresh advise is real
 owed review, not the forbidden fake send-back. Never dispatch on an old
@@ -190,6 +197,7 @@ while waves < max_waves:
     wave = intersect(wave, prepared_authorized_in_scope_ids)
     # Never take unrelated or deferred ids returned by the global selector.
     if len(wave) >= 2:
+      drop nodes with an open spike line (act spike gate); do not take those
       take each wave node --campaign campaign_id
       try:
         workflow name=run-wave args.nodes=[{id, packet}]
@@ -238,8 +246,9 @@ This session may have `spawn_subagent` and `workflow` (Grok). Python
 `spawn.py` cannot call them.
 
 - **`act` wave, two or more wholly disjoint packets:**
-  `conductor.py wave --campaign <campaign_id>`, `take --campaign
-  <campaign_id>` each, then
+  `conductor.py wave --campaign <campaign_id>`. Drop any node with an
+  open spike line (the `act` spike gate) before `take --campaign
+  <campaign_id>`. Then
   `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
   also `.grok/workflows/run-wave.rhai` in this clone). Children stay
   on HEAD. Do not isolate (worktrees PARKED). Conductor persists

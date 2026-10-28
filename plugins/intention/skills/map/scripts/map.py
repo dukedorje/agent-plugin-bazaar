@@ -36,6 +36,7 @@ ADVISE_RE = re.compile(
     re.I,
 )
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
+SPIKE_RE = re.compile(r"(?im)^\s*-\s*Spike:\s*(.+?)\s*$")
 
 CLOSED = {"closed", "done"}
 
@@ -458,6 +459,56 @@ def steer_open(dest: Path | None) -> list[str]:
     return skipped[:6]
 
 
+def spike_still_open(text: str) -> bool:
+    low = text.strip().lower()
+    tail = low.replace("—", "-").split("-")[-1].strip()
+    if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
+        return False
+    if "override" in low:
+        return False
+    return bool(low)
+
+
+def collect_spike_offers(
+    nodes: list[dict[str, Any]],
+    openspec: Path | None,
+) -> list[str]:
+    """Open spike lines from node descriptions and design.md. No new store."""
+    offers: list[str] = []
+    seen: set[str] = set()
+
+    def add(line: str) -> None:
+        key = line.strip()
+        if key and key not in seen:
+            seen.add(key)
+            offers.append(key)
+
+    for rec in nodes:
+        nid = str(rec.get("id") or "")
+        prefix = f"`{nid}` — " if nid else ""
+        for match in SPIKE_RE.finditer(str(rec.get("description") or "")):
+            body = match.group(1).strip()
+            if spike_still_open(body):
+                add(f"- {prefix}{body}")
+        landing = landing_from_title(str(rec.get("title") or ""))
+        dest = find_change_dir(openspec, landing) if landing else None
+        design = dest / "design.md" if dest else None
+        if design is None or not design.is_file():
+            continue
+        text = design.read_text(encoding="utf-8")
+        marker = "## Unverified hypotheses"
+        if marker not in text:
+            continue
+        section = text.split(marker, 1)[1].split("\n## ", 1)[0]
+        for line in section.splitlines():
+            if not line.startswith("- "):
+                continue
+            body = line[2:].strip()
+            if spike_still_open(body):
+                add(f"- {prefix}{body}")
+    return offers
+
+
 def decision_briefing(
     nodes: list[dict[str, Any]],
     by_id: dict[str, dict[str, Any]],
@@ -469,6 +520,11 @@ def decision_briefing(
 ) -> list[str]:
     """Prime a context switch before steer / grant / run."""
     lines = ["## Decision briefing", ""]
+    spikes = collect_spike_offers(nodes, openspec)
+    if spikes:
+        lines.append("Spike is an option before a landing that depends on these:")
+        lines.extend(spikes)
+        lines.append("")
     upcoming = list(dict.fromkeys([*need_act, *send_back, *change_ready]))
     if not upcoming:
         if act_ready:

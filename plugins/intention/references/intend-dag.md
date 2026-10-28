@@ -42,6 +42,7 @@ no flag (blank-page observe still happened).
 - Architecture: review-pair via `vary-reader`. Astra when blast is schema, deletion, protocol, or durability; otherwise rotate. Skip the author's vendor.
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
+- Spike: `<id> <claim> — unverified (<confidence>, <verification>)` | `go` | `skipped` — omit when nothing is unverified
 
 ## Campaign authority
 User instruction and agreed scope / non-goals / architectural commitments,
@@ -57,7 +58,9 @@ Architecture / instrument / sensitive writes still PENDING.
 
 ## Decision briefing
 Upcoming forks, why they matter, downstream, last steer skipped.
-Enough to prime a context switch. Same section `map` prints.
+Open spike lines (`from-sprint-exec.md`) when a landing still depends
+on an unverified hypothesis. Enough to prime a context switch. Same
+section `map` prints.
 
 ## Next
 - Default: `steer` (briefing + menus). `--go` / `--autonomous` skips.

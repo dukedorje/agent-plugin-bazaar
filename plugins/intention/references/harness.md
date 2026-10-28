@@ -26,6 +26,7 @@ references, scripts, workflows, and agents:
 ```bash
 codex plugin marketplace add /path/to/agent-plugin-bazaar
 codex plugin add intention@agent-plugin-bazaar
+codex plugin add morphist-tools@agent-plugin-bazaar
 ```
 
 Do not install Intention into Codex with `skills add -g`: that copies the

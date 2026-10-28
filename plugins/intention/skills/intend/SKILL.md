@@ -60,7 +60,13 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    beads (`bd create --type node`) if they want a tracker. No
    `.beads/`, or `node` rejected as a type → run `setup` first. Title is
    the kebab, not `nod-…`. No `.omc/`. No SHALLs in the DAG.
-7. **Stop.** Report ready-set, needs activation, and a **Decision
+7. **Spike.** Load `../../references/from-sprint-exec.md`. If this goal
+   depends on an unverified hypothesis, record
+   `- Spike: <id> <claim> — unverified (<confidence>, <verification>)`
+   on that node's description (chat DAG and the bead, when one exists).
+   Name it in the decision briefing. Do not run `spike`. `steer` menus
+   the three choices.
+8. **Stop.** Report ready-set, needs activation, and a **Decision
    briefing** (same section `map` prints). Pin this DAG
    (`map --current <root-id>`). Then apply **After the DAG**. Never
    `fold` from here.

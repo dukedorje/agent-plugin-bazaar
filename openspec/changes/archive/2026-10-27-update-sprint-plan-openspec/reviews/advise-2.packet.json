@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-update-sprint-plan-openspec-advise-2",
+  "node_id": "bazaar-8hs.1-advise",
+  "capability": "default-loop",
+  "change_id": "update-sprint-plan-openspec",
+  "goal": "Re-read update-sprint-plan-openspec after your send-back. You are astra-arch-review. Blind pass first: proposal.md Why and What, openspec/specs/default-loop/spec.md requirement sprint-plan is parked, and plugins/morphist-tools/skills/sprint-plan/SKILL.md lines 1-13 and 102-120. Write a 10-line take: what you would pin, what you would refuse, one tradeoff. Then open the amended specs/default-loop/spec.md, design.md, and tasks.md. Check two corrections: the factory starts only for /sprint-plan or a planning session that names it, and a generic planning request stays on intend; an ADR in ARCHITECTURE.md and a child bead or child change id are non-plan outputs, while plan narrative and progress stay in the change directory and story beads stay with the sibling change. Write openspec/changes/update-sprint-plan-openspec/reviews/2026-10-27-advise-2.md. Banner lines must include ADVISE accept or send-back, READER astra-arch-review, and the SPAWN directory. If you accept, check the exact open task line `- [ ] Fresh advise after preparation` and record living blob 459f6878d71d86bd1942d5da911655decc864828. If you send it back, add owed boxes and leave that task open. Do not implement, fold, or change the banner.",
+  "non_goals": [
+    "Edit the sprint-plan skill",
+    "Fold the living spec",
+    "Activate sibling changes"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-sprint-plan-openspec/specs/default-loop/spec.md",
+      "invariant": "The amended requirement names the factory only when the user names it, and treats an ADR and a child bead as non-plan outputs."
+    },
+    {
+      "symbol": "openspec/specs/default-loop/spec.md:43",
+      "invariant": "Living blob 459f6878d71d86bd1942d5da911655decc864828 still matches the stamp."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The amended delta agrees with design.md on invocation and on which outputs are not the plan.",
+    "if_false": "A generic planning request can start Phase 0, or the write boundary still contradicts the phase map."
+  },
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/update-sprint-plan-openspec/reviews/",
+      "openspec/changes/update-sprint-plan-openspec/tasks.md"
+    ],
+    "do_not": ["implement", "fold", "change-banner"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "packet-only",
+  "role": "reader",
+  "assignee": {
+    "id": "astra-arch-review",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6-astra",
+    "effort": "high",
+    "signing": {"mode": "stand-in", "stand_in_id": "astra-arch-review"}
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok-conductor"}
+  }
+}

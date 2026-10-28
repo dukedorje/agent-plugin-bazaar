@@ -32,13 +32,18 @@ Parse these from the user's input. Apply defaults for anything not specified.
 
 The default `OUTPUT_DIR` depends on how ultra-research was invoked:
 
-| Invocation | Default OUTPUT_DIR | Rationale |
-| ---------- | ------------------ | --------- |
-| **User** (`/ultra-research "question"`) | `docs/research/{{slug(QUESTION)}}` | User-initiated research is project knowledge — visible, committable |
-| **Agent** (prompt contains `## Ultra-Research Request`) | `.omc/research/{{slug(QUESTION)}}` | Workflow supporting data — ephemeral, not part of the repo |
-| **Explicit** (`--output-dir` or `OUTPUT_DIR` set) | Whatever was specified | Caller knows best — always wins |
+| Invocation | Default OUTPUT_DIR |
+| ---------- | ------------------ |
+| **User** (`/ultraresearch` with a question) | `docs/research/<slug>/` |
+| **Change in context** (a current `openspec/changes/<change-id>/`, or the request names one) | `openspec/changes/<change-id>/research/<slug>/` |
+| **Explicit** (`--output-dir` or `OUTPUT_DIR` in the request) | That path. It wins. |
 
-**Detection rule**: If the prompt contains `## Ultra-Research Request`, treat this as an agent invocation. Otherwise, treat it as user-invoked.
+`<slug>` is a short kebab-case name of the question, not the whole sentence.
+Do not write `.omc/`, `docs/sprints/`, or a `research_artifacts/` directory.
+
+A prompt that contains `## Ultra-Research Request` is an agent caller.
+Use the caller's `OUTPUT_DIR` when it set one. Otherwise use the change
+path when a change is in context, and `docs/research/<slug>/` when it is not.
 
 ### Quick Mode
 
@@ -67,26 +72,22 @@ and skip completed stages.
 
 ### Stage 1 — Decomposition
 
-Spawn a `decomposer` agent (opus):
+Spawn `morphist-tools:decomposer` (opus) with this prompt. Fill the
+braces from the request. Omit the Caller Context section when there is
+none.
 
 ```
-Agent(
-  subagent_type="morphist-tools:decomposer",
-  model="opus",
-  prompt="""
-  Research question: {{QUESTION}}
-  MAX_BRANCHES: {{MAX_BRANCHES}}
-  {{#if CONTEXT}}
-  ## Caller Context
-  {{CONTEXT}}
-  {{/if}}
+Research question: {QUESTION}
+MAX_BRANCHES: {MAX_BRANCHES}
 
-  Decompose this question into ranked hypotheses following your protocol.
-  Write the output as a single markdown document — I will save it to the output directory.
+## Caller Context
+{CONTEXT}
 
-  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
-  """
-)
+Decompose this question into ranked hypotheses following your protocol.
+Write the output as a single markdown document. The caller saves it.
+
+Your final message is the only thing the caller sees. Put the complete
+markdown document in that message.
 ```
 
 Save the agent's output to `{{OUTPUT_DIR}}/decomposition.md`.
@@ -96,38 +97,33 @@ simplified prompt. If it fails again, report the error and stop gracefully.
 
 ### Stage 2 — Exploration (parallel, depth-bounded)
 
-For each selected hypothesis from decomposition.md, spawn an `investigator` agent
-**in parallel** (respecting MAX_AGENTS cap — queue excess and launch as slots free):
+For each selected hypothesis from decomposition.md, spawn one
+`morphist-tools:investigator` (sonnet) in parallel. Queue any past
+`MAX_AGENTS` and launch them as slots free. Prompt:
 
 ```
-# For each hypothesis, fire in parallel:
-Agent(
-  subagent_type="morphist-tools:investigator",
-  model="sonnet",
-  prompt="""
-  ## Hypothesis Assignment
-  **Title**: {{hypothesis.title}}
-  **Investigation Type**: {{hypothesis.investigation_type}}
-  **Plausibility**: {{hypothesis.plausibility}}
-  **Info Value**: {{hypothesis.information_value}}
-  **Context**: {{hypothesis.rationale}}
+## Hypothesis Assignment
+**Title**: {hypothesis.title}
+**Investigation Type**: {hypothesis.investigation_type}
+**Plausibility**: {hypothesis.plausibility}
+**Info Value**: {hypothesis.information_value}
+**Context**: {hypothesis.rationale}
 
-  DEPTH_REMAINING: {{DEPTH - current_level}}
-  {{#if DEPTH_REMAINING > 0}}
-  You may identify up to 3 sub-hypotheses if needed. Write sub-hypothesis findings
-  to separate documents and note them in your Sub-Hypotheses section.
-  {{else}}
-  Do NOT generate sub-hypotheses. This is the maximum depth.
-  {{/if}}
+DEPTH_REMAINING: {DEPTH minus the current level}
 
-  Investigate this hypothesis following your protocol. The investigation_type tells
-  you whether to focus on web search, codebase exploration, analysis, or a hybrid.
+When DEPTH_REMAINING is greater than 0, you may identify up to 3
+sub-hypotheses. Write each as its own document and list them in your
+Sub-Hypotheses section. When DEPTH_REMAINING is 0, do not generate
+sub-hypotheses.
 
-  Write your output as a single markdown document — I will save it.
+Investigate this hypothesis following your protocol. The investigation
+type tells you whether to focus on web search, codebase exploration,
+analysis, or a hybrid.
 
-  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. Put the complete output specified above directly in your final message. Do not end with a sign-off like "Done" or "see above".
-  """
-)
+Write your output as a single markdown document. The caller saves it.
+
+Your final message is the only thing the caller sees. Put the complete
+markdown document in that message.
 ```
 
 Save each agent's output to `{{OUTPUT_DIR}}/hypotheses/{{hypothesis-slug}}/findings.md`.
@@ -141,36 +137,38 @@ it must write what it has and move on — do not block the swarm.
 
 ### Stage 3 — Synthesis & Verification
 
-Spawn a `synthesizer` agent (opus). Pass it the decomposition and all findings:
+Spawn `morphist-tools:synthesizer` (opus). The caller passes paths, not
+a paste of every findings file, unless a finding is short enough that
+the path alone would hide it. Prompt:
 
 ```
-Agent(
-  subagent_type="morphist-tools:synthesizer",
-  model="opus",
-  prompt="""
-  ## Synthesis Task
-  **Original Question**: {{QUESTION}}
-  **Mode**: {{MODE}}
-  **Output Directory**: {{OUTPUT_DIR}}
+## Synthesis Task
+**Original Question**: {QUESTION}
+**Mode**: {MODE}
+**Output Directory**: {OUTPUT_DIR}
 
-  ## Decomposition
-  {{contents of decomposition.md}}
+## Decomposition
+Read {OUTPUT_DIR}/decomposition.md
 
-  ## Findings
-  {{for each hypothesis, include the full findings.md content with its path}}
+## Findings
+Read each file under {OUTPUT_DIR}/hypotheses/.
 
-  Follow your synthesis protocol:
-  1. Cross-reference all findings by theme
-  2. Draft the narrative synthesis with inline citations
-  3. Run verification checks (citation audit, coverage, claim validation)
-  4. For each hypothesis, emit the structured metadata block per the "Per-Hypothesis Spike Metadata" schema in the ultraresearch SKILL.md. Be honest: `confidence: high` requires reproducible evidence; `version-pinned` is mandatory for any library-API claim; `spike-required` is auto-derived from confidence + verification.
-  5. Write TWO files:
-     - synthesis.md (narrative output with per-hypothesis spike metadata + verification section)
-     - summary.json (machine-readable summary with the hypotheses array)
+Follow your synthesis protocol:
+1. Cross-reference all findings by theme.
+2. Draft the narrative synthesis with inline citations.
+3. Run verification checks (citation audit, coverage, claim validation).
+4. For each hypothesis, emit the structured metadata block in
+   "Per-Hypothesis Spike Metadata". `confidence: high` requires
+   reproducible evidence. `version-pinned` is mandatory for any
+   library-API claim. `spike-required` is true unless confidence is
+   high and verification is empirically-tested.
+5. Write both files under the output directory:
+   - synthesis.md (narrative, spike metadata, verification)
+   - summary.json (machine-readable summary with the hypotheses array)
 
-  IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
-  """
-)
+Your final message is the only thing the caller sees. Report the exact
+file paths you wrote and a short status. Include blockers when there
+are any.
 ```
 
 The synthesizer handles both synthesis AND verification in a single pass.
@@ -206,16 +204,36 @@ Other skills invoke ultra-research by spawning an agent with these parameters in
 
 ```
 ## Ultra-Research Request
-- QUESTION: <the research question>
-- MODE: research | engineering | quick
-- DEPTH: 1 | 2 | 3
-- OUTPUT_DIR: <caller-specified path, e.g., .omc/sprint-plan/sprint-001/research/topic-slug>
-- MAX_BRANCHES: <number>
-- CONTEXT: <optional — any context the caller wants to inject, e.g., existing requirements, constraints>
+- QUESTION: Where should an architecture decision live when the story is already a bead?
+- MODE: engineering
+- DEPTH: 2
+- OUTPUT_DIR: openspec/changes/retarget-intake/research/decision-home
+- MAX_BRANCHES: 4
+- CONTEXT: |
+    Stories are beads (bd). Narrative for this intake is
+    openspec/changes/retarget-intake/ (proposal.md, design.md, tasks.md).
+    Do not write docs/sprints/ or .omc/.
 ```
 
-The `CONTEXT` field allows callers to seed the decomposition stage with domain knowledge
-they already have, reducing redundant exploration.
+Substitute the question, mode, depth, branch cap, and context. Set
+`OUTPUT_DIR` to `openspec/changes/<change-id>/research/<slug>/` when the
+caller is an intake change, or to `docs/research/<slug>/` when it is not.
+`CONTEXT` seeds decomposition with constraints the caller already has.
+
+When the caller cannot run this skill itself, spawn a general-purpose
+agent (opus) with that request, then these lines:
+
+```
+Follow the ultra-research workflow. Spawn morphist-tools:decomposer,
+morphist-tools:investigator, and morphist-tools:synthesizer as that
+workflow describes. Write every artifact under OUTPUT_DIR.
+
+Your final message is the only thing the caller sees. Report the exact
+file paths you wrote and a short status.
+```
+
+The caller then reads `{OUTPUT_DIR}/summary.json` and cites it from the
+change's `design.md`. It does not copy the synthesis into a bead.
 
 ### Output Contract
 
@@ -295,7 +313,7 @@ Each hypothesis the synthesis references MUST carry a structured YAML frontmatte
 - `confidence: high` requires BOTH `verification: empirically-tested` AND a cited evidence artifact (log snippet, screenshot, test command and result). If the agent can't produce the evidence, downgrade to `medium`.
 - `version-pinned` is mandatory whenever a claim cites library API behavior. "PlayCanvas 2.13–2.16" ≠ "PlayCanvas 2.17" — do not omit the version and do not paper over a range mismatch.
 - `spike-required` is automatically `true` unless both `confidence == high` AND `verification == empirically-tested`. The synthesizer must not lower this flag without evidence.
-- Downstream consumers (sprint-exec's spike-gate) enforce this metadata. Outputs without it will be treated as `confidence: low` by default, forcing a spike.
+- `spike` treats a hypothesis that omits this block as `confidence: low` and does not land it. See `plugins/intention/references/from-sprint-exec.md`.
 
 ### Why this exists (from sprint-004 retro)
 
@@ -310,38 +328,6 @@ At the end of Stage 3 (Synthesis), the synthesizer agent MUST also write `summar
 alongside `synthesis.md`. Extract the structured fields from the narrative synthesis.
 This is mandatory — agent callers depend on it to decide whether to consume the full
 synthesis or just the summary.
-
-### Example: Sprint-Plan Calling Ultra-Research
-
-```python
-# In Phase 2A, when a CRITICAL architecture decision needs deeper research:
-Agent(
-    subagent_type="general-purpose",
-    model="opus",
-    prompt="""
-## Ultra-Research Request
-- QUESTION: What are the tradeoffs between Drizzle ORM and Prisma for a multi-tenant SaaS with row-level security?
-- MODE: engineering
-- DEPTH: 2
-- OUTPUT_DIR: .omc/sprint-plan/sprint-001/research/orm-tradeoffs
-- MAX_BRANCHES: 4
-- CONTEXT: |
-    Project uses PostgreSQL (D-001). Multi-tenant with row-level security (FR7).
-    Existing codebase has no ORM — greenfield decision.
-
-Follow the ultra-research workflow exactly as defined in the skill.
-The skill uses morphist-tools:decomposer, morphist-tools:investigator, and
-morphist-tools:synthesizer agents. Orchestrate them as described.
-Write all output to the specified OUTPUT_DIR.
-
-IMPORTANT — final message contract: Your final message IS your return value. The orchestrator sees ONLY your final message, never your earlier turns or tool calls. In your final message, report the exact file paths you created or modified plus a concise status summary (including any blockers). Do not end with a bare sign-off like "Done".
-""",
-)
-
-# After agent completes, the caller reads:
-# .omc/sprint-plan/sprint-001/research/orm-tradeoffs/summary.json
-# to get structured findings, then injects them into the architecture decision.
-```
 
 ---
 

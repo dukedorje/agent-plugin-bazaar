@@ -61,9 +61,15 @@ use the procedure below after reconciling the inputs.
    the contract, add the owed task `Fresh advise after preparation`.
    A change-rigor union that only restores upstream clauses does not.
    Then return to the conductor. The same run folds after the paste matches.
-9. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
+9. **Spike.** Load `../../references/from-sprint-exec.md`. If
+   `design.md` cites an unverified hypothesis, add
+   `## Unverified hypotheses` with one bullet each (id, claim,
+   confidence, verification, synthesis path). Report that spike is an
+   option. Do not start it.
+10. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
    already granted). Do not fold. Handoff: `act` after activation,
-   `fold` after act has landed.
+   `fold` after act has landed. An open spike list is a steer fork
+   before that act.
 
 Packets for this change set `capability` (spec directory name) and
 `change_id`.

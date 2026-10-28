@@ -48,17 +48,7 @@ def change_rigor(change_dir: Path) -> str | None:
     return None
 
 
-def last_advise_verdict(change_dir: Path) -> str | None:
-    reviews = change_dir / "reviews"
-    if not reviews.is_dir():
-        return None
-    files = sorted(
-        (p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")),
-        key=review_sort_key,
-    )
-    if not files:
-        return None
-    text = files[-1].read_text(encoding="utf-8")
+def _verdict_in(text: str) -> tuple[str | None, bool]:
     verdict = None
     has_reader = False
     for line in text.splitlines()[:40]:
@@ -68,6 +58,32 @@ def last_advise_verdict(change_dir: Path) -> str | None:
             verdict = m.group(1).lower()
         if READER_RE.match(stripped):
             has_reader = True
+    return verdict, has_reader
+
+
+def last_advise_verdict(change_dir: Path) -> str | None:
+    reviews = change_dir / "reviews"
+    if not reviews.is_dir():
+        return None
+    files = sorted(
+        (p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")),
+        key=review_sort_key,
+    )
+    # A blind take or other note in the same directory is not a verdict.
+    # Walk newest-first and use the latest file that actually carries ADVISE.
+    verdict = None
+    has_reader = False
+    found = False
+    for path in reversed(files):
+        local, reader = _verdict_in(path.read_text(encoding="utf-8"))
+        if local is None:
+            continue
+        verdict = local
+        has_reader = reader
+        found = True
+        break
+    if not found:
+        return None
     if verdict in ACCEPTING and not has_reader:
         return None
     return verdict

@@ -65,7 +65,15 @@ sensitive always includes the human (already a member).
    intend already auto-logged remaining lean; do not re-menu those.
 2. **Forks.** Name 1–4 options each. Recommended first, with why.
    Group related forks into one menu. At most a handful of menus per
-   turn; leftover forks wait.
+   turn; leftover forks wait. An open spike line (node description
+   `- Spike:` that is not `go` or `skipped`, or `design.md`
+   `## Unverified hypotheses`) is the first fork. Load
+   `../../references/from-sprint-exec.md` for the three choices.
+   **Spike now** hands off to the morphist `spike` skill and blocks
+   the landing until the finding says `go`. **Spike before act**
+   leaves the line open. **Skip** writes a `bd note` on the decision
+   and sets the line to `skipped`. Do not menu a line already
+   `go` or `skipped`. `--go` does not mark an open spike line skipped.
 3. **Menu.** Use the host multiple-choice primitive (Grok
    `ask_user_question`, Claude AskUserQuestion). If the host has none,
    print the template below and wait. Every question includes:

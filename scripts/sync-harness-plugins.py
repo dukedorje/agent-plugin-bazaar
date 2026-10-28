@@ -221,6 +221,36 @@ def grok_registry_roots(home: Path) -> list[Path]:
     return uniq
 
 
+def is_bazaar_tree(path: Path) -> bool:
+    """True when this directory is a checkout of agent-plugin-bazaar."""
+    if not path.is_dir():
+        return False
+    for manifest in (
+        path / ".claude-plugin" / "marketplace.json",
+        path / ".grok-plugin" / "marketplace.json",
+        path / ".agents" / "plugins" / "marketplace.json",
+    ):
+        if not manifest.is_file():
+            continue
+        try:
+            data = json.loads(manifest.read_text())
+        except json.JSONDecodeError:
+            continue
+        if data.get("name") == MARKETPLACE_ID:
+            return True
+    if (path / ".git").exists():
+        ident = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=path,
+            capture_output=True,
+            text=True,
+        )
+        url = (ident.stdout or "").strip().lower()
+        if MARKETPLACE_ID in url or "agent-plugin-bazaar" in url:
+            return True
+    return False
+
+
 def cache_roots(home: Path) -> list[Path]:
     roots = [
         home / ".claude" / "plugins" / "cache" / MARKETPLACE_ID,
@@ -230,7 +260,7 @@ def cache_roots(home: Path) -> list[Path]:
     ]
     mp_cache = home / ".grok" / "marketplace-cache"
     if mp_cache.is_dir():
-        roots.extend(p for p in mp_cache.iterdir() if p.is_dir())
+        roots.extend(p for p in mp_cache.iterdir() if p.is_dir() and is_bazaar_tree(p))
     installed = home / ".grok" / "installed-plugins"
     if installed.is_dir():
         roots.extend(p for p in installed.iterdir() if p.is_dir())

@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-bazaar-8hs.1",
+  "node_id": "bazaar-8hs.1",
+  "capability": "default-loop",
+  "change_id": "update-sprint-plan-openspec",
+  "goal": "Retarget plugins/morphist-tools/skills/sprint-plan so a named factory intake writes plan narrative and phase progress only under openspec/changes/<change-id>/. Follow openspec/changes/update-sprint-plan-openspec/design.md and the amended delta in specs/default-loop/spec.md. Remove the PARKED banner and the parked description. Keep disable-model-invocation true. The description names the OpenSpec change directory as the plan and points a generic planning request at intend, without telling the agent to start Phase 0. Mint one verb-led change id. Do not number sprints. Phase progress is tasks.md checkboxes in that change. Do not create docs/sprints, .omc/sprint-plan, or phase-state.json. An ADR in ARCHITECTURE.md is allowed only when the shape changes. A child bead or child change id is a handoff from epic split. Do not write stories markdown and do not create story beads; that is the sibling change update-sprint-plan-beads. Map phases 0, 1, 1B, 1.5, 2A, 2B, and 5 onto the files in design.md. Check the four implementation boxes on tasks.md that this edit completes. Leave the living-spec fold box open. Do not edit the living spec. Do not fold. Do not change the ACTIVE BUILD banner.",
+  "non_goals": [
+    "Update the living default-loop spec",
+    "Implement story beads",
+    "Retarget retro, ultraresearch, or sprint-from-beads",
+    "Migrate old sprint trees in other repos"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/update-sprint-plan-openspec/design.md",
+      "invariant": "Phase narrative lands in the change directory. An ADR and a child bead are not the plan."
+    },
+    {
+      "symbol": "openspec/changes/update-sprint-plan-openspec/specs/default-loop/spec.md",
+      "invariant": "The factory starts only when the user asks for sprint-plan or names it."
+    },
+    {
+      "symbol": "plugins/morphist-tools/skills/sprint-plan/SKILL.md:106",
+      "invariant": "Initialization still creates the old state and spec directories. That is the code to replace."
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 -c \"import re; from pathlib import Path; root=Path('plugins/morphist-tools/skills/sprint-plan'); skill=(root/'SKILL.md').read_text(); fm=skill.split('---',2)[1]; assert 'disable-model-invocation: true' in fm and 'PARKED' not in fm and 'openspec/changes/' in skill; bad=re.compile(r'docs/sprints/|\\\\.omc/sprint-plan|phase-state\\\\.json'); ok=re.compile(r'not |never |forbid', re.I);\\nimport sys\\nfor p in root.rglob('*.md'):\\n  [sys.exit(f'{p}:{i}:{line}') for i,line in enumerate(p.read_text().splitlines(),1) if bad.search(line) and not ok.search(line)]\\nprint('ok')\""
+  },
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/morphist-tools/skills/sprint-plan/",
+      "openspec/changes/update-sprint-plan-openspec/tasks.md"
+    ],
+    "do_not": ["push", "fold", "edit-living-spec"]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "standard",
+  "surface": "packet-only",
+  "role": "worker",
+  "assignee": {
+    "id": "sol-implement",
+    "kind": "model",
+    "harness": "codex",
+    "interface": "gpt-6.1-sol",
+    "effort": "medium",
+    "signing": {"mode": "stand-in", "stand_in_id": "sol-implement"}
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {"mode": "stand-in", "stand_in_id": "agt-grok-conductor"}
+  }
+}
