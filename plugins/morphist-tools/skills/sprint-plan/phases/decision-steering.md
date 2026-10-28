@@ -1,8 +1,7 @@
 # Decision Steering
 
-Use during requirements, scope, UX, architecture, and epic split. Discovery
-only gathers context; validation reports findings rather than inventing
-new choices. All plan records stay in the current change directory.
+Use during requirements, scope, UX, and architecture. Discovery only
+gathers context. All plan records stay in the current change directory.
 
 ## Significance
 
@@ -38,11 +37,10 @@ choices in this change. Store rationale with its phase narrative:
 - Requirements: `proposal.md` What and spec deltas.
 - Scoping: `proposal.md` Out of scope.
 - UI and architecture: relevant `design.md` sections.
-- Child split: handoff references and notes in `tasks.md`.
 
 A decision record may use a local D-id, title, significance, decider, status,
 context, choice, alternatives, and consequences. One-line records suffice
 for MEDIUM choices; omit trivial boilerplate. Do not number sprints, create
 external decision logs, or use a separate state file. An ADR in
 `ARCHITECTURE.md` is permitted only when the shape changes and does not
-replace rationale in the change. A child bead/change id is only a handoff.
+replace rationale in the change. This factory does not mint child beads.

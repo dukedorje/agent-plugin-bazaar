@@ -35,4 +35,6 @@ codebase anchors, and existing `ARCHITECTURE.md`. Decision steering is active.
 Resolve significant decisions through steering. Check Phase 2A in
 `SPEC_DIR/tasks.md` when architecture is consistent with requirements,
 review findings are resolved, and any bounded ADR handoff is explicit.
-Reopen downstream boxes when requirements change. Next: Phase 2B.
+If requirements change, reopen the affected phase boxes in this checklist.
+Phase 2A is the last phase. Next command: `intend <change-id>`. Do not open
+a later phase.

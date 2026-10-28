@@ -74,7 +74,7 @@ Morphist-tools does not dispatch work.
 
 - **Morphist-tools owns**: Sprint planning, PRDs, vision, research, spikes, retrospectives — the *what* and *why*
 - **Intention and beads own**: Dispatch, status, and the record of what landed — the *how*
-- **Integration point**: `sprint-to-beads` writes an intake change into `bd`. Execution is `bd ready` and intention `act` / `run`
+- **Integration point**: `sprint-plan` stops at architecture. `intend` splits that change into nodes. Execution is `bd ready` and intention `act` / `run`
 
 ## Sprint Artifact Layout
 
@@ -123,13 +123,12 @@ Operator how-to: `plugins/intention/README.md`.
 
 | Skill | Description |
 |-------|-------------|
-| `sprint-plan` | **PARKED** — 10-phase factory. Revive: explicit multi-week / `--thorough`. Default is `intend`. |
+| `sprint-plan` | **PARKED** — factory through architecture (phases 0–2A), then `intend`. Default planning is `intend`. |
 | `prd` | Interactive PRD workshop |
 | `vision` | Strategic product vision |
 | `ultraresearch` | Multi-agent research swarm |
 | `spike` | Smallest empirical test of a hypothesis |
-| `sprint-to-beads` | Materialize a planned change into `bd` |
-| `sprint-from-beads` | Reverse-migrate a beads corpus onto an OpenSpec change |
+| `sprint-from-beads` | Read a beads corpus into one change and propose intend nodes |
 | `verify` | Independent epic completion check |
 | `done-validate` | File existence, Dev Agent Record, AC coverage |
 | `review-fix` | Validate and fix review findings |

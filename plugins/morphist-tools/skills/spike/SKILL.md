@@ -250,7 +250,7 @@ Inspired by the three sprint-004 LoGAvatar spikes (`/spike/splat-anim`, `/spike/
 - **`ultraresearch`** — outputs `spike-prompt` field in hypothesis metadata; this skill consumes it.
 - **Callers** — parse the final `VERDICT:` line. Nothing invokes this skill automatically.
 - **decision beads** — on `no-go`, attach `finding.md` to the reopened decision bead.
-- **`sprint-plan`** — Phase 3.5 may suggest spikes for flagged research-backed stories.
+- **`intend`** — records an open spike line on the node and does not run this skill. `act` will not land that node until this skill returns `go` or the human skips.
 
 ---
 

@@ -2,6 +2,7 @@
 name: sprint-plan
 description: >
   Named sprint-plan intake factory whose plan is openspec/changes/<change-id>/.
+  Phases stop at architecture. The next command is intend on that change id.
   Use only when the user asks for /sprint-plan or names the factory in a planning
   session. Route generic planning requests to intend.
 user-invocable: true
@@ -24,8 +25,9 @@ Never create `docs/sprints/`, `.omc/sprint-plan/`, or `phase-state.json`.
 Do not use OMC sessions, state tools, symlinks, continuation hooks, numbered
 sprints, standalone phase reports, or cross-session decision logs as plan
 storage. An ADR in `ARCHITECTURE.md` is allowed only when the shape changes.
-A child bead or child change id from epic split is a handoff. Neither is
-a substitute for the plan in the current change directory.
+The factory stops at architecture. It does not mint an intake epic, a
+child epic, a story bead, or a per-acceptance checkbox. Splitting the
+change is `intend`.
 
 ## Arguments and modes
 
@@ -49,19 +51,15 @@ user wants to build before creating a change directory.
 `--thorough` wins over `--fast`; `--restart-from` wins over `--continue`;
 `--step` wins over `--auto`. Explicit detail level wins over mode defaults.
 Default: single pass with GUIDED steering and pauses at requirements,
-scoping, architecture, and validation. Lean means short sections in the
+scoping, and architecture. Lean means short sections in the
 same change files, standard adds relevant rationale, full adds alternatives
 and deeper validation. Detail level never changes the output destinations.
 Escalate detail when HIGH/CRITICAL decisions demand it and record the reason
 in `tasks.md`; do not silently downgrade an established level.
 
-Phases 3 and 4 record stories directly as beads with acceptance criteria,
-parented to the intake epic. Mirror each acceptance as an open checkbox in
-`SPEC_DIR/tasks.md`. Never create a stories directory, story markdown, or a
-story template. `sprint-to-beads` runs at the end of intake without a separate
-flag. Legacy `--write-stories`, `--skip-stories`, and `--beads` flags do not
-select or bypass story intake or materialization. `--sprint=ID` no longer
-selects a numbered sprint; use `--change=ID`.
+Do not create story beads, an intake epic, or a checkbox per acceptance.
+Do not run `sprint-to-beads`. `--sprint=ID` no longer selects a numbered
+sprint; use `--change=ID`.
 
 ## Initialization
 
@@ -88,10 +86,6 @@ selects a numbered sprint; use `--change=ID`.
 - [ ] Phase 1B: Scoping — proposal.md Out of scope
 - [ ] Phase 1.5: UX — design.md journey, only for UI; otherwise record skip reason
 - [ ] Phase 2A: Architecture — design.md; ADR only if shape changes
-- [ ] Phase 2B: Epics — child bead/change handoff references
-- [ ] Phase 3: Story decomposition — beads with acceptance, parented to intake epic
-- [ ] Phase 4: Story elaboration — bead fields and tasks.md acceptance checkboxes
-- [ ] Phase 5: Validation — remaining tasks.md boxes and findings
 ```
 
 ## Phase routing
@@ -103,10 +97,6 @@ selects a numbered sprint; use `--change=ID`.
 | 1B Scoping | [phase-1b-sprint-scoping.md](phases/phase-1b-sprint-scoping.md) | `proposal.md` Out of scope |
 | 1.5 UX | [phase-1.5-ux-design.md](phases/phase-1.5-ux-design.md) | `design.md` journey, only for UI |
 | 2A Architecture | [phase-2a-architecture.md](phases/phase-2a-architecture.md) | `design.md`; bounded ADR if shape changes |
-| 2B Epics | [phase-2b-epic-design.md](phases/phase-2b-epic-design.md) | child bead or child change id handoffs |
-| 3 Stories | [phase-3-story-decomposition.md](phases/phase-3-story-decomposition.md) | story beads with acceptance and intake epic parent |
-| 4 Elaboration | [phase-4-write-stories.md](phases/phase-4-write-stories.md) | enriched bead fields and acceptance checkboxes in `tasks.md` |
-| 5 Validation | [phase-5-validation.md](phases/phase-5-validation.md) | remaining `tasks.md` boxes; `advise` at architecture rigor |
 
 Execute in phase order. Read each prior output from the change directory,
 then edit the mapped file in place, preserving other sections. If delegating,
@@ -116,9 +106,8 @@ commands. Require a final response containing outputs, paths, and blockers.
 
 Check the matching phase box only after its output exists and required
 steering is resolved. For a skipped conditional phase, record the reason next
-to its checked box; no output file is needed. Story content lives in bead
-fields; acceptance checkboxes and bead references live in `tasks.md`. Run
-Phases 3 and 4 before Phase 5; do not skip them as a deferred handoff.
+to its checked box; no output file is needed. Do not open a phase after
+2A. Do not create beads as the breakdown of this intake.
 
 ## Steering and continuation
 
@@ -136,11 +125,11 @@ do not skip earlier unchecked phases.
 
 For restart, uncheck the selected phase and every downstream phase in
 `tasks.md`, recording why. Keep existing narrative as input and reconcile it
-in place. Reopen affected implementation/validation tasks when conclusions
-change. A failed phase stays unchecked. Retry an agent failure once, then
+in place. Reopen the downstream phase boxes when conclusions change.
+A failed phase stays unchecked. Retry an agent failure once, then
 report the blocker with recovery options. No separate state store is needed.
 
-At completion, report the change directory, completed intake phases,
-remaining implementation/fold boxes, intake epic and story bead ids,
-and validation evidence. Intake completion does not mean implementation,
-activation, or fold. Never edit the living spec or archive as part of intake.
+At completion, report the change directory, the phases whose boxes are
+checked, and the next command: `intend <change-id>`. Stop there. Intake
+completion does not mean implementation, activation, fold, or a DAG.
+Never edit the living spec or archive as part of intake.

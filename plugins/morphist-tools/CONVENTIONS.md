@@ -125,13 +125,14 @@ Removed from morphist-tools 2026-07-28 (recoverable from git history):
 | `refine`, `replan`, `audit`, `reconcile`, `post-mortem` | Drift-repair tooling. With beads as the source of truth and smaller units of work, drift is cheaper to just fix than to orchestrate a repair pass over. |
 | `doc`, `blocker-triage`, `help` | Absorbed into the surviving skills, or obsolete once the skill count is small enough to read. |
 | `sprint-exec` (2026-10-27) | OMC is uninstalled. Execution is intention `act` / `run` and `bd ready`. Habits worth keeping are in `plugins/intention/references/from-sprint-exec.md`. |
+| `sprint-to-beads` (2026-10-27) | Story materialization. `intend` splits a change into nodes. `sprint-from-beads` still writes a change from beads that already exist. |
 
-Kept: `sprint-to-beads`, `sprint-from-beads`, `prd`,
+Kept: `sprint-from-beads`, `prd`,
 `vision`, `ultraresearch`, `retro`, `review-fix`, `verify`, `done-validate`, `spike`,
 `release`, and `brief`.
 
 `sprint-plan` is **parked** (D1, 2026-08-15). Default planning is `intend`.
-Revive when someone explicitly wants the 10-phase / `--thorough` factory.
+It runs only when someone names the factory, and it stops at architecture.
 
 The kept set preserves the thing that actually earned its keep: **a long planning session
 you can start, walk away from, and come back to** — plus the quality gates that stop an

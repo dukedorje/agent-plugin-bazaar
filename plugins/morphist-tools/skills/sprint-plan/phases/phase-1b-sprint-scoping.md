@@ -19,8 +19,8 @@ standard, or ambitious; it describes a bounded change, not a numbered sprint.
    and the deltas consistent. Record stretch items as excluded unless their
    inclusion condition has been explicitly accepted.
 
-Do not create a separate scope document or an external backlog. Phase 2B
-may hand independently scoped work to child beads or child change ids.
+Do not create a separate scope document, an external backlog, or story
+beads. A later split of this change is `intend`, not a factory phase.
 
 ## Completion
 
