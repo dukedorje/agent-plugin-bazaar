@@ -338,3 +338,7 @@ Mailbox is `/status` (ASK / EYES / PUNT faces) — not a ninth verb. `/ready` is
   an explicit task target, or a known workflow transition
 - Change branches before resolving the exact target and protecting dirty work
 - Append unrelated commits to a branch that already backs an open PR
+
+## Refusal card
+
+When you refuse to activate a node or flip its banner and the node has a recorded outside, review, internal, or deferred wait, run `python3 plugins/intention/skills/status/scripts/refusal.py <node-id> --action <action>` and paste its stdout as the first lines of the refusal. Do not paraphrase it or research the waits again. If the refusal has another reason (grant, stale contract, advise), put that reason line right after the card. The card does not flip the banner or unlock the action.

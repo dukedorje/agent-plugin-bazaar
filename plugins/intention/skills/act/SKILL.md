@@ -94,3 +94,7 @@ The packet is the only interface. Schema:
 
 If the packet contradicts the laws in `docs/contracts/agent-surface.md`,
 quote both instructions. Do not silently keep the narrower one.
+
+## Refusal card
+
+When you refuse to activate a node or flip its banner and the node has a recorded outside, review, internal, or deferred wait, run `python3 plugins/intention/skills/status/scripts/refusal.py <node-id> --action <action>` and paste its stdout as the first lines of the refusal. Do not paraphrase it or research the waits again. If the refusal has another reason (grant, stale contract, advise), put that reason line right after the card. The card does not flip the banner or unlock the action.

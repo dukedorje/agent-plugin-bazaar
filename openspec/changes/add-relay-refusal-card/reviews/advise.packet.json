@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-relay-refusal-card-advise",
+  "node_id": "bazaar-qna-advise",
+  "capability": "verbs",
+  "change_id": "add-relay-refusal-card",
+  "goal": "Independently review add-relay-refusal-card. Blind pass first: read only proposal.md Why and What, openspec/specs/verbs/spec.md from the start through the change-scaffolds requirement, and plugins/intention/skills/status/scripts/status.py around the Blocked printer. Write a 10-line independent take: what you would pin, what you would refuse, and one tradeoff. Only then open design.md, tasks.md, and specs/verbs/spec.md in this change. Compare and steelman against that take. Write openspec/changes/add-relay-refusal-card/reviews/2026-10-28-advise.md. Banner lines must include ADVISE accept or send-back, READER opus-arch-review, and SPAWN set to the spawn directory in your prompt. Do not implement, fold, or change the banner.",
+  "non_goals": [
+    "Implement refusal.py",
+    "Fold the living spec",
+    "File beads in api-proxy"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-relay-refusal-card/proposal.md#Why",
+      "invariant": "A refusal today is a drilled essay, and status prints waiting on an id."
+    },
+    {
+      "symbol": "openspec/specs/verbs/spec.md:77",
+      "invariant": "change writes a banner and does not fold. It does not yet require a refusal card."
+    },
+    {
+      "symbol": "plugins/intention/skills/status/scripts/status.py:744",
+      "invariant": "Blocked lines print waiting on bead ids and nothing else."
+    }
+  ],
+  "acceptance": {
+    "kind": "contrast",
+    "if_true": "The delta can be folded onto verbs without telling the printer to flip banners, and without treating an external-only beads edge as a bd ready blocker.",
+    "if_false": "The delta invents projects when export fails, or makes the external: id the only edge bd ready is assumed to honor."
+  },
+  "out_of_scope": [
+    {
+      "item": "api-proxy secret-use beads",
+      "tracked_as": "api-proxy"
+    }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "openspec/changes/add-relay-refusal-card/reviews/",
+      "openspec/changes/add-relay-refusal-card/tasks.md"
+    ],
+    "do_not": [
+      "implement",
+      "fold",
+      "change-banner"
+    ]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "lean",
+  "surface": "packet-only",
+  "role": "reader",
+  "assignee": {
+    "id": "opus-arch-review",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "claude-opus-5-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "opus-arch-review"
+    }
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-conductor"
+    }
+  }
+}

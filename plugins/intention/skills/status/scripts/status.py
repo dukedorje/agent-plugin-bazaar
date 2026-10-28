@@ -25,6 +25,7 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 from advise_status import last_advise_verdict, needs_advise  # noqa: E402
+from refusal import load_export, waiting_lines  # noqa: E402
 
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
@@ -588,7 +589,9 @@ def print_change(row: dict, *, note: str | None = None, from_open: bool = True) 
         print(f"  Revive when {row['revive']}")
 
 
-def print_bead_line(row: dict, *, waiting: str | None = None) -> None:
+def print_bead_line(
+    row: dict, *, waiting: str | None = None, outside: list[str] | None = None
+) -> None:
     nid = str(row.get("id") or "")
     kind = str(row.get("issue_type") or row.get("type") or row.get("kind") or "bead")
     title = short_what(row.get("title") or "", 80)
@@ -601,7 +604,10 @@ def print_bead_line(row: dict, *, waiting: str | None = None) -> None:
     if title:
         bits.append(title)
     print(" · ".join(bits))
-    if waiting:
+    if outside:
+        for line in outside:
+            print(f"  waiting on {line}")
+    elif waiting:
         print(f"  waiting on {waiting}")
 
 
@@ -741,9 +747,12 @@ def print_queue(face: dict[str, list[dict]], pins: list[dict[str, Any]] | None =
         print(f"## Blocked · {len(face['blocked'])}")
         print()
 
+        export_rows = load_export(None)
+
         def blocked_line(row: dict) -> None:
+            outside = waiting_lines(str(row.get("id") or ""), export_rows)
             waiting = ", ".join(code_id(x) for x in row.get("blocked_by") or []) or "—"
-            print_bead_line(row, waiting=waiting)
+            print_bead_line(row, waiting=waiting, outside=outside)
 
         print_grouped(face["blocked"], line=blocked_line)
     if face["waiting"]:

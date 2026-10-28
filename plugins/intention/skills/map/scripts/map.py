@@ -19,6 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+_STATUS_SCRIPTS = Path(__file__).resolve().parents[2] / "status" / "scripts"
+if str(_STATUS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_STATUS_SCRIPTS))
+from refusal import load_export, waiting_lines  # noqa: E402
+
 SESSION_ENV = (
     "INTENTION_SESSION",
     "GROK_SESSION_ID",
@@ -398,7 +403,8 @@ def render_node(
     if kind:
         status_line += f" ({kind})"
     if waiting_on:
-        status_line += f" · waiting on {', '.join(waiting_on)}"
+        outside = waiting_lines(nid, load_export(None))
+        status_line += f" · waiting on {'; '.join(outside) if outside else ', '.join(waiting_on)}"
     lines = [
         f"### {nid}",
         f"- Goal: {title}",

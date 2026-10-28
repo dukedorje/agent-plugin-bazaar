@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "pkt-add-relay-refusal-card",
+  "node_id": "bazaar-qna",
+  "capability": "verbs",
+  "change_id": "add-relay-refusal-card",
+  "goal": "Implement the refusal card specified in openspec/changes/add-relay-refusal-card/. Read proposal.md, design.md, tasks.md, and specs/verbs/spec.md. Do not reopen the design. Add plugins/intention/skills/status/scripts/refusal.py that prints the card from a beads-export JSONL fixture or from `bd export`. Wire status Blocked and map waiting lines through that renderer. Add the paste instruction to the change, act, and run skills. Check the owed boxes in tasks.md when each is done. Do not fold. Do not flip the banner. Edit and stop.",
+  "non_goals": [
+    "File beads in api-proxy",
+    "Change bd ready",
+    "Fold the living spec"
+  ],
+  "anchors": [
+    {
+      "symbol": "openspec/changes/add-relay-refusal-card/design.md",
+      "invariant": "The card shape, the same-type outside bead, and the external: reference are already decided."
+    },
+    {
+      "symbol": "openspec/changes/add-relay-refusal-card/specs/verbs/spec.md",
+      "invariant": "Scenarios name the four projects, the review, Separate, the second print, the unreadable line, and the status row."
+    }
+  ],
+  "acceptance": {
+    "kind": "command",
+    "command": "python3 plugins/intention/scripts/test-refusal.py"
+  },
+  "out_of_scope": [
+    {
+      "item": "api-proxy secret-use beads",
+      "tracked_as": "api-proxy"
+    }
+  ],
+  "constraints": {
+    "permission": "write",
+    "paths": [
+      "plugins/intention/skills/status/scripts/refusal.py",
+      "plugins/intention/skills/status/scripts/status.py",
+      "plugins/intention/skills/map/scripts/map.py",
+      "plugins/intention/skills/change/SKILL.md",
+      "plugins/intention/skills/act/SKILL.md",
+      "plugins/intention/skills/run/SKILL.md",
+      "plugins/intention/scripts/test-refusal.py",
+      "openspec/changes/add-relay-refusal-card/tasks.md"
+    ],
+    "do_not": [
+      "fold",
+      "push"
+    ]
+  },
+  "load_class": "intention-critical",
+  "rigor": "architecture",
+  "density": "explicit",
+  "surface": "packet-only",
+  "kind": "implement",
+  "assignee": {
+    "id": "sonnet-known",
+    "kind": "model",
+    "harness": "claude",
+    "interface": "claude-sonnet-5-5",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "sonnet-known"
+    }
+  },
+  "requester": {
+    "id": "agt-grok-conductor",
+    "kind": "model",
+    "harness": "grok",
+    "interface": "grok",
+    "signing": {
+      "mode": "stand-in",
+      "stand_in_id": "agt-grok-conductor"
+    }
+  }
+}
