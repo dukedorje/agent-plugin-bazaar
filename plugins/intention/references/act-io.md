@@ -133,8 +133,12 @@ word maps to `-c model_reasoning_effort="…"`. Sandbox is
 `read-only` for consult / empty write-set; `workspace-write`
 when `permission: write` or `constraints.paths` includes a
 `reviews/` dir — the reader writes their own review file.
-Override the binary with `CODEX_BIN`. Stage picks this when the
-assignee harness is `codex` and `codex` is on PATH.
+Implementation writes also pass
+`-c sandbox_workspace_write.network_access=true`, so cargo tests,
+dev servers, and the public internet work inside that sandbox.
+Advise review writes stay offline. Override the binary with
+`CODEX_BIN`. Stage picks this when the assignee harness is
+`codex` and `codex` is on PATH.
 
 `run --adapter grok` is live `grok --prompt-file` (headless). Grok
 does **not** read piped stdin; the staged `prompt.md` is the brief

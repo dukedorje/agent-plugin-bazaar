@@ -293,6 +293,7 @@ def test_codex_adapter_argv() -> None:
         expect(argv[-1] == "-", argv)
         expect("-m" in argv and "gpt-6.1-sol" in argv, argv)
         expect("--sandbox" in argv and "read-only" in argv, argv)
+        expect("network_access" not in " ".join(argv), argv)
         expect("--skip-git-repo-check" in argv, argv)
         expect("--ephemeral" in argv, argv)
         expect("--enable" in argv, argv)
@@ -684,7 +685,34 @@ def test_codex_advise_sandbox_is_writable() -> None:
         argv, stdin = logged["argv"], logged["stdin"]
         expect("--sandbox" in argv and "workspace-write" in argv, argv)
         expect("read-only" not in argv, argv)
+        expect("network_access" not in " ".join(argv), argv)
         expect("Write your own review file" in stdin, stdin[:500])
+
+
+def test_codex_implementation_sandbox_opens_network() -> None:
+    """workspace-write blocks localhost binds until network_access is set."""
+    prompt = Path("/unused/prompt.md")
+    argv = spawn.codex_argv(
+        {
+            "interface": "sol",
+            "permission": "write",
+            "sandbox": "workspace-write",
+            "paths": ["src/x.py"],
+        },
+        prompt,
+    )
+    expect("--sandbox" in argv and "workspace-write" in argv, argv)
+    expect("sandbox_workspace_write.network_access=true" in argv, argv)
+    offline = spawn.codex_argv(
+        {
+            "interface": "sol",
+            "permission": "read",
+            "sandbox": "read-only",
+            "paths": [],
+        },
+        prompt,
+    )
+    expect("network_access" not in " ".join(offline), offline)
 
 
 def test_consult_prompt_is_not_advise() -> None:
@@ -988,6 +1016,7 @@ def main() -> int:
         test_infra_evidence_only,
         test_read_permission_prompt_is_reader_brief,
         test_codex_advise_sandbox_is_writable,
+        test_codex_implementation_sandbox_opens_network,
         test_act_packet_with_change_id_is_worker,
         test_stage_defaults_root_to_cwd_repo,
         test_consult_prompt_is_not_advise,

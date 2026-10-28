@@ -139,6 +139,23 @@ def is_advise(packet: dict) -> bool:
     return writes_review(packet_paths(packet))
 
 
+def codex_network(spec: dict) -> bool:
+    """Implementation writes need outbound network and localhost binds.
+
+    Codex `workspace-write` blocks both unless
+    `sandbox_workspace_write.network_access` is set. Consult stays
+    `read-only`. Advise writes a review file and stays offline.
+    """
+    sandbox = str(spec.get("sandbox") or sandbox_of(spec))
+    if sandbox != "workspace-write":
+        return False
+    paths = [str(p) for p in (spec.get("paths") or [])]
+    if writes_review(paths):
+        return False
+    perm = str(spec.get("permission") or "")
+    return perm in ("", "write")
+
+
 def sandbox_of(spec: dict, packet: dict | None = None) -> str:
     """Reviewers write their own review file. Consult stays read-only."""
     if packet is not None and is_consult(packet):
@@ -410,6 +427,12 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
             "never",
             "--sandbox",
             sandbox,
+        ]
+    )
+    if codex_network(spec):
+        argv.extend(["-c", "sandbox_workspace_write.network_access=true"])
+    argv.extend(
+        [
             "-C",
             workspace,
             "-m",
