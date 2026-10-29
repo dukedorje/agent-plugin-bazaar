@@ -61,31 +61,31 @@ def _verdict_in(text: str) -> tuple[str | None, bool]:
     return verdict, has_reader
 
 
-def last_advise_verdict(change_dir: Path) -> str | None:
+def latest_advise_review(change_dir: Path) -> tuple[str | None, Path | None]:
+    """Newest review that carries an ADVISE line, and that verdict.
+
+    An accept with no READER line does not count. The path is still
+    returned so a caller can say the file was ignored.
+    """
     reviews = change_dir / "reviews"
     if not reviews.is_dir():
-        return None
+        return None, None
     files = sorted(
         (p for p in reviews.iterdir() if p.is_file() and p.name.endswith(".md")),
         key=review_sort_key,
     )
-    # A blind take or other note in the same directory is not a verdict.
-    # Walk newest-first and use the latest file that actually carries ADVISE.
-    verdict = None
-    has_reader = False
-    found = False
     for path in reversed(files):
         local, reader = _verdict_in(path.read_text(encoding="utf-8"))
         if local is None:
             continue
-        verdict = local
-        has_reader = reader
-        found = True
-        break
-    if not found:
-        return None
-    if verdict in ACCEPTING and not has_reader:
-        return None
+        if local in ACCEPTING and not reader:
+            return None, path
+        return local, path
+    return None, None
+
+
+def last_advise_verdict(change_dir: Path) -> str | None:
+    verdict, _path = latest_advise_review(change_dir)
     return verdict
 
 

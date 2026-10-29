@@ -23,7 +23,7 @@ from typing import Any
 _STATUS_SCRIPTS = Path(__file__).resolve().parents[2] / "status" / "scripts"
 if str(_STATUS_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_STATUS_SCRIPTS))
-from advise_status import last_advise_verdict  # noqa: E402
+from advise_status import last_advise_verdict, latest_advise_review  # noqa: E402
 from status import describe_blocker  # noqa: E402
 
 STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
@@ -655,6 +655,7 @@ def decide(
                 "stop": None,
                 "next": "change",
                 "focus": pick_send[0],
+                "reason": "send-back",
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -786,6 +787,7 @@ def decide(
                 "stop": None,
                 "next": "change",
                 "focus": scope,
+                "reason": "send-back",
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -1163,6 +1165,170 @@ def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
     return lines
 
 
+_READER_ID_RE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
+_HEADING_RE = re.compile(r"^#{1,6}\s+(.*)$")
+_OWED_HEAD_RE = re.compile(r"owed|send-?back", re.I)
+_NUMBERED_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
+_BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
+_REVIEW_SECTIONS = ("owed corrections", "verdict", "findings")
+
+
+def _clip(text: str, limit: int = 140) -> str:
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def _reader_id(text: str) -> str | None:
+    for line in text.splitlines()[:40]:
+        match = _READER_ID_RE.match(line.strip())
+        if match:
+            return match.group(1)
+    return None
+
+
+def _owed_heading_boxes(tasks: str) -> list[str]:
+    """Unchecked boxes under an owed / send-back heading. Cap 4.
+
+    Other open boxes are the work list. They are not the send-back.
+    """
+    heading = ""
+    out: list[str] = []
+    for line in tasks.splitlines():
+        head = _HEADING_RE.match(line.strip())
+        if head:
+            heading = head.group(1)
+            continue
+        match = CHECKBOX_RE.match(line)
+        if not match or match.group(2).lower() == "x":
+            continue
+        if not _OWED_HEAD_RE.search(heading):
+            continue
+        out.append(_clip(match.group(3)))
+        if len(out) >= 4:
+            break
+    return out
+
+
+def _review_sections(text: str) -> list[tuple[str, list[str]]]:
+    sections: list[tuple[str, list[str]]] = []
+    name = ""
+    body: list[str] = []
+    for line in text.splitlines():
+        head = _HEADING_RE.match(line.strip())
+        if head:
+            sections.append((name, body))
+            name = head.group(1).strip().lower()
+            body = []
+        else:
+            body.append(line)
+    sections.append((name, body))
+    return sections
+
+
+def _numbered_particulars(body: list[str]) -> list[str]:
+    items: list[str] = []
+    for line in body:
+        match = _NUMBERED_RE.match(line)
+        if not match:
+            continue
+        raw = match.group(1).strip()
+        bold = _BOLD_RE.search(raw)
+        piece = bold.group(1).strip(" .") if bold else raw
+        items.append(_clip(piece))
+        if len(items) >= 4:
+            break
+    return items
+
+
+def _review_particulars(text: str) -> list[str]:
+    sections = _review_sections(text)
+    for key in _REVIEW_SECTIONS:
+        for name, body in sections:
+            if key not in name:
+                continue
+            items = _numbered_particulars(body)
+            if items:
+                return items
+    return []
+
+
+def _why_sentence(text: str) -> str | None:
+    kept: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(">") or stripped.startswith("#"):
+            continue
+        kept.append(stripped)
+    blob = re.sub(r"\s+", " ", " ".join(kept)).strip()
+    if not blob:
+        return None
+    parts = re.split(r"(?<=[.!?])\s+", blob)
+    return _clip(" ".join(parts[:2]), 160)
+
+
+def send_back_particulars(change_dir: Path | None, change_id: str) -> list[str]:
+    """Reader, owed fixes, or the review file. Does not edit the review."""
+    if change_dir is None:
+        return [f"`{change_id}` was sent back. No change directory to read."]
+    _verdict, path = latest_advise_review(change_dir)
+    text = path.read_text(encoding="utf-8") if path is not None and path.is_file() else ""
+    reader = _reader_id(text) if text else None
+    who = f" by {reader}" if reader else ""
+    lines = [f"`{change_id}` sent back{who}."]
+    tasks = change_dir / "tasks.md"
+    items = _owed_heading_boxes(tasks.read_text(encoding="utf-8")) if tasks.is_file() else []
+    if not items and text:
+        items = _review_particulars(text)
+    if not items and text:
+        why = _why_sentence(text)
+        if why:
+            items = [why]
+    if items:
+        lines.extend(items)
+    elif path is not None:
+        lines.append(f"Review `{path.name}` has no particulars.")
+    else:
+        lines.append("No review file to read.")
+    return lines
+
+
+def accept_line(change_dir: Path, change_id: str) -> list[str]:
+    """One line when the last counted verdict is an accept. No reader, no line."""
+    verdict, path = latest_advise_review(change_dir)
+    if verdict not in {"accept", "accept-with-nits"} or path is None:
+        return []
+    reader = _reader_id(path.read_text(encoding="utf-8"))
+    if not reader:
+        return []
+    nits = " with nits" if verdict == "accept-with-nits" else ""
+    return [f"`{change_id}` accepted{nits} by {reader}."]
+
+
+def stage_note(row: dict[str, Any], openspec: Path | None) -> tuple[str, list[str]]:
+    """Short summary at a stage boundary. Empty when the card already says enough."""
+    nxt = row.get("next")
+    focus = str(row.get("focus") or "")
+    if not focus or nxt not in {"change", "advise", "act"}:
+        return "", []
+    dest = find_change_dir(openspec, focus)
+    if nxt == "change" and row.get("reason") == "send-back":
+        lines = send_back_particulars(dest, focus)
+        if dest is not None:
+            lines.append("Next is change: amend those.")
+        return "SEND-BACK", lines
+    if nxt == "advise" and dest is not None and last_advise_verdict(dest) == "send-back":
+        lines = send_back_particulars(dest, focus)
+        lines.append("No open owed boxes. Next is another read, not an amend.")
+        return "SEND-BACK", lines
+    if nxt == "act" and dest is not None:
+        lines = accept_line(dest, focus)
+        if lines:
+            return "ACCEPTED", lines
+    return "", []
+
+
 def load_explain() -> dict[str, Any]:
     """`bd ready --explain` when this is a live board, not a fixture."""
     try:
@@ -1230,6 +1396,13 @@ def card(row: dict[str, Any]) -> str:
                     lines.append("║ Next:")
                     lines.append(f"║   {cmd}")
         lines.append("╚═══════════════════════════════════════════════")
+    stage = [str(line) for line in (row.get("stage") or []) if str(line).strip()]
+    kind = str(row.get("stage_kind") or "")
+    if stage and kind:
+        lines.append("")
+        lines.append(kind)
+        for line in stage:
+            lines.append(f"- {line}")
     unblock = [str(line) for line in (row.get("unblock") or []) if str(line).strip()]
     if unblock:
         lines.append("")
@@ -1323,6 +1496,10 @@ def main() -> int:
             if explained.get("ready") is not None:
                 data["ready_beads"] = explained.get("ready")
     row["unblock"] = human_unblock(row, data)
+    kind, stage = stage_note(row, find_openspec())
+    if kind and stage:
+        row["stage_kind"] = kind
+        row["stage"] = stage
     if args.json:
         print(json.dumps(row, indent=2))
     else:

@@ -145,6 +145,20 @@ blocker). An external dependency names the project it lives in.
 If priority order and dependency order disagree, one line names the
 ready bead to do first. Print that block as the card prints it.
 Do not drop it, and do not turn it into another verb.
+
+When the card prints `SEND-BACK` or `ACCEPTED`, that block is the
+summary between stages. Print it as the card prints it. Do not
+paraphrase a send-back into "advise sent it back." `SEND-BACK` names
+the reader and the owed particulars, or the review file when the
+body has none. A send-back with no open owed boxes says the next
+step is another read, not an amend. `ACCEPTED` is one line into
+`act` when the last counted verdict is accept. No summary for fold,
+for advise that has not been read, or for a plain continue.
+Stale-base stays on the reason line. EYES stays `YOUR EYES`.
+
+After an act wave returns, print one line before the next card:
+the close reason, or the red blocker. The script does not see the
+wave result, so that line is yours.
 Refusing fold must not end the campaign. Same-family advise must not end the campaign.
 `stop: empty` is not stuck while `needs_advise` remains and an
 other-family route exists. `next: fold` is not a halt. Persist
@@ -167,6 +181,8 @@ punt = []
 while waves < max_waves:
   card = run.py [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
+  # SEND-BACK / ACCEPTED on the card is the between-stages summary.
+  # Print it as written. After an act wave, one line: close reason or red.
   # Before activation stops: apply an existing bounded campaign grant via
   # change to eligible PENDING nodes, respecting explicit policy limits;
   # re-observe if anything changed. Never infer a grant from the card.

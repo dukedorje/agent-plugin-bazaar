@@ -1271,6 +1271,269 @@ def test_ask_stop_says_steer() -> None:
         expect(any("steer" in line for line in face["unblock"]), face["unblock"])
 
 
+def _write_review(change: Path, body: str, name: str = "2026-10-29-advise.md") -> None:
+    reviews = change / "reviews"
+    reviews.mkdir(exist_ok=True)
+    (reviews / name).write_text(body, encoding="utf-8")
+
+
+def test_send_back_card_names_particulars() -> None:
+    """Owed-heading boxes, not the whole task list, and not a fifth item."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks=(
+                "# Tasks\n\n"
+                "- [ ] implement the compiler\n\n"
+                "## Owed (advise send-back)\n\n"
+                "- [ ] Pin the wave write-set before take\n"
+                "- [x] already done\n"
+                "- [ ] Release taken nodes when launch fails\n"
+                "- [ ] Land each persist on HEAD\n"
+                "- [ ] Cap the wave after disjointness\n"
+                "- [ ] Fifth stays off the card\n"
+            ),
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** fable-5.1-arch-review\n\n"
+            "## Verdict\n\n"
+            "1. **Write-set is unknown at pick.** Packets land after take.\n",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-sheaf-type"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "change", face)
+        expect(face["reason"] == "send-back", face)
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        text = "\n".join(face["stage"])
+        expect("fable-5.1-arch-review" in text, text)
+        expect("Pin the wave write-set before take" in text, text)
+        expect("Release taken nodes when launch fails" in text, text)
+        expect("Land each persist on HEAD" in text, text)
+        expect("Cap the wave after disjointness" in text, text)
+        expect("Fifth stays off the card" not in text, text)
+        expect("implement the compiler" not in text, text)
+        expect("Write-set is unknown" not in text, text)
+        expect("Next is change: amend those." in text, text)
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("\nSEND-BACK\n" in rendered.stdout, rendered.stdout)
+        expect("Pin the wave write-set before take" in rendered.stdout, rendered.stdout)
+
+
+def test_send_back_uses_review_when_boxes_are_not_owed() -> None:
+    """An open task box is not the send-back. Numbered review items are."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** opus-arch\n\n"
+            "## Owed corrections\n\n"
+            "1. **Stamp the living base** before the union paste.\n"
+            "2. **Refuse a stale SHALL** when the blob moved.\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        text = "\n".join(face["stage"])
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        expect("Stamp the living base" in text, text)
+        expect("Refuse a stale SHALL" in text, text)
+        expect("implement the compiler" not in text, text)
+
+
+def test_send_back_names_file_when_body_empty() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] amend the SHALL on compile",
+            review="send-back",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        text = "\n".join(face["stage"])
+        expect("2026-08-27-advise.md" in text, text)
+        expect("has no particulars" in text, text)
+
+
+def test_send_back_stuck_says_reread() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-sheaf-type", rigor="architecture", tasks="- [x] done")
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** fable-5.1-arch-review\n\n"
+            "## Verdict\n\n"
+            "1. **Nothing lands the wave.** N branches and no merge.\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "advise", face)
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        text = "\n".join(face["stage"])
+        expect("Nothing lands the wave" in text, text)
+        expect("another read, not an amend" in text, text)
+        expect("Next is change" not in text, text)
+
+
+def test_send_back_without_dir_says_so() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "send_back": ["add-x"],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        expect("No change directory to read." in "\n".join(face["stage"]), face["stage"])
+
+
+def test_accept_card_is_one_line() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** accept\n> **READER:** fable-5.1-arch-review\n\nLooks sound.\n",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [{"id": "add-sheaf-type"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act", face)
+        expect(face["stage_kind"] == "ACCEPTED", face)
+        expect(
+            face["stage"] == ["`add-sheaf-type` accepted by fable-5.1-arch-review."],
+            face["stage"],
+        )
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("\nACCEPTED\n" in rendered.stdout, rendered.stdout)
+
+
+def test_accept_with_nits_names_nits() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-sheaf-type", tasks="- [ ] implement")
+        _write_review(
+            change,
+            "> **ADVISE:** accept-with-nits\n> **READER:** opus-arch\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": ["add-sheaf-type"], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect("accepted with nits by opus-arch" in "\n".join(face["stage"]), face)
+
+
+def test_accept_without_reader_is_quiet() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+            review="accept",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": ["add-sheaf-type"], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect("stage" not in face, face)
+
+
+def test_unread_advise_has_no_stage_summary() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-agent-body", rigor="architecture")
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-agent-body"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect("stage" not in face, face)
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("SEND-BACK" not in rendered.stdout, rendered.stdout)
+        expect("ACCEPTED" not in rendered.stdout, rendered.stdout)
+
+
 def test_scoped_skip_still_advises_same_id() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -1328,6 +1591,15 @@ def main() -> int:
         test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,
         test_roll_send_back_with_boxes_is_change,
+        test_send_back_card_names_particulars,
+        test_send_back_uses_review_when_boxes_are_not_owed,
+        test_send_back_names_file_when_body_empty,
+        test_send_back_stuck_says_reread,
+        test_send_back_without_dir_says_so,
+        test_accept_card_is_one_line,
+        test_accept_with_nits_names_nits,
+        test_accept_without_reader_is_quiet,
+        test_unread_advise_has_no_stage_summary,
         test_wait_eyes_is_stop_eyes,
         test_roll_eyes_does_not_intend_leftover,
         test_roll_unrelated_ready_moves_with_eyes_listed,

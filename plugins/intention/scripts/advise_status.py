@@ -20,6 +20,7 @@ _spec.loader.exec_module(_mod)
 
 change_rigor = _mod.change_rigor
 last_advise_verdict = _mod.last_advise_verdict
+latest_advise_review = _mod.latest_advise_review
 review_sort_key = _mod.review_sort_key
 needs_advise = _mod.needs_advise
 needs_advise_ids = _mod.needs_advise_ids
