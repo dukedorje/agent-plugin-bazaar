@@ -594,6 +594,8 @@ def run_pi(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> in
     """
     import pi_tmux  # noqa: WPS433
 
+    if pi_tmux.STAGE_RUNNER is None:
+        pi_tmux.STAGE_RUNNER = pi_tmux.rsync_runner
     dest = prompt_file.parent
     stream_path = dest / "stream.log"
     prompt = read_prompt(prompt_file)

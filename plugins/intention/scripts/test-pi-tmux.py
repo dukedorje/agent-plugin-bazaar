@@ -464,6 +464,53 @@ def test_packet_to_turn_face_and_lock_release() -> None:
             pi_tmux.unlock(probe)
 
 
+def test_rsync_runner_argv_exit_and_timeout() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        src = root / "src"
+        src.mkdir()
+        (src / "f").write_text("x", encoding="utf-8")
+        calls: list[list[str]] = []
+
+        def fake(argv, **kw):
+            calls.append(argv)
+            return subprocess.CompletedProcess(argv, fake.code)
+        fake.code = 0
+        step = {"src": str(src), "dest": "/d", "delete": False}
+        with patch("subprocess.run", fake):
+            expect(pi_tmux.rsync_runner(step, [], "s", 5) == 0, "zero")
+            expect(calls[-1] == ["rsync", "-a", str(src), "/d"], calls[-1])
+            step["delete"] = True
+            pi_tmux.rsync_runner(step, [], "s", 5)
+            expect(calls[-1][:3] == ["rsync", "-a", "--delete"], calls[-1])
+            pi_tmux.rsync_runner(step, ["ssh", "-p", "22", "vm"], "s", 5)
+            expect(calls[-1] == ["rsync", "-a", "--delete", "-e", "ssh -p 22",
+                                 str(src), "vm:/d"], calls[-1])
+            fake.code = 23
+            expect(pi_tmux.rsync_runner(step, [], "s", 5) == 23, "nonzero")
+            n = len(calls)
+            step["src"] = str(root / "missing")
+            expect(pi_tmux.rsync_runner(step, [], "s", 5) != 0 and len(calls) == n,
+                   "missing src runs no rsync")
+
+        def slow(argv, **kw):
+            raise subprocess.TimeoutExpired(argv, kw["timeout"])
+        step["src"] = str(src)
+        with patch("subprocess.run", slow):
+            expect(pi_tmux.rsync_runner(step, [], "s", 1) != 0, "timeout")
+        # Real local copy when rsync exists.
+        dest = root / "dest"
+        step = {"src": str(src) + "/", "dest": str(dest), "delete": False}
+        if subprocess.run(["which", "rsync"], capture_output=True).returncode == 0:
+            expect(pi_tmux.rsync_runner(step, [], "s", 30) == 0, "real copy")
+            expect((dest / "f").read_text(encoding="utf-8") == "x", "copied")
+
+
+def test_run_pi_registers_rsync_runner() -> None:
+    src = Path(spawn.__file__).read_text(encoding="utf-8")
+    expect("pi_tmux.STAGE_RUNNER = pi_tmux.rsync_runner" in src, "registration")
+
+
 def main() -> int:
     tests = [
         test_parse_idle_and_dirty,
@@ -479,6 +526,8 @@ def main() -> int:
         test_empty_stage_and_dirty_composer,
         test_packet_stage_schema_and_spec,
         test_packet_to_turn_face_and_lock_release,
+        test_rsync_runner_argv_exit_and_timeout,
+        test_run_pi_registers_rsync_runner,
     ]
     failed = 0
     for fn in tests:

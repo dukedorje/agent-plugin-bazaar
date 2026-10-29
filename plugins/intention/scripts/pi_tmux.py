@@ -36,6 +36,31 @@ StageRunner = Callable[[dict[str, str | bool], list[str], str, float], int]
 STAGE_RUNNER: StageRunner | None = None
 
 
+def rsync_argv(step: dict[str, str | bool], ssh_argv: list[str]) -> list[str]:
+    """rsync argv for one normalized step. Last ssh_argv item is the host."""
+    argv = ["rsync", "-a"]
+    if step["delete"] is True:
+        argv.append("--delete")
+    if not ssh_argv:
+        return [*argv, str(step["src"]), str(step["dest"])]
+    host = ssh_argv[-1]
+    return [*argv, "-e", shlex.join(ssh_argv[:-1]), str(step["src"]),
+            f"{host}:{step['dest']}"]
+
+
+def rsync_runner(step: dict[str, str | bool], ssh_argv: list[str],
+                 session: str, timeout_sec: float) -> int:
+    """Copy src to dest with rsync. Non-zero on missing src, failure, or timeout."""
+    if not os.path.exists(str(step["src"])):
+        return 1
+    try:
+        done = subprocess.run(rsync_argv(step, ssh_argv), stdin=subprocess.DEVNULL,
+                              capture_output=True, timeout=timeout_sec, check=False)
+    except subprocess.TimeoutExpired:
+        return 124
+    return done.returncode
+
+
 def validate_stage(stage: object) -> None:
     """Reject the whole declaration before any step can run."""
     if not isinstance(stage, list):
