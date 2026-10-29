@@ -102,13 +102,17 @@ def strip_marker(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-def answer_from(suffix: str, submitted: str) -> str:
-    """Drop the pasted instruction line. It is echoed into the transcript."""
-    text = suffix.strip()
+def reply_region(transcript: str, submitted: str, base: str) -> str:
+    """Text after the pasted instruction.
+
+    A TUI scroll means the new capture is not a prefix of the old one.
+    The instruction line is the cut, wherever it sits on screen.
+    """
+    text = transcript.strip()
     lead = submitted.strip()
-    if lead and text.startswith(lead):
-        text = text[len(lead) :].strip()
-    return strip_marker(text)
+    if lead and lead in text:
+        return text.rsplit(lead, 1)[1].strip()
+    return added_text(base, text)
 
 
 @dataclass
@@ -288,7 +292,7 @@ def run_turn(
         if now - start >= timeout_sec:
             return Turn(
                 "stall",
-                answer_from(prev, submitted),
+                strip_marker(prev),
                 f"Pi did not finish within {timeout_sec}s. The session was left running.",
                 last_raw,
                 name,
@@ -300,7 +304,7 @@ def run_turn(
             return Turn("error", strip_marker(prev), str(exc), last_raw, name)
         last_raw = raw
         pane = parse_pane(raw)
-        suffix = added_text(base, str(pane["transcript"]))
+        suffix = reply_region(str(pane["transcript"]), submitted, base)
         written = _publish(stream_path, written, suffix)
         if suffix != prev:
             prev = suffix
@@ -310,6 +314,6 @@ def run_turn(
             continue
         held = clock() - stable_since
         if has_marker(suffix) and held >= marker_stable_sec:
-            return Turn("pass", answer_from(suffix, submitted), "marker", last_raw, name)
+            return Turn("pass", strip_marker(suffix), "marker", last_raw, name)
         if pane["idle"] and held >= stable_sec:
-            return Turn("pass", answer_from(suffix, submitted), "idle", last_raw, name)
+            return Turn("pass", strip_marker(suffix), "idle", last_raw, name)

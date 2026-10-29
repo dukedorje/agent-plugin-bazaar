@@ -91,6 +91,32 @@ def test_turn_streams_then_strips_marker() -> None:
         expect((root / "remote-prompt.md").read_text(encoding="utf-8") == "do the task", "prompt")
 
 
+def test_scrolled_pane_keeps_only_the_new_reply() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        user = pi_tmux.submit_line(str(root / "remote-prompt.md"))
+        old = "Committed as f668c8f and pushed.\n\nA long previous answer that scrolled."
+        final = old + "\n\n" + user + "\n\nread /tmp/intention-pi-prompt.md\n\npong\nINTENTION-DONE"
+        (root / "frames.json").write_text(
+            json.dumps([pane("Committed as f668c8f and pushed."), pane(final)]),
+            encoding="utf-8",
+        )
+        clock = Clock()
+        turn = pi_tmux.run_turn(
+            pi_tmux.DirSession(root),
+            "Reply with exactly the single word pong.\n",
+            timeout_sec=30,
+            marker_stable_sec=1,
+            poll_sec=0.5,
+            clock=clock,
+            sleep=clock.sleep,
+        )
+        expect(turn.status == "pass", turn)
+        expect("f668c8f" not in turn.answer, turn.answer)
+        expect("pong" in turn.answer, turn.answer)
+        expect("INTENTION-DONE" not in turn.answer, turn.answer)
+
+
 def test_dirty_prompt_sends_nothing() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -210,6 +236,7 @@ def main() -> int:
     tests = [
         test_parse_idle_and_dirty,
         test_turn_streams_then_strips_marker,
+        test_scrolled_pane_keeps_only_the_new_reply,
         test_dirty_prompt_sends_nothing,
         test_timeout_leaves_the_session,
         test_adapter_routing,
