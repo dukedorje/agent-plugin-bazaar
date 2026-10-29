@@ -24,6 +24,7 @@ _STATUS_SCRIPTS = Path(__file__).resolve().parents[2] / "status" / "scripts"
 if str(_STATUS_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_STATUS_SCRIPTS))
 from advise_status import last_advise_verdict  # noqa: E402
+from status import describe_blocker  # noqa: E402
 
 STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
 STAGES = ("intend", "change", "advise", "act", "fold")
@@ -34,6 +35,7 @@ NODE_TYPES = frozenset({"node", "work-node"})
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
 EYES_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
+SPIKE_RE = re.compile(r"(?im)^\s*-\s*Spike:\s*(.+?)\s*$")
 NEXT_CMD_RE = re.compile(r"Next:\s*(.+)$", re.I)
 WALK = frozenset({"roll", "ask"})
 
@@ -965,6 +967,225 @@ def apply_eyes_stop(
     return row
 
 
+def spike_still_open(text: str) -> bool:
+    found = False
+    for match in SPIKE_RE.finditer(text or ""):
+        low = match.group(1).strip().lower().replace("—", "-")
+        tail = low.split("-")[-1].strip()
+        if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
+            continue
+        if "override" in low:
+            continue
+        found = True
+    return found
+
+
+def _prio(row: dict[str, Any]) -> int:
+    try:
+        return int(row.get("priority"))
+    except (TypeError, ValueError):
+        return 99
+
+
+def _join_and(parts: list[str]) -> str:
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return ", ".join(parts[:-1]) + " and " + parts[-1]
+
+
+def _blocker_bits(item: object) -> str:
+    info = describe_blocker(item)
+    if info["gate"] == "human":
+        return f"human gate `{info['id']}`"
+    if info["gate"]:
+        return f"{info['gate']} gate `{info['id']}`"
+    if info["external"]:
+        where = str(info["source"] or "another project")
+        if info["where"]:
+            where = f"{where} at {info['where']}"
+        state = str(info["status"] or "not closed")
+        return f"`{info['id']}` in {where} ({state})"
+    state = str(info["status"] or "open")
+    where = str(info["source"] or "this repo")
+    return f"`{info['id']}` ({state}, {where})"
+
+
+def _do_bits(items: list[object]) -> str:
+    infos = [describe_blocker(item) for item in items]
+    bits: list[str] = []
+    externals = [info for info in infos if info["external"]]
+    gates = [info for info in infos if info["gate"]]
+    local = [info for info in infos if not info["external"] and not info["gate"]]
+    if externals:
+        names = _join_and([str(info["source"] or "that project") for info in externals])
+        bits.append(f"fix or close the bead in {names}")
+    if any(info["gate"] == "human" for info in gates):
+        bits.append("close the human gate")
+    if any(info["gate"] in {"gh:run", "gh:pr", "timer", "bead"} for info in gates):
+        bits.append("let the gate finish, or resolve it")
+    if local:
+        names = ", ".join(f"`{info['id']}`" for info in local[:3])
+        bits.append(f"run or close {names}")
+    if not bits:
+        return "See `status`."
+    return "Do: " + "; ".join(bits) + "."
+
+
+def _lead(row: dict[str, Any]) -> str | None:
+    stop = str(row.get("stop") or "")
+    focus = row.get("focus") or "that bead"
+    leads = {
+        "ask": f"`{focus}` is waiting on you. Run `steer`. The loop will not decide it.",
+        "activation": (
+            f"`{focus}` is PENDING. Activate it (`steer`, or the campaign grant) "
+            "before the loop will build it."
+        ),
+        "eyes": f"`{focus}` needs your eyes. Look, then check the box. The loop will not.",
+        "pause-before": (
+            f"Paused before `{focus}`. Drop `--pause-before` when you want the loop to take it."
+        ),
+        "owed-beads": f"`{focus}` still has open beads. Run or close them before fold.",
+        "skipped": f"`{focus}` is skipped. Drop the scope to walk other work.",
+        "scope-ambiguous": f"`{focus}` matches more than one bead. Name the child.",
+        "scope-unresolved": (
+            f"`{focus}` has no change landing. `map` it, or name a child change-id."
+        ),
+    }
+    return leads.get(stop)
+
+
+def _order_note(ready: list[dict[str, Any]], blocked: list[dict[str, Any]]) -> str | None:
+    if len(ready) < 2 or not blocked:
+        return None
+    unblocks: dict[str, list[str]] = {}
+    for issue in blocked:
+        nid = str(issue.get("id") or "")
+        raw = issue.get("blocked_by") or []
+        if not isinstance(raw, list):
+            raw = [raw]
+        for item in raw:
+            info = describe_blocker(item)
+            blocker_id = str(info["raw_id"] or info["id"] or "")
+            if blocker_id and nid:
+                unblocks.setdefault(blocker_id, []).append(nid)
+        for item in issue.get("gated_by") or []:
+            info = describe_blocker(item)
+            blocker_id = str(info["raw_id"] or info["id"] or "")
+            if blocker_id and nid:
+                unblocks.setdefault(blocker_id, []).append(nid)
+    if not unblocks:
+        return None
+
+    def dep_key(bead: dict[str, Any]) -> tuple:
+        count = len(unblocks.get(str(bead.get("id") or ""), []))
+        return (-count, _prio(bead), str(bead.get("id") or ""))
+
+    by_priority = sorted(ready, key=lambda bead: (_prio(bead), str(bead.get("id") or "")))
+    by_dependency = sorted(ready, key=dep_key)
+    first_pri = by_priority[0]
+    first_dep = by_dependency[0]
+    if str(first_pri.get("id") or "") == str(first_dep.get("id") or ""):
+        return None
+    unlocked = unblocks.get(str(first_dep.get("id") or ""), [])
+    if not unlocked:
+        return None
+    names = ", ".join(f"`{nid}`" for nid in unlocked[:4])
+    if _prio(first_dep) == _prio(first_pri):
+        why = "Same priority; the id sort would do the other one first."
+    else:
+        why = "Priority would leave that chain waiting."
+    return (
+        f"Order: do `{first_dep.get('id')}` (P{_prio(first_dep)}) before "
+        f"`{first_pri.get('id')}` (P{_prio(first_pri)}). It blocks {names}. "
+        f"{why}"
+    )
+
+
+def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
+    """What a person does when a stop left a bead unexecuted.
+
+    Empty when the loop is still going, or when nothing open explains the stop.
+    """
+    if row.get("stop") is None:
+        return []
+    if row.get("stop") == "no-ready":
+        return []
+    lines: list[str] = []
+    lead = _lead(row)
+    if lead:
+        lines.append(lead)
+
+    blocked = data.get("blocked") if isinstance(data.get("blocked"), list) else []
+    actionable: list[tuple[dict[str, Any], list[Any]]] = []
+    for issue in blocked:
+        if not isinstance(issue, dict) or not issue.get("id"):
+            continue
+        raw = list(issue.get("blocked_by") or [])
+        raw.extend(issue.get("gated_by") or [])
+        if raw:
+            actionable.append((issue, raw))
+    for issue, raw in actionable[:6]:
+        waiting = _join_and([_blocker_bits(item) for item in raw[:4]])
+        lines.append(
+            f"`{issue['id']}` stayed open. Waiting on {waiting}. {_do_bits(raw)}"
+        )
+    extra = len(actionable) - 6
+    if extra > 0:
+        lines.append(f"{extra} more open beads are blocked. `status --queue` lists them.")
+
+    seen: set[str] = set()
+    pools: list[Any] = []
+    if isinstance(data.get("ready_beads"), list):
+        pools.extend(data["ready_beads"])
+    pools.extend(blocked)
+    if isinstance(data.get("beads"), list):
+        pools.extend(data["beads"])
+    for bead in pools:
+        if not isinstance(bead, dict):
+            continue
+        nid = str(bead.get("id") or "")
+        if not nid or nid in seen:
+            continue
+        if not spike_still_open(str(bead.get("description") or "")):
+            continue
+        seen.add(nid)
+        lines.append(
+            f"`{nid}` has an open spike. Spike now, or note a skip. The loop will not land it."
+        )
+
+    ready = data.get("ready_beads") if isinstance(data.get("ready_beads"), list) else []
+    ready_dicts = [bead for bead in ready if isinstance(bead, dict) and bead.get("id")]
+    note = _order_note(ready_dicts, [b for b in blocked if isinstance(b, dict)])
+    if note:
+        lines.append(note)
+    return lines
+
+
+def load_explain() -> dict[str, Any]:
+    """`bd ready --explain` when this is a live board, not a fixture."""
+    try:
+        proc = subprocess.run(
+            ["bd", "ready", "--explain", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return {}
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return {}
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(payload, dict) and "blocked" not in payload and isinstance(payload.get("data"), dict):
+        payload = payload["data"]
+    return payload if isinstance(payload, dict) else {}
+
+
 def card(row: dict[str, Any]) -> str:
     stop = row["stop"] or "continue"
     focus = row.get("focus") or "—"
@@ -1009,6 +1230,12 @@ def card(row: dict[str, Any]) -> str:
                     lines.append("║ Next:")
                     lines.append(f"║   {cmd}")
         lines.append("╚═══════════════════════════════════════════════")
+    unblock = [str(line) for line in (row.get("unblock") or []) if str(line).strip()]
+    if unblock:
+        lines.append("")
+        lines.append("UNBLOCK")
+        for line in unblock:
+            lines.append(f"- {line}")
     return "\n".join(lines)
 
 
@@ -1087,6 +1314,15 @@ def main() -> int:
         no_beads=no_beads,
     )
     row = apply_eyes_stop(row, data, find_openspec())
+    if args.ready_json is None and row.get("stop") and row.get("stop") != "no-ready":
+        explained = load_explain()
+        if explained:
+            data = dict(data)
+            if explained.get("blocked") is not None:
+                data["blocked"] = explained.get("blocked")
+            if explained.get("ready") is not None:
+                data["ready_beads"] = explained.get("ready")
+    row["unblock"] = human_unblock(row, data)
     if args.json:
         print(json.dumps(row, indent=2))
     else:

@@ -460,6 +460,96 @@ def is_umbrella_epic(row: dict, parents: set[str]) -> bool:
     return kind == "epic" and nid in parents
 
 
+_EXTERNAL_RE = re.compile(r"^external:([^:]+):(.+)$")
+_RIG_RE = re.compile(r"^([^:]+):([^:]+)$")
+
+
+def describe_blocker(item: object) -> dict[str, Any]:
+    """Identity of one unmet dependency, including an external source.
+
+    `external:<project>:<id>` and `<rig>:<id>` name another beads database.
+    A plain id is this repo.
+    """
+    if isinstance(item, dict):
+        raw_id = str(item.get("id") or "")
+        status = str(item.get("status") or "")
+        title = str(item.get("title") or "")
+        source = str(item.get("source") or item.get("project") or item.get("repo") or "")
+        gate = str(item.get("type") or item.get("gate_type") or "")
+        where = str(item.get("where") or item.get("path") or "")
+    else:
+        raw_id = str(item or "")
+        status = title = source = gate = where = ""
+    external = False
+    display = raw_id
+    matched = _EXTERNAL_RE.match(raw_id)
+    if matched:
+        external = True
+        source = source or matched.group(1)
+        display = matched.group(2)
+    elif raw_id.startswith("external:"):
+        external = True
+        parts = raw_id.split(":")
+        source = source or (parts[1] if len(parts) > 1 else "external")
+        display = parts[-1] or raw_id
+    else:
+        rig = _RIG_RE.match(raw_id)
+        if rig and rig.group(1) not in {"http", "https"}:
+            external = True
+            source = source or rig.group(1)
+            display = rig.group(2)
+    return {
+        "id": display,
+        "raw_id": raw_id,
+        "status": status,
+        "title": title,
+        "source": source,
+        "external": external,
+        "gate": gate,
+        "where": where,
+    }
+
+
+def kept_blocker(item: object) -> object | None:
+    if isinstance(item, dict):
+        keep: dict[str, Any] = {}
+        for key in (
+            "id",
+            "status",
+            "title",
+            "source",
+            "project",
+            "repo",
+            "where",
+            "path",
+            "type",
+            "priority",
+        ):
+            if item.get(key) not in (None, ""):
+                keep[key] = item[key]
+        if keep.get("project") and not keep.get("source"):
+            keep["source"] = keep["project"]
+        return keep or None
+    text = str(item or "").strip()
+    return text or None
+
+
+def blocker_label(item: object) -> str:
+    info = describe_blocker(item)
+    label = code_id(info["id"])
+    if info["external"]:
+        where = str(info["source"] or "external")
+        if info["where"]:
+            where = f"{where} ({info['where']})"
+        bits = [where]
+        if info["status"]:
+            bits.append(str(info["status"]))
+        return f"{label} · {', '.join(bits)}"
+    if info["status"]:
+        return f"{label} · {info['status']}"
+    return label
+
+
 def queue_row(row: dict, *, source: str) -> dict:
     title = row.get("title")
     if not title or title == row.get("id"):
@@ -477,7 +567,7 @@ def queue_row(row: dict, *, source: str) -> dict:
         "issue_type": str(row.get("issue_type") or row.get("type") or row.get("kind") or "bead"),
         "title": short_what(title, 72),
         "source": source,
-        "blocked_by": [str(x) for x in blocked_by if x],
+        "blocked_by": [kept for item in blocked_by if (kept := kept_blocker(item))],
     }
 
 
@@ -742,7 +832,7 @@ def print_queue(face: dict[str, list[dict]], pins: list[dict[str, Any]] | None =
         print()
 
         def blocked_line(row: dict) -> None:
-            waiting = ", ".join(code_id(x) for x in row.get("blocked_by") or []) or "—"
+            waiting = ", ".join(blocker_label(x) for x in row.get("blocked_by") or []) or "—"
             print_bead_line(row, waiting=waiting)
 
         print_grouped(face["blocked"], line=blocked_line)

@@ -1140,6 +1140,137 @@ def test_scoped_skip_does_not_widen() -> None:
         expect(unscoped["next"] == "act" and unscoped["focus"] == "add-embedded-assert", unscoped)
 
 
+def test_stop_names_the_human_unblock() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "eyes": [],
+                "fold_legal": [],
+                "beads": [],
+                "blocked": [
+                    {
+                        "id": "bazaar-spi.3",
+                        "title": "campaign walks demo",
+                        "status": "open",
+                        "priority": 2,
+                        "description": "- Spike: H9 old claim — go",
+                        "blocked_by": [
+                            {
+                                "id": "bazaar-spi.1",
+                                "status": "open",
+                                "title": "demo verb",
+                                "priority": 1,
+                            }
+                        ],
+                    },
+                    {
+                        "id": "bazaar-ext.1",
+                        "title": "waits outside",
+                        "status": "open",
+                        "priority": 1,
+                        "blocked_by": [
+                            {
+                                "id": "external:tatastu:tat-9",
+                                "status": "open",
+                                "title": "host packet",
+                                "where": "~/work/tatastu",
+                            }
+                        ],
+                    },
+                    {
+                        "id": "bazaar-spike.1",
+                        "title": "lands a recipe",
+                        "status": "open",
+                        "priority": 2,
+                        "description": "- Spike: H3 canvas hash — unverified (low, inferred-from-source)",
+                        "blocked_by": [{"id": "bazaar-spi.1", "status": "open"}],
+                    },
+                ],
+                "ready_beads": [
+                    {"id": "bazaar-tvm", "priority": 1, "title": "tatastu", "issue_type": "task"},
+                    {"id": "bazaar-ja7", "priority": 2, "title": "ingest", "issue_type": "task"},
+                ],
+            },
+        )
+        # ja7 unblocks a chain; priority would do tvm first.
+        payload = json.loads(fixture.read_text(encoding="utf-8"))
+        payload["blocked"].append(
+            {
+                "id": "bazaar-db8.3",
+                "status": "open",
+                "priority": 2,
+                "blocked_by": [{"id": "bazaar-ja7", "status": "open", "priority": 2}],
+            }
+        )
+        fixture.write_text(json.dumps(payload), encoding="utf-8")
+        proc = run(["--ready-json", str(fixture), "--json"], cwd=root)
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "empty", face)
+        text = "\n".join(face["unblock"])
+        expect("bazaar-spi.3" in text and "bazaar-spi.1" in text, text)
+        expect("this repo" in text, text)
+        expect("tat-9" in text and "tatastu" in text, text)
+        expect("open spike" in text and "bazaar-spike.1" in text, text)
+        expect("H9" not in text, text)
+        expect("Order:" in text and "bazaar-ja7" in text and "bazaar-tvm" in text, text)
+        shown = run(["--ready-json", str(fixture)], cwd=root)
+        expect("UNBLOCK" in shown.stdout, shown.stdout)
+        expect("tatastu at ~/work/tatastu" in shown.stdout, shown.stdout)
+
+
+def test_continuing_card_has_no_unblock() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "blocked": [
+                    {
+                        "id": "bazaar-spi.3",
+                        "blocked_by": [{"id": "bazaar-spi.1", "status": "open"}],
+                    }
+                ],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act", face)
+        expect(face["unblock"] == [], face)
+
+
+def test_ask_stop_says_steer() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "ask", "--ready-json", str(fixture), "--json"], cwd=Path(td))
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "ask", face)
+        expect(any("steer" in line for line in face["unblock"]), face["unblock"])
+
+
 def test_scoped_skip_still_advises_same_id() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -1158,6 +1289,9 @@ def main() -> int:
         test_epic_alias_resolves_to_landing,
         test_scoped_skip_does_not_widen,
         test_scoped_skip_still_advises_same_id,
+        test_stop_names_the_human_unblock,
+        test_continuing_card_has_no_unblock,
+        test_ask_stop_says_steer,
         test_preparation_obligation_tracks_act_candidates,
         test_non_act_has_no_preparation_candidates,
         test_empty_ready_no_worker,

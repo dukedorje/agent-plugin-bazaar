@@ -341,6 +341,43 @@ def test_queue_omits_umbrella_epics_and_blocked() -> None:
         expect("YOUR EYES" not in text.stdout, text.stdout)
         after_open = text.stdout.split("Open, unblocked", 1)[-1]
         expect("(none)" not in after_open, after_open)
+        expect("waiting on `bazaar-y4t.21`" in text.stdout, text.stdout)
+
+        external = root / "blocked-external.json"
+        external.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": "bazaar-ext.1",
+                        "title": "waits outside",
+                        "issue_type": "task",
+                        "priority": 1,
+                        "blocked_by": [
+                            {
+                                "id": "external:tatastu:tat-9",
+                                "status": "open",
+                                "where": "~/work/tatastu",
+                            }
+                        ],
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+        ext = run(
+            [
+                "--queue",
+                "--root",
+                str(root / "openspec"),
+                "--beads-json",
+                str(beads),
+                "--blocked-json",
+                str(external),
+            ],
+            cwd=root,
+        )
+        expect(ext.returncode == 0, ext.stderr + ext.stdout)
+        expect("`tat-9` · tatastu (~/work/tatastu), open" in ext.stdout, ext.stdout)
 
 
 def test_status_lists_this_and_other_pins() -> None:

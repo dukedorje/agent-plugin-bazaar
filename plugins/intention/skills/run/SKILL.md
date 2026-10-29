@@ -138,8 +138,14 @@ Split the refusal:
 
 Stop only when the new card has `stop` set, or `--max-waves` hits.
 `stop: eyes` is a halt: Duke's look, command in Next. Do not
-paraphrase it into `stop: empty`. Refusing fold must not end the
-campaign. Same-family advise must not end the campaign.
+paraphrase it into `stop: empty`. When `stop` is set and a bead
+stayed open, the card prints `UNBLOCK`: one line each for the human
+action (steer, look, activate, spike or skip, run or close the
+blocker). An external dependency names the project it lives in.
+If priority order and dependency order disagree, one line names the
+ready bead to do first. Print that block as the card prints it.
+Do not drop it, and do not turn it into another verb.
+Refusing fold must not end the campaign. Same-family advise must not end the campaign.
 `stop: empty` is not stuck while `needs_advise` remains and an
 other-family route exists. `next: fold` is not a halt. Persist
 `act` on **current HEAD** by default; do not skip fold because the branch is
