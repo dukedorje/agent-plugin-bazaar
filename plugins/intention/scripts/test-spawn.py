@@ -293,6 +293,7 @@ def test_codex_adapter_argv() -> None:
         expect(argv[-1] == "-", argv)
         expect("-m" in argv and "gpt-6.1-sol" in argv, argv)
         expect("--sandbox" in argv and "read-only" in argv, argv)
+        expect("network_access" not in " ".join(argv), argv)
         expect("--skip-git-repo-check" in argv, argv)
         expect("--ephemeral" in argv, argv)
         expect("--enable" in argv, argv)
@@ -588,6 +589,43 @@ def act_packet(change_id: str | None = "add-x") -> dict:
     return packet
 
 
+def test_act_codex_sandbox_reaches_local_services() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        pkt = root / "packet.json"
+        pkt.write_text(json.dumps(act_packet()), encoding="utf-8")
+        fake = root / "fake-codex"
+        argv_log = root / "argv.json"
+        fake.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            f"json.dump({{'argv': sys.argv}}, open({str(argv_log)!r},'w'))\n",
+            encoding="utf-8",
+        )
+        fake.chmod(0o755)
+        env = {**os.environ, "CODEX_BIN": str(fake)}
+        staged = subprocess.run(
+            [sys.executable, str(SPAWN), "stage", "--packet", str(pkt), "--root", str(root)],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(staged.returncode == 0, staged.stderr + staged.stdout)
+        spec = json.loads(staged.stdout)
+        expect(spec.get("network") is True, spec)
+        expect(spec.get("sandbox") == "workspace-write", spec)
+        env_run = subprocess.run(
+            [sys.executable, str(SPAWN), "run", "--spec", spec["spec_file"], "--adapter", "codex"],
+            text=True,
+            capture_output=True,
+            env=env,
+        )
+        expect(env_run.returncode == 0, env_run.stderr + env_run.stdout)
+        argv = json.loads(argv_log.read_text(encoding="utf-8"))["argv"]
+        expect("workspace-write" in argv, argv)
+        expect("sandbox_workspace_write.network_access=true" in argv, argv)
+
+
 def test_act_packet_with_change_id_is_worker() -> None:
     """bazaar-8dj: change_id on an act packet must not append the reader brief."""
     with tempfile.TemporaryDirectory() as td:
@@ -684,6 +722,7 @@ def test_codex_advise_sandbox_is_writable() -> None:
         argv, stdin = logged["argv"], logged["stdin"]
         expect("--sandbox" in argv and "workspace-write" in argv, argv)
         expect("read-only" not in argv, argv)
+        expect("network_access" not in " ".join(argv), argv)
         expect("Write your own review file" in stdin, stdin[:500])
 
 
@@ -988,6 +1027,7 @@ def main() -> int:
         test_infra_evidence_only,
         test_read_permission_prompt_is_reader_brief,
         test_codex_advise_sandbox_is_writable,
+        test_act_codex_sandbox_reaches_local_services,
         test_act_packet_with_change_id_is_worker,
         test_stage_defaults_root_to_cwd_repo,
         test_consult_prompt_is_not_advise,

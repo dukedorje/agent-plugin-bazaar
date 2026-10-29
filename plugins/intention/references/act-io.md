@@ -133,6 +133,9 @@ word maps to `-c model_reasoning_effort="…"`. Sandbox is
 `read-only` for consult / empty write-set; `workspace-write`
 when `permission: write` or `constraints.paths` includes a
 `reviews/` dir — the reader writes their own review file.
+An act write (permission write, not a review path) also sets
+`sandbox_workspace_write.network_access=true`, so local Postgres
+and other dev services answer. Advise and consult stay offline.
 Override the binary with `CODEX_BIN`. Stage picks this when the
 assignee harness is `codex` and `codex` is on PATH.
 

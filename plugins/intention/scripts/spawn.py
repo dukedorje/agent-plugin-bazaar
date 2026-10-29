@@ -139,6 +139,29 @@ def is_advise(packet: dict) -> bool:
     return writes_review(packet_paths(packet))
 
 
+def needs_dev_network(spec: dict, packet: dict | None = None) -> bool:
+    """Act writes reach local dev services. Review and consult stay offline.
+
+    Codex `workspace-write` blocks sockets, including Postgres on localhost.
+    """
+    if str(spec.get("sandbox") or "") not in {"", "workspace-write"}:
+        return False
+    if packet is not None and (is_advise(packet) or is_consult(packet)):
+        return False
+    paths = [str(p) for p in (spec.get("paths") or [])]
+    if packet is not None and not paths:
+        paths = packet_paths(packet)
+    if writes_review(paths):
+        return False
+    perm = str(spec.get("permission") or "")
+    if packet is not None and not perm:
+        perm = permission_of(packet)
+    if perm != "write":
+        return False
+    sandbox = str(spec.get("sandbox") or sandbox_of(spec, packet))
+    return sandbox == "workspace-write"
+
+
 def sandbox_of(spec: dict, packet: dict | None = None) -> str:
     """Reviewers write their own review file. Consult stays read-only."""
     if packet is not None and is_consult(packet):
@@ -293,6 +316,7 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "argv": [],
     }
     spec["sandbox"] = sandbox_of(spec, packet)
+    spec["network"] = needs_dev_network(spec, packet)
     assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
     if assignee.get("effort"):
         spec["effort"] = assignee["effort"]
@@ -410,6 +434,21 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
             "never",
             "--sandbox",
             sandbox,
+        ]
+    )
+    # Act only. A missing key on an older spec is recomputed from permission.
+    allow_net = spec.get("network")
+    if allow_net is None:
+        allow_net = needs_dev_network(spec)
+    if allow_net and sandbox == "workspace-write":
+        argv.extend(
+            [
+                "-c",
+                "sandbox_workspace_write.network_access=true",
+            ]
+        )
+    argv.extend(
+        [
             "-C",
             workspace,
             "-m",
