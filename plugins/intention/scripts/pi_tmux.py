@@ -23,11 +23,31 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 MARKER = "INTENTION-DONE"
 BUFFER = "intention-pi"
 DEFAULT_PROMPT_PATH = "/tmp/intention-pi-prompt.md"
 DEFAULT_SESSION = "pi"
+NO_STAGE = object()
+# Registered by the copy implementation. Each invocation owns timeout_sec.
+# Arguments: normalized step, SSH argv ([] for local), session, timeout_sec.
+StageRunner = Callable[[dict[str, str | bool], list[str], str, float], int]
+STAGE_RUNNER: StageRunner | None = None
+
+
+def validate_stage(stage: object) -> None:
+    """Reject the whole declaration before any step can run."""
+    if not isinstance(stage, list):
+        raise ValueError("stage must be an array")
+    for index, step in enumerate(stage):
+        if not isinstance(step, dict) or set(step) - {"src", "dest", "delete"}:
+            raise ValueError(f"stage[{index}] must be a closed src/dest/delete object")
+        for field in ("src", "dest"):
+            if not isinstance(step.get(field), str) or not step[field]:
+                raise ValueError(f"stage[{index}].{field} must be a non-empty string")
+        if "delete" in step and not isinstance(step["delete"], bool):
+            raise ValueError(f"stage[{index}].delete must be boolean")
 
 
 def submit_line(prompt_path: str) -> str:
@@ -130,6 +150,7 @@ class DirSession:
     def __init__(self, root: Path) -> None:
         self.root = root
         self.session = "fake"
+        self.prefix: list[str] = []
         self.prompt_path = str(root / "remote-prompt.md")
         self._n = 0
 
@@ -257,6 +278,9 @@ def run_turn(
     marker_stable_sec: float = 1.0,
     poll_sec: float = 0.4,
     stream_path: Path | None = None,
+    stage: object = NO_STAGE,
+    stage_error: str | None = None,
+    stage_runner: StageRunner | None = None,
     clock=time.monotonic,
     sleep=time.sleep,
 ) -> Turn:
@@ -275,6 +299,23 @@ def run_turn(
             name,
         )
     base = str(first["transcript"])
+    try:
+        if stage_error is not None:
+            raise ValueError(stage_error)
+        if stage is not NO_STAGE:
+            validate_stage(stage)
+            runner = stage_runner if stage_runner is not None else STAGE_RUNNER
+            if stage and runner is None:
+                raise ValueError("stage declared but no runner is registered")
+            for step in stage:
+                normalized = {"src": step["src"], "dest": step["dest"],
+                              "delete": step.get("delete", False)}
+                code = runner(normalized, list(session.prefix), name, timeout_sec)
+                if code != 0:
+                    raise ValueError(f"stage runner failed (exit {code})")
+    except (ValueError, OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        return Turn("stage-failed", "", str(exc), base, name)
+
     submitted = submit_line(str(session.prompt_path))
     try:
         session.write_prompt(prompt)

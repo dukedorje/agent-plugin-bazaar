@@ -316,6 +316,16 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "argv": [],
     }
     spec["sandbox"] = sandbox_of(spec, packet)
+    if "stage" in packet:
+        from pi_tmux import validate_stage
+
+        try:
+            validate_stage(packet["stage"])
+        except ValueError as exc:
+            # Keep invalid declarations distinct from the absent-stage path.
+            spec["stage_error"] = str(exc)
+        else:
+            spec["stage"] = packet["stage"]
     spec["network"] = needs_dev_network(spec, packet)
     assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
     if assignee.get("effort"):
@@ -611,6 +621,8 @@ def run_pi(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> in
             prompt,
             timeout_sec=timeout_sec,
             stream_path=stream_path,
+            stage=spec.get("stage", pi_tmux.NO_STAGE),
+            stage_error=spec.get("stage_error"),
         )
     finally:
         pi_tmux.unlock(lock_fd)
@@ -636,6 +648,7 @@ def run_pi(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> in
     blockers = {
         "stall": "stall",
         "not-idle": "pi-session-not-idle",
+        "stage-failed": "pi-stage-failed",
         "error": "pi-session-unreachable",
         "pass": "pi-empty",
     }

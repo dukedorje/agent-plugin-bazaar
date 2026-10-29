@@ -318,6 +318,19 @@
         "requester": { "$ref": "#/$defs/identity" },
         "assignee": { "$ref": "#/$defs/identity" },
         "goal": { "type": "string", "minLength": 1 },
+        "stage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["src", "dest"],
+            "properties": {
+              "src": { "type": "string", "minLength": 1 },
+              "dest": { "type": "string", "minLength": 1 },
+              "delete": { "type": "boolean" }
+            }
+          }
+        },
         "non_goals": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }

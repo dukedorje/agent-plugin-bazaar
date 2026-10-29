@@ -176,6 +176,19 @@ Harness `pi` uses the adapter whenever `PI_TMUX_SSH` or `PI_TMUX_LOCAL=1`
 is set. `INTENTION_CODEX_VIA_PI=1` sends ladder `codex` work to that same
 pane. One pane, one turn.
 
+Optional packet `stage` entries (`src`, `dest`, optional boolean `delete`)
+are validated together and copied onto the spawn spec; an invalid declaration
+is retained as `stage_error`. After the idle check, while the session lock
+is held, `pi_tmux.STAGE_RUNNER(step, transport, session, timeout_sec)` runs
+each entry in order before `write_prompt` and the one-line paste. `transport`
+is the pane's SSH argv (empty for local tmux), `delete` defaults to false,
+and the runner owns each invocation's spawn timeout (600 seconds if omitted).
+The post-submit clock starts later. The first non-zero result, timeout,
+launch/transport exception, malformed declaration, or non-empty stage with
+no runner returns `pi-stage-failed` without writing the prompt or pasting;
+the lock is released. Absent or empty stage preserves the existing turn.
+The copy runner is supplied by `add-rsync-before-keys`.
+
 `run --adapter grok` is live `grok --prompt-file` (headless). Grok
 does **not** read piped stdin; the staged `prompt.md` is the brief
 (no ARG_MAX). Model from the spec interface (`grok-4.7`). Shared
