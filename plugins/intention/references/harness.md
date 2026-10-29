@@ -18,6 +18,16 @@ In this repo, `.agents/skills/<verb>` is a symlink to those directories.
 
 Foreign worker rule (every row): if the host is *assigned work by another conductor*, it receives a task packet. It never receives a Claude slash command.
 
+## Shared Pi tmux
+
+The Pi row above is Pi as a skill host. The long-lived coding session on
+the dev VM is a different thing: one tmux pane, already signed in.
+
+`spawn.py run --adapter pi` types into that pane. It does not shell out to
+`codex exec` and it does not start `pi -p`. Contract and setup live in
+`act-io.md`. Codex ladder routes stay on the local Codex CLI unless
+`INTENTION_CODEX_VIA_PI=1` and `PI_TMUX_SSH` (or `PI_TMUX_LOCAL=1`) are set.
+
 ## Install elsewhere (other repos)
 
 Codex uses the marketplace bundle because Intention skills depend on sibling

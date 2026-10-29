@@ -139,6 +139,43 @@ and other dev services answer. Advise and consult stay offline.
 Override the binary with `CODEX_BIN`. Stage picks this when the
 assignee harness is `codex` and `codex` is on PATH.
 
+`run --adapter pi` is the shared Pi tmux session, not another farmed-out
+process. `pi -p` and `pi --mode rpc` are still fresh processes. They can
+stream, and they do not type into the session that is already on screen.
+
+What a CLI harness actually has to provide here: a prompt on stdin (or a
+file, for Grok), a process that exits, and a final text (stdout, JSON
+`result`, or `last.md`). `run` does not read that stdout until the process
+exits, so a streaming CLI is buffered into one blob. The exit code becomes
+`pass` or `infra-red`. Timeout kills that process group.
+
+The Pi pane has none of those. It is already running, Duke may be attached,
+and Ctrl-C stops Pi. A facade that pretended to be `codex exec` would keep
+the buffered-until-exit shape and throw away the live screen. The adapter
+keeps the same ending contract (`face.json`, `last.md`) and, while it
+waits, appends new pane text to `stream.log`. Callers that only parse the
+final face stay as they are. Tail `stream.log` for the partials. The pane
+itself is the other live view.
+
+The prompt file is copied to the host (`PI_TMUX_PROMPT_PATH`, default
+`/tmp/intention-pi-prompt.md`). tmux pastes one line that names that file,
+then Enter. A packet is not typed as keys, because newlines in the composer
+can submit early. One spawn holds `~/.intention/pi-tmux.lock`. A second
+spawn, or a composer that is not empty, returns `infra-red` and sends
+nothing. Timeout records `stall` and does not send Ctrl-C.
+
+```bash
+# This dev VM. Opt-in: without the last line, codex stays local codex exec.
+PI_TMUX_SSH='ssh -o BatchMode=yes -o ConnectTimeout=15 -J root@45.76.77.97 root@10.237.227.19'
+PI_TMUX_SESSION=pi
+INTENTION_CODEX_VIA_PI=1
+```
+
+`PI_TMUX_LOCAL=1` is the same adapter against tmux on this machine.
+Harness `pi` uses the adapter whenever `PI_TMUX_SSH` or `PI_TMUX_LOCAL=1`
+is set. `INTENTION_CODEX_VIA_PI=1` sends ladder `codex` work to that same
+pane. One pane, one turn.
+
 `run --adapter grok` is live `grok --prompt-file` (headless). Grok
 does **not** read piped stdin; the staged `prompt.md` is the brief
 (no ARG_MAX). Model from the spec interface (`grok-4.7`). Shared

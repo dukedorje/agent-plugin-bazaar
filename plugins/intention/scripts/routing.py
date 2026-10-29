@@ -43,9 +43,24 @@ def model_of(interface, data=None):
     return data["families"][family]["model"]
 
 
+def _pi_configured(env):
+    if (env.get("PI_TMUX_SSH") or "").strip():
+        return True
+    return (env.get("PI_TMUX_LOCAL") or "").strip() == "1"
+
+
+def _truthy(raw):
+    return str(raw or "").strip().lower() in {"1", "true", "yes"}
+
+
 def adapter_for(harness, permission="write", env=None, which=None):
     env = os.environ if env is None else env
     which = shutil.which if which is None else which
+    # One shared Pi pane. Opt-in so a codex fan-out does not type over itself.
+    if harness in {"codex", "openai"} and _truthy(env.get("INTENTION_CODEX_VIA_PI")) and _pi_configured(env):
+        return "pi"
+    if harness == "pi" and _pi_configured(env):
+        return "pi"
     if harness in {"codex", "openai"}:
         if which(env.get("CODEX_BIN", "codex")):
             return "codex"
