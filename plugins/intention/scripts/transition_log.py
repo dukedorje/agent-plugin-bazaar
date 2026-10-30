@@ -25,6 +25,19 @@ STILL_OPEN = re.compile(r"Still open on ([A-Za-z0-9-]+): (.+)")
 OPEN_ITEM = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9-]+)\)")
 DEMO = re.compile(r"(?m)^[ \t]*Demo[ \t]*$")
 ACTIVATE = re.compile(r"activate and run")
+PINNED = re.compile(r"pinned campaign is still ([A-Za-z0-9.-]+)")
+ACCEPTED_BY = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) accepted by (\S+)")
+SENT_BACK = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) sent back by (\S+)")
+NEXT_CHANGE = re.compile(r"Next is change: ([^\n]+)")
+R_ACCEPT = re.compile(r"(r\d+ accepted that spec)")
+FOLD_IS = re.compile(r"The fold is ([0-9a-f]{7,}): \S*specs/([a-z0-9-]+)/")
+REFUSED = re.compile(
+    r"(?m)^[^\n]*?([a-z0-9]+(?:-[a-z0-9]+)*) (?:still has \d+ open|says |is landed except)"
+)
+HUMAN_GATE = re.compile(
+    r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9.-]+)\) is still a human gate[^\n]*not activated"
+)
+ACT_NOT = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) is accepted and still owes[^\n]*")
 
 
 def load_rows() -> list[dict]:
@@ -80,6 +93,9 @@ def observe(text: str) -> list[dict]:
     if still:
         campaign = still.group(1)
         open_nodes = [item.group(2) for item in OPEN_ITEM.finditer(still.group(2))]
+    pinned = PINNED.search(text)
+    if pinned and not campaign:
+        campaign = pinned.group(1)
     events: list[tuple[int, str, dict]] = []
     started = ACTIVATE.search(text)
     if started:
@@ -93,6 +109,22 @@ def observe(text: str) -> list[dict]:
     demo = DEMO.search(text)
     if demo:
         events.append((demo.start(), "demo", {"evidence": "Demo"}))
+    for match in ACCEPTED_BY.finditer(text):
+        events.append((match.start(), "accepted", {"change": match.group(1), "evidence": match.group(0).rstrip(".")}))
+    for match in SENT_BACK.finditer(text):
+        events.append((match.start(), "sendback", {"change": match.group(1), "evidence": match.group(0).rstrip(".")}))
+    for match in NEXT_CHANGE.finditer(text):
+        events.append((match.start(), "nextchange", {"evidence": match.group(0).strip()}))
+    for match in R_ACCEPT.finditer(text):
+        events.append((match.start(), "raccept", {"evidence": match.group(1)}))
+    for match in FOLD_IS.finditer(text):
+        events.append((match.start(), "foldis", {"change": match.group(2), "evidence": f"The fold is {match.group(1)}"}))
+    for match in REFUSED.finditer(text):
+        events.append((match.start(), "refused", {"change": match.group(1), "evidence": match.group(0).strip()}))
+    for match in HUMAN_GATE.finditer(text):
+        events.append((match.start(), "gate", {"change": match.group(1), "node": match.group(2), "evidence": match.group(0).strip()}))
+    for match in ACT_NOT.finditer(text):
+        events.append((match.start(), "actnot", {"change": match.group(1), "evidence": match.group(0).strip()}))
     events.sort(key=lambda item: item[0])
     seen: set[tuple[str, str]] = set()
     unique: list[tuple[int, str, dict]] = []
@@ -105,6 +137,7 @@ def observe(text: str) -> list[dict]:
     events = unique
 
     state = "campaign"
+    last_change = ""
     rows: list[dict] = []
 
     def add(frm: str, verb: str, to: str, change: str, evidence: str, taken: bool = True) -> None:
@@ -123,6 +156,8 @@ def observe(text: str) -> list[dict]:
         )
 
     for _pos, kind, data in events:
+        if data.get("change"):
+            last_change = data["change"]
         if kind == "activate":
             add(state, "activate_and_run", "campaign", "", "activate and run")
             state = "campaign"
@@ -140,6 +175,33 @@ def observe(text: str) -> list[dict]:
             add(state, "demo", state, "", data["evidence"])
         elif kind == "nofold":
             add(state, "fold", state, data["change"], data["evidence"], taken=False)
+        elif kind == "accepted":
+            add("advising", "advise", "accepted", data["change"], data["evidence"])
+            state = "accepted"
+        elif kind == "sendback":
+            add("advising", "advise", "send_back", data["change"], data["evidence"])
+            state = "send_back"
+        elif kind == "nextchange":
+            add("send_back", "change", "scaffolded", last_change, data["evidence"])
+            state = "scaffolded"
+        elif kind == "raccept":
+            add("advising", "advise", "accepted", last_change, data["evidence"])
+            state = "accepted"
+        elif kind == "foldis":
+            add("accepted", "fold", "folded", data["change"], data["evidence"])
+            state = "folded"
+        elif kind == "refused":
+            add(state, "fold", state, data["change"], data["evidence"], taken=False)
+        elif kind == "gate":
+            last_change = data.get("change") or last_change
+            add(state, "activate", "ask", data["change"], data["evidence"], taken=False)
+            if data["node"] not in open_nodes:
+                open_nodes.append(data["node"])
+        elif kind == "actnot":
+            add("accepted", "act", "accepted", data["change"], data["evidence"], taken=False)
+    for row in rows:
+        if not row["open"]:
+            row["open"] = list(open_nodes)
     return rows
 
 
