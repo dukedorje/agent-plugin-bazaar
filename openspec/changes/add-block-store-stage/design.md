@@ -21,17 +21,17 @@ and on its state file. Pi was not restarted. Nothing was written.
   selected VM. That is the Recrypt share's publisher, not a
   directory mounted for the harness.
 
-## Unverified hypotheses
+## Closed hypothesis
 
-- `block-store-identity`: the block store connected to the Pi VM is
-  a mounted path the harness can read. Look says this guest has no
-  such mount. Confidence low. Verification: not empirically tested
-  as a store. Synthesis path: none.
+- `block-store-identity`: a mounted path the harness can already
+  read. No-go. The 2026-10-29 look found no such mount.
 
 ## Forks
 
-- Store identity: still open. Steer chose spike before act. See
-  `steer.md`.
+- Store identity: decided. A host directory attached with virtiofs.
+  See `steer.md`.
 - Attach moment: decided. New guests at boot, via `extra_mounts`.
-  The live Pi VM is not rebooted for this. The allowlist landing
-  waits until the store has a name.
+  The live Pi VM is not rebooted. The host prefix and tag belong
+  to the later Mjolnir allowlist landing.
+- Copy machine: decided. The session machine copies from the guest
+  mount to the session tree. A missing mount fails the step.
