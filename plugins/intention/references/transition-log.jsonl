@@ -19,3 +19,4 @@
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "household-network", "from": "accepted", "verb": "fold", "to": "accepted", "open": [], "taken": false, "evidence": "The household-network fold was refused"}
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": [], "taken": true, "evidence": "Issuance landed in 27f4aa9"}
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": [], "taken": true, "evidence": "The DNS gate landed in db9b898"}
+{"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": ["mjolnir-mesh-b6j.1"], "taken": true, "evidence": "The ACME courier is on main as 2217d5c"}

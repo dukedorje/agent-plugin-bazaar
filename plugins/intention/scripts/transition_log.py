@@ -36,6 +36,8 @@ REFUSED = re.compile(
 )
 FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold was refused")
 LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
+ON_MAIN = re.compile(r"([A-Z][^.!\n]+?) is on main as ([0-9a-f]{7,})")
+STAYS_OPEN = re.compile(r"([A-Za-z0-9.-]+) stays open")
 FOCUS = re.compile(r"focus ([a-z0-9]+(?:-[a-z0-9]+)+)")
 HUMAN_GATE = re.compile(
     r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9.-]+)\) is still a human gate[^\n]*not activated"
@@ -136,6 +138,11 @@ def observe(text: str) -> list[dict]:
         events.append((match.start(), "refused", {"change": match.group(1), "evidence": match.group(0).strip()}))
     for match in LANDED_IN.finditer(text):
         events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
+    for match in ON_MAIN.finditer(text):
+        events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
+    for match in STAYS_OPEN.finditer(text):
+        if match.group(1) not in open_nodes:
+            open_nodes.append(match.group(1))
     events.sort(key=lambda item: item[0])
     seen: set[tuple[str, str]] = set()
     unique: list[tuple[int, str, dict]] = []
