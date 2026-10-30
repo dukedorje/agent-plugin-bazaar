@@ -5,14 +5,18 @@
 The system SHALL run a block-store stage as a stage step on the
 named session, after the idle check and before the paste. A step
 that does not finish SHALL NOT write the prompt file and SHALL NOT
-paste. The declaration shape of that store waits on steer. This
+submit the paste. A prompt file that already existed SHALL stay as
+it was. The declaration shape of that store waits on steer. This
 requirement does not name a path, a hash, or a Mjolnir mount.
 
 #### Scenario: The store step does not finish
 
 - GIVEN a stage whose source is the block store named by steer
+- AND a prompt file already on the session machine
 - WHEN that step does not finish
-- THEN the prompt file is absent and the pane is not pasted
+- THEN that prompt file is unchanged
+- AND the turn does not write a prompt
+- AND the turn does not submit the paste
 
 #### Scenario: No store declaration
 

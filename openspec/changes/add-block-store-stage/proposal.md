@@ -9,6 +9,16 @@ the `stage-before-keys` grant. The look below is recorded. Direction
 is still a steer. `act` stays blocked while `block-store-identity`
 is open.
 
+## Preparation
+
+- Upstream: living `remote-stage` at `e07a40c`, rsync runner at
+  `2d4438c`. Hook returns on stage failure without deleting a
+  prompt file already on disk (`pi_tmux.py` around the stage-failed
+  return).
+- Outcome: revised only the failure wording. Store identity is
+  still the open spike. Authority is the same grant. No store was
+  guessed.
+
 ## Why
 
 The stage hook and the rsync runner copy a conductor path onto the
@@ -38,8 +48,9 @@ check, stage, then the one-line paste.
 1. **Working** — the store step finishes, then the paste runs.
 2. **Empty** — no store declaration. The rsync runner and the
    one-file prompt stay as they are.
-3. **Failed** — the store step does not finish. No prompt file, no
-   paste.
+3. **Failed** — the store step does not finish. The turn does not
+   write a prompt and does not submit the paste. A prompt file
+   already on the machine stays as it was.
 4. **Off** — the pane is not idle, or the lock is held. The store
    step does not start.
 
