@@ -28,9 +28,9 @@
       for success, missing store, failure/timeout, malformed and absent stages.
 - [x] Correct the delta and Failed journey to require no new prompt write
       or submit on stage failure; cover an unchanged pre-existing prompt file.
-- [ ] Obtain fresh advise on the resolved store contract and amended change
+- [x] Obtain fresh advise on the resolved store contract and amended change
       before implementation; this send-back does not close the identity gate.
-- [ ] Fresh advise after preparation
+- [x] Fresh advise after preparation
 
 ## Owed from re-advise (2026-10-30, astra-arch-review)
 
