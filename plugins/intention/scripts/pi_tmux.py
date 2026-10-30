@@ -61,14 +61,83 @@ def rsync_runner(step: dict[str, str | bool], ssh_argv: list[str],
     return done.returncode
 
 
+# Executed on the session machine, never on the conductor for an SSH pane.
+# exec keeps mount inspection and rsync within the caller's single timeout.
+STORE_COPY_SCRIPT = r"""
+import os
+import re
+import sys
+
+store, dest, delete = sys.argv[1:]
+resolved = os.path.realpath(store)
+if resolved == "/" or not os.path.isdir(resolved):
+    sys.exit(1)
+
+def unescape(value):
+    return re.sub(r"\\([0-7]{3})", lambda m: chr(int(m[1], 8)), value)
+
+mounts = []
+with open("/proc/self/mountinfo", encoding="utf-8") as report:
+    for line in report:
+        fields, filesystem = line.split(" - ", 1)
+        mountpoint = unescape(fields.split()[4])
+        if resolved == mountpoint or resolved.startswith(mountpoint.rstrip("/") + "/"):
+            mounts.append((mountpoint, filesystem.split()[0]))
+if not mounts:
+    sys.exit(1)
+mountpoint, filesystem = max(mounts, key=lambda mount: len(mount[0]))
+if mountpoint == "/" or filesystem != "virtiofs":
+    sys.exit(1)
+argv = ["rsync", "-a"]
+if delete == "true":
+    argv.append("--delete")
+# Match rsync's no-trailing-slash source shape explicitly even on openrsync:
+# an existing destination contains the source basename; an absent one is
+# the copied directory itself.
+source = os.path.normpath(store)
+if not os.path.exists(dest):
+    source += "/"
+argv.extend(["--", source, dest])
+os.execvp(argv[0], argv)
+"""
+
+
+def store_copy_argv(step: dict[str, str | bool], ssh_argv: list[str]) -> list[str]:
+    argv = ["python3", "-c", STORE_COPY_SCRIPT, str(step["store"]),
+            str(step["dest"]), "true" if step["delete"] is True else "false"]
+    # SSH joins its command arguments into shell text. Send one fully quoted
+    # command so scripts and paths (including spaces) remain single arguments.
+    return [*ssh_argv, shlex.join(argv)] if ssh_argv else argv
+
+
+def store_runner(step: dict[str, str | bool], ssh_argv: list[str],
+                 session: str, timeout_sec: float) -> int:
+    """Check the session mount before copying or pruning on that machine."""
+    try:
+        done = subprocess.run(store_copy_argv(step, ssh_argv), stdin=subprocess.DEVNULL,
+                              capture_output=True, timeout=timeout_sec, check=False)
+    except subprocess.TimeoutExpired:
+        return 124
+    return done.returncode
+
+
+def stage_runner(step: dict[str, str | bool], ssh_argv: list[str],
+                 session: str, timeout_sec: float) -> int:
+    runner = store_runner if "store" in step else rsync_runner
+    return runner(step, ssh_argv, session, timeout_sec)
+
+
 def validate_stage(stage: object) -> None:
     """Reject the whole declaration before any step can run."""
     if not isinstance(stage, list):
         raise ValueError("stage must be an array")
     for index, step in enumerate(stage):
-        if not isinstance(step, dict) or set(step) - {"src", "dest", "delete"}:
-            raise ValueError(f"stage[{index}] must be a closed src/dest/delete object")
-        for field in ("src", "dest"):
+        if not isinstance(step, dict) or set(step) - {"src", "store", "dest", "delete"}:
+            raise ValueError(f"stage[{index}] must be a closed src-or-store/dest/delete object")
+        if ("src" in step) == ("store" in step):
+            raise ValueError(f"stage[{index}] must name exactly one of src or store")
+        selector = "src" if "src" in step else "store"
+        for field in (selector, "dest"):
             if not isinstance(step.get(field), str) or not step[field]:
                 raise ValueError(f"stage[{index}].{field} must be a non-empty string")
         if "delete" in step and not isinstance(step["delete"], bool):
@@ -333,7 +402,8 @@ def run_turn(
             if stage and runner is None:
                 raise ValueError("stage declared but no runner is registered")
             for step in stage:
-                normalized = {"src": step["src"], "dest": step["dest"],
+                selector = "src" if "src" in step else "store"
+                normalized = {selector: step[selector], "dest": step["dest"],
                               "delete": step.get("delete", False)}
                 code = runner(normalized, list(session.prefix), name, timeout_sec)
                 if code != 0:

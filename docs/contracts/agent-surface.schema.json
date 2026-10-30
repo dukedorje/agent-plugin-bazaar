@@ -321,14 +321,28 @@
         "stage": {
           "type": "array",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["src", "dest"],
-            "properties": {
-              "src": { "type": "string", "minLength": 1 },
-              "dest": { "type": "string", "minLength": 1 },
-              "delete": { "type": "boolean" }
-            }
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["src", "dest"],
+                "properties": {
+                  "src": { "type": "string", "minLength": 1 },
+                  "dest": { "type": "string", "minLength": 1 },
+                  "delete": { "type": "boolean" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["store", "dest"],
+                "properties": {
+                  "store": { "type": "string", "minLength": 1 },
+                  "dest": { "type": "string", "minLength": 1 },
+                  "delete": { "type": "boolean" }
+                }
+              }
+            ]
           }
         },
         "non_goals": {

@@ -56,6 +56,32 @@ def test_unique_stage() -> None:
         expect(str(Path(sa["packet_file"])) in text, text)
 
 
+def test_src_store_stage_propagation() -> None:
+    cases = [None, [], [{"src": "tree", "dest": "/tree"}],
+             [{"store": "/mnt/store", "dest": "/tree"}],
+             [{"src": "tree", "dest": "/tree"}, {"store": "/mnt/store", "dest": "/tree"}],
+             [{"src": "tree", "store": "/mnt/store", "dest": "/tree"}],
+             [{"dest": "/tree"}],
+             [{"store": "/mnt/store", "dest": "/tree"}, {"dest": "/bad"}]]
+    for index, stage in enumerate(cases):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            packet = json.loads(PACKET.read_text())
+            if stage is not None:
+                packet["stage"] = stage
+            pkt = root / "packet.json"
+            pkt.write_text(json.dumps(packet))
+            proc = run(["stage", "--packet", str(pkt), "--root", str(root)])
+            expect(proc.returncode == 0, proc.stderr)
+            spec = json.loads(Path(json.loads(proc.stdout)["spec_file"]).read_text())
+            if index == 0:
+                expect("stage" not in spec and "stage_error" not in spec, str(spec))
+            elif index < 5:
+                expect(spec.get("stage") == stage and "stage_error" not in spec, str(spec))
+            else:
+                expect("stage" not in spec and "stage_error" in spec, str(spec))
+
+
 def test_empty_prompt_fails() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -1013,6 +1039,7 @@ def test_empty_packet_fails() -> None:
 def main() -> int:
     tests = [
         test_unique_stage,
+        test_src_store_stage_propagation,
         test_empty_prompt_fails,
         test_missing_prompt_fails,
         test_stall_infra_red,

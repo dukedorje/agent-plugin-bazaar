@@ -88,7 +88,7 @@ The only thing an assignee is given.
 | `requester` | yes | Identity. Who asked, so the result can be addressed |
 | `assignee` | yes | Identity. May be a group |
 | `goal` | yes | What is true after that is not true now |
-| `stage` | no | Array of closed objects: non-empty string `src` and `dest`, optional boolean `delete`; only `true` authorizes pruning. Pi runs these before the prompt paste. |
+| `stage` | no | Array of closed objects: exactly one non-empty string `src` (conductor path) or `store` (session path), plus non-empty string `dest` and optional boolean `delete`. Only `true` authorizes pruning. Pi runs these before the prompt paste; `store` must exist on a virtiofs mount whose mountpoint is not `/` before any copy or prune. |
 | `non_goals` | no | Commander’s non-goals for this node |
 | `anchors` | yes (may be `[]` at vibe rigor) | `{symbol, invariant}` — not file bodies |
 | `acceptance` | yes | See below |

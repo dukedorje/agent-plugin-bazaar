@@ -1,6 +1,6 @@
 # Tasks
 
-- [ ] Implement the exclusive `src` / `store` declaration and the
+- [x] Implement the exclusive `src` / `store` declaration and the
       session-side store copy under the existing session lock.
       Surfaces: the closed `stage` item in
       `docs/contracts/agent-surface.schema.json`, the `stage` row in
@@ -8,7 +8,7 @@
       `spawn.py` `cmd_stage`, `run_turn` normalization, and the
       `run_pi` runner registration. A step that does not finish
       does not write the prompt and does not paste.
-- [ ] Tests use a fake mount report or a local temp dir. They do
+- [x] Tests use a fake mount report or a local temp dir. They do
       not contact the dev VM. Cover store-only and mixed lists,
       both and neither selectors, a malformed later entry before
       any copy, absent and empty stage, legacy `src`, a ready extra

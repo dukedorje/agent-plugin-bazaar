@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -294,6 +296,10 @@ def test_stage_order_transport_delete_and_clock() -> None:
 
 def malformed_stages() -> list:
     return [None, False, {}, "", [None], [[]], [{}],
+            [{"src": "tree", "store": "/store", "dest": "/tree"}],
+            [{"store": "/store"}], [{"store": "", "dest": "/tree"}],
+            [{"store": "/store", "dest": "/tree", "delete": 1}],
+            [{"store": "/store", "dest": "/tree"}, {"dest": "/bad"}],
             [{"src": "tree"}], [{"dest": "/tree"}],
             [{"src": "", "dest": "/tree"}],
             [{"src": "tree", "dest": 1}],
@@ -376,6 +382,9 @@ def test_packet_stage_schema_and_spec() -> None:
     validator = jsonschema.Draft7Validator(target)
     for stage in (pi_tmux.NO_STAGE, [], [{"src": "tree", "dest": "/tree"}],
                   [{"src": "tree", "dest": "/tree", "delete": True}],
+                  [{"store": "/store", "dest": "/tree"}],
+                  [{"src": "tree", "dest": "/tree"},
+                   {"store": "/store", "dest": "/tree", "delete": True}],
                   *malformed_stages()):
         with tempfile.TemporaryDirectory() as td:
             spec = stage_packet(Path(td), stage)
@@ -401,6 +410,9 @@ def test_packet_to_turn_face_and_lock_release() -> None:
              (steps, "success", False, True, "pi-session-locked"),
              ([], "missing", False, False, None),
              (pi_tmux.NO_STAGE, "missing", False, False, None)]
+    cases.extend((stage, "success", False, False, None) for stage in (
+        [{"store": "/store", "dest": "/tree"}],
+        [{"src": "one", "dest": "/one"}, {"store": "/store", "dest": "/tree"}]))
     cases.extend((stage, "success", False, False, "pi-stage-failed")
                  for stage in malformed_stages())
     for stage, mode, dirty, locked, blocker in cases:
@@ -456,6 +468,9 @@ def test_packet_to_turn_face_and_lock_release() -> None:
                 expect(face["disposition"] == "pass", face)
                 stage_events = [e for e in events if isinstance(e, tuple) and e[0] == "stage"]
                 expect(len(stage_events) == (len(stage) if isinstance(stage, list) else 0), events)
+                if isinstance(stage, list):
+                    expected = [{**entry, "delete": entry.get("delete", False)} for entry in stage]
+                    expect([e[1] for e in stage_events] == expected, stage_events)
                 expect(events.index("submit") > events.index(("write", prompt.read_text())), events)
             if locked:
                 expect(events == [], events)
@@ -506,9 +521,114 @@ def test_rsync_runner_argv_exit_and_timeout() -> None:
             expect((dest / "f").read_text(encoding="utf-8") == "x", "copied")
 
 
-def test_run_pi_registers_rsync_runner() -> None:
-    src = Path(spawn.__file__).read_text(encoding="utf-8")
-    expect("pi_tmux.STAGE_RUNNER = pi_tmux.rsync_runner" in src, "registration")
+def test_default_stage_runner_dispatch() -> None:
+    with patch.object(pi_tmux, "rsync_runner", return_value=11) as src, \
+         patch.object(pi_tmux, "store_runner", return_value=12) as store:
+        for selector, code in (("src", 11), ("store", 12)):
+            step = {selector: "tree", "dest": "/dest", "delete": False}
+            expect(pi_tmux.stage_runner(step, [], "pane", 9) == code, selector)
+        src.assert_called_once_with({"src": "tree", "dest": "/dest", "delete": False}, [], "pane", 9)
+        store.assert_called_once_with({"store": "tree", "dest": "/dest", "delete": False}, [], "pane", 9)
+
+
+def test_store_transport_and_timeout() -> None:
+    step = {"store": "/mnt/block-store/my tree's", "dest": "/tmp/session tree", "delete": True}
+    prefix = ["ssh", "-o", "BatchMode=yes", "guest.example"]
+    argv = pi_tmux.store_copy_argv(step, prefix)
+    expect(argv[:-1] == prefix, argv)
+    remote = shlex.split(argv[-1])
+    expect(remote == pi_tmux.store_copy_argv(step, []), remote)
+    expect(remote[-3:] == [step["store"], step["dest"], "true"], remote)
+    with patch.object(pi_tmux.os.path, "exists", side_effect=AssertionError("conductor stat")), \
+         patch.object(pi_tmux.subprocess, "run", return_value=subprocess.CompletedProcess(argv, 23)) as run:
+        expect(pi_tmux.store_runner(step, prefix, "pane", 9) == 23, "exit")
+        expect(run.call_args.kwargs["timeout"] == 9, run.call_args)
+    with patch.object(pi_tmux.subprocess, "run", side_effect=subprocess.TimeoutExpired(argv, 9)):
+        expect(pi_tmux.store_runner(step, prefix, "pane", 9) == 124, "timeout")
+
+
+def test_store_mount_readiness_and_directory_shape() -> None:
+    # Substitute only the mount report. All path checks and the local rsync
+    # process execute for real; no mounts, guests, or network are involved.
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td).resolve()
+        mount = root / "block store"
+        store = mount / "campaign"
+        store.mkdir(parents=True)
+        (store / "file").write_text("source")
+        dest = root / "session tree"
+        report = root / "mountinfo"
+        # A wrapper proves that unready mounts start no copy at all.
+        rsync = shutil.which("rsync")
+        expect(rsync is not None, "local rsync required for store copy check")
+        bin_dir = root / "bin"
+        bin_dir.mkdir()
+        copy_log = root / "copies"
+        wrapper = bin_dir / "rsync"
+        wrapper.write_text("#!/bin/sh\n" +
+                           "echo copy >> " + shlex.quote(str(copy_log)) + "\n" +
+                           "exec " + shlex.quote(rsync) + ' "$@"\n')
+        wrapper.chmod(0o755)
+        script = pi_tmux.STORE_COPY_SCRIPT.replace("/proc/self/mountinfo", str(report))
+        escaped = str(mount).replace(" ", r"\040")
+        base = "1 0 0:1 / / rw - virtiofs root rw\n"
+        extra = f"2 1 0:2 / {escaped} rw - virtiofs extra rw\n"
+        report.write_text(base + extra)
+        with patch.object(pi_tmux, "STORE_COPY_SCRIPT", script), \
+             patch.dict(os.environ, {"PATH": str(bin_dir) + os.pathsep + os.environ["PATH"]}):
+            for source in (store, mount):
+                target = root / ("copy-" + source.name)
+                step = {"store": str(source) + "/", "dest": str(target), "delete": False}
+                expect(pi_tmux.store_runner(step, [], "local", 10) == 0, source)
+                relative = "file" if source == store else "campaign/file"
+                expect((target / relative).read_text() == "source", target)
+            dest.mkdir()
+            (dest / "keep").write_text("keep")
+            step = {"store": str(store), "dest": str(dest), "delete": False}
+            expect(pi_tmux.store_runner(step, [], "local", 10) == 0, "existing dest")
+            expect((dest / "campaign/file").read_text() == "source", "directory shape")
+            (dest / "campaign/stale").write_text("stale")
+            step["delete"] = True
+            expect(pi_tmux.store_runner(step, [], "local", 10) == 0, "delete")
+            expect(not (dest / "campaign/stale").exists(), "prune after readiness")
+            (dest / "campaign/stale").write_text("preserve")
+            (root / "frames.json").write_text(json.dumps([pane("idle")]))
+            prompt = root / "remote-prompt.md"
+            prompt.write_text("old prompt")
+            # Root virtiofs, an ordinary FS, and a nested non-virtiofs mount
+            # all fail before rsync, including delete=true.
+            copies_before = copy_log.read_text()
+            for mounts in (base, base + extra.replace("virtiofs extra", "ext4 extra"),
+                           base + extra + f"3 2 0:3 / {store} rw - ext4 nested rw\n"):
+                # Escape spaces in the synthetic nested mount too.
+                mounts = mounts.replace(str(store), str(store).replace(" ", r"\040"))
+                report.write_text(mounts)
+                task = root / "task.md"
+                task.write_text("new prompt")
+                lock = root / "pi.lock"
+                with patch.object(pi_tmux, "STAGE_RUNNER", None), \
+                     patch.object(pi_tmux, "session_from_env", return_value=pi_tmux.DirSession(root)), \
+                     patch.dict(os.environ, {"PI_TMUX_LOCK": str(lock)}), \
+                     contextlib.redirect_stdout(io.StringIO()) as output:
+                    spawn.run_pi({"stage": [step], "timeout_sec": 10}, task,
+                                 root / "raw.log", root / "face.json")
+                face = json.loads(output.getvalue())
+                expect(face["blockers"] == ["pi-stage-failed"], face)
+                probe = pi_tmux.try_lock(lock)
+                expect(probe is not None, "session lock leaked")
+                pi_tmux.unlock(probe)
+                expect(prompt.read_text() == "old prompt", "prompt replaced")
+                expect(not (root / "ops.json").exists(), "submitted")
+                expect((dest / "campaign/stale").read_text() == "preserve", "pruned")
+                expect(copy_log.read_text() == copies_before, "copy started before readiness")
+            report.write_text(base + extra)
+            for source in ("/", str(mount / "missing"), str(root / "block store-other")):
+                bad = {"store": source, "dest": str(dest), "delete": True}
+                expect(pi_tmux.store_runner(bad, [], "local", 10) != 0, source)
+            # No rsync executable needed to observe this distinct copy failure.
+            with patch.dict(os.environ, {"PATH": str(root)}):
+                argv = [sys.executable, "-c", script, str(store), str(dest), "false"]
+                expect(subprocess.run(argv, capture_output=True).returncode != 0, "launch failure")
 
 
 def main() -> int:
@@ -527,7 +647,9 @@ def main() -> int:
         test_packet_stage_schema_and_spec,
         test_packet_to_turn_face_and_lock_release,
         test_rsync_runner_argv_exit_and_timeout,
-        test_run_pi_registers_rsync_runner,
+        test_default_stage_runner_dispatch,
+        test_store_transport_and_timeout,
+        test_store_mount_readiness_and_directory_shape,
     ]
     failed = 0
     for fn in tests:
