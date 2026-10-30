@@ -15,7 +15,7 @@
       mount, and an existing unattached directory with `delete`
       true that preserves dest and the prompt.
 
-- Spike: `block-store-identity` a mounted path the harness can already read — no-go (look 2026-10-29). Decision: host directory via virtiofs; the session machine copies from the guest mount.
+- Spike: block-store-identity a mounted path the harness can already read is no-go after the look. Decision: host directory via virtiofs; the session machine copies from the guest mount — skipped
 
 ## Owed from advise (2026-10-30, astra-arch-review)
 
