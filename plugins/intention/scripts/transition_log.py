@@ -34,11 +34,15 @@ FOLD_IS = re.compile(r"The fold is ([0-9a-f]{7,}): \S*specs/([a-z0-9-]+)/")
 REFUSED = re.compile(
     r"(?m)^[^\n]*?([a-z0-9]+(?:-[a-z0-9]+)+) (?:still has \d+ open|says |is landed except)"
 )
-FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold (?:was|is still) refused")
+FOLD_REFUSED = re.compile(
+    r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold (?:was|is still|remains) refused"
+)
 LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
 ON_MAIN = re.compile(r"([A-Z][^.!\n]+?) is on main as ([0-9a-f]{7,})")
 DISPLAY = re.compile(r"The display itself is ([0-9a-f]{7,})")
-LANDED_AS = re.compile(r"[Ll]anded as ([0-9a-f]{7,})")
+LANDED_AS = re.compile(
+    r"((?:[A-Z][^.\n]*\.\s+)?(?:That )?[Ll]anded as [0-9a-f]{7,}(?:\.[^.!\n]*)?)"
+)
 LIBRARY = re.compile(
     r"((?:[A-Z][^.\n]*\.\s+)?That library is [0-9a-f]{7,}(?:\.[^.!\n]*)?)"
 )
@@ -156,7 +160,7 @@ def observe(text: str) -> list[dict]:
     for match in LIBRARY.finditer(text):
         events.append((match.start(), "landedin", {"evidence": match.group(1).strip()}))
     for match in LANDED_AS.finditer(text):
-        events.append((match.start(), "landedin", {"evidence": match.group(0).strip()}))
+        events.append((match.start(), "landedin", {"evidence": match.group(1).strip()}))
     for match in SHA_UPDATES.finditer(text):
         events.append((match.start(), "landedin", {"evidence": match.group(0).strip()}))
     for match in STAYS_OPEN.finditer(text):
