@@ -8,7 +8,8 @@ Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
 (campaign; takes waves when two+ disjoint writes are ready), `consult` (second
 opinion, no intend node), `demo` (try a landed act). `steer` is the
 default next after `intend` (not a `/run` wave; not `/ask`). Every verb
-is listed in the [glossary of commands](references/glossary.md). Canonical
+is listed in the [glossary of commands](references/glossary.md). The
+between-turn choice is the [Jev prompt](references/jev-next.md). Canonical
 skill files live here. In this repo, `.agents/skills/<name>` is a
 symlink at each skill so Grok, Hermes, and Prime load the same files
 without a plugin install.

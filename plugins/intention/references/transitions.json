@@ -1,0 +1,106 @@
+{
+  "model": "jev-1.13.0",
+  "question": "next_command",
+  "instructions": "Which command should be sent to the harness next? Use the current state and the last turn. Prefer a common transition. Choose other when the harness is waiting on a person, or when the right next line is not one of the listed commands.",
+  "commands": {
+    "intend": "intend <goal>. Open a DAG. The default next state is steered, via steer.",
+    "intend_ask": "intend --ask <goal>. Present the DAG and stop for the person.",
+    "steer": "steer. Decision briefing, then menus. Recommended first, skip always available.",
+    "change": "change <id>. Scaffold the change from steer residue. Do not implement.",
+    "advise": "advise <id>. Spawn a fresh other-family reader. Wait for accept or send-back.",
+    "act": "act <id>. Implement one ready node.",
+    "activate": "activate this set. Record the grant, prepare contracts, and pause.",
+    "activate_and_run": "activate and run. Record the grant and continue the campaign.",
+    "run": "run. Conduct the next ready wave.",
+    "demo": "demo <id>. Walk the landed journey, then stop.",
+    "fold": "fold <id>. Merge the change into living specs and archive it.",
+    "brief": "brief. Write one disposable unit of work.",
+    "debrief": "debrief. Record takeaways from the unit that just finished.",
+    "consult": "consult. Ask for a second opinion. This does not change the DAG.",
+    "spike": "Run the open spike and stop when it has a verdict.",
+    "answer": "Answer what the harness just asked. Do not send a stock campaign command.",
+    "status": "status. Read the board and do not implement.",
+    "map": "map. Reprint this DAG and do not implement.",
+    "other": "A free instruction. The harness can be told anything. Use this when it is asking, or when none of the common transitions fit."
+  },
+  "states": {
+    "idle": {
+      "means": "No current DAG.",
+      "next": ["intend", "intend_ask", "brief", "consult", "status", "map", "other"]
+    },
+    "intended": {
+      "means": "A DAG exists and steer has not been answered.",
+      "next": ["steer", "activate", "activate_and_run", "change", "map", "status", "other"]
+    },
+    "steered": {
+      "means": "Steer residue is recorded.",
+      "next": ["change", "consult", "activate", "activate_and_run", "steer", "map", "status", "other"]
+    },
+    "scaffolded": {
+      "means": "The change directory exists and implementation is not authorized yet.",
+      "next": ["advise", "activate", "activate_and_run", "steer", "change", "map", "status", "other"]
+    },
+    "advising": {
+      "means": "A reader is owed or still reading.",
+      "next": ["status", "map", "other"]
+    },
+    "accepted": {
+      "means": "The last counted advise verdict is accept, and act is legal.",
+      "next": ["act", "activate_and_run", "run", "map", "status", "other"]
+    },
+    "send_back": {
+      "means": "Advise sent the change back.",
+      "next": ["change", "advise", "map", "status", "other"]
+    },
+    "ready": {
+      "means": "A node can be implemented or the campaign can take another wave.",
+      "next": ["act", "run", "activate_and_run", "fold", "map", "status", "other"]
+    },
+    "spike": {
+      "means": "An open spike blocks act.",
+      "next": ["spike", "status", "map", "other"]
+    },
+    "eyes": {
+      "means": "The campaign halted for a human look. YOUR EYES is still open.",
+      "next": ["answer", "status", "map", "other"]
+    },
+    "ask": {
+      "means": "The harness asked for a decision, a verdict, or a direction.",
+      "next": ["answer", "steer", "status", "map", "other"]
+    },
+    "landed": {
+      "means": "An act committed and the change is not archived.",
+      "next": ["demo", "fold", "debrief", "activate_and_run", "run", "status", "map", "other"]
+    },
+    "campaign": {
+      "means": "A grant is recorded and the last turn continued the campaign without asking.",
+      "next": ["activate_and_run", "run", "status", "map", "steer", "other"]
+    },
+    "folded": {
+      "means": "The change is archived into living specs.",
+      "next": ["debrief", "intend", "status", "map", "other"]
+    }
+  },
+  "workflows": [
+    {
+      "name": "show me first",
+      "path": ["idle", "intended", "steered", "scaffolded", "advising", "accepted"]
+    },
+    {
+      "name": "activate and run",
+      "path": ["idle", "intended", "steered", "scaffolded", "advising", "campaign", "landed", "folded"]
+    },
+    {
+      "name": "send-back",
+      "path": ["advising", "send_back", "scaffolded", "advising"]
+    },
+    {
+      "name": "spike",
+      "path": ["ready", "spike", "ready"]
+    },
+    {
+      "name": "eyes",
+      "path": ["campaign", "eyes", "campaign"]
+    }
+  ]
+}

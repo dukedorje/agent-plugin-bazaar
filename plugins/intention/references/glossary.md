@@ -45,3 +45,6 @@ Skill files: `plugins/intention/skills/<verb>/SKILL.md`.
 ## Say this
 
 Phrase-to-command map: [plugin README](../README.md#say-this).
+
+Between turns, the next command is a Jev choice over the legal transitions:
+[jev-next.md](jev-next.md).
