@@ -141,7 +141,12 @@ FLAT = 0.05
 
 def nodes_are_open(turn: str) -> bool:
     text = turn.lower()
-    return "still open" in text or "open nodes" in text or "open node" in text
+    return (
+        "still open" in text
+        or "stays open" in text
+        or "open nodes" in text
+        or "open node" in text
+    )
 
 
 def verdict(data: dict, payload: dict, turn: str = "") -> dict:

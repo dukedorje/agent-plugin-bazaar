@@ -26,8 +26,8 @@ OPEN_ITEM = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9-]+)\)")
 DEMO = re.compile(r"(?m)^[ \t]*Demo[ \t]*$")
 ACTIVATE = re.compile(r"activate and run")
 PINNED = re.compile(r"pinned campaign is still ([A-Za-z0-9-]+)")
-ACCEPTED_BY = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) accepted by (\S+)")
-SENT_BACK = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) sent back by (\S+)")
+ACCEPTED_BY = re.compile(r"`?([a-z0-9]+(?:-[a-z0-9]+)*)`? accepted by (\S+)")
+SENT_BACK = re.compile(r"`?([a-z0-9]+(?:-[a-z0-9]+)*)`? sent back by (\S+)")
 NEXT_CHANGE = re.compile(r"Next is change: ([^\n]+)")
 R_ACCEPT = re.compile(r"(r\d+ accepted that spec)")
 FOLD_IS = re.compile(r"The fold is ([0-9a-f]{7,}): \S*specs/([a-z0-9-]+)/")
@@ -37,7 +37,8 @@ REFUSED = re.compile(
 FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold (?:was|is still) refused")
 LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
 ON_MAIN = re.compile(r"([A-Z][^.!\n]+?) is on main as ([0-9a-f]{7,})")
-STAYS_OPEN = re.compile(r"([A-Za-z0-9.-]+) stays open")
+DISPLAY = re.compile(r"The display itself is ([0-9a-f]{7,})")
+STAYS_OPEN = re.compile(r"([A-Za-z0-9.-]*\d[A-Za-z0-9.-]*) stays open")
 FOCUS = re.compile(r"focus ([a-z0-9]+(?:-[a-z0-9]+)+)")
 HUMAN_GATE = re.compile(
     r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9.-]+)\) is still a human gate[^\n]*not activated"
@@ -82,8 +83,9 @@ def unwrap(text: str) -> str:
         if not line:
             joined.append("")
             continue
-        if joined and joined[-1].endswith("-") and line[:1].islower():
-            joined[-1] = joined[-1] + line
+        if joined and line[:1].islower() and joined[-1][-1:] not in ".!?":
+            sep = "" if joined[-1].endswith("-") else " "
+            joined[-1] = joined[-1] + sep + line
         else:
             joined.append(line)
     return "\n".join(joined)
@@ -140,6 +142,8 @@ def observe(text: str) -> list[dict]:
         events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
     for match in ON_MAIN.finditer(text):
         events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
+    for match in DISPLAY.finditer(text):
+        events.append((match.start(), "landedin", {"evidence": match.group(0).strip()}))
     for match in STAYS_OPEN.finditer(text):
         if match.group(1) not in open_nodes:
             open_nodes.append(match.group(1))
