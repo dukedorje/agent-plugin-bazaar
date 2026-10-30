@@ -64,8 +64,17 @@ for a decision, a look, or a spike verdict?"
 }
 ```
 
-Build that body with `python3 plugins/intention/scripts/jev_next.py --state <name>`.
+Build a known-state body with `python3 plugins/intention/scripts/jev_next.py --state <name>`.
 `--check` validates the machine and does not call Jev.
+
+When a tmux turn settles, pass the whole pane on stdin. That call also asks
+which state the conversation is in, and it offers every command so the
+probabilities cover the open set. A command is sent only when it is legal
+for the state Jev names.
+
+```bash
+tmux capture-pane -t 0:0.0 -p -S - | python3 plugins/intention/scripts/jev_next.py --call --out /tmp/jev-next.json
+```
 
 ## How to read the answer
 
