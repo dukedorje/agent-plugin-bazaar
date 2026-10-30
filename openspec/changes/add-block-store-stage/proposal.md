@@ -5,40 +5,45 @@
 **Rigor:** architecture
 
 Activated 2026-10-29 by an explicit "activate" on this node, inside
-the `stage-before-keys` grant. The look below is recorded. Direction
-is still a steer. `act` stays blocked while `block-store-identity`
-is open.
+the `stage-before-keys` grant. Steer on 2026-10-30 named the
+store. Fresh advise is still owed before `act`.
 
 ## Preparation
 
 - Upstream: living `remote-stage` at `e07a40c`, rsync runner at
-  `2d4438c`. Hook returns on stage failure without deleting a
-  prompt file already on disk (`pi_tmux.py` around the stage-failed
-  return).
-- Outcome: revised only the failure wording. Store identity is
-  still the open spike. Authority is the same grant. No store was
-  guessed.
+  `2d4438c`, steer at `06f8e4c`. Hook returns on stage failure
+  without deleting a prompt file already on disk.
+- Outcome: `src` stays a conductor path. `store` is a path on the
+  session machine, the guest mount of a virtiofs host directory.
+  The session machine copies `store` to `dest`. A missing mount
+  fails closed. Host prefix and tag stay in the Mjolnir allowlist
+  landing. Authority is the same grant.
 
 ## Why
 
 The stage hook and the rsync runner copy a conductor path onto the
-session machine. A block store connected to that machine is a
-different source. On the dev guest that store is not a mounted path
-today, so this node cannot reuse rsync until steer names the store.
-Attaching one can be a Mjolnir change.
+session machine. The block store is a host directory the guest
+sees only after virtiofs attaches it. That guest path is not a
+conductor `src`. The 2026-10-29 look found no such mount on the
+live Pi VM. New guests get the share at boot. This change copies
+from the mount. It does not attach the mount.
 
 ## What
 
 - Capability `remote-stage`.
-- One stage step whose source is the named store, under the lock
-  already held for the paste. Failure does not paste.
-- Mjolnir work, if steer wants a share attached, is a downstream
-  landing in that repo. This change does not boot a VM.
+- A stage entry names either conductor `src` or session `store`,
+  plus `dest`. The session machine copies `store` to `dest` under
+  the lock already held for the paste. Failure does not write a
+  prompt and does not submit.
+- The host prefix, the virtiofs tag, and hot-add stay outside this
+  change. Hot-add is deferred bead `mjolnir-uull`.
 
 ## Impact
 
-- Capabilities: MODIFIED `remote-stage`
-- ADRs: none in this repo until steer adds a packet field
+- Capabilities: MODIFIED `remote-stage` (declaration check and
+  rsync runner), ADDED session store copy
+- ADRs: none. The packet grows an optional `store` string on a
+  stage entry. `src` stays the conductor path.
 
 ## User journey & surfaces
 

@@ -10,10 +10,10 @@
 
 ## Owed from advise (2026-10-30, astra-arch-review)
 
-- [ ] Resolve the recorded store-identity spike/steer gate before act;
+- [x] Resolve the recorded store-identity spike/steer gate before act;
       record the selected store, protocol, execution machine, path semantics,
       readiness evidence, and provisioning boundary without guessing a store.
-- [ ] Reconcile the selected declaration and dispatch with the living
+- [x] Reconcile the selected declaration and dispatch with the living
       remote-stage requirements and affected schema/validation/propagation;
       preserve legacy rsync semantics and specify focused fake/local checks
       for success, missing store, failure/timeout, malformed and absent stages.
@@ -21,3 +21,4 @@
       or submit on stage failure; cover an unchanged pre-existing prompt file.
 - [ ] Obtain fresh advise on the resolved store contract and amended change
       before implementation; this send-back does not close the identity gate.
+- [ ] Fresh advise after preparation
