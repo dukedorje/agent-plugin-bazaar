@@ -34,7 +34,7 @@ FOLD_IS = re.compile(r"The fold is ([0-9a-f]{7,}): \S*specs/([a-z0-9-]+)/")
 REFUSED = re.compile(
     r"(?m)^[^\n]*?([a-z0-9]+(?:-[a-z0-9]+)+) (?:still has \d+ open|says |is landed except)"
 )
-FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold was refused")
+FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold (?:was|is still) refused")
 LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
 ON_MAIN = re.compile(r"([A-Z][^.!\n]+?) is on main as ([0-9a-f]{7,})")
 STAYS_OPEN = re.compile(r"([A-Za-z0-9.-]+) stays open")

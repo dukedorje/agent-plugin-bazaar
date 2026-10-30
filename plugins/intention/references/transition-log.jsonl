@@ -20,3 +20,5 @@
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": [], "taken": true, "evidence": "Issuance landed in 27f4aa9"}
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": [], "taken": true, "evidence": "The DNS gate landed in db9b898"}
 {"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": ["mjolnir-mesh-b6j.1"], "taken": true, "evidence": "The ACME courier is on main as 2217d5c"}
+{"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "add-https-aliases", "from": "accepted", "verb": "act", "to": "landed", "open": ["mjolnir-mesh-b6j.1"], "taken": true, "evidence": "The optional router TLS listener is on main as 4320428"}
+{"v": 1, "campaign": "mjolnir-mesh-70wk", "change": "household-network", "from": "landed", "verb": "fold", "to": "landed", "open": ["mjolnir-mesh-b6j.1"], "taken": false, "evidence": "The household-network fold is still refused"}
