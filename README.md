@@ -33,7 +33,7 @@ codex plugin add morphist-tools@agent-plugin-bazaar
 
 Start a new Codex thread after installing so the intention skills are loaded.
 
-Default verbs: `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`, `map`, `status`, `run`.
+Every Intention command: [plugins/intention/references/glossary.md](plugins/intention/references/glossary.md).
 
 How to use them — “run it by me”, current DAG, ready vs beads, `/run` (roll): [plugins/intention/README.md](plugins/intention/README.md).
 
