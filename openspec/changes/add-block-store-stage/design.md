@@ -34,4 +34,8 @@ and on its state file. Pi was not restarted. Nothing was written.
   The live Pi VM is not rebooted. The host prefix and tag belong
   to the later Mjolnir allowlist landing.
 - Copy machine: decided. The session machine copies from the guest
-  mount to the session tree. A missing mount fails the step.
+  mount to the session tree. Readiness is that extra virtiofs mount,
+  its root or a descendant, checked on the session machine before
+  any copy or prune. An existing directory on the guest root is not
+  that mount. `/` being virtiofs is not enough. A missing or unready
+  mount fails the step and does not prune.
