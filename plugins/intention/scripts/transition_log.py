@@ -25,15 +25,18 @@ STILL_OPEN = re.compile(r"Still open on ([A-Za-z0-9-]+): (.+)")
 OPEN_ITEM = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9-]+)\)")
 DEMO = re.compile(r"(?m)^[ \t]*Demo[ \t]*$")
 ACTIVATE = re.compile(r"activate and run")
-PINNED = re.compile(r"pinned campaign is still ([A-Za-z0-9.-]+)")
+PINNED = re.compile(r"pinned campaign is still ([A-Za-z0-9-]+)")
 ACCEPTED_BY = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) accepted by (\S+)")
 SENT_BACK = re.compile(r"([a-z0-9]+(?:-[a-z0-9]+)*) sent back by (\S+)")
 NEXT_CHANGE = re.compile(r"Next is change: ([^\n]+)")
 R_ACCEPT = re.compile(r"(r\d+ accepted that spec)")
 FOLD_IS = re.compile(r"The fold is ([0-9a-f]{7,}): \S*specs/([a-z0-9-]+)/")
 REFUSED = re.compile(
-    r"(?m)^[^\n]*?([a-z0-9]+(?:-[a-z0-9]+)*) (?:still has \d+ open|says |is landed except)"
+    r"(?m)^[^\n]*?([a-z0-9]+(?:-[a-z0-9]+)+) (?:still has \d+ open|says |is landed except)"
 )
+FOLD_REFUSED = re.compile(r"The ([a-z0-9]+(?:-[a-z0-9]+)*) fold was refused")
+LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
+FOCUS = re.compile(r"focus ([a-z0-9]+(?:-[a-z0-9]+)+)")
 HUMAN_GATE = re.compile(
     r"([a-z0-9]+(?:-[a-z0-9]+)*) \(([A-Za-z0-9.-]+)\) is still a human gate[^\n]*not activated"
 )
@@ -96,6 +99,10 @@ def observe(text: str) -> list[dict]:
     pinned = PINNED.search(text)
     if pinned and not campaign:
         campaign = pinned.group(1)
+    focus = ""
+    found = FOCUS.search(text)
+    if found:
+        focus = found.group(1)
     events: list[tuple[int, str, dict]] = []
     started = ACTIVATE.search(text)
     if started:
@@ -125,6 +132,10 @@ def observe(text: str) -> list[dict]:
         events.append((match.start(), "gate", {"change": match.group(1), "node": match.group(2), "evidence": match.group(0).strip()}))
     for match in ACT_NOT.finditer(text):
         events.append((match.start(), "actnot", {"change": match.group(1), "evidence": match.group(0).strip()}))
+    for match in FOLD_REFUSED.finditer(text):
+        events.append((match.start(), "refused", {"change": match.group(1), "evidence": match.group(0).strip()}))
+    for match in LANDED_IN.finditer(text):
+        events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
     events.sort(key=lambda item: item[0])
     seen: set[tuple[str, str]] = set()
     unique: list[tuple[int, str, dict]] = []
@@ -199,6 +210,9 @@ def observe(text: str) -> list[dict]:
                 open_nodes.append(data["node"])
         elif kind == "actnot":
             add("accepted", "act", "accepted", data["change"], data["evidence"], taken=False)
+        elif kind == "landedin":
+            add("accepted", "act", "landed", focus or data["change"], data["evidence"])
+            state = "landed"
     for row in rows:
         if not row["open"]:
             row["open"] = list(open_nodes)
