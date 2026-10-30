@@ -39,6 +39,9 @@ LANDED_IN = re.compile(r"([A-Z][A-Za-z ]+?) landed in ([0-9a-f]{7,})")
 ON_MAIN = re.compile(r"([A-Z][^.!\n]+?) is on main as ([0-9a-f]{7,})")
 DISPLAY = re.compile(r"The display itself is ([0-9a-f]{7,})")
 LANDED_AS = re.compile(r"[Ll]anded as ([0-9a-f]{7,})")
+LIBRARY = re.compile(
+    r"((?:[A-Z][^.\n]*\.\s+)?That library is [0-9a-f]{7,}(?:\.[^.!\n]*)?)"
+)
 SHA_UPDATES = re.compile(r"(?m)(?:^|\s)([0-9a-f]{7,}) updates ")
 STAYS_OPEN = re.compile(r"([A-Za-z0-9.-]*\d[A-Za-z0-9.-]*) stays open")
 FOCUS = re.compile(r"focus ([a-z0-9]+(?:-[a-z0-9]+)+)")
@@ -79,7 +82,11 @@ def append_rows(rows: list[dict]) -> int:
 
 def unwrap(text: str) -> str:
     """Join pane wraps so a change id split across lines is one token."""
-    lines = [re.sub(r"[ \t]+", " ", line.replace("█", "")).strip() for line in text.splitlines()]
+    lines = []
+    for line in text.splitlines():
+        line = re.sub(r"[ \t]+", " ", line.replace("█", "")).strip()
+        line = re.sub(r"\s+\d{1,2}:\d{2}\s*[AP]M$", "", line)
+        lines.append(line)
     joined: list[str] = []
     for line in lines:
         if not line:
@@ -146,6 +153,8 @@ def observe(text: str) -> list[dict]:
         events.append((match.start(), "landedin", {"change": match.group(1).strip().lower().replace(" ", "-"), "evidence": match.group(0).strip()}))
     for match in DISPLAY.finditer(text):
         events.append((match.start(), "landedin", {"evidence": match.group(0).strip()}))
+    for match in LIBRARY.finditer(text):
+        events.append((match.start(), "landedin", {"evidence": match.group(1).strip()}))
     for match in LANDED_AS.finditer(text):
         events.append((match.start(), "landedin", {"evidence": match.group(0).strip()}))
     for match in SHA_UPDATES.finditer(text):
