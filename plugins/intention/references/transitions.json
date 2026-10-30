@@ -1,7 +1,7 @@
 {
   "model": "jev-1.13.0",
   "question": "next_command",
-  "instructions": "Which command should be sent to the harness next? Use the current state and the last turn. Prefer a common transition. Choose other when the harness is waiting on a person, or when the right next line is not one of the listed commands.",
+  "instructions": "Which command should be sent to the harness next? Compare the options by the gaps between them. There is no confidence cutoff. If nodes are already open and the harness is not waiting on a person, choose run, which is typed as /run. Choose other when the harness is waiting on a person, or when the right next line is not one of the listed commands.",
   "commands": {
     "intend": "intend <goal>. Open a DAG. The default next state is steered, via steer.",
     "intend_ask": "intend --ask <goal>. Present the DAG and stop for the person.",
@@ -11,7 +11,7 @@
     "act": "act <id>. Implement one ready node.",
     "activate": "activate this set. Record the grant, prepare contracts, and pause.",
     "activate_and_run": "activate and run. Record the grant and continue the campaign.",
-    "run": "run. Conduct the next ready wave.",
+    "run": "/run. Conduct the next ready wave. Usual next command when nodes are already open.",
     "demo": "demo <id>. Walk the landed journey, then stop.",
     "fold": "fold <id>. Merge the change into living specs and archive it.",
     "brief": "brief. Write one disposable unit of work.",

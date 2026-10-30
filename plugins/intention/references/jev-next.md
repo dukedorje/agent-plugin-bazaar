@@ -78,16 +78,11 @@ tmux capture-pane -t 0:0.0 -p -S - | python3 plugins/intention/scripts/jev_next.
 
 ## How to read the answer
 
-`answers.next_command.probabilities` sums to 1. `choice` is the peak.
+`answers.next_command.probabilities` sums to 1. Read them as gaps. The lead is the peak minus the next probability. There is no 0.5 cutoff.
 
-Send `commands[choice]` only when all of these hold:
+If the conversation still has open nodes, and the state is not `ask`, `eyes`, `spike`, or `advising`, type `/run`. That prior wins even when another command has the higher raw probability.
 
-- `waiting_on_person` is below 0.5
-- `choice` is not `other` or `answer`
-- `confidence` is at least 0.5
-
-Otherwise stop and show the distribution. `other` means write the next line
-from the turn itself. `answer` means reply to the question it asked.
+Otherwise send the peak when it leads the runner-up by at least 0.05, it is legal for the named state, and it is not `other` or `answer`. A smaller gap is a tie: show the distribution and do not type. `other` means write the next line from the turn itself. `answer` means reply to the question it asked.
 
 `activate_and_run` is legal from `intended`, `steered`, `scaffolded`,
 `accepted`, `ready`, `landed`, and `campaign`. It is not legal from

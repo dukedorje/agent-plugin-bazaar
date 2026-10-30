@@ -81,7 +81,7 @@ SAY = {
     "act": "act",
     "activate": "activate this set",
     "activate_and_run": "activate and run",
-    "run": "run",
+    "run": "/run",
     "demo": "demo",
     "fold": "fold",
     "brief": "brief",
@@ -134,20 +134,39 @@ def conversation_body(data: dict, turn: str) -> dict:
     }
 
 
-def verdict(data: dict, payload: dict) -> dict:
+HUMAN = {"ask", "eyes", "spike", "advising"}
+# A lead smaller than this is a tie. The gap is what matters, not a 0.5 floor.
+FLAT = 0.05
+
+
+def nodes_are_open(turn: str) -> bool:
+    text = turn.lower()
+    return "still open" in text or "open nodes" in text or "open node" in text
+
+
+def verdict(data: dict, payload: dict, turn: str = "") -> dict:
     answers = payload["answers"]
     inferred = answers["current_state"]["choice"]
     command = answers["next_command"]
     waiting = float(answers["waiting_on_person"]["noul"])
-    choice = command["choice"]
     confidence = float(command["confidence"])
-    legal = data["states"].get(inferred, {}).get("next", [])
-    send = (
-        waiting < 0.5
-        and choice not in {"other", "answer"}
-        and confidence >= 0.5
-        and choice in legal
-    )
+    probabilities = command["probabilities"]
+    ranked = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)
+    peak, top = ranked[0] if ranked else (command["choice"], 0.0)
+    second = ranked[1][1] if len(ranked) > 1 else 0.0
+    lead = top - second
+    legal_set = data["states"].get(inferred, {}).get("next", [])
+    open_nodes = nodes_are_open(turn)
+    reason = "lead"
+    choice = peak
+    if open_nodes and inferred not in HUMAN:
+        choice = "run"
+        reason = "open-nodes"
+        send = True
+    else:
+        send = choice not in {"other", "answer"} and choice in legal_set and lead >= FLAT
+        if lead < FLAT:
+            reason = "flat"
     return {
         "send": send,
         "say": SAY.get(choice, ""),
@@ -155,8 +174,11 @@ def verdict(data: dict, payload: dict) -> dict:
         "state": inferred,
         "confidence": confidence,
         "waiting": waiting,
-        "legal": choice in legal,
-        "probabilities": command["probabilities"],
+        "legal": choice in legal_set,
+        "lead": lead,
+        "reason": reason,
+        "open_nodes": open_nodes,
+        "probabilities": probabilities,
     }
 
 
@@ -180,7 +202,7 @@ def call(data: dict, turn: str, out: Path | None) -> dict:
     except urllib.error.HTTPError as error:
         detail = error.read().decode(errors="replace")[:500]
         raise SystemExit(f"Jev HTTP {error.code}: {detail}") from error
-    decision = verdict(data, payload)
+    decision = verdict(data, payload, turn)
     if out is not None:
         out.write_text(json.dumps({"decision": decision, "response": payload}, indent=2) + "\n", encoding="utf-8")
     return decision
@@ -201,8 +223,9 @@ def main() -> int:
         phrase = decision["say"] or decision["choice"]
         print(
             f"{kind} |||{phrase}||| "
-            f"state={decision['state']} confidence={decision['confidence']:.2f} "
-            f"waiting={decision['waiting']:.2f} legal={str(decision['legal']).lower()}"
+            f"state={decision['state']} lead={decision['lead']:.2f} "
+            f"reason={decision['reason']} waiting={decision['waiting']:.2f} "
+            f"legal={str(decision['legal']).lower()}"
         )
         return 0
     if args.check and not args.state:
