@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -13,7 +14,11 @@ HERE = Path(__file__).resolve().parent
 RUN = HERE.parents[0] / "skills" / "run" / "scripts" / "run.py"
 
 
-def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str],
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     if cwd is None and "--ready-json" in args:
         cwd = Path(args[args.index("--ready-json") + 1]).parent
     return subprocess.run(
@@ -21,6 +26,7 @@ def run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess
         text=True,
         capture_output=True,
         cwd=str(cwd) if cwd else None,
+        env=env,
     )
 
 
@@ -1140,6 +1146,53 @@ def test_scoped_skip_does_not_widen() -> None:
         expect(unscoped["next"] == "act" and unscoped["focus"] == "add-embedded-assert", unscoped)
 
 
+def test_beads_ready_queue_does_not_hide_the_dag() -> None:
+    """bazaar-kat: ready-json `beads` is the ready queue, not parent/child edges."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-umbrella-net", tasks="Owed work lives in beads (mesh-ai0.*).")
+        graph = [
+            kat_bead("mesh-ai0", "add-umbrella-net: household network"),
+            kat_bead("mesh-ai0.1", "add-trust-contract: trust", "open", "mesh-ai0"),
+        ]
+        bindir = root / "bin"
+        bindir.mkdir()
+        (bindir / "bd").write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, sys\n"
+            f"json.dump({graph!r}, sys.stdout)\n",
+            encoding="utf-8",
+        )
+        (bindir / "bd").chmod(0o755)
+        fixture = write_ready(root, {
+            "ready": ["add-embedded-assert"],
+            "waiting": [],
+            "needs_advise": [],
+            "ask": [],
+            "send_back": [],
+            "beads": [],
+        })
+        env = os.environ.copy()
+        env["PATH"] = str(bindir) + os.pathsep + env.get("PATH", "")
+        face = json.loads(run(
+            ["ai0", "--ready-json", str(fixture), "--json"], cwd=root, env=env,
+        ).stdout)
+        expect(face["next"] != "intend", face)
+        expect(face["focus"] == "add-umbrella-net", face)
+        expect(face["stop"] == "owed-beads", face)
+        expect(face["owed"] == ["mesh-ai0.1"], face)
+        unscoped = json.loads(run(
+            ["--ready-json", str(fixture), "--json"], cwd=root, env=env,
+        ).stdout)
+        expect(not (unscoped["next"] == "fold" and unscoped["focus"] == "add-umbrella-net"), unscoped)
+        skipped = json.loads(run([
+            "add-umbrella-net", "--skip", "add-umbrella-net",
+            "--ready-json", str(fixture), "--json",
+        ], cwd=root, env=env).stdout)
+        expect(skipped["stop"] == "skipped" and skipped["focus"] == "add-umbrella-net", skipped)
+        expect("stays put" in skipped["diagnostic"], skipped)
+
+
 def test_scoped_skip_still_advises_same_id() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -1157,6 +1210,7 @@ def main() -> int:
         test_umbrella_with_closed_beads_folds,
         test_epic_alias_resolves_to_landing,
         test_scoped_skip_does_not_widen,
+        test_beads_ready_queue_does_not_hide_the_dag,
         test_scoped_skip_still_advises_same_id,
         test_preparation_obligation_tracks_act_candidates,
         test_non_act_has_no_preparation_candidates,

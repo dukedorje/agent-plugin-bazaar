@@ -523,9 +523,11 @@ def decide(
         graph_box.append([b for b in raw_graph if isinstance(b, dict)])
 
     def graph() -> list[dict[str, Any]]:
-        # Fixtures without a graph never call bd.
+        # `beads` is the ready queue, not parent/child edges. A fixture
+        # that supplies `graph` uses that list; otherwise load bd so an
+        # epic alias and an umbrella fold can see open descendants.
         if not graph_box:
-            graph_box.append(load_graph() if data.get("beads") is None else [])
+            graph_box.append(load_graph())
         return graph_box[0]
 
     # An epic / bead id is a scope, not a goal: resolve it to its landing
@@ -605,7 +607,10 @@ def decide(
                 "ask": asks,
             }
         row = face("skipped", scope, until, ready, waiting, needs_advise, asks)
-        row["diagnostic"] = f"{scope} is skipped/punted; drop the scope to walk other work"
+        row["diagnostic"] = (
+            f"{scope} is skipped. The named scope stays put; "
+            "this card does not walk other work."
+        )
         return row
 
     if data.get("fold_legal") is not None:

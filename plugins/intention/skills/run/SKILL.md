@@ -90,7 +90,10 @@ the next wave.
 
 Decision table, not a preference order: a verb-led kebab
 (`add-` / `update-` / `remove-` / `refactor-` + rest) is a
-change-id. Any other scope is a goal → `intend`. Named change-id
+change-id. An epic or bead id that resolves to one change landing is
+that landing; open descendants block fold. An unresolved bead id
+stops `scope-unresolved`. Any other non-change scope is a goal →
+`intend`. Named change-id
 with no directory → `change`. `--until fold` / `--until roll` / `--until ask` and
 fold is legal (ACTIVE BUILD, no open owed box, not PARKED, **not**
 `needs_advise`, **not** a stale base) → `fold` (unscoped scans inflight).
@@ -123,8 +126,11 @@ Split the refusal:
 
 - **Fold / illegal act / no-op change:** `--skip` that id (do not
   fold/act/amend it this pick). Do **not** park it on ask. Do
-  **not** `--punt` it. Re-observe. `--skip` still allows `advise`
-  on that same id. Follow the new `next`.
+  **not** `--punt` it. Re-observe with the same `<scope>`. `--skip`
+  still allows `advise` on that same id. Follow the new `next`.
+  Skipping the named scope is `stop: skipped`: that scope stays put.
+  Do not drop it to walk other work. An unscoped `--skip` still
+  walks the rest of the ready-set.
 - **Advise, any session:** do not inline `accept`. Do not write a
   fake send-back with no architecture boxes — that retriggers
   `change`. Assign with `vary-reader` (`references/reviewers.md`),
@@ -159,7 +165,7 @@ waves = 0
 skip = []
 punt = []
 while waves < max_waves:
-  card = run.py [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
+  card = run.py [<scope>] [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
   # Before activation stops: apply an existing bounded campaign grant via
   # change to eligible PENDING nodes, respecting explicit policy limits;
