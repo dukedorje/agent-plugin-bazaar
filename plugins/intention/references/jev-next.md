@@ -16,7 +16,7 @@ Use the first match.
 |---|---|
 | Asks for a decision, a verdict, or a direction | `ask` |
 | Says YOUR EYES, or `stop: eyes` | `eyes` |
-| Says an open spike blocks act | `spike` |
+| Says the next node has an open spike (`next: spike`) | `spike` |
 | Is a send-back with something owed | `send_back` |
 | Is a send-back with nothing owed | `advising` |
 | Is ACCEPTED and act is legal | `accepted` |
@@ -39,7 +39,7 @@ descriptions come from `transitions.json`. `criteria` is only
 `commands[id]`.
 
 `questions.waiting_on_person` is a Noul: "Is the harness waiting on a person
-for a decision, a look, or a spike verdict?"
+for a decision, a look, or a no-go spike?"
 
 ```json
 {
@@ -58,7 +58,7 @@ for a decision, a look, or a spike verdict?"
     },
     "waiting_on_person": {
       "type": "noul",
-      "instructions": "Is the harness waiting on a person for a decision, a look, or a spike verdict?"
+      "instructions": "Is the harness waiting on a person for a decision, a look, or a no-go spike?"
     }
   }
 }
@@ -81,13 +81,13 @@ tmux capture-pane -t 0:0.0 -p -S - | python3 plugins/intention/scripts/jev_next.
 
 `answers.next_command.probabilities` sums to 1. Read them as gaps. The lead is the peak minus the next probability. There is no 0.5 cutoff.
 
-If the conversation still has open nodes, and the state is not `ask`, `eyes`, `spike`, or `advising`, type `/run`. That prior wins even when another command has the higher raw probability.
+If the conversation still has open nodes, and the state is not `ask`, `eyes`, or `advising`, type `/run`. A `spike` state is `/run` too: the campaign runs the spike. That prior wins even when another command has the higher raw probability.
 
 Otherwise send the peak when it leads the runner-up by at least 0.05, it is legal for the named state, and it is not `other` or `answer`. A smaller gap is a tie: show the distribution and do not type. `other` means write the next line from the turn itself. `answer` means reply to the question it asked.
 
 `activate_and_run` is legal from `intended`, `steered`, `scaffolded`,
 `accepted`, `ready`, `landed`, and `campaign`. It is not legal from
-`spike`, `eyes`, `ask`, or `advising`.
+`eyes`, `ask`, or `advising`.
 
 ## Common paths
 

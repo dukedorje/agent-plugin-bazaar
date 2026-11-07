@@ -19,7 +19,7 @@ Spikes exist to invert the cost curve: a 30-minute isolated test is cheaper than
 
 ## When to Use
 
-- **When intention offers it** — `intend` names an unverified hypothesis in the decision briefing, `steer` menus it, `change` lists it under `design.md`, and `act` will not launch that node until this skill returns `go` or the human skips. See `plugins/intention/references/from-sprint-exec.md`.
+- **When intention reaches it** — `intend` records an open spike line on a node; `run` (card `next: spike`) or `act` runs this skill just before that node lands. No human pick of when. On `go` the campaign continues; on `no-go` the decision reopens and goes to `steer`. `intend` runs it up front only when the verdict would change the DAG's shape. See `plugins/intention/references/from-sprint-exec.md`.
 - **On-demand** — any time a user wants to prove out a claim before committing to it. ("Can we actually animate splats in PC 2.17?" → spike.)
 - **When an approach changes** — spike the new approach before landing it.
 
@@ -54,7 +54,7 @@ Do **not** use this skill for:
 
 Read the source synthesis (if provided). Extract the hypothesis block including `spike-prompt`, `version-pinned`, and `claim`.
 
-If no pre-defined `spike-prompt` exists, draft one using the following template and confirm with the user:
+If no pre-defined `spike-prompt` exists, draft one using the following template. Confirm with the user only when a human invoked `/spike` directly. When `CALLER` is `run`, `act`, or `intend`, do not confirm: draft it, print it, and proceed.
 
 ```
 Hypothesis: {claim}
@@ -250,7 +250,7 @@ Inspired by the three sprint-004 LoGAvatar spikes (`/spike/splat-anim`, `/spike/
 - **`ultraresearch`** — outputs `spike-prompt` field in hypothesis metadata; this skill consumes it.
 - **Callers** — parse the final `VERDICT:` line. Nothing invokes this skill automatically.
 - **decision beads** — on `no-go`, attach `finding.md` to the reopened decision bead.
-- **`intend`** — records an open spike line on the node and does not run this skill. `act` will not land that node until this skill returns `go` or the human skips.
+- **`intend`** — records an open spike line on the node; runs this skill up front only when the verdict reshapes the DAG. `run` / `act` run it before that node lands. `go` → the line becomes `go` and the campaign continues. `no-go` / `inconclusive` → the line becomes `no-go`, the decision reopens, and `steer` picks a new direction.
 
 ---
 

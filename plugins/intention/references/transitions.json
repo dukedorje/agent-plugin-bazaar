@@ -17,7 +17,7 @@
     "brief": "brief. Write one disposable unit of work.",
     "debrief": "debrief. Record takeaways from the unit that just finished.",
     "consult": "consult. Ask for a second opinion. This does not change the DAG.",
-    "spike": "Run the open spike and stop when it has a verdict.",
+    "spike": "Run the open spike. On go, keep the campaign moving. On no-go, steer.",
     "answer": "Answer what the harness just asked. Do not send a stock campaign command.",
     "status": "status. Read the board and do not implement.",
     "map": "map. Reprint this DAG and do not implement.",
@@ -57,8 +57,8 @@
       "next": ["act", "run", "activate_and_run", "fold", "map", "status", "other"]
     },
     "spike": {
-      "means": "An open spike blocks act.",
-      "next": ["spike", "status", "map", "other"]
+      "means": "The next ready node has an open spike. Run does it; no person needed.",
+      "next": ["run", "spike", "status", "map", "other"]
     },
     "eyes": {
       "means": "The campaign halted for a human look. YOUR EYES is still open.",

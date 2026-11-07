@@ -65,7 +65,7 @@ def body(data: dict, state: str, turn: str) -> dict:
                 "type": "noul",
                 "instructions": (
                     "Is the harness waiting on a person for a decision, "
-                    "a look, or a spike verdict?"
+                    "a look, or a no-go spike?"
                 ),
             },
         },
@@ -87,7 +87,7 @@ SAY = {
     "brief": "brief",
     "debrief": "debrief",
     "consult": "consult",
-    "spike": "run the open spike",
+    "spike": "/run",
     "status": "status",
     "map": "map",
 }
@@ -127,14 +127,14 @@ def conversation_body(data: dict, turn: str) -> dict:
                 "type": "noul",
                 "instructions": (
                     "Is the harness waiting on a person for a decision, "
-                    "a look, or a spike verdict?"
+                    "a look, or a no-go spike?"
                 ),
             },
         },
     }
 
 
-HUMAN = {"ask", "eyes", "spike", "advising"}
+HUMAN = {"ask", "eyes", "advising"}
 # A lead smaller than this is a tie. The gap is what matters, not a 0.5 floor.
 FLAT = 0.05
 

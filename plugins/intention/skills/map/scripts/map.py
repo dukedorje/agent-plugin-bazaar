@@ -460,7 +460,10 @@ def steer_open(dest: Path | None) -> list[str]:
 
 
 def spike_still_open(text: str) -> bool:
+    """Open or no-go: both still owe a decision on the briefing."""
     low = text.strip().lower()
+    if re.search(r"\b(no-go|no go|inconclusive)\s*\W*$", low.replace("—", "-")):
+        return True
     tail = low.replace("—", "-").split("-")[-1].strip()
     if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
         return False
@@ -522,7 +525,7 @@ def decision_briefing(
     lines = ["## Decision briefing", ""]
     spikes = collect_spike_offers(nodes, openspec)
     if spikes:
-        lines.append("Spike is an option before a landing that depends on these:")
+        lines.append("Spikes owed (run spikes these before act; a no-go needs steer):")
         lines.extend(spikes)
         lines.append("")
     upcoming = list(dict.fromkeys([*need_act, *send_back, *change_ready]))

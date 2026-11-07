@@ -27,7 +27,7 @@ from advise_status import last_advise_verdict, latest_advise_review  # noqa: E40
 from status import describe_blocker  # noqa: E402
 
 STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
-STAGES = ("intend", "change", "advise", "act", "fold")
+STAGES = ("intend", "change", "spike", "advise", "act", "fold")
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
 )
@@ -635,6 +635,11 @@ def decide(
     # A stale base is not that skip. It is change, in this same run.
     pick_advise = without(needs_advise, punt_set)
     pick_ready = without(ready, blocked)
+    # A no-go spike is a new decision: the node waits on steer, not act.
+    no_go = [i for i in pick_ready if spike_lines(i, openspec, graph(), "no-go")]
+    if no_go:
+        pick_ready = without(pick_ready, set(no_go))
+        asks = unique(asks + no_go)
     stale = [] if no_fold else stale_base_ids(openspec, pick_fold)
     pick_fold = without(pick_fold, set(stale))
 
@@ -676,6 +681,10 @@ def decide(
                 "ask": asks,
             }
         if pick_ready:
+            for rid in pick_ready:
+                lines = open_spike_lines(rid, openspec, graph())
+                if lines:
+                    return spike_row(rid, lines, until, ready, waiting, needs_advise, asks)
             return {
                 "stop": None,
                 "next": "act",
@@ -816,6 +825,10 @@ def decide(
     if until == "advise":
         return face("empty", scope, until, ready, waiting, needs_advise, asks)
     if ready_ids:
+        for rid in ready_ids:
+            lines = open_spike_lines(rid, openspec, graph())
+            if lines:
+                return spike_row(rid, lines, until, ready, waiting, needs_advise, asks)
         return {
             "stop": None,
             "next": "act",
@@ -829,6 +842,30 @@ def decide(
             "ask": asks,
         }
     return face("empty", scope, until, ready, waiting, needs_advise, asks)
+
+
+def spike_row(
+    focus: str,
+    lines: list[str],
+    until: str,
+    ready: list[str],
+    waiting: list[str],
+    needs_advise: list[str],
+    asks: list[str],
+) -> dict[str, Any]:
+    """A ready landing still bets on an unverified claim. Spike is the stage."""
+    return {
+        "stop": None,
+        "next": "spike",
+        "focus": focus,
+        "spikes": lines,
+        "until": until,
+        "workers_launched": 0,
+        "ready": ready,
+        "waiting": waiting,
+        "needs_advise": needs_advise,
+        "ask": asks,
+    }
 
 
 def fold_row(
@@ -969,17 +1006,68 @@ def apply_eyes_stop(
     return row
 
 
+NO_GO_RE = re.compile(r"\b(no-go|no go|nogo|inconclusive)\s*\W*$")
+
+
+def spike_state(body: str) -> str | None:
+    """open | no-go | None (go, skipped, override, or empty)."""
+    low = body.strip().lower().replace("—", "-").replace("–", "-")
+    if not low:
+        return None
+    if NO_GO_RE.search(low) or low.startswith(("no-go", "inconclusive")):
+        return "no-go"
+    tail = low.split("-")[-1].strip()
+    if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
+        return None
+    if "override" in low:
+        return None
+    return "open"
+
+
+def spike_body_open(body: str) -> bool:
+    return spike_state(body) == "open"
+
+
 def spike_still_open(text: str) -> bool:
-    found = False
-    for match in SPIKE_RE.finditer(text or ""):
-        low = match.group(1).strip().lower().replace("—", "-")
-        tail = low.split("-")[-1].strip()
-        if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
+    return any(spike_body_open(m.group(1)) for m in SPIKE_RE.finditer(text or ""))
+
+
+def spike_no_go(text: str) -> bool:
+    return any(spike_state(m.group(1)) == "no-go" for m in SPIKE_RE.finditer(text or ""))
+
+
+def spike_lines(
+    change_id: str,
+    openspec: Path | None,
+    beads: list[dict[str, Any]],
+    state: str = "open",
+) -> list[str]:
+    """Spike lines in `state` that gate this landing: node beads + design.md."""
+    out: list[str] = []
+    for bead in beads:
+        title = str(bead.get("title") or "")
+        if landing_from_title(title) != change_id and bead.get("id") != change_id:
             continue
-        if "override" in low:
-            continue
-        found = True
-    return found
+        for match in SPIKE_RE.finditer(str(bead.get("description") or "")):
+            if spike_state(match.group(1)) == state:
+                out.append(match.group(1).strip())
+    dest = find_change_dir(openspec, change_id)
+    design = dest / "design.md" if dest else None
+    if design is not None and design.is_file():
+        text = design.read_text(encoding="utf-8")
+        marker = "## Unverified hypotheses"
+        if marker in text:
+            section = text.split(marker, 1)[1].split("\n## ", 1)[0]
+            for line in section.splitlines():
+                if line.startswith("- ") and spike_state(line[2:]) == state:
+                    out.append(line[2:].strip())
+    return unique(out)
+
+
+def open_spike_lines(
+    change_id: str, openspec: Path | None, beads: list[dict[str, Any]]
+) -> list[str]:
+    return spike_lines(change_id, openspec, beads, "open")
 
 
 def _prio(row: dict[str, Any]) -> int:
@@ -1150,11 +1238,16 @@ def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
         nid = str(bead.get("id") or "")
         if not nid or nid in seen:
             continue
-        if not spike_still_open(str(bead.get("description") or "")):
+        desc = str(bead.get("description") or "")
+        if spike_no_go(desc):
+            seen.add(nid)
+            lines.append(f"`{nid}` spike came back no-go. Steer a new decision.")
+            continue
+        if not spike_still_open(desc):
             continue
         seen.add(nid)
         lines.append(
-            f"`{nid}` has an open spike. Spike now, or note a skip. The loop will not land it."
+            f"`{nid}` has an open spike. `/run` spikes it when it comes up; a no-go goes to steer."
         )
 
     ready = data.get("ready_beads") if isinstance(data.get("ready_beads"), list) else []
@@ -1365,6 +1458,8 @@ def card(row: dict[str, Any]) -> str:
         f"eyes {len(eyes)}",
         "└───────────────────────────────────────────────",
     ]
+    for line in row.get("spikes") or []:
+        lines.insert(-1, "│ spike " + str(line))
     if row.get("prepare_before_act"):
         lines.insert(-1, "│ prepare before act: " + ", ".join(row["prepare_before_act"]))
     if row.get("reason"):

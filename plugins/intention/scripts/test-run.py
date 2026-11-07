@@ -194,6 +194,89 @@ def test_ready_is_act() -> None:
         expect(face["focus"] == "add-x", face)
 
 
+def test_ready_with_open_spike_is_spike() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}, {"id": "add-y"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "graph": [
+                    {
+                        "id": "bazaar-n1",
+                        "title": "add-y",
+                        "issue_type": "node",
+                        "description": "- Spike: H3 canvas hash — unverified (low, inferred-from-source)",
+                    }
+                ],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "spike", face)
+        expect(face["focus"] == "add-y", face)
+        expect(face["stop"] is None, face)
+        expect(any("H3" in line for line in face["spikes"]), face)
+        shown = run(["--ready-json", str(fixture)])
+        expect("│ spike H3" in shown.stdout, shown.stdout)
+
+
+def test_design_unverified_is_spike_until_go() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-x")
+        design = change / "design.md"
+        design.write_text(
+            "# design\n\n## Unverified hypotheses\n\n- H1 lib does X — unverified\n",
+            encoding="utf-8",
+        )
+        payload = {
+            "ready": [{"id": "add-x"}],
+            "waiting": [],
+            "needs_advise": [],
+            "ask": [],
+            "fold_legal": [],
+            "beads": [],
+            "send_back": [],
+        }
+        fixture = write_ready(root, payload)
+        face = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(face["next"] == "spike" and face["focus"] == "add-x", face)
+        design.write_text(
+            "# design\n\n## Unverified hypotheses\n\n- H1 lib does X — go\n",
+            encoding="utf-8",
+        )
+        face = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(face["next"] == "act", face)
+
+
+def test_no_go_spike_waits_on_steer_not_act() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}, {"id": "add-y"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "graph": [
+                    {"id": "n1", "title": "add-x", "description": "- Spike: H3 canvas hash — no-go"},
+                ],
+            },
+        )
+        face = json.loads(run(["--ready-json", str(fixture), "--json"]).stdout)
+        expect(face["next"] == "act" and face["focus"] == "add-y", face)
+        expect("add-x" in face["ask"], face)
+        expect("add-x" not in face.get("prepare_before_act", []), face)
+
+
 def test_goal_scope_is_intend() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -1601,6 +1684,9 @@ def main() -> int:
         test_accept_without_reader_is_quiet,
         test_unread_advise_has_no_stage_summary,
         test_wait_eyes_is_stop_eyes,
+        test_ready_with_open_spike_is_spike,
+        test_design_unverified_is_spike_until_go,
+        test_no_go_spike_waits_on_steer_not_act,
         test_roll_eyes_does_not_intend_leftover,
         test_roll_unrelated_ready_moves_with_eyes_listed,
     ]
