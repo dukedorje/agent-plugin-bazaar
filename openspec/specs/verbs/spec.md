@@ -1005,6 +1005,49 @@ SHALL set `next: fold` on the first hit.
   titled `nod-empty-paths: …`
 - WHEN `run.py` observes
 - THEN `next` is not `intend`
+
+### Requirement: run closes a finished epic
+
+On `--until roll` or `--until ask`, an open epic whose every direct
+child bead has status `closed` SHALL appear in `close_epics`. A
+child counts only when its status is `closed`. An epic with no
+children SHALL NOT appear. A non-epic SHALL NOT appear. A nested
+epic SHALL NOT appear until its own children are closed, so a child
+epic is listed before its parent becomes eligible. The conductor
+SHALL run `bd epic close-eligible --reason "all child tasks closed"`
+and SHALL re-observe without counting a wave, before the next stage
+or a halt. A dry-run SHALL print the ids and SHALL NOT close.
+`--no-beads` and `--until fold` SHALL NOT list `close_epics`.
+Listing an epic SHALL NOT change `next`.
+
+#### Scenario: Last closed child makes the epic eligible
+
+- GIVEN epic `bazaar-ep` has children `bazaar-ep.1` and `bazaar-ep.2`, both `closed`
+- AND `--until roll`
+- WHEN `run.py` observes
+- THEN `close_epics` is `["bazaar-ep"]`
+
+#### Scenario: An open child keeps the epic open
+
+- GIVEN epic `bazaar-ep` has one `closed` child and one `open` child
+- WHEN `run.py` observes
+- THEN `close_epics` does not include `bazaar-ep`
+
+#### Scenario: A childless epic stays open
+
+- GIVEN an open epic with no children
+- WHEN `run.py` observes
+- THEN `close_epics` does not include it
+- AND `next` is not `intend`
+
+#### Scenario: A nested epic closes from the inside
+
+- GIVEN epic `bazaar-parent` has one child epic `bazaar-child`
+- AND `bazaar-child` has one `closed` task and is still open
+- WHEN `run.py` observes
+- THEN `close_epics` is `["bazaar-child"]`
+- AND `close_epics` does not include `bazaar-parent`
+
 ### Requirement: until ask is a roll that stops on elicitation
 
 `--until ask` SHALL use the same observe table as `--until roll`.

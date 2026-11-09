@@ -357,6 +357,68 @@ def load_graph() -> list[dict[str, Any]]:
     return [row for row in data if isinstance(row, dict)] if isinstance(data, list) else []
 
 
+def finished_epics(graph: list[dict[str, Any]]) -> list[str]:
+    """Open epics whose direct children are all status closed.
+
+    Same rule as `bd epic close-eligible`: a parent-child edge points
+    from the child at the epic, a child counts only when its status is
+    closed, and an epic with no children stays open.
+    """
+    kids: dict[str, list[dict[str, Any]]] = {}
+    for bead in graph:
+        if not isinstance(bead, dict):
+            continue
+        parent = bead_parent(bead)
+        if parent:
+            kids.setdefault(parent, []).append(bead)
+    found: list[str] = []
+    for bead in graph:
+        if not isinstance(bead, dict):
+            continue
+        kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
+        if kind != "epic":
+            continue
+        if str(bead.get("status") or "open").lower() == "closed":
+            continue
+        nid = str(bead.get("id") or "")
+        children = kids.get(nid) or []
+        if not nid or not children:
+            continue
+        if all(str(child.get("status") or "open").lower() == "closed" for child in children):
+            found.append(nid)
+    return sorted(found)
+
+
+def load_eligible_epic_ids() -> list[str]:
+    """Live board. Empty when bd is missing or the command fails."""
+    try:
+        proc = subprocess.run(
+            ["bd", "epic", "status", "--eligible-only", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return []
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    rows = payload if isinstance(payload, list) else []
+    found: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("eligible_for_close"):
+            continue
+        epic = row.get("epic") if isinstance(row.get("epic"), dict) else {}
+        nid = str(epic.get("id") or "")
+        if nid:
+            found.append(nid)
+    return sorted(found)
+
+
 def bead_parent(bead: dict[str, Any]) -> str | None:
     nid = str(bead.get("id") or "")
     for edge in bead.get("dependencies") or []:
@@ -1460,6 +1522,8 @@ def card(row: dict[str, Any]) -> str:
     ]
     for line in row.get("spikes") or []:
         lines.insert(-1, "│ spike " + str(line))
+    if row.get("close_epics"):
+        lines.insert(-1, "│ close epics " + ", ".join(str(i) for i in row["close_epics"]))
     if row.get("prepare_before_act"):
         lines.insert(-1, "│ prepare before act: " + ", ".join(row["prepare_before_act"]))
     if row.get("reason"):
@@ -1582,6 +1646,19 @@ def main() -> int:
         no_beads=no_beads,
     )
     row = apply_eyes_stop(row, data, find_openspec())
+    if until in WALK and not no_beads:
+        if args.ready_json is None:
+            close_ids = load_eligible_epic_ids()
+        else:
+            raw_graph = data.get("graph")
+            graph = (
+                [b for b in raw_graph if isinstance(b, dict)]
+                if isinstance(raw_graph, list)
+                else []
+            )
+            close_ids = finished_epics(graph)
+        if close_ids:
+            row["close_epics"] = close_ids
     if args.ready_json is None and row.get("stop") and row.get("stop") != "no-ready":
         explained = load_explain()
         if explained:

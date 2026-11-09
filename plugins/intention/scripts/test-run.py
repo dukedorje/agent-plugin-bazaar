@@ -529,6 +529,39 @@ def test_roll_does_not_stop_on_pending() -> None:
         expect("add-y" in face["ask"], face)
 
 
+def graph_bead(
+    nid: str,
+    title: str,
+    *,
+    kind: str = "task",
+    status: str = "open",
+    parent: str | None = None,
+) -> dict:
+    deps = []
+    if parent:
+        deps.append({"issue_id": nid, "depends_on_id": parent, "type": "parent-child"})
+    return {
+        "id": nid,
+        "title": title,
+        "status": status,
+        "issue_type": kind,
+        "dependencies": deps,
+    }
+
+
+def epic_board(*beads: dict) -> dict:
+    return {
+        "ready": [],
+        "waiting": [],
+        "needs_advise": [],
+        "ask": [],
+        "fold_legal": [],
+        "send_back": [],
+        "beads": [],
+        "graph": list(beads),
+    }
+
+
 def test_roll_skips_epic() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -557,6 +590,111 @@ def test_roll_skips_epic() -> None:
         face = json.loads(proc.stdout)
         expect(face["next"] is None, face)
         expect(face["stop"] == "empty", face)
+        expect("close_epics" not in face, face)
+
+
+def test_roll_closes_epic_when_every_child_is_closed() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+                graph_bead("bazaar-ep.2", "two", status="closed", parent="bazaar-ep"),
+            ),
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["close_epics"] == ["bazaar-ep"], face)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+        text = run(["--until", "roll", "--ready-json", str(fixture)], cwd=Path(td))
+        expect("close epics bazaar-ep" in text.stdout, text.stdout)
+
+
+def test_open_child_keeps_epic_open() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+                graph_bead("bazaar-ep.2", "two", status="open", parent="bazaar-ep"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect("close_epics" not in face, face)
+
+
+def test_nested_epic_closes_from_the_inside() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-parent", "outer", kind="epic"),
+                graph_bead("bazaar-child", "inner", kind="epic", parent="bazaar-parent"),
+                graph_bead("bazaar-child.1", "task", status="closed", parent="bazaar-child"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect(face["close_epics"] == ["bazaar-child"], face)
+
+
+def test_close_epics_does_not_replace_next() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        payload = epic_board(
+            graph_bead("bazaar-ep", "household", kind="epic"),
+            graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+        )
+        payload["ready"] = [{"id": "add-x"}]
+        fixture = write_ready(root, payload)
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect(face["focus"] == "add-x", face)
+        expect(face["close_epics"] == ["bazaar-ep"], face)
+
+
+def test_no_beads_and_fold_do_not_list_epics() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = write_ready(
+            root,
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+            ),
+        )
+        for args in (["--no-beads"], ["--until", "fold"]):
+            face = json.loads(
+                run([*args, "--ready-json", str(fixture), "--json"], cwd=root).stdout
+            )
+            expect("close_epics" not in face, face)
+
+
+def test_tombstone_child_is_not_closed() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="tombstone", parent="bazaar-ep"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect("close_epics" not in face, face)
 
 
 def test_roll_intend_orphan_task() -> None:
@@ -1657,6 +1795,12 @@ def main() -> int:
         test_roll_send_back_is_change,
         test_roll_bead_landing_is_change,
         test_roll_skips_epic,
+        test_roll_closes_epic_when_every_child_is_closed,
+        test_open_child_keeps_epic_open,
+        test_nested_epic_closes_from_the_inside,
+        test_close_epics_does_not_replace_next,
+        test_no_beads_and_fold_do_not_list_epics,
+        test_tombstone_child_is_not_closed,
         test_roll_intend_orphan_task,
         test_roll_skips_node_type,
         test_roll_skips_legacy_nod_title,

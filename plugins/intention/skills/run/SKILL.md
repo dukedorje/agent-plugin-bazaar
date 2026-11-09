@@ -115,7 +115,16 @@ boxes → `needs_advise` (re-advise or park), not `change`, not
 unblocked task/feature with no landing (not epic, not beads type
 `node`, not a legacy `nod-` title) → `intend --extract-from`
 that bead. `--until ask` stops first if
-there is an elicitation. Do not intend epics. Do not `act` an
+there is an elicitation. Do not intend epics. When every direct
+child of an epic is `closed`, the card lists that epic in
+`close_epics` (child epics before a parent, because the parent is
+not eligible until the child epic itself is closed). Before any
+halt or next stage, run
+`bd epic close-eligible --reason "all child tasks closed"` and
+re-observe. Do not count that as a wave. A dry-run prints the ids
+and does not close. An epic with no children stays open.
+`--no-beads` and `--tidy` do not close epics. If an id is still
+listed after that close, halt and print the error. Do not `act` an
 architecture / instrument change that still `needs_advise`. Do not
 `fold` a `needs_advise` id. `--until fold` with nothing fold-legal
 is `stop: empty`.
@@ -193,6 +202,12 @@ punt = []
 while waves < max_waves:
   card = run.py [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
+  if card.close_epics and not dry_run:
+    if any id was already closed this campaign: halt "epic close did not stick"
+    bd epic close-eligible --reason "all child tasks closed"
+    if that close fails: halt and print the error
+    remember those ids
+    continue                          # re-observe; this is not a wave
   # SEND-BACK / ACCEPTED on the card is the between-stages summary.
   # Print it as written. After an act wave, one line: close reason or red.
   # Before activation stops: apply an existing bounded campaign grant via

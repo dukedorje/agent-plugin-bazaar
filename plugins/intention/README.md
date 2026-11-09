@@ -94,6 +94,9 @@ instrument also gets **advise** unless declined.
 ## Run campaign
 
 `run.py` observes; the conductor follows one sibling skill per wave.
+When every direct child of an epic is closed, the conductor closes
+that epic (`bd epic close-eligible`) and re-observes before the next
+stage or a halt. An epic with no children stays open.
 Bare `/run` walks away (roll). `--wait` is desk mode. `--tidy` folds.
 `/status` is the morning pile. `--until *` / `--interrupt` / `--only fold`
 are one-release aliases.

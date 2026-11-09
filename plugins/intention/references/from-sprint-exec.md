@@ -83,7 +83,10 @@ Beads and the change directory are the record. No new store.
 - Blocker: leave the bead open, label it blocked, and note the type and
   detail. It then drops out of `bd ready`. Surface the blocker. Do not
   invent a workaround and close the bead.
-- An epic is done when its child task beads are closed.
+- An epic is done when every direct child bead is `closed`. A roll
+  or ask run then runs `bd epic close-eligible` and re-observes. An
+  epic with no children stays open. `--tidy` and `--no-beads` do not
+  close epics.
 - Do not also write a story file, a Dev Agent Record, or
   `phase-state.json`.
 
