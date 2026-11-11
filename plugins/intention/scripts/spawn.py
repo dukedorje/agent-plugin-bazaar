@@ -139,21 +139,27 @@ def is_advise(packet: dict) -> bool:
     return writes_review(packet_paths(packet))
 
 
-def codex_network(spec: dict) -> bool:
-    """Implementation writes need outbound network and localhost binds.
+def needs_dev_network(spec: dict, packet: dict | None = None) -> bool:
+    """Act writes reach local dev services. Review and consult stay offline.
 
-    Codex `workspace-write` blocks both unless
-    `sandbox_workspace_write.network_access` is set. Consult stays
-    `read-only`. Advise writes a review file and stays offline.
+    Codex `workspace-write` blocks sockets, including Postgres on localhost.
     """
-    sandbox = str(spec.get("sandbox") or sandbox_of(spec))
-    if sandbox != "workspace-write":
+    if str(spec.get("sandbox") or "") not in {"", "workspace-write"}:
+        return False
+    if packet is not None and (is_advise(packet) or is_consult(packet)):
         return False
     paths = [str(p) for p in (spec.get("paths") or [])]
+    if packet is not None and not paths:
+        paths = packet_paths(packet)
     if writes_review(paths):
         return False
     perm = str(spec.get("permission") or "")
-    return perm in ("", "write")
+    if packet is not None and not perm:
+        perm = permission_of(packet)
+    if perm != "write":
+        return False
+    sandbox = str(spec.get("sandbox") or sandbox_of(spec, packet))
+    return sandbox == "workspace-write"
 
 
 def sandbox_of(spec: dict, packet: dict | None = None) -> str:
@@ -310,6 +316,17 @@ def cmd_stage(args: argparse.Namespace) -> int:
         "argv": [],
     }
     spec["sandbox"] = sandbox_of(spec, packet)
+    if "stage" in packet:
+        from pi_tmux import validate_stage
+
+        try:
+            validate_stage(packet["stage"])
+        except ValueError as exc:
+            # Reject the entire src/store list; never turn malformed stage into absence.
+            spec["stage_error"] = str(exc)
+        else:
+            spec["stage"] = packet["stage"]
+    spec["network"] = needs_dev_network(spec, packet)
     assignee = packet.get("assignee") if isinstance(packet.get("assignee"), dict) else {}
     if assignee.get("effort"):
         spec["effort"] = assignee["effort"]
@@ -429,8 +446,17 @@ def codex_argv(spec: dict, prompt_file: Path) -> list[str]:
             sandbox,
         ]
     )
-    if codex_network(spec):
-        argv.extend(["-c", "sandbox_workspace_write.network_access=true"])
+    # Act only. A missing key on an older spec is recomputed from permission.
+    allow_net = spec.get("network")
+    if allow_net is None:
+        allow_net = needs_dev_network(spec)
+    if allow_net and sandbox == "workspace-write":
+        argv.extend(
+            [
+                "-c",
+                "sandbox_workspace_write.network_access=true",
+            ]
+        )
     argv.extend(
         [
             "-C",
@@ -551,6 +577,94 @@ def run_openai(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -
     atomic_write(face_path, json.dumps(face, indent=2) + "\n")
     print(json.dumps(face, indent=2))
     return 0
+
+
+def _write_pi_face(face: dict[str, Any], face_path: Path, raw_path: Path, raw: str) -> int:
+    atomic_write(raw_path, raw, allow_empty=True)
+    atomic_write(face_path, json.dumps(face, indent=2) + "\n")
+    print(json.dumps(face, indent=2))
+    return 0
+
+
+def run_pi(spec: dict, prompt_file: Path, raw_path: Path, face_path: Path) -> int:
+    """One turn on the shared Pi tmux. Stdout is face.json. Partials are stream.log.
+
+    This is not a codex exec facade. Codex is a process Intention waits out.
+    Pi stays up, so a timeout records stall and leaves the pane alone.
+    """
+    import pi_tmux  # noqa: WPS433
+
+    if pi_tmux.STAGE_RUNNER is None:
+        pi_tmux.STAGE_RUNNER = pi_tmux.stage_runner
+    dest = prompt_file.parent
+    stream_path = dest / "stream.log"
+    prompt = read_prompt(prompt_file)
+    lock_fd = pi_tmux.try_lock(pi_tmux.default_lock_path())
+    if lock_fd is None:
+        face = infra_face(
+            "Pi session is already in a turn. No keys were sent.",
+            "pi-session-locked",
+            str(raw_path),
+        )
+        return _write_pi_face(face, face_path, raw_path, "locked\n")
+    try:
+        try:
+            session = pi_tmux.session_from_env()
+        except RuntimeError as exc:
+            face = infra_face(str(exc), "pi-not-configured", str(raw_path))
+            return _write_pi_face(face, face_path, raw_path, str(exc) + "\n")
+        timeout = spec.get("timeout_sec")
+        try:
+            timeout_sec = float(timeout) if timeout is not None else 600.0
+        except (TypeError, ValueError):
+            timeout_sec = 600.0
+        turn = pi_tmux.run_turn(
+            session,
+            prompt,
+            timeout_sec=timeout_sec,
+            stream_path=stream_path,
+            stage=spec.get("stage", pi_tmux.NO_STAGE),
+            stage_error=spec.get("stage_error"),
+        )
+    finally:
+        pi_tmux.unlock(lock_fd)
+
+    last = dest / "last.md"
+    if turn.answer:
+        atomic_write(last, turn.answer + "\n")
+    session_name = turn.session or "pi"
+    if turn.status == "pass" and turn.answer.strip():
+        face = {
+            "disposition": "pass",
+            "summary": turn.answer.strip()[:500],
+            "verify_command": f"pi-tmux:{session_name}",
+            "verify_exit": 0,
+            "commit_sha": None,
+            "changed_files": [],
+            "blockers": [],
+            "raw_ref": str(raw_path),
+            "stream_ref": str(stream_path),
+        }
+        routing.record_execution(spec, "pi", "success")
+        return _write_pi_face(face, face_path, raw_path, turn.raw)
+    blockers = {
+        "stall": "stall",
+        "not-idle": "pi-session-not-idle",
+        "stage-failed": "pi-stage-failed",
+        "error": "pi-session-unreachable",
+        "pass": "pi-empty",
+    }
+    blocker = blockers.get(turn.status, "pi-session-unreachable")
+    if blocker == "stall":
+        routing.record_execution(spec, "pi", "stall")
+    face = infra_face(
+        turn.detail or "Pi turn failed.",
+        blocker,
+        str(raw_path),
+    )
+    face["stream_ref"] = str(stream_path)
+    face["verify_command"] = f"pi-tmux:{session_name}"
+    return _write_pi_face(face, face_path, raw_path, turn.raw)
 
 
 def read_prompt(path: Path) -> str:
@@ -775,6 +889,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         argv = grok_argv(spec, prompt_file)
     if adapter == "openai":
         return run_openai(spec, prompt_file, raw_path, face_path)
+    if adapter == "pi":
+        return run_pi(spec, prompt_file, raw_path, face_path)
     if adapter == "none" and not argv:
         face = infra_face(
             "No adapter configured. Spec is ready for a packet-only host.",
@@ -786,7 +902,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(json.dumps(face, indent=2))
         return 0
 
-    if adapter not in {"exec", "claude", "codex", "grok", "openai", "none"}:
+    if adapter not in {"exec", "claude", "codex", "grok", "openai", "pi", "none"}:
         print(f"unknown adapter: {adapter}", file=sys.stderr)
         return 2
     if not argv:

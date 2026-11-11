@@ -23,35 +23,55 @@ Look in the goal, `docs/research/*/synthesis.md`,
 `openspec/changes/*/research/*/synthesis.md`, and any decision the
 node cites. Do not look in `.omc/`.
 
-## When to offer spike
+## When spike runs
 
-Offer it. Do not start it unless they choose **spike now**.
+Spike is a stage, not a human gate. Do not menu "now or before act".
 
-| Moment | Who |
-|---|---|
-| Intend, while the decision briefing is written | `intend` |
-| The next steer menu, when a spike line is still open | `steer` |
-| `design.md` names a decision that cites one | `change` |
-| Advise has a verdict and the design list is still open | `advise` |
-| Before `take`, if the node would land the recipe | `act` |
+**Default: just in time.** The spike runs when its node is next.
+`run` sees `next: spike` on the card and runs the morphist `spike`
+skill on that node. `act` invoked directly on a node with an open line
+runs the spike first. Neither asks.
 
-Three choices, recommended first:
+**Exception: spike now.** When the verdict would change the *shape* of
+the DAG (which nodes exist, their order, or an architecture fork), not
+only one node's recipe, `intend` runs the spike before it writes the
+DAG. It says so in one line. The human can also say "spike now" at any
+point. That is the only override, and it is theirs to volunteer.
 
-1. **Spike now.** Hand off to the morphist `spike` skill. It blocks the landing until `docs/spikes/<id>/finding.md` says `go`.
-2. **Spike before act.** Planning continues. `act` stops on this node until a `go` or a skip.
-3. **Skip.** They accept the risk. `bd note` on the decision, and the spike line becomes `skipped`.
+**Skip** is never menued. If the human says to skip, `bd note` the
+decision and set the line to `skipped`.
 
-On **go**, the synthesis sets `spike-artifact`, `confidence: high`, and `verification: empirically-tested`. The spike line becomes `go`. On **no-go**, leave the decision open (`bd update {id} --status open` plus a note that names the finding) and do not land the recipe.
+| Moment | Who | Does |
+|---|---|---|
+| Intend | `intend` | Records the line. Runs it now only if shape-changing |
+| `design.md` names a decision that cites one | `change` | Lists it under `## Unverified hypotheses` |
+| Advise verdict, list still open | `advise` | Leaves it; the spike runs before act |
+| Card says `next: spike` | `run` | Runs the spike, then re-observes |
+| Before `take` on a node with an open line | `act` | Runs the spike, then continues on `go` |
 
-`act` does not run the spike. It refuses the launch while a line is still open. `--go` does not mark that line skipped.
+Run it non-interactively: no `Proceed?` confirm. Draft the minimal
+test from the claim and the node; time box 60 min. Out dir is
+`docs/spikes/<id>/`.
+
+On **go**, the synthesis sets `spike-artifact`, `confidence: high`, and `verification: empirically-tested`. The spike line becomes `go` (bead description and `design.md` bullet). Commit the finding. The campaign keeps going: re-observe and the node is `act`.
+
+On **no-go** or **inconclusive**, that is a new decision, not a retry
+loop. Leave the decision open (`bd update {id} --status open` plus a
+note that names the finding), put `ASK: spike <id> no-go — re-steer`
+as an owed box on the change's `tasks.md`, and do not land the recipe.
+The campaign skips that node and keeps unrelated work moving; the
+ASK face sends the human to `steer` (or `advise` for a second read of
+the finding). `--wait` halts there.
+
+`--go` does not mark a line skipped.
 
 ### Residue
 
 Beads and the change directory are the record. No new store.
 
-- On the node description, one line: `- Spike: <id> <claim> — unverified (<confidence>, <verification>)`. Later values are `go` or `skipped`.
+- On the node description, one line: `- Spike: <id> <claim> — unverified (<confidence>, <verification>)`. Later values are `go`, `no-go`, or `skipped`. `no-go` (or `inconclusive`) keeps the node out of act until steer re-decides.
 - In `design.md`, when architecture cites one: `## Unverified hypotheses`, one bullet per hypothesis (id, claim, confidence, verification, synthesis path).
-- `map` reprints open lines in the decision briefing. `go` and `skipped` stay off that briefing.
+- `map` reprints open lines in the decision briefing. `no-go` lines stay on it as a steer fork. `go` and `skipped` stay off.
 
 ## Beads is the only status record
 
@@ -63,7 +83,10 @@ Beads and the change directory are the record. No new store.
 - Blocker: leave the bead open, label it blocked, and note the type and
   detail. It then drops out of `bd ready`. Surface the blocker. Do not
   invent a workaround and close the bead.
-- An epic is done when its child task beads are closed.
+- An epic is done when every direct child bead is `closed`. A roll
+  or ask run then runs `bd epic close-eligible` and re-observes. An
+  epic with no children stays open. `--tidy` and `--no-beads` do not
+  close epics.
 - Do not also write a story file, a Dev Agent Record, or
   `phase-state.json`.
 

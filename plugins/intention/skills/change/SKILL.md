@@ -64,12 +64,12 @@ use the procedure below after reconciling the inputs.
 9. **Spike.** Load `../../references/from-sprint-exec.md`. If
    `design.md` cites an unverified hypothesis, add
    `## Unverified hypotheses` with one bullet each (id, claim,
-   confidence, verification, synthesis path). Report that spike is an
-   option. Do not start it.
+   confidence, verification, synthesis path). `run` spikes it before
+   act. Do not start it here and do not ask when.
 10. **Stop.** Do not implement unless ACTIVE BUILD (or vibe/brief write
    already granted). Do not fold. Handoff: `act` after activation,
-   `fold` after act has landed. An open spike list is a steer fork
-   before that act.
+   `fold` after act has landed. An open spike list runs as a spike
+   stage before that act; it is not a steer fork.
 
 Packets for this change set `capability` (spec directory name) and
 `change_id`.

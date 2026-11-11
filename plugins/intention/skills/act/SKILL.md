@@ -39,9 +39,12 @@ The packet is the only interface. Schema:
 3. **Spike gate.** Load `../../references/from-sprint-exec.md`. If
    this node still has an open unverified hypothesis (a `- Spike:`
    line that is not `go` or `skipped`, or `design.md` `## Unverified
-   hypotheses`), do not take and do not spawn. Spike is the option:
-   run the morphist `spike` skill, or record a skip as a `bd note`
-   and set the line to `skipped`. A `go` finding clears the gate.
+   hypotheses`), do not take yet. Run the morphist `spike` skill on
+   it first (non-interactive, rules in that reference). Do not ask.
+   **go** → set the line to `go`, commit the finding, continue to
+   Take. **no-go / inconclusive** → do not take; reopen the decision,
+   add the `ASK: spike <id> no-go — re-steer` box, stop, hand off
+   `steer`. A line the human already `skipped` clears the gate.
 4. **Take.** `conductor.py take --campaign <campaign_id> --node <id>
    --holder <route-id>`.
    That is the mutex: `in_progress` + lease + write-set. A second

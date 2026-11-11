@@ -80,13 +80,25 @@ accept for a revised contract.
 
 ## Attention
 
-When the card says `next` is a stage (`intend`, `change`, `advise`,
-`act`, `fold`), **Read** that stage's SKILL.md from the **same
+When the card says `next` is a stage (`intend`, `change`, `spike`,
+`advise`, `act`, `fold`), **Read** that stage's SKILL.md from the **same
 skills tree as this file** (sibling directory, e.g.
 `../change/SKILL.md`), not from `plugins/intention/skills/` in the
 current repo. Follow that skill for one wave only when the pick is
 legal for that focus. Re-read this skill and re-run the script at
 the next wave.
+
+`next: spike` means a ready node still bets on an unverified claim
+(the card prints each `spike` line). It is machine work, not a stop.
+Run the morphist `spike` skill (`morphist-tools:spike`, or spawn it in
+the background with the Agent-Callable Interface, `CALLER: run`) on
+that focus, non-interactive, per `../../references/from-sprint-exec.md`.
+**go** → set the line to `go`, commit the finding, re-observe; the node
+comes back as `act`. **no-go / inconclusive** → reopen the decision,
+add the `ASK: spike <id> no-go — re-steer` owed box, re-observe. The
+card drops that node into `ask` and keeps walking other work; the
+human answers with `steer` (or `advise` on the finding). Never ask
+the human whether to spike.
 
 Decision table, not a preference order: a verb-led kebab
 (`add-` / `update-` / `remove-` / `refactor-` + rest) is a
@@ -106,7 +118,16 @@ boxes → `needs_advise` (re-advise or park), not `change`, not
 unblocked task/feature with no landing (not epic, not beads type
 `node`, not a legacy `nod-` title) → `intend --extract-from`
 that bead. `--until ask` stops first if
-there is an elicitation. Do not intend epics. Do not `act` an
+there is an elicitation. Do not intend epics. When every direct
+child of an epic is `closed`, the card lists that epic in
+`close_epics` (child epics before a parent, because the parent is
+not eligible until the child epic itself is closed). Before any
+halt or next stage, run
+`bd epic close-eligible --reason "all child tasks closed"` and
+re-observe. Do not count that as a wave. A dry-run prints the ids
+and does not close. An epic with no children stays open.
+`--no-beads` and `--tidy` do not close epics. If an id is still
+listed after that close, halt and print the error. Do not `act` an
 architecture / instrument change that still `needs_advise`. Do not
 `fold` a `needs_advise` id. `--until fold` with nothing fold-legal
 is `stop: empty`.
@@ -144,8 +165,28 @@ Split the refusal:
 
 Stop only when the new card has `stop` set, or `--max-waves` hits.
 `stop: eyes` is a halt: Duke's look, command in Next. Do not
-paraphrase it into `stop: empty`. Refusing fold must not end the
-campaign. Same-family advise must not end the campaign.
+paraphrase it into `stop: empty`. When `stop` is set and a bead
+stayed open, the card prints `UNBLOCK`: one line each for the human
+action (steer, look, activate, steer a no-go spike, run or close
+the blocker). An external dependency names the project it lives in.
+If priority order and dependency order disagree, one line names the
+ready bead to do first. Print that block as the card prints it.
+Do not drop it, and do not turn it into another verb.
+
+When the card prints `SEND-BACK` or `ACCEPTED`, that block is the
+summary between stages. Print it as the card prints it. Do not
+paraphrase a send-back into "advise sent it back." `SEND-BACK` names
+the reader and the owed particulars, or the review file when the
+body has none. A send-back with no open owed boxes says the next
+step is another read, not an amend. `ACCEPTED` is one line into
+`act` when the last counted verdict is accept. No summary for fold,
+for advise that has not been read, or for a plain continue.
+Stale-base stays on the reason line. EYES stays `YOUR EYES`.
+
+After an act wave returns, print one line before the next card:
+the close reason, or the red blocker. The script does not see the
+wave result, so that line is yours.
+Refusing fold must not end the campaign. Same-family advise must not end the campaign.
 `stop: empty` is not stuck while `needs_advise` remains and an
 other-family route exists. `next: fold` is not a halt. Persist
 `act` on **current HEAD** by default; do not skip fold because the branch is
@@ -167,6 +208,14 @@ punt = []
 while waves < max_waves:
   card = run.py [<scope>] [--wait] [--tidy] [--no-fold] [--no-beads] [--skip …] [--punt …]
   print card
+  if card.close_epics and not dry_run:
+    if any id was already closed this campaign: halt "epic close did not stick"
+    bd epic close-eligible --reason "all child tasks closed"
+    if that close fails: halt and print the error
+    remember those ids
+    continue                          # re-observe; this is not a wave
+  # SEND-BACK / ACCEPTED on the card is the between-stages summary.
+  # Print it as written. After an act wave, one line: close reason or red.
   # Before activation stops: apply an existing bounded campaign grant via
   # change to eligible PENDING nodes, respecting explicit policy limits;
   # re-observe if anything changed. Never infer a grant from the card.
@@ -191,8 +240,14 @@ while waves < max_waves:
   if card.next is change and no-op:     # send-back, no open boxes
     skip += [focus]
     continue
-  if by_me_ask and card.next is act:    # “run it by me”
+  if by_me_ask and card.next in {act, spike}:  # “run it by me”
     halt                                # present map; do not act
+  if card.next is spike:                # unverified bet on a ready node
+    run morphist spike on focus (non-interactive, no ask)
+    go      -> line = go, commit finding
+    no-go   -> reopen decision, owed "ASK: spike <id> no-go — re-steer"
+    waves += 1
+    continue                            # re-observe: act, or next node
   if card.next is act:
     prepare each dispatch candidate via change/brief (preparation.md)
     if contract/activation/review/dependencies changed: continue  # re-observe
@@ -203,7 +258,8 @@ while waves < max_waves:
     wave = intersect(wave, prepared_authorized_in_scope_ids)
     # Never take unrelated or deferred ids returned by the global selector.
     if len(wave) >= 2:
-      drop nodes with an open spike line (act spike gate); do not take those
+      # card never says act while a ready node has an open spike line;
+      # if one slipped in, drop it here and let the next card spike it
       take each wave node --campaign campaign_id
       try:
         workflow name=run-wave args.nodes=[{id, packet}]
@@ -252,9 +308,9 @@ This session may have `spawn_subagent` and `workflow` (Grok). Python
 `spawn.py` cannot call them.
 
 - **`act` wave, two or more wholly disjoint packets:**
-  `conductor.py wave --campaign <campaign_id>`. Drop any node with an
-  open spike line (the `act` spike gate) before `take --campaign
-  <campaign_id>`. Then
+  `conductor.py wave --campaign <campaign_id>`. A node with an open
+  spike line never reaches a wave (the card says `next: spike` first);
+  drop one if it does. `take --campaign <campaign_id>`. Then
   `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
   also `.grok/workflows/run-wave.rhai` in this clone). Children stay
   on HEAD. Do not isolate (worktrees PARKED). Conductor persists
@@ -273,7 +329,7 @@ replace this whole loop with Rhai — the workflow is one act fan-out.
 
 | Token | Means |
 |---|---|
-| (none) | **default = roll.** fold → stale-base re-paste → send-back amend → advise → act → beads; park ASK/EYES; see `/status` for the pile; stop when empty |
+| (none) | **default = roll.** fold → stale-base re-paste → send-back amend → advise → spike → act → beads; park ASK/EYES; see `/status` for the pile; stop when empty |
 | `--wait` | same walk; stop at the first elicitation (ASK, PENDING, EYES). Desk mode. |
 | `--tidy` | fold-legal only |
 | `--no-fold` | skip fold picks |

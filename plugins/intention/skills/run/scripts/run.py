@@ -23,10 +23,11 @@ from typing import Any
 _STATUS_SCRIPTS = Path(__file__).resolve().parents[2] / "status" / "scripts"
 if str(_STATUS_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_STATUS_SCRIPTS))
-from advise_status import last_advise_verdict  # noqa: E402
+from advise_status import last_advise_verdict, latest_advise_review  # noqa: E402
+from status import describe_blocker  # noqa: E402
 
 STOPS = ("empty", "advise", "activation", "ask", "eyes", "fold", "roll")
-STAGES = ("intend", "change", "advise", "act", "fold")
+STAGES = ("intend", "change", "spike", "advise", "act", "fold")
 CHANGE_ID_RE = re.compile(
     r"^(add|update|remove|refactor)-[a-z0-9]+(?:-[a-z0-9]+)*$"
 )
@@ -34,6 +35,7 @@ NODE_TYPES = frozenset({"node", "work-node"})
 BANNER_RE = re.compile(r"^>\s*\*\*(PENDING|ACTIVE BUILD|PARKED)\b")
 CHECKBOX_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
 EYES_RE = re.compile(r"\b(EYES|by-eye|human-verify|human verify)\b", re.I)
+SPIKE_RE = re.compile(r"(?im)^\s*-\s*Spike:\s*(.+?)\s*$")
 NEXT_CMD_RE = re.compile(r"Next:\s*(.+)$", re.I)
 WALK = frozenset({"roll", "ask"})
 
@@ -355,6 +357,68 @@ def load_graph() -> list[dict[str, Any]]:
     return [row for row in data if isinstance(row, dict)] if isinstance(data, list) else []
 
 
+def finished_epics(graph: list[dict[str, Any]]) -> list[str]:
+    """Open epics whose direct children are all status closed.
+
+    Same rule as `bd epic close-eligible`: a parent-child edge points
+    from the child at the epic, a child counts only when its status is
+    closed, and an epic with no children stays open.
+    """
+    kids: dict[str, list[dict[str, Any]]] = {}
+    for bead in graph:
+        if not isinstance(bead, dict):
+            continue
+        parent = bead_parent(bead)
+        if parent:
+            kids.setdefault(parent, []).append(bead)
+    found: list[str] = []
+    for bead in graph:
+        if not isinstance(bead, dict):
+            continue
+        kind = str(bead.get("issue_type") or bead.get("type") or "").lower()
+        if kind != "epic":
+            continue
+        if str(bead.get("status") or "open").lower() == "closed":
+            continue
+        nid = str(bead.get("id") or "")
+        children = kids.get(nid) or []
+        if not nid or not children:
+            continue
+        if all(str(child.get("status") or "open").lower() == "closed" for child in children):
+            found.append(nid)
+    return sorted(found)
+
+
+def load_eligible_epic_ids() -> list[str]:
+    """Live board. Empty when bd is missing or the command fails."""
+    try:
+        proc = subprocess.run(
+            ["bd", "epic", "status", "--eligible-only", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return []
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return []
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return []
+    rows = payload if isinstance(payload, list) else []
+    found: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("eligible_for_close"):
+            continue
+        epic = row.get("epic") if isinstance(row.get("epic"), dict) else {}
+        nid = str(epic.get("id") or "")
+        if nid:
+            found.append(nid)
+    return sorted(found)
+
+
 def bead_parent(bead: dict[str, Any]) -> str | None:
     nid = str(bead.get("id") or "")
     for edge in bead.get("dependencies") or []:
@@ -638,6 +702,11 @@ def decide(
     # A stale base is not that skip. It is change, in this same run.
     pick_advise = without(needs_advise, punt_set)
     pick_ready = without(ready, blocked)
+    # A no-go spike is a new decision: the node waits on steer, not act.
+    no_go = [i for i in pick_ready if spike_lines(i, openspec, graph(), "no-go")]
+    if no_go:
+        pick_ready = without(pick_ready, set(no_go))
+        asks = unique(asks + no_go)
     stale = [] if no_fold else stale_base_ids(openspec, pick_fold)
     pick_fold = without(pick_fold, set(stale))
 
@@ -658,6 +727,7 @@ def decide(
                 "stop": None,
                 "next": "change",
                 "focus": pick_send[0],
+                "reason": "send-back",
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -678,6 +748,10 @@ def decide(
                 "ask": asks,
             }
         if pick_ready:
+            for rid in pick_ready:
+                lines = open_spike_lines(rid, openspec, graph())
+                if lines:
+                    return spike_row(rid, lines, until, ready, waiting, needs_advise, asks)
             return {
                 "stop": None,
                 "next": "act",
@@ -789,6 +863,7 @@ def decide(
                 "stop": None,
                 "next": "change",
                 "focus": scope,
+                "reason": "send-back",
                 "until": until,
                 "workers_launched": 0,
                 "ready": ready,
@@ -817,6 +892,10 @@ def decide(
     if until == "advise":
         return face("empty", scope, until, ready, waiting, needs_advise, asks)
     if ready_ids:
+        for rid in ready_ids:
+            lines = open_spike_lines(rid, openspec, graph())
+            if lines:
+                return spike_row(rid, lines, until, ready, waiting, needs_advise, asks)
         return {
             "stop": None,
             "next": "act",
@@ -830,6 +909,30 @@ def decide(
             "ask": asks,
         }
     return face("empty", scope, until, ready, waiting, needs_advise, asks)
+
+
+def spike_row(
+    focus: str,
+    lines: list[str],
+    until: str,
+    ready: list[str],
+    waiting: list[str],
+    needs_advise: list[str],
+    asks: list[str],
+) -> dict[str, Any]:
+    """A ready landing still bets on an unverified claim. Spike is the stage."""
+    return {
+        "stop": None,
+        "next": "spike",
+        "focus": focus,
+        "spikes": lines,
+        "until": until,
+        "workers_launched": 0,
+        "ready": ready,
+        "waiting": waiting,
+        "needs_advise": needs_advise,
+        "ask": asks,
+    }
 
 
 def fold_row(
@@ -970,6 +1073,445 @@ def apply_eyes_stop(
     return row
 
 
+NO_GO_RE = re.compile(r"\b(no-go|no go|nogo|inconclusive)\s*\W*$")
+
+
+def spike_state(body: str) -> str | None:
+    """open | no-go | None (go, skipped, override, or empty)."""
+    low = body.strip().lower().replace("—", "-").replace("–", "-")
+    if not low:
+        return None
+    if NO_GO_RE.search(low) or low.startswith(("no-go", "inconclusive")):
+        return "no-go"
+    tail = low.split("-")[-1].strip()
+    if tail in {"go", "skipped"} or low.startswith(("go", "skipped")):
+        return None
+    if "override" in low:
+        return None
+    return "open"
+
+
+def spike_body_open(body: str) -> bool:
+    return spike_state(body) == "open"
+
+
+def spike_still_open(text: str) -> bool:
+    return any(spike_body_open(m.group(1)) for m in SPIKE_RE.finditer(text or ""))
+
+
+def spike_no_go(text: str) -> bool:
+    return any(spike_state(m.group(1)) == "no-go" for m in SPIKE_RE.finditer(text or ""))
+
+
+def spike_lines(
+    change_id: str,
+    openspec: Path | None,
+    beads: list[dict[str, Any]],
+    state: str = "open",
+) -> list[str]:
+    """Spike lines in `state` that gate this landing: node beads + design.md."""
+    out: list[str] = []
+    for bead in beads:
+        title = str(bead.get("title") or "")
+        if landing_from_title(title) != change_id and bead.get("id") != change_id:
+            continue
+        for match in SPIKE_RE.finditer(str(bead.get("description") or "")):
+            if spike_state(match.group(1)) == state:
+                out.append(match.group(1).strip())
+    dest = find_change_dir(openspec, change_id)
+    design = dest / "design.md" if dest else None
+    if design is not None and design.is_file():
+        text = design.read_text(encoding="utf-8")
+        marker = "## Unverified hypotheses"
+        if marker in text:
+            section = text.split(marker, 1)[1].split("\n## ", 1)[0]
+            for line in section.splitlines():
+                if line.startswith("- ") and spike_state(line[2:]) == state:
+                    out.append(line[2:].strip())
+    return unique(out)
+
+
+def open_spike_lines(
+    change_id: str, openspec: Path | None, beads: list[dict[str, Any]]
+) -> list[str]:
+    return spike_lines(change_id, openspec, beads, "open")
+
+
+def _prio(row: dict[str, Any]) -> int:
+    try:
+        return int(row.get("priority"))
+    except (TypeError, ValueError):
+        return 99
+
+
+def _join_and(parts: list[str]) -> str:
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return ", ".join(parts[:-1]) + " and " + parts[-1]
+
+
+def _blocker_bits(item: object) -> str:
+    info = describe_blocker(item)
+    if info["gate"] == "human":
+        return f"human gate `{info['id']}`"
+    if info["gate"]:
+        return f"{info['gate']} gate `{info['id']}`"
+    if info["external"]:
+        where = str(info["source"] or "another project")
+        if info["where"]:
+            where = f"{where} at {info['where']}"
+        state = str(info["status"] or "not closed")
+        return f"`{info['id']}` in {where} ({state})"
+    state = str(info["status"] or "open")
+    where = str(info["source"] or "this repo")
+    return f"`{info['id']}` ({state}, {where})"
+
+
+def _do_bits(items: list[object]) -> str:
+    infos = [describe_blocker(item) for item in items]
+    bits: list[str] = []
+    externals = [info for info in infos if info["external"]]
+    gates = [info for info in infos if info["gate"]]
+    local = [info for info in infos if not info["external"] and not info["gate"]]
+    if externals:
+        names = _join_and([str(info["source"] or "that project") for info in externals])
+        bits.append(f"fix or close the bead in {names}")
+    if any(info["gate"] == "human" for info in gates):
+        bits.append("close the human gate")
+    if any(info["gate"] in {"gh:run", "gh:pr", "timer", "bead"} for info in gates):
+        bits.append("let the gate finish, or resolve it")
+    if local:
+        names = ", ".join(f"`{info['id']}`" for info in local[:3])
+        bits.append(f"run or close {names}")
+    if not bits:
+        return "See `status`."
+    return "Do: " + "; ".join(bits) + "."
+
+
+def _lead(row: dict[str, Any]) -> str | None:
+    stop = str(row.get("stop") or "")
+    focus = row.get("focus") or "that bead"
+    leads = {
+        "ask": f"`{focus}` is waiting on you. Run `steer`. The loop will not decide it.",
+        "activation": (
+            f"`{focus}` is PENDING. Activate it (`steer`, or the campaign grant) "
+            "before the loop will build it."
+        ),
+        "eyes": f"`{focus}` needs your eyes. Look, then check the box. The loop will not.",
+        "pause-before": (
+            f"Paused before `{focus}`. Drop `--pause-before` when you want the loop to take it."
+        ),
+        "owed-beads": f"`{focus}` still has open beads. Run or close them before fold.",
+        "skipped": f"`{focus}` is skipped. Drop the scope to walk other work.",
+        "scope-ambiguous": f"`{focus}` matches more than one bead. Name the child.",
+        "scope-unresolved": (
+            f"`{focus}` has no change landing. `map` it, or name a child change-id."
+        ),
+    }
+    return leads.get(stop)
+
+
+def _order_note(ready: list[dict[str, Any]], blocked: list[dict[str, Any]]) -> str | None:
+    if len(ready) < 2 or not blocked:
+        return None
+    unblocks: dict[str, list[str]] = {}
+    for issue in blocked:
+        nid = str(issue.get("id") or "")
+        raw = issue.get("blocked_by") or []
+        if not isinstance(raw, list):
+            raw = [raw]
+        for item in raw:
+            info = describe_blocker(item)
+            blocker_id = str(info["raw_id"] or info["id"] or "")
+            if blocker_id and nid:
+                unblocks.setdefault(blocker_id, []).append(nid)
+        for item in issue.get("gated_by") or []:
+            info = describe_blocker(item)
+            blocker_id = str(info["raw_id"] or info["id"] or "")
+            if blocker_id and nid:
+                unblocks.setdefault(blocker_id, []).append(nid)
+    if not unblocks:
+        return None
+
+    def dep_key(bead: dict[str, Any]) -> tuple:
+        count = len(unblocks.get(str(bead.get("id") or ""), []))
+        return (-count, _prio(bead), str(bead.get("id") or ""))
+
+    by_priority = sorted(ready, key=lambda bead: (_prio(bead), str(bead.get("id") or "")))
+    by_dependency = sorted(ready, key=dep_key)
+    first_pri = by_priority[0]
+    first_dep = by_dependency[0]
+    if str(first_pri.get("id") or "") == str(first_dep.get("id") or ""):
+        return None
+    unlocked = unblocks.get(str(first_dep.get("id") or ""), [])
+    if not unlocked:
+        return None
+    names = ", ".join(f"`{nid}`" for nid in unlocked[:4])
+    if _prio(first_dep) == _prio(first_pri):
+        why = "Same priority; the id sort would do the other one first."
+    else:
+        why = "Priority would leave that chain waiting."
+    return (
+        f"Order: do `{first_dep.get('id')}` (P{_prio(first_dep)}) before "
+        f"`{first_pri.get('id')}` (P{_prio(first_pri)}). It blocks {names}. "
+        f"{why}"
+    )
+
+
+def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
+    """What a person does when a stop left a bead unexecuted.
+
+    Empty when the loop is still going, or when nothing open explains the stop.
+    """
+    if row.get("stop") is None:
+        return []
+    if row.get("stop") == "no-ready":
+        return []
+    lines: list[str] = []
+    lead = _lead(row)
+    if lead:
+        lines.append(lead)
+
+    blocked = data.get("blocked") if isinstance(data.get("blocked"), list) else []
+    actionable: list[tuple[dict[str, Any], list[Any]]] = []
+    for issue in blocked:
+        if not isinstance(issue, dict) or not issue.get("id"):
+            continue
+        raw = list(issue.get("blocked_by") or [])
+        raw.extend(issue.get("gated_by") or [])
+        if raw:
+            actionable.append((issue, raw))
+    for issue, raw in actionable[:6]:
+        waiting = _join_and([_blocker_bits(item) for item in raw[:4]])
+        lines.append(
+            f"`{issue['id']}` stayed open. Waiting on {waiting}. {_do_bits(raw)}"
+        )
+    extra = len(actionable) - 6
+    if extra > 0:
+        lines.append(f"{extra} more open beads are blocked. `status --queue` lists them.")
+
+    seen: set[str] = set()
+    pools: list[Any] = []
+    if isinstance(data.get("ready_beads"), list):
+        pools.extend(data["ready_beads"])
+    pools.extend(blocked)
+    if isinstance(data.get("beads"), list):
+        pools.extend(data["beads"])
+    for bead in pools:
+        if not isinstance(bead, dict):
+            continue
+        nid = str(bead.get("id") or "")
+        if not nid or nid in seen:
+            continue
+        desc = str(bead.get("description") or "")
+        if spike_no_go(desc):
+            seen.add(nid)
+            lines.append(f"`{nid}` spike came back no-go. Steer a new decision.")
+            continue
+        if not spike_still_open(desc):
+            continue
+        seen.add(nid)
+        lines.append(
+            f"`{nid}` has an open spike. `/run` spikes it when it comes up; a no-go goes to steer."
+        )
+
+    ready = data.get("ready_beads") if isinstance(data.get("ready_beads"), list) else []
+    ready_dicts = [bead for bead in ready if isinstance(bead, dict) and bead.get("id")]
+    note = _order_note(ready_dicts, [b for b in blocked if isinstance(b, dict)])
+    if note:
+        lines.append(note)
+    return lines
+
+
+_READER_ID_RE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
+_HEADING_RE = re.compile(r"^#{1,6}\s+(.*)$")
+_OWED_HEAD_RE = re.compile(r"owed|send-?back", re.I)
+_NUMBERED_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
+_BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
+_REVIEW_SECTIONS = ("owed corrections", "verdict", "findings")
+
+
+def _clip(text: str, limit: int = 140) -> str:
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def _reader_id(text: str) -> str | None:
+    for line in text.splitlines()[:40]:
+        match = _READER_ID_RE.match(line.strip())
+        if match:
+            return match.group(1)
+    return None
+
+
+def _owed_heading_boxes(tasks: str) -> list[str]:
+    """Unchecked boxes under an owed / send-back heading. Cap 4.
+
+    Other open boxes are the work list. They are not the send-back.
+    """
+    heading = ""
+    out: list[str] = []
+    for line in tasks.splitlines():
+        head = _HEADING_RE.match(line.strip())
+        if head:
+            heading = head.group(1)
+            continue
+        match = CHECKBOX_RE.match(line)
+        if not match or match.group(2).lower() == "x":
+            continue
+        if not _OWED_HEAD_RE.search(heading):
+            continue
+        out.append(_clip(match.group(3)))
+        if len(out) >= 4:
+            break
+    return out
+
+
+def _review_sections(text: str) -> list[tuple[str, list[str]]]:
+    sections: list[tuple[str, list[str]]] = []
+    name = ""
+    body: list[str] = []
+    for line in text.splitlines():
+        head = _HEADING_RE.match(line.strip())
+        if head:
+            sections.append((name, body))
+            name = head.group(1).strip().lower()
+            body = []
+        else:
+            body.append(line)
+    sections.append((name, body))
+    return sections
+
+
+def _numbered_particulars(body: list[str]) -> list[str]:
+    items: list[str] = []
+    for line in body:
+        match = _NUMBERED_RE.match(line)
+        if not match:
+            continue
+        raw = match.group(1).strip()
+        bold = _BOLD_RE.search(raw)
+        piece = bold.group(1).strip(" .") if bold else raw
+        items.append(_clip(piece))
+        if len(items) >= 4:
+            break
+    return items
+
+
+def _review_particulars(text: str) -> list[str]:
+    sections = _review_sections(text)
+    for key in _REVIEW_SECTIONS:
+        for name, body in sections:
+            if key not in name:
+                continue
+            items = _numbered_particulars(body)
+            if items:
+                return items
+    return []
+
+
+def _why_sentence(text: str) -> str | None:
+    kept: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(">") or stripped.startswith("#"):
+            continue
+        kept.append(stripped)
+    blob = re.sub(r"\s+", " ", " ".join(kept)).strip()
+    if not blob:
+        return None
+    parts = re.split(r"(?<=[.!?])\s+", blob)
+    return _clip(" ".join(parts[:2]), 160)
+
+
+def send_back_particulars(change_dir: Path | None, change_id: str) -> list[str]:
+    """Reader, owed fixes, or the review file. Does not edit the review."""
+    if change_dir is None:
+        return [f"`{change_id}` was sent back. No change directory to read."]
+    _verdict, path = latest_advise_review(change_dir)
+    text = path.read_text(encoding="utf-8") if path is not None and path.is_file() else ""
+    reader = _reader_id(text) if text else None
+    who = f" by {reader}" if reader else ""
+    lines = [f"`{change_id}` sent back{who}."]
+    tasks = change_dir / "tasks.md"
+    items = _owed_heading_boxes(tasks.read_text(encoding="utf-8")) if tasks.is_file() else []
+    if not items and text:
+        items = _review_particulars(text)
+    if not items and text:
+        why = _why_sentence(text)
+        if why:
+            items = [why]
+    if items:
+        lines.extend(items)
+    elif path is not None:
+        lines.append(f"Review `{path.name}` has no particulars.")
+    else:
+        lines.append("No review file to read.")
+    return lines
+
+
+def accept_line(change_dir: Path, change_id: str) -> list[str]:
+    """One line when the last counted verdict is an accept. No reader, no line."""
+    verdict, path = latest_advise_review(change_dir)
+    if verdict not in {"accept", "accept-with-nits"} or path is None:
+        return []
+    reader = _reader_id(path.read_text(encoding="utf-8"))
+    if not reader:
+        return []
+    nits = " with nits" if verdict == "accept-with-nits" else ""
+    return [f"`{change_id}` accepted{nits} by {reader}."]
+
+
+def stage_note(row: dict[str, Any], openspec: Path | None) -> tuple[str, list[str]]:
+    """Short summary at a stage boundary. Empty when the card already says enough."""
+    nxt = row.get("next")
+    focus = str(row.get("focus") or "")
+    if not focus or nxt not in {"change", "advise", "act"}:
+        return "", []
+    dest = find_change_dir(openspec, focus)
+    if nxt == "change" and row.get("reason") == "send-back":
+        lines = send_back_particulars(dest, focus)
+        if dest is not None:
+            lines.append("Next is change: amend those.")
+        return "SEND-BACK", lines
+    if nxt == "advise" and dest is not None and last_advise_verdict(dest) == "send-back":
+        lines = send_back_particulars(dest, focus)
+        lines.append("No open owed boxes. Next is another read, not an amend.")
+        return "SEND-BACK", lines
+    if nxt == "act" and dest is not None:
+        lines = accept_line(dest, focus)
+        if lines:
+            return "ACCEPTED", lines
+    return "", []
+
+
+def load_explain() -> dict[str, Any]:
+    """`bd ready --explain` when this is a live board, not a fixture."""
+    try:
+        proc = subprocess.run(
+            ["bd", "ready", "--explain", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=str(Path.cwd()),
+        )
+    except OSError:
+        return {}
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return {}
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(payload, dict) and "blocked" not in payload and isinstance(payload.get("data"), dict):
+        payload = payload["data"]
+    return payload if isinstance(payload, dict) else {}
+
+
 def card(row: dict[str, Any]) -> str:
     stop = row["stop"] or "continue"
     focus = row.get("focus") or "—"
@@ -983,6 +1525,10 @@ def card(row: dict[str, Any]) -> str:
         f"eyes {len(eyes)}",
         "└───────────────────────────────────────────────",
     ]
+    for line in row.get("spikes") or []:
+        lines.insert(-1, "│ spike " + str(line))
+    if row.get("close_epics"):
+        lines.insert(-1, "│ close epics " + ", ".join(str(i) for i in row["close_epics"]))
     if row.get("prepare_before_act"):
         lines.insert(-1, "│ prepare before act: " + ", ".join(row["prepare_before_act"]))
     if row.get("reason"):
@@ -1014,6 +1560,19 @@ def card(row: dict[str, Any]) -> str:
                     lines.append("║ Next:")
                     lines.append(f"║   {cmd}")
         lines.append("╚═══════════════════════════════════════════════")
+    stage = [str(line) for line in (row.get("stage") or []) if str(line).strip()]
+    kind = str(row.get("stage_kind") or "")
+    if stage and kind:
+        lines.append("")
+        lines.append(kind)
+        for line in stage:
+            lines.append(f"- {line}")
+    unblock = [str(line) for line in (row.get("unblock") or []) if str(line).strip()]
+    if unblock:
+        lines.append("")
+        lines.append("UNBLOCK")
+        for line in unblock:
+            lines.append(f"- {line}")
     return "\n".join(lines)
 
 
@@ -1092,6 +1651,32 @@ def main() -> int:
         no_beads=no_beads,
     )
     row = apply_eyes_stop(row, data, find_openspec())
+    if until in WALK and not no_beads:
+        if args.ready_json is None:
+            close_ids = load_eligible_epic_ids()
+        else:
+            raw_graph = data.get("graph")
+            graph = (
+                [b for b in raw_graph if isinstance(b, dict)]
+                if isinstance(raw_graph, list)
+                else []
+            )
+            close_ids = finished_epics(graph)
+        if close_ids:
+            row["close_epics"] = close_ids
+    if args.ready_json is None and row.get("stop") and row.get("stop") != "no-ready":
+        explained = load_explain()
+        if explained:
+            data = dict(data)
+            if explained.get("blocked") is not None:
+                data["blocked"] = explained.get("blocked")
+            if explained.get("ready") is not None:
+                data["ready_beads"] = explained.get("ready")
+    row["unblock"] = human_unblock(row, data)
+    kind, stage = stage_note(row, find_openspec())
+    if kind and stage:
+        row["stage_kind"] = kind
+        row["stage"] = stage
     if args.json:
         print(json.dumps(row, indent=2))
     else:

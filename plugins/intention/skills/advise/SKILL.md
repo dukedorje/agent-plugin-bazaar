@@ -134,9 +134,9 @@ unrelated ASK/EYES work.
    - send-back → `disposition: task-red` (not infra)
 8. **Stop.** Do not implement the notes (`change` amends). Do
    not fold. Do not `act`. If `design.md` still has
-   `## Unverified hypotheses`, say that spike is an option before
-   act (`../../references/from-sprint-exec.md`). Leave that section
-   out of the reader packet.
+   `## Unverified hypotheses`, say in one line that `run` spikes
+   them before act (`../../references/from-sprint-exec.md`). Leave
+   that section out of the reader packet.
 
 **Panel:** `python3 <consult-skill-dir>/scripts/consult.py --panel`
 is a second opinion; it

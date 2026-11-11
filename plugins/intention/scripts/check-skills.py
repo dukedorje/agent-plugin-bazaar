@@ -23,6 +23,10 @@ REQUIRED_REFS = (
     "fold-steps.md",
     "harness.md",
     "ladder.json",
+    "glossary.md",
+    "transitions.json",
+    "jev-next.md",
+    "transition-log.md",
 )
 
 FM = re.compile(r"^---\n(.*?)\n---", re.S)

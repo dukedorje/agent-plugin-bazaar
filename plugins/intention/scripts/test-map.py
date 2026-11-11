@@ -553,7 +553,7 @@ def test_open_spike_stays_in_the_briefing() -> None:
         }
         out = map_fixture(root, fixture)
         brief = section_after(out, "Decision briefing")
-        expect("Spike is an option" in brief, brief)
+        expect("Spikes owed" in brief, brief)
         expect("H3 canvas hash" in brief, brief)
         expect("skipped" not in brief, brief)
         expect("H9 old claim" not in brief, brief)

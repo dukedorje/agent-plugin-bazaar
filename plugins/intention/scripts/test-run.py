@@ -200,6 +200,89 @@ def test_ready_is_act() -> None:
         expect(face["focus"] == "add-x", face)
 
 
+def test_ready_with_open_spike_is_spike() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}, {"id": "add-y"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "graph": [
+                    {
+                        "id": "bazaar-n1",
+                        "title": "add-y",
+                        "issue_type": "node",
+                        "description": "- Spike: H3 canvas hash — unverified (low, inferred-from-source)",
+                    }
+                ],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "spike", face)
+        expect(face["focus"] == "add-y", face)
+        expect(face["stop"] is None, face)
+        expect(any("H3" in line for line in face["spikes"]), face)
+        shown = run(["--ready-json", str(fixture)])
+        expect("│ spike H3" in shown.stdout, shown.stdout)
+
+
+def test_design_unverified_is_spike_until_go() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-x")
+        design = change / "design.md"
+        design.write_text(
+            "# design\n\n## Unverified hypotheses\n\n- H1 lib does X — unverified\n",
+            encoding="utf-8",
+        )
+        payload = {
+            "ready": [{"id": "add-x"}],
+            "waiting": [],
+            "needs_advise": [],
+            "ask": [],
+            "fold_legal": [],
+            "beads": [],
+            "send_back": [],
+        }
+        fixture = write_ready(root, payload)
+        face = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(face["next"] == "spike" and face["focus"] == "add-x", face)
+        design.write_text(
+            "# design\n\n## Unverified hypotheses\n\n- H1 lib does X — go\n",
+            encoding="utf-8",
+        )
+        face = json.loads(run(["--ready-json", str(fixture), "--json"], cwd=root).stdout)
+        expect(face["next"] == "act", face)
+
+
+def test_no_go_spike_waits_on_steer_not_act() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}, {"id": "add-y"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "graph": [
+                    {"id": "n1", "title": "add-x", "description": "- Spike: H3 canvas hash — no-go"},
+                ],
+            },
+        )
+        face = json.loads(run(["--ready-json", str(fixture), "--json"]).stdout)
+        expect(face["next"] == "act" and face["focus"] == "add-y", face)
+        expect("add-x" in face["ask"], face)
+        expect("add-x" not in face.get("prepare_before_act", []), face)
+
+
 def test_goal_scope_is_intend() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -452,6 +535,39 @@ def test_roll_does_not_stop_on_pending() -> None:
         expect("add-y" in face["ask"], face)
 
 
+def graph_bead(
+    nid: str,
+    title: str,
+    *,
+    kind: str = "task",
+    status: str = "open",
+    parent: str | None = None,
+) -> dict:
+    deps = []
+    if parent:
+        deps.append({"issue_id": nid, "depends_on_id": parent, "type": "parent-child"})
+    return {
+        "id": nid,
+        "title": title,
+        "status": status,
+        "issue_type": kind,
+        "dependencies": deps,
+    }
+
+
+def epic_board(*beads: dict) -> dict:
+    return {
+        "ready": [],
+        "waiting": [],
+        "needs_advise": [],
+        "ask": [],
+        "fold_legal": [],
+        "send_back": [],
+        "beads": [],
+        "graph": list(beads),
+    }
+
+
 def test_roll_skips_epic() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -480,6 +596,111 @@ def test_roll_skips_epic() -> None:
         face = json.loads(proc.stdout)
         expect(face["next"] is None, face)
         expect(face["stop"] == "empty", face)
+        expect("close_epics" not in face, face)
+
+
+def test_roll_closes_epic_when_every_child_is_closed() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+                graph_bead("bazaar-ep.2", "two", status="closed", parent="bazaar-ep"),
+            ),
+        )
+        proc = run(
+            ["--until", "roll", "--ready-json", str(fixture), "--json"],
+            cwd=Path(td),
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["close_epics"] == ["bazaar-ep"], face)
+        expect(face["next"] is None, face)
+        expect(face["stop"] == "empty", face)
+        text = run(["--until", "roll", "--ready-json", str(fixture)], cwd=Path(td))
+        expect("close epics bazaar-ep" in text.stdout, text.stdout)
+
+
+def test_open_child_keeps_epic_open() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+                graph_bead("bazaar-ep.2", "two", status="open", parent="bazaar-ep"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect("close_epics" not in face, face)
+
+
+def test_nested_epic_closes_from_the_inside() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-parent", "outer", kind="epic"),
+                graph_bead("bazaar-child", "inner", kind="epic", parent="bazaar-parent"),
+                graph_bead("bazaar-child.1", "task", status="closed", parent="bazaar-child"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect(face["close_epics"] == ["bazaar-child"], face)
+
+
+def test_close_epics_does_not_replace_next() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        payload = epic_board(
+            graph_bead("bazaar-ep", "household", kind="epic"),
+            graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+        )
+        payload["ready"] = [{"id": "add-x"}]
+        fixture = write_ready(root, payload)
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect(face["focus"] == "add-x", face)
+        expect(face["close_epics"] == ["bazaar-ep"], face)
+
+
+def test_no_beads_and_fold_do_not_list_epics() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = write_ready(
+            root,
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="closed", parent="bazaar-ep"),
+            ),
+        )
+        for args in (["--no-beads"], ["--until", "fold"]):
+            face = json.loads(
+                run([*args, "--ready-json", str(fixture), "--json"], cwd=root).stdout
+            )
+            expect("close_epics" not in face, face)
+
+
+def test_tombstone_child_is_not_closed() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            epic_board(
+                graph_bead("bazaar-ep", "household", kind="epic"),
+                graph_bead("bazaar-ep.1", "one", status="tombstone", parent="bazaar-ep"),
+            ),
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect("close_epics" not in face, face)
 
 
 def test_roll_intend_orphan_task() -> None:
@@ -1193,6 +1414,400 @@ def test_beads_ready_queue_does_not_hide_the_dag() -> None:
         expect("stays put" in skipped["diagnostic"], skipped)
 
 
+def test_stop_names_the_human_unblock() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "eyes": [],
+                "fold_legal": [],
+                "beads": [],
+                "blocked": [
+                    {
+                        "id": "bazaar-spi.3",
+                        "title": "campaign walks demo",
+                        "status": "open",
+                        "priority": 2,
+                        "description": "- Spike: H9 old claim — go",
+                        "blocked_by": [
+                            {
+                                "id": "bazaar-spi.1",
+                                "status": "open",
+                                "title": "demo verb",
+                                "priority": 1,
+                            }
+                        ],
+                    },
+                    {
+                        "id": "bazaar-ext.1",
+                        "title": "waits outside",
+                        "status": "open",
+                        "priority": 1,
+                        "blocked_by": [
+                            {
+                                "id": "external:tatastu:tat-9",
+                                "status": "open",
+                                "title": "host packet",
+                                "where": "~/work/tatastu",
+                            }
+                        ],
+                    },
+                    {
+                        "id": "bazaar-spike.1",
+                        "title": "lands a recipe",
+                        "status": "open",
+                        "priority": 2,
+                        "description": "- Spike: H3 canvas hash — unverified (low, inferred-from-source)",
+                        "blocked_by": [{"id": "bazaar-spi.1", "status": "open"}],
+                    },
+                ],
+                "ready_beads": [
+                    {"id": "bazaar-tvm", "priority": 1, "title": "tatastu", "issue_type": "task"},
+                    {"id": "bazaar-ja7", "priority": 2, "title": "ingest", "issue_type": "task"},
+                ],
+            },
+        )
+        # ja7 unblocks a chain; priority would do tvm first.
+        payload = json.loads(fixture.read_text(encoding="utf-8"))
+        payload["blocked"].append(
+            {
+                "id": "bazaar-db8.3",
+                "status": "open",
+                "priority": 2,
+                "blocked_by": [{"id": "bazaar-ja7", "status": "open", "priority": 2}],
+            }
+        )
+        fixture.write_text(json.dumps(payload), encoding="utf-8")
+        proc = run(["--ready-json", str(fixture), "--json"], cwd=root)
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "empty", face)
+        text = "\n".join(face["unblock"])
+        expect("bazaar-spi.3" in text and "bazaar-spi.1" in text, text)
+        expect("this repo" in text, text)
+        expect("tat-9" in text and "tatastu" in text, text)
+        expect("open spike" in text and "bazaar-spike.1" in text, text)
+        expect("H9" not in text, text)
+        expect("Order:" in text and "bazaar-ja7" in text and "bazaar-tvm" in text, text)
+        shown = run(["--ready-json", str(fixture)], cwd=root)
+        expect("UNBLOCK" in shown.stdout, shown.stdout)
+        expect("tatastu at ~/work/tatastu" in shown.stdout, shown.stdout)
+
+
+def test_continuing_card_has_no_unblock() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "blocked": [
+                    {
+                        "id": "bazaar-spi.3",
+                        "blocked_by": [{"id": "bazaar-spi.1", "status": "open"}],
+                    }
+                ],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act", face)
+        expect(face["unblock"] == [], face)
+
+
+def test_ask_stop_says_steer() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "send_back": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "ask", "--ready-json", str(fixture), "--json"], cwd=Path(td))
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "ask", face)
+        expect(any("steer" in line for line in face["unblock"]), face["unblock"])
+
+
+def _write_review(change: Path, body: str, name: str = "2026-10-29-advise.md") -> None:
+    reviews = change / "reviews"
+    reviews.mkdir(exist_ok=True)
+    (reviews / name).write_text(body, encoding="utf-8")
+
+
+def test_send_back_card_names_particulars() -> None:
+    """Owed-heading boxes, not the whole task list, and not a fifth item."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks=(
+                "# Tasks\n\n"
+                "- [ ] implement the compiler\n\n"
+                "## Owed (advise send-back)\n\n"
+                "- [ ] Pin the wave write-set before take\n"
+                "- [x] already done\n"
+                "- [ ] Release taken nodes when launch fails\n"
+                "- [ ] Land each persist on HEAD\n"
+                "- [ ] Cap the wave after disjointness\n"
+                "- [ ] Fifth stays off the card\n"
+            ),
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** fable-5.1-arch-review\n\n"
+            "## Verdict\n\n"
+            "1. **Write-set is unknown at pick.** Packets land after take.\n",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-sheaf-type"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "change", face)
+        expect(face["reason"] == "send-back", face)
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        text = "\n".join(face["stage"])
+        expect("fable-5.1-arch-review" in text, text)
+        expect("Pin the wave write-set before take" in text, text)
+        expect("Release taken nodes when launch fails" in text, text)
+        expect("Land each persist on HEAD" in text, text)
+        expect("Cap the wave after disjointness" in text, text)
+        expect("Fifth stays off the card" not in text, text)
+        expect("implement the compiler" not in text, text)
+        expect("Write-set is unknown" not in text, text)
+        expect("Next is change: amend those." in text, text)
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("\nSEND-BACK\n" in rendered.stdout, rendered.stdout)
+        expect("Pin the wave write-set before take" in rendered.stdout, rendered.stdout)
+
+
+def test_send_back_uses_review_when_boxes_are_not_owed() -> None:
+    """An open task box is not the send-back. Numbered review items are."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** opus-arch\n\n"
+            "## Owed corrections\n\n"
+            "1. **Stamp the living base** before the union paste.\n"
+            "2. **Refuse a stale SHALL** when the blob moved.\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        text = "\n".join(face["stage"])
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        expect("Stamp the living base" in text, text)
+        expect("Refuse a stale SHALL" in text, text)
+        expect("implement the compiler" not in text, text)
+
+
+def test_send_back_names_file_when_body_empty() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] amend the SHALL on compile",
+            review="send-back",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        text = "\n".join(face["stage"])
+        expect("2026-08-27-advise.md" in text, text)
+        expect("has no particulars" in text, text)
+
+
+def test_send_back_stuck_says_reread() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-sheaf-type", rigor="architecture", tasks="- [x] done")
+        _write_review(
+            change,
+            "> **ADVISE:** send-back\n"
+            "> **READER:** fable-5.1-arch-review\n\n"
+            "## Verdict\n\n"
+            "1. **Nothing lands the wave.** N branches and no merge.\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": [], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "advise", face)
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        text = "\n".join(face["stage"])
+        expect("Nothing lands the wave" in text, text)
+        expect("another read, not an amend" in text, text)
+        expect("Next is change" not in text, text)
+
+
+def test_send_back_without_dir_says_so() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "send_back": ["add-x"],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=Path(td)).stdout
+        )
+        expect(face["stage_kind"] == "SEND-BACK", face)
+        expect("No change directory to read." in "\n".join(face["stage"]), face["stage"])
+
+
+def test_accept_card_is_one_line() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+        )
+        _write_review(
+            change,
+            "> **ADVISE:** accept\n> **READER:** fable-5.1-arch-review\n\nLooks sound.\n",
+        )
+        fixture = write_ready(
+            root,
+            {
+                "ready": [{"id": "add-sheaf-type"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act", face)
+        expect(face["stage_kind"] == "ACCEPTED", face)
+        expect(
+            face["stage"] == ["`add-sheaf-type` accepted by fable-5.1-arch-review."],
+            face["stage"],
+        )
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("\nACCEPTED\n" in rendered.stdout, rendered.stdout)
+
+
+def test_accept_with_nits_names_nits() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        change = write_change(root, "add-sheaf-type", tasks="- [ ] implement")
+        _write_review(
+            change,
+            "> **ADVISE:** accept-with-nits\n> **READER:** opus-arch\n",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": ["add-sheaf-type"], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect("accepted with nits by opus-arch" in "\n".join(face["stage"]), face)
+
+
+def test_accept_without_reader_is_quiet() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(
+            root,
+            "add-sheaf-type",
+            rigor="architecture",
+            tasks="- [ ] implement the compiler",
+            review="accept",
+        )
+        fixture = write_ready(
+            root,
+            {"ready": ["add-sheaf-type"], "waiting": [], "needs_advise": [], "ask": [], "beads": []},
+        )
+        face = json.loads(
+            run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root).stdout
+        )
+        expect(face["next"] == "act", face)
+        expect("stage" not in face, face)
+
+
+def test_unread_advise_has_no_stage_summary() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_change(root, "add-agent-body", rigor="architecture")
+        fixture = write_ready(
+            root,
+            {
+                "ready": [],
+                "waiting": [],
+                "needs_advise": [{"id": "add-agent-body"}],
+                "ask": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "roll", "--ready-json", str(fixture), "--json"], cwd=root)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "advise", face)
+        expect("stage" not in face, face)
+        rendered = run(["--until", "roll", "--ready-json", str(fixture)], cwd=root)
+        expect("SEND-BACK" not in rendered.stdout, rendered.stdout)
+        expect("ACCEPTED" not in rendered.stdout, rendered.stdout)
+
+
 def test_scoped_skip_still_advises_same_id() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -1212,6 +1827,9 @@ def main() -> int:
         test_scoped_skip_does_not_widen,
         test_beads_ready_queue_does_not_hide_the_dag,
         test_scoped_skip_still_advises_same_id,
+        test_stop_names_the_human_unblock,
+        test_continuing_card_has_no_unblock,
+        test_ask_stop_says_steer,
         test_preparation_obligation_tracks_act_candidates,
         test_non_act_has_no_preparation_candidates,
         test_empty_ready_no_worker,
@@ -1231,6 +1849,12 @@ def main() -> int:
         test_roll_send_back_is_change,
         test_roll_bead_landing_is_change,
         test_roll_skips_epic,
+        test_roll_closes_epic_when_every_child_is_closed,
+        test_open_child_keeps_epic_open,
+        test_nested_epic_closes_from_the_inside,
+        test_close_epics_does_not_replace_next,
+        test_no_beads_and_fold_do_not_list_epics,
+        test_tombstone_child_is_not_closed,
         test_roll_intend_orphan_task,
         test_roll_skips_node_type,
         test_roll_skips_legacy_nod_title,
@@ -1248,7 +1872,19 @@ def main() -> int:
         test_roll_punt_skips_advise,
         test_roll_send_back_no_boxes_is_not_change,
         test_roll_send_back_with_boxes_is_change,
+        test_send_back_card_names_particulars,
+        test_send_back_uses_review_when_boxes_are_not_owed,
+        test_send_back_names_file_when_body_empty,
+        test_send_back_stuck_says_reread,
+        test_send_back_without_dir_says_so,
+        test_accept_card_is_one_line,
+        test_accept_with_nits_names_nits,
+        test_accept_without_reader_is_quiet,
+        test_unread_advise_has_no_stage_summary,
         test_wait_eyes_is_stop_eyes,
+        test_ready_with_open_spike_is_spike,
+        test_design_unverified_is_spike_until_go,
+        test_no_go_spike_waits_on_steer_not_act,
         test_roll_eyes_does_not_intend_leftover,
         test_roll_unrelated_ready_moves_with_eyes_listed,
     ]

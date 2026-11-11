@@ -7,7 +7,9 @@ Default loop from intention to a running system:
 Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
 (campaign; takes waves when two+ disjoint writes are ready), `consult` (second
 opinion, no intend node), `demo` (try a landed act). `steer` is the
-default next after `intend` (not a `/run` wave; not `/ask`). Canonical
+default next after `intend` (not a `/run` wave; not `/ask`). Every verb
+is listed in the [glossary of commands](references/glossary.md). The
+between-turn choice is the [Jev prompt](references/jev-next.md). Canonical
 skill files live here. In this repo, `.agents/skills/<name>` is a
 symlink at each skill so Grok, Hermes, and Prime load the same files
 without a plugin install.
@@ -92,6 +94,9 @@ instrument also gets **advise** unless declined.
 ## Run campaign
 
 `run.py` observes; the conductor follows one sibling skill per wave.
+When every direct child of an epic is closed, the conductor closes
+that epic (`bd epic close-eligible`) and re-observes before the next
+stage or a halt. An epic with no children stays open.
 Bare `/run` walks away (roll). `--wait` is desk mode. `--tidy` folds.
 `/status` is the morning pile. `--until *` / `--interrupt` / `--only fold`
 are one-release aliases.
@@ -137,9 +142,11 @@ pointer in `AGENTS.md`/`CLAUDE.md`.
 `--check` reports only.
 
 Contracts: `docs/contracts/agent-surface.md`. Living specs:
-`openspec/specs/`. Verb bodies: `references/` (shared vocabulary;
-skills do not fork the surface). Execution habits kept from the removed
-morphist dispatcher: [`references/from-sprint-exec.md`](references/from-sprint-exec.md).
+`openspec/specs/`. Command index:
+[`references/glossary.md`](references/glossary.md). Verb bodies:
+`references/` (shared vocabulary; skills do not fork the surface).
+Execution habits kept from the removed morphist dispatcher:
+[`references/from-sprint-exec.md`](references/from-sprint-exec.md).
 
 ### Learning as the DAG advances
 

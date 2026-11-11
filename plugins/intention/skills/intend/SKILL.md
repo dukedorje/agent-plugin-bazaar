@@ -64,8 +64,11 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    depends on an unverified hypothesis, record
    `- Spike: <id> <claim> — unverified (<confidence>, <verification>)`
    on that node's description (chat DAG and the bead, when one exists).
-   Name it in the decision briefing. Do not run `spike`. `steer` menus
-   the three choices.
+   Name it in the decision briefing. Default: leave it; `run` spikes it
+   when that node is next. Do not menu when to spike. Only if the
+   verdict would change the DAG's shape (which nodes exist, their
+   order, an architecture fork) run the morphist `spike` skill now,
+   before writing the DAG, and say so in one line.
 8. **Stop.** Report ready-set, needs activation, and a **Decision
    briefing** (same section `map` prints). Pin this DAG
    (`map --current <root-id>`). Then apply **After the DAG**. Never
