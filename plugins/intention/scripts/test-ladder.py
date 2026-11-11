@@ -22,13 +22,17 @@ def main():
     def load(permission="write", which=lambda _: "/stub", env=env):
         return ladder.apply_env(copy.deepcopy(raw), permission, store=health, env=env, which=which)
     data = load()
-    orders = {"known": ["sonnet-known", "terra-known"], "implementation": ["sol-implement", "opus-implement"], "thinking": ["sol-implement", "opus-implement"], "design": ["opus-design"], "plan": ["opus-plan", "astra-plan"], "replan": ["opus-plan", "astra-plan"], "intend-consult": ["opus-plan", "astra-plan"], "fold": ["opus-fold"], "architecture-review": ["opus-arch-review", "astra-arch-review", "grok-arch-review"]}
+    orders = {"known": ["sonnet-known", "terra-known"], "implementation": ["sol-implement", "opus-implement"], "thinking": ["sol-implement", "opus-implement"], "design": ["fable-design", "opus-design"], "plan": ["opus-plan", "astra-plan"], "replan": ["opus-plan", "astra-plan"], "intend-consult": ["opus-plan", "astra-plan"], "fold": ["opus-fold"], "architecture-review": ["fable-arch-review", "astra-arch-review", "opus-arch-review", "grok-arch-review"]}
     for shape, expected in orders.items():
         expect([r["id"] for r in ladder.candidates(data, shape)] == expected, shape)
         expect(ladder.assign(data, shape)["health"] == "unknown", shape)
-    expect(ladder.assign(data, "architecture-review")["effort"] == "high", "Opus high")
+    expect(ladder.assign(data, "architecture-review")["effort"] == "high", "Fable high")
+    expect(ladder.assign(data, "design")["id"] == "fable-design", "Fable drafts architecture")
+    expect(routing.model_of("fable") == "claude-fable-5-2", "Fable 5.2 concrete model")
+    expect(routing.model_of("fable-5.2") == "claude-fable-5-2", "Fable 5.2 alias")
     expect(ladder.assign(data, "architecture-review", author_family="opus")["id"] == "astra-arch-review", "Claude author")
-    expect(ladder.assign(data, "architecture-review", author_family="codex")["id"] == "opus-arch-review", "Codex author")
+    expect(ladder.assign(data, "architecture-review", author_family="grok")["id"] == "fable-arch-review", "Grok driver keeps Fable")
+    expect(ladder.assign(data, "architecture-review", author_family="codex")["id"] == "fable-arch-review", "Codex author")
     no_codex = load(which=lambda binary: None if binary == "codex" else "/stub", env={})
     expect(ladder.assign(no_codex, "architecture-review", author_family="claude")["id"] == "grok-arch-review", "Claude author fallback")
     expect(ladder.assign(data, "architecture-review", route_id="opus-4.8-arch-review", author_family="opus")["id"] == "opus-arch-review", "explicit migration override")
@@ -37,17 +41,26 @@ def main():
         expect(ladder.assign(data, route["shapes"][0], route_id=alias)["id"] == target, alias)
     expect(ladder.assign(data, "known", after="sonnet-5")["id"] == "terra-known", "alias after")
     expect(ladder.resolve_who(data, "plan", ["astra", "opus"])[0]["id"] == "opus-plan", "shape nicknames preserve priority")
-    for name in ("sol", "terra", "fable"):
+    for name in ("sol", "terra", "fable-5.1"):
         try:
             ladder.resolve_who(data, "architecture-review", [name])
         except SystemExit:
             pass
         else:
             raise AssertionError("forbidden architecture nickname " + name)
+    expect(ladder.resolve_who(data, "architecture-review", ["fable"])[0]["id"] == "fable-arch-review", "Fable nickname")
+    retired_ids = (("plan", "fable-5.1-plan"), ("architecture-review", "fable-5.1-arch-review"))
+    for shape, retired in retired_ids:
+        try:
+            ladder.assign(data, shape, route_id=retired)
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError("fable 5.1 still mapped: " + retired)
     expect(all("verified_at" in f for f in raw["families"].values()), "verification dates")
     expect(routing.model_of("opus-4.8") == raw["families"]["opus"]["model"], "launcher interface alias")
     expect(routing.model_of("grok") == "grok-4.7", "Grok concrete model")
-    expect(all(r["family"] != "fable" for r in raw["routes"]), "no retired live family")
+    expect(any(r["id"] == "fable-design" for r in raw["routes"]), "live Fable architect")
     bad = {"id": "bad", "family": "sol", "harness": "codex", "shapes": ["architecture-review"]}
     expect(not routing.resolve(bad, raw, store=health, which=lambda _: "/stub")["configured"], "policy validation")
     pinned = {"id": "pin", "family": "opus", "model": "older", "harness": "claude"}
@@ -96,16 +109,16 @@ def main():
     health.record(*args, "quota")
     current = load()
     expect(ladder.assign(current, "architecture-review")["id"] == "astra-arch-review", "skip degraded in priority")
-    explicit = ladder.assign(current, "architecture-review", route_id="opus-arch-review")
-    expect(explicit["id"] == "opus-arch-review" and explicit["warnings"], "human health override")
-    expect(ladder.resolve_who(current, "architecture-review", ["opus"])[0]["warnings"], "human nickname warning")
+    explicit = ladder.assign(current, "architecture-review", route_id="fable-arch-review")
+    expect(explicit["id"] == "fable-arch-review" and explicit["warnings"], "human health override")
+    expect(ladder.resolve_who(current, "architecture-review", ["fable"])[0]["warnings"], "human nickname warning")
     try:
         ladder.assign(current, "architecture-review", after="astra-arch-review", fallback_hops=2)
     except SystemExit:
         pass
     else:
         raise AssertionError("third fallback accepted")
-    expect(ladder.assign(current, "architecture-review", after="astra-arch-review", fallback_hops=1)["id"] == "grok-arch-review", "second fallback allowed")
+    expect(ladder.assign(current, "architecture-review", after="astra-arch-review", fallback_hops=1)["id"] == "opus-arch-review", "second fallback allowed")
     ident = routing.credential_identity("openai", env)
     expect(ident == routing.credential_identity("openai", {**env, "OPENAI_API_KEY": "rotated-secret"}), "identity never derives from key")
     expect(ident != routing.credential_identity("openai", {**env, "INTENTION_CREDENTIAL_ID_OPENAI": "account-b"}), "nonsecret identity epoch")
@@ -115,13 +128,14 @@ def main():
         stored.record("openai", "model", ident, "mapping", "auth")
         expect("secret" not in path.read_text(), "no secret in health store")
         expect(routing.HealthStore(path, clock=lambda: now[0]).state("openai", "model", ident, "mapping") == "degraded", "scratch persistence")
-    expect(ladder.vary_reader(data, "grok")["id"] == "opus-arch-review", "vary starts at Opus")
-    expect(ladder.vary_reader(data, "grok", last_reader="opus-arch-review")["id"] == "astra-arch-review", "vary rotates off Opus")
-    expect(ladder.vary_reader(data, "grok", last_reader="astra-arch-review")["id"] == "opus-arch-review", "Astra turn returns to Opus")
+    expect(ladder.vary_reader(data, "grok")["id"] == "fable-arch-review", "vary starts at Fable")
+    expect(ladder.vary_reader(data, "grok", last_reader="fable-arch-review")["id"] == "astra-arch-review", "vary rotates to Astra")
+    expect(ladder.vary_reader(data, "grok", last_reader="astra-arch-review")["id"] == "fable-arch-review", "Astra turn returns to Fable")
+    expect(ladder.vary_reader(data, "claude", last_reader="astra-arch-review")["id"] == "astra-arch-review", "Claude author stays on Astra")
     hard = ladder.vary_reader(data, "grok", blast="schema", last_reader="opus-arch-review")
     expect(hard["id"] == "astra-arch-review" and hard["vary_reason"] == "high-blast", "high blast is Astra")
     expect(ladder.vary_reader(data, "astra", blast="deletion")["vary_reason"] == "high-blast-author-skipped", "Astra author cannot self-review")
-    expect(ladder.vary_reader(data, "claude", last_reader="astra-arch-review")["id"] == "grok-arch-review", "Claude author rotates to Grok")
+    expect(ladder.vary_reader(no_codex, "claude")["id"] == "grok-arch-review", "Claude author without Astra uses Grok")
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         change = root / "openspec" / "changes" / "add-x"

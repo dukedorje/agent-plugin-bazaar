@@ -583,11 +583,18 @@ model SHALL provide a `pin_reason`. Historical route ids MAY remain migration
 aliases for one release.
 
 The default order SHALL be Sonnet then Terra for known/mechanical work; Sol
-then Opus for implementation/thinking; Opus for design; Opus then Astra for
-planning; Opus then optional Grok for fold; and Opus at high effort, then
-Astra, then Grok for architecture review. Fable SHALL NOT be configured. Sol
-and Terra SHALL NOT be architecture-review routes. Grok routes SHALL resolve to
-Grok 4.7.
+then Opus for implementation/thinking; Fable 5.2 then Opus for design; Opus
+then Astra for planning; Opus then optional Grok for fold; and Fable 5.2 at
+high effort, then Astra, then Opus, then Grok for architecture review. Fable
+5.2 SHALL resolve to `claude-fable-5-2`. Fable 5.1 SHALL NOT be configured
+and SHALL NOT alias to Opus. Sol and Terra SHALL NOT be architecture-review
+routes. Grok routes SHALL resolve to Grok 4.7.
+
+Fable 5.2 SHALL be the assignee for the initial architecture draft. The
+session driver, often Grok, MAY edit that draft. The author family passed
+to review SHALL be that driver, so a Grok edit keeps Fable eligible.
+Ordinary gating review SHALL rotate Fable 5.2 and Astra when either is
+eligible, and SHALL use Opus or Grok only when that pair is not.
 
 #### Scenario: Known coding task
 
@@ -601,14 +608,21 @@ Grok 4.7.
 - GIVEN shape `plan`
 - WHEN assignment runs
 - THEN latest Opus is first and latest Astra is second
-- AND no Fable or Sol planning route exists
+- AND no Fable 5.1 or Sol planning route exists
 
 #### Scenario: Architecture review order
 
 - GIVEN shape `architecture-review`
-- WHEN assignment runs for a non-Claude author
-- THEN latest Opus at high effort is first, Astra is second, and Grok 4.7 is third
-- AND no Fable, Sol, Terra, or pinned Opus 4.8 review route exists
+- WHEN assignment runs for a non-Anthropic author
+- THEN Fable 5.2 at high effort is first, Astra is second, Opus is third, and Grok 4.7 is fourth
+- AND no Fable 5.1, Sol, Terra, or pinned Opus 4.8 review route exists
+
+#### Scenario: Design draft is Fable
+
+- GIVEN shape `design`
+- WHEN assignment runs
+- THEN Fable 5.2 is first and Opus is the fallback
+- AND the concrete model is `claude-fable-5-2`
 
 #### Scenario: Cross-family review by default
 
@@ -764,7 +778,7 @@ SHALL be skipped. Verdicts SHALL be `agree` / `caution` / `dissent`.
 
 #### Scenario: Stub consult is not advise
 
-- GIVEN a fake `claude` on PATH and `--id fable-5.1-arch-review`
+- GIVEN a fake `claude` on PATH and `--id fable-arch-review`
 - WHEN `consult --goal "…" ` executes
 - THEN the prompt asks for `CONSULT:` not `ADVISE:`
 - AND stdout is opinions JSON, not a change review file
@@ -1114,13 +1128,20 @@ retry according to bounded fallback; it SHALL NOT manufacture a verdict.
 
 - GIVEN Claude authored an architecture change
 - WHEN automatic advise assignment runs
-- THEN it skips Opus and selects executable Astra, otherwise Grok 4.7
+- THEN it skips Fable and Opus and selects executable Astra, otherwise Grok 4.7
 
-#### Scenario: Codex author uses Opus
+#### Scenario: Codex author uses Fable
 
 - GIVEN Codex authored an architecture change
 - WHEN automatic advise assignment runs
-- THEN it selects latest Opus at high effort when executable
+- THEN it selects Fable 5.2 at high effort when executable
+
+#### Scenario: Grok driver reviews with Fable and Astra
+
+- GIVEN Grok edited the architecture draft
+- WHEN ordinary `vary-reader` runs, then runs again after Fable accepted
+- THEN the first reader is Fable 5.2 and the next is Astra
+- AND the turn after Astra returns to Fable 5.2
 
 ### Requirement: run operator flags
 

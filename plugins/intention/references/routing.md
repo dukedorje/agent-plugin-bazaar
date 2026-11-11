@@ -8,10 +8,11 @@ Assignment accepts `--permission read|write|sensitive`; writes (including
 advise review files) require a CLI harness. `OPENAI_API_KEY` alone makes only
 read-only OpenAI HTTP executable. `--author-family <harness/family/vendor>`
 is the recorded author identity for automatic architecture review. Claude
-authors skip Opus and try Astra then Grok; Codex authors try Opus first.
-Gating advise does not stop at that first route. `ladder.py vary-reader`
-(`references/reviewers.md`) prefers Astra for high blast and otherwise
-rotates through the eligible list. `assign` remains first-by-priority.
+authors skip Fable and Opus and try Astra then Grok; a Grok driver keeps
+Fable then Astra. Gating advise does not stop at that first route.
+`ladder.py vary-reader` (`references/reviewers.md`) prefers Astra for high
+blast and otherwise rotates Fable 5.2 and Astra. `assign` remains
+first-by-priority. Fable 5.1 is not configured and does not alias to Opus.
 `--not-harness` remains an input alias for that vendor boundary. Explicit
 `--who`/`--id` overrides health and the boundary and returns warnings.
 

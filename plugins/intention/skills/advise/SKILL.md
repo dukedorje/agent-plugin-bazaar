@@ -70,9 +70,10 @@ unrelated ASK/EYES work.
    Human pick (`--who` / `--id`) selects the spawned reader. It
    does not waive isolation.
 
-   Eligible order stays Opus, then Astra, then Grok. Varying walks that
-   list; it does not always start at Opus. Claude authors skip Opus;
-   Codex authors skip Astra.
+   Eligible order stays Fable 5.2, then Astra, then Opus, then Grok.
+   Ordinary varying rotates Fable and Astra. It uses Opus or Grok when
+   that pair is not eligible. Claude authors skip Fable and Opus;
+   Codex authors skip Astra. A Grok driver keeps both Fable and Astra.
    Human picks may override the vendor boundary and degraded health with
    a warning. Optional extra: `--shape plan` consult (Opus then Astra). Plan consult is
    **not** the sole accept.

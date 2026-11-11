@@ -3,7 +3,7 @@
   "human_override": "always wins",
   "max_inflight": 2,
   "max_fallback_hops": 2,
-  "notes": "Versions verified by approved 2026-10-05 consultation. Priority is independent of executability and passive health. Gating architecture advise uses vary-reader: high blast prefers Astra, otherwise rotate eligible readers. assign stays first-by-priority.",
+  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Design assign is the initial architecture (Fable, then Opus). The session driver may edit that draft. Gating advise uses vary-reader: high blast prefers Astra, otherwise rotate Fable and Astra when either is eligible. assign stays first-by-priority.",
   "families": {
     "sonnet": {
       "model": "claude-sonnet-5-5",
@@ -26,6 +26,17 @@
         "claude-opus-4-8"
       ],
       "verified_at": "2026-10-05"
+    },
+    "fable": {
+      "model": "claude-fable-5-2",
+      "vendor": "anthropic",
+      "effort": "high",
+      "aliases": [
+        "fable-5.2",
+        "fable-5",
+        "claude-fable-5"
+      ],
+      "verified_at": "2026-11-10"
     },
     "sol": {
       "model": "gpt-6.1-sol",
@@ -67,9 +78,7 @@
     "opus-5-design": "opus-design",
     "opus-5-fold": "opus-fold",
     "opus-4.8-arch-review": "opus-arch-review",
-    "fable-5.1-plan": "opus-plan",
     "sol-plan": "astra-plan",
-    "fable-5.1-arch-review": "opus-arch-review",
     "sol-arch-review": "astra-arch-review"
   },
   "routes": [
@@ -132,12 +141,29 @@
       "effort": "medium"
     },
     {
+      "id": "fable-design",
+      "family": "fable",
+      "shapes": [
+        "design"
+      ],
+      "priority": 1,
+      "role": "worker",
+      "harness": "claude",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "skills": [
+        "designer"
+      ],
+      "notes": "Initial architecture. The session driver may edit the draft."
+    },
+    {
       "id": "opus-design",
       "family": "opus",
       "shapes": [
         "design"
       ],
-      "priority": 1,
+      "priority": 2,
       "role": "worker",
       "harness": "claude",
       "surface": "skill-host",
@@ -206,12 +232,25 @@
       "notes": "Optional: enable or explicitly human-pick."
     },
     {
+      "id": "fable-arch-review",
+      "family": "fable",
+      "shapes": [
+        "architecture-review"
+      ],
+      "priority": 1,
+      "role": "reader",
+      "harness": "claude",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high"
+    },
+    {
       "id": "opus-arch-review",
       "family": "opus",
       "shapes": [
         "architecture-review"
       ],
-      "priority": 1,
+      "priority": 3,
       "role": "reader",
       "harness": "claude",
       "surface": "skill-host",
@@ -237,7 +276,7 @@
       "shapes": [
         "architecture-review"
       ],
-      "priority": 3,
+      "priority": 4,
       "role": "reader",
       "harness": "grok",
       "surface": "skill-host",

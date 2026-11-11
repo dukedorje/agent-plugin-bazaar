@@ -144,7 +144,7 @@ def resolve(route, data, permission="write", *, store=None, env=None, which=None
     row = dict(route)
     family = data.get("families", {}).get(row.get("family"), {})
     configured = bool(row.get("enabled", True) and family.get("model"))
-    if "architecture-review" in (row.get("shapes") or []) and row.get("family") not in {"opus", "astra", "grok"}:
+    if "architecture-review" in (row.get("shapes") or []) and row.get("family") not in {"fable", "opus", "astra", "grok"}:
         configured = False
     if row.get("model") and row["model"] != family.get("model") and not row.get("pin_reason"):
         configured = False

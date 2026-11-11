@@ -6,7 +6,7 @@ description: >
   pair of eyes, consult the architecture buddy, run this by Opus /
   Astra / Grok, call several, or convoke a panel.
 user-invocable: true
-argument-hint: "[--who opus,astra,grok | --panel] [--shape architecture-review] [<question>]"
+argument-hint: "[--who fable,astra,opus,grok | --panel] [--shape architecture-review] [<question>]"
 ---
 
 # consult
@@ -41,7 +41,7 @@ a gated reader, use `advise` instead.
    | named models (“Astra”, “Opus and Grok”) | `--who astra` / `--who opus,grok` |
    | “compare Sol and Opus” | `--shape thinking --who sol,opus` (named wins) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
-   | nobody named | first executable different-vendor reader (Opus → Astra → Grok). Consult does not rotate and does not call `vary-reader`. |
+   | nobody named | first executable different-vendor reader (Fable 5.2 → Astra → Opus → Grok). Consult does not rotate and does not call `vary-reader`. |
 
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or
@@ -62,7 +62,7 @@ a gated reader, use `advise` instead.
    ```bash
    python3 <this-skill-dir>/scripts/consult.py \
      --shape architecture-review \
-     [--who opus,astra,grok | --panel | --id <route>] \
+     [--who fable,astra,opus,grok | --panel | --id <route>] \
      [--author-family <author>] \
      [--paths <p> ...] \
      --goal "<question>"

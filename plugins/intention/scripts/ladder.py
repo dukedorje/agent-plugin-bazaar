@@ -170,6 +170,13 @@ _READER_LINE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
 _TRAILING_SEQ = re.compile(r"^(.*)-(\d+)$")
 _ACCEPTING = {"accept", "accept-with-nits"}
 _HIGH_BLAST = {"high", "schema", "deletion", "protocol", "durability", "challenging"}
+_PREFERRED_READERS = {"fable", "astra"}
+
+
+def _review_pool(eligible: list[dict]) -> list[dict]:
+    """Ordinary gating rotates Fable 5.2 and Astra. The wider ladder is the fallback."""
+    pair = [route for route in eligible if route.get("family") in _PREFERRED_READERS]
+    return pair or eligible
 
 
 def _review_sort_key(path: Path) -> tuple[str, int]:
@@ -245,11 +252,11 @@ def vary_reader(
     change_dir: Path | None = None,
     shape: str = "architecture-review",
 ) -> dict:
-    """Gating architecture reader. Priority order stays the fallback list.
+    """Gating architecture reader.
 
     High blast prefers Astra. A send-back on this change returns to that
-    reader. Otherwise rotate to the next eligible reader after the last
-    accept, skipping the author's vendor.
+    reader. Otherwise rotate Fable 5.2 and Astra when either is eligible.
+    Opus and Grok are used when that pair is not. The author's vendor is skipped.
     """
     eligible = candidates(data, shape, author_family=author_family)
     if not eligible:
@@ -266,12 +273,13 @@ def vary_reader(
         chosen = astra or eligible[0]
         reason = "high-blast" if astra else "high-blast-author-skipped"
     else:
-        ids = [route["id"] for route in eligible]
+        pool = _review_pool(eligible)
+        ids = [route["id"] for route in pool]
         if last_reader in ids and len(ids) > 1:
-            chosen = eligible[(ids.index(last_reader) + 1) % len(ids)]
+            chosen = pool[(ids.index(last_reader) + 1) % len(ids)]
             reason = "rotate"
         else:
-            chosen = eligible[0]
+            chosen = pool[0]
             reason = "first"
     return {**chosen, "vary_reason": reason, "last_reader": last_reader}
 

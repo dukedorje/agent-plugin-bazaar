@@ -34,7 +34,10 @@ use the procedure below after reconciling the inputs.
    `archive/`). Prefer modifying an existing capability.
 2. Verb-led `change-id`. If `intend` already named one, use that id.
 3. Scaffold `openspec/changes/<id>/` using the templates. `design.md`
-   only when the templates say so.
+   only when the templates say so. On an architecture change, the initial
+   `design.md` is Fable 5.2 (`assign --shape design`). The session driver,
+   often Grok, may edit that draft. Advise then uses the driver's family,
+   so Fable stays in the review loop with Astra.
 4. Banner is `> **PENDING**` unless the human already activated this scope
    or recorded campaign authority covers this dependency-ready, prepared
    node (then `> **ACTIVE BUILD**`). Follow preparation.md limits; changed

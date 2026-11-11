@@ -39,7 +39,7 @@ no flag (blank-page observe still happened).
 - Surface: skill-host | packet-only
 - Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
 - Consult: plan/replan → Opus then Astra; write stays here
-- Architecture: review-pair via `vary-reader`. Astra when blast is schema, deletion, protocol, or durability; otherwise rotate. Skip the author's vendor.
+- Architecture: Fable 5.2 drafts; the driver may edit. Review-pair via `vary-reader`. Astra when blast is schema, deletion, protocol, or durability; otherwise rotate Fable and Astra. Skip the author's vendor.
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 - Spike: `<id> <claim> — unverified (<confidence>, <verification>)` | `go` | `skipped` — omit when nothing is unverified

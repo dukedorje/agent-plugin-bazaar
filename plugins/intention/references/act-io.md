@@ -206,7 +206,7 @@ not pretend a worker ran. Timeout kills the process group and
 classifies `stall` as `infra-red`.
 
 `consult` is a second opinion with no intend node and no act
-unblock. Default shape `architecture-review`. `--who opus,astra,grok`
+unblock. Default shape `architecture-review`. `--who fable,astra,opus,grok`
 (nicknames or ids, several, ladder order). `--panel` is every
 spawnable reader. `--id` is exact-id only. `--who` / `--panel` /
 `--id` are mutually exclusive. Named unspawnable hard-fails;
@@ -243,7 +243,7 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 
 Source: `plugins/intention/references/ladder.json`. Configured priority (`--after` handoff; `panel` fan-out): known → Sonnet
 then Terra; implementation/thinking → Sol then Opus; plan → Opus then Astra;
-architecture gating → `vary-reader` (Astra on high blast, else rotate; fallback list stays Opus then Astra then Grok); fold → Opus, optional Grok.
+design → Fable 5.2, then Opus (the driver may edit Fable's draft); architecture gating → `vary-reader` (Astra on high blast, else rotate Fable and Astra; fallback list is Fable, Astra, Opus, Grok); fold → Opus, optional Grok.
 Concrete models and verification dates live only in the family registry.
 Same-family author passes `--author-family <author>` (harness/family/vendor)
 and **spawns** an executable different-vendor reader. Advise needs write
