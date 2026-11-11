@@ -1,7 +1,7 @@
 {
   "name": "intention",
-  "version": "0.6.0",
-  "description": "Intention-to-running work algebra: intend, steer, change, advise, act, demo, fold, status, brief, debrief, map, run, run-wave, consult, setup. A group is an agent.",
+  "version": "0.7.0",
+  "description": "Intention-to-running work algebra: intend, steer, change, advise, act, demo, fold, status, brief, debrief, map, run, consult, setup. A group is an agent.",
   "author": {
     "name": "Duke Jones",
     "url": "https://github.com/dukejones"
