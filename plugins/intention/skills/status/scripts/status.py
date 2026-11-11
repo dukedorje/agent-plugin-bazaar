@@ -897,7 +897,7 @@ def print_card(
 
         print_section(
             "Ready",
-            "OpenSpec · ACTIVE BUILD, unblocked implement work.",
+            "OpenSpec · ACTIVE BUILD, unblocked implement work. A direction this activation does not cover is `steer`.",
             data.get("ready") or [],
             lambda rows: [print_change(r) for r in rows],
         )

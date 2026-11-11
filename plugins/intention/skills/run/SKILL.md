@@ -173,6 +173,20 @@ If priority order and dependency order disagree, one line names the
 ready bead to do first. Print that block as the card prints it.
 Do not drop it, and do not turn it into another verb.
 
+When the card prints `STEER`, that block is the decision. Print it
+as the card prints it, ahead of any prose. A ready change this walk
+left behind is `steer` when the open acceptance is outside the
+accepted contract. Do not answer that halt with another `/run`, and
+do not leave `Do: run or close` as the only verb for that same work.
+A roll that still has PENDING or ASK names those ids under `STEER`
+too: the owner can decide them, and this walk will not.
+
+A direction gap is not an illegal act. If preparation shows the
+accepted contract does not cover the remaining acceptance, `--skip`
+that id and re-observe so the card can print `STEER`. Do not dispatch
+the old accept, and do not lead the halt with `next act` as if the
+walk were about to take it.
+
 When the card prints `SEND-BACK` or `ACCEPTED`, that block is the
 summary between stages. Print it as the card prints it. Do not
 paraphrase a send-back into "advise sent it back." `SEND-BACK` names

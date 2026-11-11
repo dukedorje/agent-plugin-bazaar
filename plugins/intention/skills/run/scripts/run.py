@@ -1169,7 +1169,67 @@ def _blocker_bits(item: object) -> str:
     return f"`{info['id']}` ({state}, {where})"
 
 
-def _do_bits(items: list[object]) -> str:
+def _landing_by_bead(data: dict[str, Any]) -> dict[str, str]:
+    """Bead id → change-id, from titles on the live or fixture board."""
+    found: dict[str, str] = {}
+    pools: list[Any] = []
+    for key in ("ready_beads", "beads", "blocked"):
+        raw = data.get(key)
+        if isinstance(raw, list):
+            pools.extend(raw)
+    for bead in pools:
+        if not isinstance(bead, dict):
+            continue
+        nid = str(bead.get("id") or "")
+        landing = landing_from_title(str(bead.get("title") or ""))
+        if nid and landing:
+            found[nid] = landing
+    return found
+
+
+def untaken_ready(row: dict[str, Any]) -> list[str]:
+    """Ready change-ids a roll left behind.
+
+    An empty walk with a non-empty ready list means every ready id was
+    skipped. A skipped named scope counts only when that scope is itself
+    still ready. Fold-only walks are not a direction gap.
+    """
+    if str(row.get("until") or "") not in WALK:
+        return []
+    if row.get("ask") or row.get("needs_advise"):
+        return []
+    ready = ids(row.get("ready"))
+    stop = str(row.get("stop") or "")
+    if stop == "empty":
+        return ready
+    if stop == "skipped":
+        focus = str(row.get("focus") or "")
+        if focus and focus in ready:
+            return [focus]
+    return []
+
+
+def _steer_target(info: dict[str, Any], untaken: set[str], landings: dict[str, str]) -> str | None:
+    if not untaken:
+        return None
+    bid = str(info.get("id") or "")
+    landing = landing_from_title(str(info.get("title") or ""))
+    if landing and landing in untaken:
+        return landing
+    if bid in untaken:
+        return bid
+    mapped = landings.get(bid) or landings.get(str(info.get("raw_id") or ""))
+    if mapped and mapped in untaken:
+        return mapped
+    return None
+
+
+def _do_bits(
+    items: list[object],
+    *,
+    untaken: set[str] | None = None,
+    landings: dict[str, str] | None = None,
+) -> str:
     infos = [describe_blocker(item) for item in items]
     bits: list[str] = []
     externals = [info for info in infos if info["external"]]
@@ -1183,11 +1243,51 @@ def _do_bits(items: list[object]) -> str:
     if any(info["gate"] in {"gh:run", "gh:pr", "timer", "bead"} for info in gates):
         bits.append("let the gate finish, or resolve it")
     if local:
-        names = ", ".join(f"`{info['id']}`" for info in local[:3])
-        bits.append(f"run or close {names}")
+        held = untaken or set()
+        known = landings or {}
+        steer_names: list[str] = []
+        run_names: list[str] = []
+        for info in local:
+            target = _steer_target(info, held, known)
+            if target and target not in steer_names:
+                steer_names.append(target)
+            elif not target:
+                run_names.append(str(info["id"]))
+        if steer_names:
+            names = ", ".join(f"`{name}`" for name in steer_names[:3])
+            bits.append(f"`steer` {names}")
+        if run_names:
+            names = ", ".join(f"`{name}`" for name in run_names[:3])
+            bits.append(f"run or close {names}")
     if not bits:
         return "See `status`."
     return "Do: " + "; ".join(bits) + "."
+
+
+def steer_notice(row: dict[str, Any]) -> list[str]:
+    """Human-visible steer lines. Empty when nothing is waiting on a decision."""
+    lines: list[str] = []
+    stop = row.get("stop")
+    until = str(row.get("until") or "")
+    if stop is None and until in WALK:
+        decisions = unique(ids(row.get("waiting")) + ids(row.get("ask")))
+        if decisions:
+            names = ", ".join(f"`{name}`" for name in decisions[:4])
+            more = f" and {len(decisions) - 4} more" if len(decisions) > 4 else ""
+            lines.append(
+                f"Decision available: {names}{more}. Type `steer`. "
+                "This walk will not decide it."
+            )
+    untaken = untaken_ready(row)
+    if untaken:
+        names = ", ".join(f"`{name}`" for name in untaken[:4])
+        more = f" and {len(untaken) - 4} more" if len(untaken) > 4 else ""
+        lines.append(
+            f"Ready and not taken: {names}{more}. "
+            "Type `steer` if the open acceptance is a decision. "
+            "`/run` will not widen the accepted contract."
+        )
+    return lines
 
 
 def _lead(row: dict[str, Any]) -> str | None:
@@ -1274,6 +1374,8 @@ def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
     if lead:
         lines.append(lead)
 
+    held = set(untaken_ready(row))
+    landings = _landing_by_bead(data)
     blocked = data.get("blocked") if isinstance(data.get("blocked"), list) else []
     actionable: list[tuple[dict[str, Any], list[Any]]] = []
     for issue in blocked:
@@ -1286,7 +1388,8 @@ def human_unblock(row: dict[str, Any], data: dict[str, Any]) -> list[str]:
     for issue, raw in actionable[:6]:
         waiting = _join_and([_blocker_bits(item) for item in raw[:4]])
         lines.append(
-            f"`{issue['id']}` stayed open. Waiting on {waiting}. {_do_bits(raw)}"
+            f"`{issue['id']}` stayed open. Waiting on {waiting}. "
+            f"{_do_bits(raw, untaken=held, landings=landings)}"
         )
     extra = len(actionable) - 6
     if extra > 0:
@@ -1567,6 +1670,12 @@ def card(row: dict[str, Any]) -> str:
         lines.append(kind)
         for line in stage:
             lines.append(f"- {line}")
+    steer = [str(line) for line in (row.get("steer") or []) if str(line).strip()]
+    if steer:
+        lines.append("")
+        lines.append("STEER")
+        for line in steer:
+            lines.append(f"- {line}")
     unblock = [str(line) for line in (row.get("unblock") or []) if str(line).strip()]
     if unblock:
         lines.append("")
@@ -1672,6 +1781,7 @@ def main() -> int:
                 data["blocked"] = explained.get("blocked")
             if explained.get("ready") is not None:
                 data["ready_beads"] = explained.get("ready")
+    row["steer"] = steer_notice(row)
     row["unblock"] = human_unblock(row, data)
     kind, stage = stage_note(row, find_openspec())
     if kind and stage:

@@ -1115,6 +1115,35 @@ or by-eye boxes.
 - WHEN `run.py` observes
 - THEN `stop` is `eyes` and `next` is not `intend`
 
+### Requirement: a walk that leaves ready work names steer
+
+A roll that stops `empty` or `skipped` with ready work still listed,
+and with no ask and no owed advise, SHALL print a `STEER` block naming
+those change-ids. The human verb for that work SHALL be `steer` when
+the open acceptance is outside the accepted contract. The card SHALL
+NOT tell the owner only to `/run` or close that same bead. A roll that
+is still walking SHALL name PENDING and ASK ids under `STEER` as
+decisions this walk will not make. `--until fold` SHALL NOT print that
+block just because implement work remains.
+
+#### Scenario: Skipped ready work says steer
+
+- GIVEN `--until roll`, READY `add-blob-distribution-qualification`,
+  and that id passed to `--skip`
+- AND an open bead titled `add-blob-distribution-qualification` blocks
+  another bead
+- WHEN `run.py` observes
+- THEN `stop` is `empty`
+- AND the card prints `STEER` naming `add-blob-distribution-qualification`
+- AND the unblock line for that bead says `steer`, not only `run or close`
+
+#### Scenario: Pending work is named while the walk continues
+
+- GIVEN `--until roll`, READY `add-x`, and PENDING `add-y`
+- WHEN `run.py` observes
+- THEN `next` is `act` and `focus` is `add-x`
+- AND the card prints `STEER` naming `add-y`
+
 ### Requirement: second-family advise is spawned, not parked
 
 When `next` is `advise`, `run` SHALL assign an executable

@@ -1525,6 +1525,111 @@ def test_continuing_card_has_no_unblock() -> None:
         expect(face["unblock"] == [], face)
 
 
+def test_skipped_ready_work_says_steer() -> None:
+    """api-proxy .13: the walk left the ready change, and run-or-close looped."""
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-blob-distribution-qualification"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+                "blocked": [
+                    {
+                        "id": "ikproxy-gwk.15",
+                        "title": "add-papyrus-blob-export-bridge",
+                        "status": "open",
+                        "priority": 2,
+                        "blocked_by": [
+                            {
+                                "id": "ikproxy-gwk.13",
+                                "status": "open",
+                                "title": "add-blob-distribution-qualification",
+                            }
+                        ],
+                    }
+                ],
+                "ready_beads": [
+                    {
+                        "id": "ikproxy-gwk.13",
+                        "priority": 2,
+                        "title": "add-blob-distribution-qualification",
+                        "issue_type": "node",
+                    }
+                ],
+            },
+        )
+        proc = run(
+            [
+                "--skip",
+                "add-blob-distribution-qualification",
+                "--ready-json",
+                str(fixture),
+                "--json",
+            ]
+        )
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "empty", face)
+        expect(face["next"] is None, face)
+        text = "\n".join(face["steer"])
+        expect("add-blob-distribution-qualification" in text, face["steer"])
+        expect("steer" in text, text)
+        unblock = "\n".join(face["unblock"])
+        expect("`steer` `add-blob-distribution-qualification`" in unblock, unblock)
+        expect("run or close `ikproxy-gwk.13`" not in unblock, unblock)
+        shown = run(
+            ["--skip", "add-blob-distribution-qualification", "--ready-json", str(fixture)]
+        )
+        expect("\nSTEER\n" in shown.stdout, shown.stdout)
+        expect("Type `steer`" in shown.stdout, shown.stdout)
+
+
+def test_roll_names_pending_as_steer() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [{"id": "add-y"}],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["next"] == "act" and face["focus"] == "add-x", face)
+        expect(any("add-y" in line and "steer" in line for line in face["steer"]), face["steer"])
+        shown = run(["--ready-json", str(fixture)])
+        expect("\nSTEER\n" in shown.stdout, shown.stdout)
+
+
+def test_fold_walk_does_not_call_ready_work_steer() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        fixture = write_ready(
+            Path(td),
+            {
+                "ready": [{"id": "add-x"}],
+                "waiting": [],
+                "needs_advise": [],
+                "ask": [],
+                "fold_legal": [],
+                "beads": [],
+            },
+        )
+        proc = run(["--until", "fold", "--ready-json", str(fixture), "--json"])
+        expect(proc.returncode == 0, proc.stderr + proc.stdout)
+        face = json.loads(proc.stdout)
+        expect(face["stop"] == "empty", face)
+        expect(face["steer"] == [], face)
+
+
 def test_ask_stop_says_steer() -> None:
     with tempfile.TemporaryDirectory() as td:
         fixture = write_ready(
@@ -1830,6 +1935,9 @@ def main() -> int:
         test_stop_names_the_human_unblock,
         test_continuing_card_has_no_unblock,
         test_ask_stop_says_steer,
+        test_skipped_ready_work_says_steer,
+        test_roll_names_pending_as_steer,
+        test_fold_walk_does_not_call_ready_work_steer,
         test_preparation_obligation_tracks_act_candidates,
         test_non_act_has_no_preparation_candidates,
         test_empty_ready_no_worker,
