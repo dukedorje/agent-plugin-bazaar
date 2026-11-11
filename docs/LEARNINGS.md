@@ -2,6 +2,8 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
+- 2026-11-10 — High blast and plan consult default to Fable 5.2. Astra is the detail reviewer, next in the rotation and second on plan. (`plugins/intention/scripts/ladder.py`, `plugins/intention/references/ladder.json`)
+
 - 2026-11-10 — A ready change `/run` leaves behind is a decision. The halt card prints `STEER`. `Do: run or close` on that same bead sends the owner in a loop. (`plugins/intention/skills/run/scripts/run.py`)
 
 - 2026-11-10 — `/run-wave` is not a command. `/run` launches the `run-wave` workflow when two or more disjoint writes are ready. (`plugins/intention/skills/run/SKILL.md`, `plugins/intention/workflows/run-wave.rhai`)

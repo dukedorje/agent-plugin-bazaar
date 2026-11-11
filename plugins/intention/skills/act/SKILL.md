@@ -34,8 +34,8 @@ The packet is the only interface. Schema:
    `needs_advise`.
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
    Complementary → weave. Architecture advise uses `vary-reader`
-   (`references/reviewers.md`): Astra on high blast, otherwise rotate
-   Fable 5.2 and Astra, skip the author's vendor. Foreign harness → packet file, never a slash command.
+   (`references/reviewers.md`): Fable on high blast, otherwise rotate
+   Fable 5.2 and Astra. Astra is the detail reviewer. Skip the author's vendor. Foreign harness → packet file, never a slash command.
 3. **Spike gate.** Load `../../references/from-sprint-exec.md`. If
    this node still has an open unverified hypothesis (a `- Spike:`
    line that is not `go` or `skipped`, or `design.md` `## Unverified

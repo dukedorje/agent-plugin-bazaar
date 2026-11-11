@@ -22,7 +22,7 @@ def main():
     def load(permission="write", which=lambda _: "/stub", env=env):
         return ladder.apply_env(copy.deepcopy(raw), permission, store=health, env=env, which=which)
     data = load()
-    orders = {"known": ["sonnet-known", "terra-known"], "implementation": ["sol-implement", "opus-implement"], "thinking": ["sol-implement", "opus-implement"], "design": ["fable-design", "opus-design"], "plan": ["opus-plan", "astra-plan"], "replan": ["opus-plan", "astra-plan"], "intend-consult": ["opus-plan", "astra-plan"], "fold": ["opus-fold"], "architecture-review": ["fable-arch-review", "astra-arch-review", "opus-arch-review", "grok-arch-review"]}
+    orders = {"known": ["sonnet-known", "terra-known"], "implementation": ["sol-implement", "opus-implement"], "thinking": ["sol-implement", "opus-implement"], "design": ["fable-design", "opus-design"], "plan": ["fable-plan", "astra-plan", "opus-plan"], "replan": ["fable-plan", "astra-plan", "opus-plan"], "intend-consult": ["fable-plan", "astra-plan", "opus-plan"], "fold": ["opus-fold"], "architecture-review": ["fable-arch-review", "astra-arch-review", "opus-arch-review", "grok-arch-review"]}
     for shape, expected in orders.items():
         expect([r["id"] for r in ladder.candidates(data, shape)] == expected, shape)
         expect(ladder.assign(data, shape)["health"] == "unknown", shape)
@@ -40,7 +40,7 @@ def main():
         route = next(r for r in data["routes"] if r["id"] == target)
         expect(ladder.assign(data, route["shapes"][0], route_id=alias)["id"] == target, alias)
     expect(ladder.assign(data, "known", after="sonnet-5")["id"] == "terra-known", "alias after")
-    expect(ladder.resolve_who(data, "plan", ["astra", "opus"])[0]["id"] == "opus-plan", "shape nicknames preserve priority")
+    expect(ladder.resolve_who(data, "plan", ["astra", "opus"])[0]["id"] == "astra-plan", "shape nicknames preserve priority")
     for name in ("sol", "terra", "fable-5.1"):
         try:
             ladder.resolve_who(data, "architecture-review", [name])
@@ -133,8 +133,10 @@ def main():
     expect(ladder.vary_reader(data, "grok", last_reader="astra-arch-review")["id"] == "fable-arch-review", "Astra turn returns to Fable")
     expect(ladder.vary_reader(data, "claude", last_reader="astra-arch-review")["id"] == "astra-arch-review", "Claude author stays on Astra")
     hard = ladder.vary_reader(data, "grok", blast="schema", last_reader="opus-arch-review")
-    expect(hard["id"] == "astra-arch-review" and hard["vary_reason"] == "high-blast", "high blast is Astra")
-    expect(ladder.vary_reader(data, "astra", blast="deletion")["vary_reason"] == "high-blast-author-skipped", "Astra author cannot self-review")
+    expect(hard["id"] == "fable-arch-review" and hard["vary_reason"] == "high-blast", "high blast is Fable")
+    skipped = ladder.vary_reader(data, "claude", blast="deletion")
+    expect(skipped["id"] == "astra-arch-review" and skipped["vary_reason"] == "high-blast-author-skipped", "high blast skips Fable when Fable is the author")
+    expect(ladder.vary_reader(data, "astra", blast="deletion")["id"] == "fable-arch-review", "Astra author still gets Fable on high blast")
     expect(ladder.vary_reader(no_codex, "claude")["id"] == "grok-arch-review", "Claude author without Astra uses Grok")
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)

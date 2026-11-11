@@ -583,18 +583,20 @@ model SHALL provide a `pin_reason`. Historical route ids MAY remain migration
 aliases for one release.
 
 The default order SHALL be Sonnet then Terra for known/mechanical work; Sol
-then Opus for implementation/thinking; Fable 5.2 then Opus for design; Opus
-then Astra for planning; Opus then optional Grok for fold; and Fable 5.2 at
+then Opus for implementation/thinking; Fable 5.2 then Opus for design; Fable
+5.2 then Astra for planning, with Opus only when that pair is not eligible;
+Opus then optional Grok for fold; and Fable 5.2 at
 high effort, then Astra, then Opus, then Grok for architecture review. Fable
 5.2 SHALL resolve to `claude-fable-5-2`. Fable 5.1 SHALL NOT be configured
 and SHALL NOT alias to Opus. Sol and Terra SHALL NOT be architecture-review
 routes. Grok routes SHALL resolve to Grok 4.7.
 
-Fable 5.2 SHALL be the assignee for the initial architecture draft. The
-session driver, often Grok, MAY edit that draft. The author family passed
-to review SHALL be that driver, so a Grok edit keeps Fable eligible.
-Ordinary gating review SHALL rotate Fable 5.2 and Astra when either is
-eligible, and SHALL use Opus or Grok only when that pair is not.
+Fable 5.2 SHALL be the assignee for the initial architecture draft and for
+high blast. The session driver, often Grok, MAY edit that draft. The author
+family passed to review SHALL be that driver, so a Grok edit keeps Fable
+eligible. Ordinary gating review SHALL rotate Fable 5.2 and Astra when either
+is eligible, and SHALL use Opus or Grok only when that pair is not. Astra is
+the detail reviewer. A high-blast Fable accept counts as Fable's turn.
 
 #### Scenario: Known coding task
 
@@ -607,8 +609,23 @@ eligible, and SHALL use Opus or Grok only when that pair is not.
 
 - GIVEN shape `plan`
 - WHEN assignment runs
-- THEN latest Opus is first and latest Astra is second
+- THEN Fable 5.2 is first and Astra is second
+- AND Opus is used only when that pair is not eligible
 - AND no Fable 5.1 or Sol planning route exists
+
+#### Scenario: High blast review is Fable
+
+- GIVEN blast `schema` and a non-Anthropic author
+- WHEN `vary-reader` runs
+- THEN the reader is Fable 5.2
+- AND the reason is `high-blast`
+
+#### Scenario: High blast skips an Anthropic author
+
+- GIVEN blast `deletion` and an Anthropic author
+- WHEN `vary-reader` runs
+- THEN Fable is not the reader
+- AND the reason is `high-blast-author-skipped`
 
 #### Scenario: Architecture review order
 

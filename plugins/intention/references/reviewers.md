@@ -24,17 +24,18 @@ python3 <plugin>/scripts/ladder.py vary-reader \
 The author's vendor is skipped. Human `--who` / `--id` still wins.
 
 - **High blast** (schema, deletion, protocol, durability, or the DAG calls
-  the blast high) prefers Astra. If Astra is the author vendor, take the
-  first remaining reader and say why.
+  the blast high) prefers Fable 5.2. Fable holds the big picture. If Fable
+  is not eligible, take the first remaining reader and say why. A
+  high-blast Fable accept counts as Fable's turn, so the next ordinary
+  review moves to Astra.
 - **Send-back** on this change returns to that review's `READER` when the
   route is still eligible. Do not rotate away from the reader who sent it
   back.
-- **Otherwise rotate** Fable 5.2 and Astra. The next of that pair after
-  the latest accepting `READER` is the pick. No prior accept starts at
-  Fable when the author is not Anthropic, otherwise the first remaining
-  reader. Opus and Grok enter only when neither Fable nor Astra is
-  eligible. Astra on a high-blast accept counts as Astra's turn, so the
-  next ordinary review moves on.
+- **Otherwise rotate** Fable 5.2 and Astra. Astra is the detail reviewer.
+  The next of that pair after the latest accepting `READER` is the pick.
+  No prior accept starts at Fable when the author is not Anthropic,
+  otherwise the first remaining reader. Opus and Grok enter only when
+  neither Fable nor Astra is eligible.
 
 A fresh session after send-back is the same reader, not the next one.
 Consult does not use this rotation and does not unblock `act`.

@@ -56,8 +56,8 @@ unrelated ASK/EYES work.
    `python3 <this-skill-dir>/../../scripts/ladder.py vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id> [--blast high]`
 
    Load `../../references/reviewers.md`. High blast (schema, deletion,
-   protocol, durability) passes `--blast high` and prefers Astra.
-   Ordinary reads rotate. A send-back on this change returns to that
+   protocol, durability) passes `--blast high` and prefers Fable 5.2.
+   Ordinary reads rotate. Astra is the detail reviewer. A send-back on this change returns to that
    `READER`. `assign` without `vary-reader` is the fallback list only.
 
    Run `ladder.py show` / `assign`: configured, executable, and health
@@ -75,7 +75,7 @@ unrelated ASK/EYES work.
    that pair is not eligible. Claude authors skip Fable and Opus;
    Codex authors skip Astra. A Grok driver keeps both Fable and Astra.
    Human picks may override the vendor boundary and degraded health with
-   a warning. Optional extra: `--shape plan` consult (Opus then Astra). Plan consult is
+   a warning. Optional extra: `--shape plan` consult (Fable 5.2, then Astra). Plan consult is
    **not** the sole accept.
 
    If `assign --author-family <author>` finds no executable route:

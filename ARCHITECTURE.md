@@ -165,8 +165,8 @@ and verification dates live only in `references/ladder.json`:
 | Known / mechanical | Sonnet then Terra · `explicit` |
 | Implementation / thinking | Sol then Opus · `standard` · effort medium |
 | Design | Fable 5.2, then Opus. The session driver may edit Fable's draft |
-| Planning helper / replan consult | Opus then Astra · `lean` · no write |
-| Real architecture review | Fable 5.2 then Astra, then Opus, then Grok. Ordinary gating rotates Fable and Astra |
+| Planning helper / replan consult | Fable 5.2 then Astra, Opus when that pair is not eligible · `lean` · no write |
+| Real architecture review | Fable 5.2 then Astra, then Opus, then Grok. High blast prefers Fable. Ordinary gating rotates Fable and Astra; Astra is the detail reviewer |
 | Fold | Opus then optional Grok |
 
 Same-vendor review still cannot promote. The resolver takes an explicit

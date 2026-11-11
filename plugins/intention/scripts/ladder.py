@@ -254,7 +254,7 @@ def vary_reader(
 ) -> dict:
     """Gating architecture reader.
 
-    High blast prefers Astra. A send-back on this change returns to that
+    High blast prefers Fable 5.2. A send-back on this change returns to that
     reader. Otherwise rotate Fable 5.2 and Astra when either is eligible.
     Opus and Grok are used when that pair is not. The author's vendor is skipped.
     """
@@ -269,9 +269,9 @@ def vary_reader(
                 return {**same, "vary_reason": "send-back", "last_reader": last_reader}
     high = (blast or "").strip().lower() in _HIGH_BLAST
     if high:
-        astra = next((route for route in eligible if route.get("family") == "astra"), None)
-        chosen = astra or eligible[0]
-        reason = "high-blast" if astra else "high-blast-author-skipped"
+        fable = next((route for route in eligible if route.get("family") == "fable"), None)
+        chosen = fable or eligible[0]
+        reason = "high-blast" if fable else "high-blast-author-skipped"
     else:
         pool = _review_pool(eligible)
         ids = [route["id"] for route in pool]
@@ -343,7 +343,7 @@ def main() -> int:
 
     vary = sub.add_parser(
         "vary-reader",
-        help="gating architecture reader: Astra on high blast, else rotate",
+        help="gating architecture reader: Fable on high blast, else rotate",
     )
     vary.add_argument("--shape", default="architecture-review")
     vary.add_argument("--blast", default="", help="high, schema, deletion, protocol, or durability")

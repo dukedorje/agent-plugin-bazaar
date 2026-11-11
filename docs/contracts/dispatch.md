@@ -56,9 +56,10 @@ python3 plugins/intention/scripts/ladder.py assign --shape known
 Source: `plugins/intention/references/ladder.json`. Known work is
 Codex Terra when the CLI is present, else Sonnet 5. Implementation
 and thinking are Sol, else Opus 5. The initial architecture draft is
-Fable 5.2; the session driver may edit it. Ordinary architecture review
-rotates Fable 5.2 and Astra. Grok is the driver and the cross-family
-reader when that pair is not eligible.
+Fable 5.2; the session driver may edit it. High-blast review prefers
+Fable. Ordinary architecture review rotates Fable 5.2 and Astra; Astra
+is the detail pass. Plan consult is Fable, then Astra. Grok is the driver
+and the cross-family reader when that pair is not eligible.
 
 Blast **raises** density and never lowers it: schema/migration, auth,
 crypto, money, cross-service contract → at least `standard`.

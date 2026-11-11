@@ -3,7 +3,7 @@
   "human_override": "always wins",
   "max_inflight": 2,
   "max_fallback_hops": 2,
-  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Design assign is the initial architecture (Fable, then Opus). The session driver may edit that draft. Gating advise uses vary-reader: high blast prefers Astra, otherwise rotate Fable and Astra when either is eligible. assign stays first-by-priority.",
+  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Design assign is the initial architecture (Fable, then Opus). The session driver may edit that draft. Plan consult is Fable, then Astra, then Opus. Gating advise uses vary-reader: high blast prefers Fable, otherwise rotate Fable and Astra when either is eligible. Astra is the detail reviewer. assign stays first-by-priority.",
   "families": {
     "sonnet": {
       "model": "claude-sonnet-5-5",
@@ -174,8 +174,8 @@
       ]
     },
     {
-      "id": "opus-plan",
-      "family": "opus",
+      "id": "fable-plan",
+      "family": "fable",
       "shapes": [
         "plan",
         "replan",
@@ -186,7 +186,24 @@
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high"
+      "effort": "high",
+      "notes": "Big-picture plan. Astra is the detail pass."
+    },
+    {
+      "id": "opus-plan",
+      "family": "opus",
+      "shapes": [
+        "plan",
+        "replan",
+        "intend-consult"
+      ],
+      "priority": 3,
+      "role": "consultant",
+      "harness": "claude",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "notes": "Fallback when Fable and Astra are not eligible."
     },
     {
       "id": "astra-plan",
@@ -201,7 +218,8 @@
       "harness": "codex",
       "surface": "packet-only",
       "density": "lean",
-      "effort": "high"
+      "effort": "high",
+      "notes": "Detail pass after Fable."
     },
     {
       "id": "opus-fold",

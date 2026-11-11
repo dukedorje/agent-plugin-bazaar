@@ -29,7 +29,8 @@ a gated reader, use `advise` instead.
    a change-id. Pass the question on stdin (or `--goal`). `--paths`
    for files they named.
 2. **Shape first, then who.** Default shape is `architecture-review`.
-   Plan/replan → `--shape plan`. Thinking → `--shape thinking`
+   Plan/replan → `--shape plan` (Fable 5.2, then Astra; Opus only when
+   that pair is not eligible). Thinking → `--shape thinking`
    (still `permission: read`). Nicknames bind *inside* that shape
    (`opus` resolves the current registry version in every shape).
    Sol is a thinking reader; Sol and Terra are refused for architecture review.

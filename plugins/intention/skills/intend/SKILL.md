@@ -48,12 +48,12 @@ Read the citation table in `shared.md` from disk. Do not paste those files.
    depth). Blast raises density, never lowers it. Assign with
    `python3 plugins/intention/scripts/ladder.py assign --shape …`
    (known → Sonnet then Terra; implementation/thinking → Sol then Opus;
-   plan → Opus then Astra; design → Fable 5.2, then Opus). Fable writes
-   the initial architecture. The session driver, often Grok, may edit
+   plan → Fable 5.2 then Astra; design → Fable 5.2, then Opus). Fable writes
+   the initial architecture and the big-picture plan. The session driver, often Grok, may edit
    that draft. Real architecture opens a review-pair. Gating advise uses
-   `vary-reader` (`references/reviewers.md`): Astra when the blast is
+   `vary-reader` (`references/reviewers.md`): Fable when the blast is
    schema, deletion, protocol, or durability; otherwise rotate Fable 5.2
-   and Astra, and skip the author's vendor. Versions live only in ladder.json.
+   and Astra. Astra is the detail reviewer. Skip the author's vendor. Versions live only in ladder.json.
 5. **Group.** Complementary jobs → `weave`. Contested expensive → `fork`
    only under the gates in `shared.md`. `ambiguous` / `sensitive` /
    architecture write → `human-gate`. Members are agents (or groups).
