@@ -5,7 +5,7 @@
 The system SHALL keep canonical skill files at
 `plugins/intention/skills/<verb>/SKILL.md` for
 `intend`, `steer`, `change`, `advise`, `act`, `fold`, `brief`, `debrief`,
-`map`, `status`, `consult`, `run`, and `run-wave`. `ready` SHALL remain as an alias skill
+`map`, `status`, `consult`, and `run`. `ready` SHALL remain as an alias skill
 that points at `status`. Each `SKILL.md` SHALL have YAML frontmatter whose `name`
 matches the directory.
 
@@ -18,8 +18,8 @@ plugin install.
 - GIVEN a clone of this repo
 - WHEN Grok starts in the repo root
 - THEN it discovers `intend`, `steer`, `change`, `advise`, `act`,
-  `fold`, `brief`, `debrief`, `map`, `status`, `consult`, `run`, and
-  `run-wave` from `.agents/skills/`
+  `fold`, `brief`, `debrief`, `map`, `status`, `consult`, and `run`
+  from `.agents/skills/`
 
 #### Scenario: Claude installs the same files
 

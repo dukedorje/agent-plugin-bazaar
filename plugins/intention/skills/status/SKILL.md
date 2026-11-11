@@ -45,7 +45,7 @@ Sources (union, labeled, not collapsed):
 - **ASK** — open owed boxes matching ASK (a decision). Next is `steer`.
 - **EYES** — open owed boxes matching EYES / by-eye / human-verify.
   Look, then check the box. These are not READY. Print **YOUR EYES**
-  and a **Next:** command (`Next: /run-wave` on the box, else
+  and a **Next:** command (the `Next:` written on the box, else
   `/status`). `/run` halt on this face is `stop: eyes`.
 - **PUNT** — open owed boxes matching PUNT (last-resort second-family
   advise).

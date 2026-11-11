@@ -5,7 +5,7 @@
 
 ## Decided
 
-- Native dispatch lives in skill prose, plus a `/run-wave` workflow
+- Native dispatch lives in skill prose, plus the `run-wave` workflow
   (user | recommended+workflow)
 - First slice: campaign `parallel()` for disjoint ready writes
   (user)

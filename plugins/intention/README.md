@@ -31,7 +31,6 @@ without a plugin install.
 | What’s on deck (OpenSpec **and** beads) | `status` |
 | Honest open pile (unblocked leaves, no empty faces) | `status --queue` |
 | Keep going while unblocked | `run` (waves internally when two+ disjoint writes are ready) |
-| One fan-out without the campaign | `run-wave` — usually you want `run` |
 | Try a landed act (internal ring) | `demo` / `demo <change-id>` |
 | At the desk; halt at first ASK/EYES/PENDING | `run --wait` |
 | Morning pile (ASK / EYES / PUNT) | `status` |

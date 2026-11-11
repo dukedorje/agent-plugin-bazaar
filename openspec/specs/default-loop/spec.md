@@ -22,8 +22,8 @@ the campaign; `map` and `status` are observe; `brief` / `debrief`
 are disposable decide; `steer` is human-gated guidance (not a
 campaign wave); `demo` is the human trying the iteration after
 `act` and before `fold`; the rest are stages. `ready` SHALL be listed only
-as an alias of `status`. `run-wave` SHALL be listed as the act
-fan-out, not a default-loop stage.
+as an alias of `status`. A wave of two or more disjoint writes
+SHALL stay inside `run`. There SHALL NOT be a separate fan-out command.
 
 #### Scenario: README install
 

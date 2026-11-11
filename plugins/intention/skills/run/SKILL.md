@@ -347,9 +347,9 @@ and “and run” enter this walk). It does **not**
 check EYES. Review afterwards is `map` / `demo` / `status`. Mailbox
 is `/status`, not this card.
 
-`run-wave` is the fan-out this loop already launches when two or more
-wholly disjoint writes are dispatchable. Do not tell the human to
-invoke `/run-wave` instead of `/run`.
+The `run-wave` workflow is the fan-out this loop launches when two or
+more wholly disjoint writes are dispatchable. There is no `/run-wave`
+command.
 
 ### Run it by me
 

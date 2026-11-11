@@ -38,7 +38,7 @@ def test_inflight_journey() -> None:
                 "Duke runs the wave from a Grok tab.\n\n"
                 "## Out of scope\n"
             ),
-            "tasks": "- [ ] EYES: one real two-node wave. Next: /run-wave\n",
+            "tasks": "- [ ] EYES: one real two-node wave. Next: /run\n",
         }
         path = root / "fix.json"
         path.write_text(json.dumps(fixture), encoding="utf-8")
@@ -48,7 +48,7 @@ def test_inflight_journey() -> None:
         expect("YOUR DEMO" in out, out)
         expect("halt" in out, out)
         expect("Duke runs the wave" in out, out)
-        expect("/run-wave" in out, out)
+        expect("try: /run" in out, out)
         expect("Do not fold" in out, out)
         expect(not (root / "demo.md").exists(), "wrote demo.md")
         expect(not list(root.glob("**/demo.md")), "wrote demo.md somewhere")
@@ -64,7 +64,7 @@ def test_archive_not_empty() -> None:
                 "## User journey & surfaces\n\n"
                 "Try the folded wave.\n"
             ),
-            "tasks": "- [x] EYES: look. Next: /run-wave\n",
+            "tasks": "- [x] EYES: look. Next: /run\n",
         }
         path = root / "fix.json"
         path.write_text(json.dumps(fixture), encoding="utf-8")

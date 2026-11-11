@@ -221,7 +221,7 @@ forks. Skip SHALL leave a fork open and SHALL NOT block siblings.
 ### Requirement: Shared references, not four surfaces
 
 The skills `intend`, `steer`, `change`, `advise`, `act`, `fold`,
-`brief`, `debrief`, `map`, `ready`, `run`, `run-wave`, `consult`,
+`brief`, `debrief`, `map`, `ready`, `run`, `consult`,
 and `demo` SHALL load
 `plugins/intention/references/shared.md` and SHALL NOT restate
 packet fields or topology wirings. Adding a tenth law to a skill
@@ -1220,7 +1220,7 @@ every act owes a demo.
 - GIVEN a landed `act` on `add-run-wave-workflow` and Duke says
   `/demo`
 - WHEN `demo` runs
-- THEN he is given a journey to try the wave (e.g. `/run-wave`)
+- THEN he is given a journey to try the wave (e.g. `/run`)
 - AND no EYES box is checked
 - AND no deploy ran
 

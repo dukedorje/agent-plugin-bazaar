@@ -1,7 +1,7 @@
 # Prepare at the execution frontier
 
 Activation is permission; preparation establishes that the work still fits.
-This policy applies to run, direct act, and every member of a run-wave.
+This policy applies to run, direct act, and every member of a wave.
 Python observes eligibility; the conductor performs the semantic check.
 
 ## Authority

@@ -5,7 +5,7 @@
 **Rigor:** architecture
 
 Activated 2026-09-02 (steer: Grok-native dispatch in skills plus a
-`/run-wave` workflow; first slice is parallel disjoint `act`).
+the `run-wave` workflow; first slice is parallel disjoint `act`).
 
 ## Why
 

@@ -566,7 +566,7 @@ def decision_briefing(
             "",
             "Default after intend is `steer`. Activate this set → grant, then "
             "change/advise, then pause (or `--go` / autonomous into `/run`). "
-            "`/run` already takes waves; you do not need `/run-wave` for that.",
+            "`/run` takes waves when two or more disjoint writes are ready.",
             "",
         ]
     )

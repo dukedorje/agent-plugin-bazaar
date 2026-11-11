@@ -61,7 +61,7 @@ The packet is the only interface. Schema:
    harness is `grok`, spawn `general-purpose` with the packet path
    (the worker reads `act` and the packet). If the host has
    `workflow` and this node is one of a disjoint wave, the
-   conductor already launched `run-wave` — do not launch again.
+   conductor already launched the `run-wave` workflow — do not launch again.
    Otherwise stage a unique prompt (`spawn.py stage --packet
    <packet>`) and `spawn.py run --adapter claude` or `codex`.
    Empty/missing prompt is a hard fail. Stall → `infra-red`. On

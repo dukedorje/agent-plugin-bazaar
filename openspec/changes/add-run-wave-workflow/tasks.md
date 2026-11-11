@@ -3,7 +3,7 @@
 - [x] `conductor.py wave` mutually disjoint dispatchable subset
 - [x] `.grok/workflows/run-wave.rhai` + `validate_only` smoke
 - [x] `run/SKILL.md` + `act/SKILL.md` native dispatch
-- [x] `run-wave` skill + `.agents/skills/run-wave` so `/run-wave` resolves
+- [x] `run-wave` workflow. No `/run-wave` command.
 - [x] harness.md
 - [x] verbs delta
 - [x] Tests for wave pick
@@ -27,7 +27,7 @@ dissent. Slice one is whole-packet disjoint waves on HEAD.
       node's `constraints.paths` sequentially on HEAD, classify /
       close / repair / park. `run-wave.rhai` `complete()` returns
       `{nodes: [{id, success}]}`.
-- [x] EYES: one real two-node wave from a Grok tab — wholly disjoint packets, both persists on HEAD, both beads closed, no `act/*` branch or `.worktrees/` left. Next: /run-wave
+- [x] EYES: one real two-node wave from a Grok tab — wholly disjoint packets, both persists on HEAD, both beads closed, no `act/*` branch or `.worktrees/` left. Next: /run
 - [x] Scope: slice one runs from the bazaar clone only (stated in
       `proposal.md` Out of scope). Leave rhai paths as
       `plugins/intention/...` until a later slice threads the skill

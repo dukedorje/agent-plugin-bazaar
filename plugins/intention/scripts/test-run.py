@@ -1127,7 +1127,7 @@ def test_wait_eyes_is_stop_eyes() -> None:
                     {
                         "id": "add-x",
                         "open": [
-                            "EYES: one real two-node wave. Next: /run-wave"
+                            "EYES: one real two-node wave. Next: /run"
                         ],
                     }
                 ],
@@ -1141,10 +1141,10 @@ def test_wait_eyes_is_stop_eyes() -> None:
         expect(face["stop"] == "eyes", face)
         expect(face["next"] is None, face)
         expect(face["focus"] == "add-x", face)
-        expect(face["next_steps"][0]["command"] == "/run-wave", face)
+        expect(face["next_steps"][0]["command"] == "/run", face)
         text = run(["--wait", "--ready-json", str(fixture)])
         expect("YOUR EYES" in text.stdout, text.stdout)
-        expect("/run-wave" in text.stdout, text.stdout)
+        expect("Next: /run" in text.stdout, text.stdout)
         expect("Next:" in text.stdout, text.stdout)
 
 
@@ -1160,7 +1160,7 @@ def test_roll_eyes_does_not_intend_leftover() -> None:
                 "eyes": [
                     {
                         "id": "add-run-wave-workflow",
-                        "open": ["EYES: look. Next: /run-wave"],
+                        "open": ["EYES: look. Next: /run"],
                     }
                 ],
                 "fold_legal": [],

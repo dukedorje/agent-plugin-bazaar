@@ -97,4 +97,4 @@ is the same pause with no act. Skip the pause only when they said
 | `--autonomous` / “I'll review after” | `--go` plus, if a grant is recorded, `/run` (roll). Do not halt for steer. Do not flip PENDING without the grant. Do not check EYES. Review afterwards is `map` / `demo` / `status`. |
 
 Do not treat “run it by me” as `/run` or `/run --wait`. Those act.
-You do not need `/run-wave` after this; `/run` takes waves.
+`/run` takes waves when two or more disjoint writes are ready.
