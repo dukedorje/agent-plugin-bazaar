@@ -29,8 +29,8 @@ a gated reader, use `advise` instead.
    a change-id. Pass the question on stdin (or `--goal`). `--paths`
    for files they named.
 2. **Shape first, then who.** Default shape is `architecture-review`.
-   Plan/replan → `--shape plan` (Fable 5.2, then Astra; Opus only when
-   that pair is not eligible). Thinking → `--shape thinking`
+   Plan/replan → `--shape plan` (Astra, then Opus; Fable on a high blast).
+   Thinking → `--shape thinking`
    (still `permission: read`). Nicknames bind *inside* that shape
    (`opus` resolves the current registry version in every shape).
    Sol is a thinking reader; Sol and Terra are refused for architecture review.
@@ -42,7 +42,7 @@ a gated reader, use `advise` instead.
    | named models (“Astra”, “Opus and Grok”) | `--who astra` / `--who opus,grok` |
    | “compare Sol and Opus” | `--shape thinking --who sol,opus` (named wins) |
    | bare “panel” / “convoke” / “everyone” | `--panel` |
-   | nobody named | first executable different-vendor reader (Fable 5.2 → Astra → Opus → Grok). Consult does not rotate and does not call `vary-reader`. |
+   | nobody named | first executable different-vendor reader (Astra → Grok → Fable → Opus). Consult does not rotate and does not call `vary-reader`. |
 
    `--who`, `--panel`, and `--id` are mutually exclusive. `--who`
    several is ladder priority order, not token order. Unknown or

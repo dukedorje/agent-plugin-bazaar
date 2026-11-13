@@ -35,9 +35,11 @@ use the procedure below after reconciling the inputs.
 2. Verb-led `change-id`. If `intend` already named one, use that id.
 3. Scaffold `openspec/changes/<id>/` using the templates. `design.md`
    only when the templates say so. On an architecture change, the initial
-   `design.md` is Fable 5.2 (`assign --shape design`). The session driver,
-   often Grok, may edit that draft. Advise then uses the driver's family,
-   so Fable stays in the review loop with Astra.
+   `design.md` is Opus (`assign --shape design`). Fable 5.2 drafts it
+   when the blast is high (`vary-reader --shape design --blast high`)
+   or a human names Fable. The session driver, often Grok, may edit
+   that draft. Advise then uses the driver's family. Ordinary review
+   is Astra; a high blast is Fable.
 4. Banner is `> **PENDING**` unless the human already activated this scope
    or recorded campaign authority covers this dependency-ready, prepared
    node (then `> **ACTIVE BUILD**`). Follow preparation.md limits; changed

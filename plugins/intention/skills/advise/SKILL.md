@@ -57,7 +57,7 @@ unrelated ASK/EYES work.
 
    Load `../../references/reviewers.md`. High blast (schema, deletion,
    protocol, durability) passes `--blast high` and prefers Fable 5.2.
-   Ordinary reads rotate. Astra is the detail reviewer. A send-back on this change returns to that
+   Ordinary reads are Astra and do not rotate. A send-back on this change returns to that
    `READER`. `assign` without `vary-reader` is the fallback list only.
 
    Run `ladder.py show` / `assign`: configured, executable, and health
@@ -70,12 +70,12 @@ unrelated ASK/EYES work.
    Human pick (`--who` / `--id`) selects the spawned reader. It
    does not waive isolation.
 
-   Eligible order stays Fable 5.2, then Astra, then Opus, then Grok.
-   Ordinary varying rotates Fable and Astra. It uses Opus or Grok when
-   that pair is not eligible. Claude authors skip Fable and Opus;
-   Codex authors skip Astra. A Grok driver keeps both Fable and Astra.
+   Eligible order stays Astra, then Grok, then Fable, then Opus.
+   Ordinary varying picks Astra. Claude authors skip Fable and Opus;
+   Codex authors skip Astra and land on Grok, not Fable. A Grok driver
+   keeps Astra for an ordinary read and Fable for a high blast.
    Human picks may override the vendor boundary and degraded health with
-   a warning. Optional extra: `--shape plan` consult (Fable 5.2, then Astra). Plan consult is
+   a warning. Optional extra: `--shape plan` consult (Astra, then Opus; Fable on a high blast). Plan consult is
    **not** the sole accept.
 
    If `assign --author-family <author>` finds no executable route:

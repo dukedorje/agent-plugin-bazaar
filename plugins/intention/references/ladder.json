@@ -3,7 +3,7 @@
   "human_override": "always wins",
   "max_inflight": 2,
   "max_fallback_hops": 2,
-  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Design assign is the initial architecture (Fable, then Opus). The session driver may edit that draft. Plan consult is Fable, then Astra, then Opus. Gating advise uses vary-reader: high blast prefers Fable, otherwise rotate Fable and Astra when either is eligible. Astra is the detail reviewer. assign stays first-by-priority.",
+  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Ordinary design is Opus; Fable drafts the initial architecture on a high blast or when a human names Fable. Plan consult is Astra, then Opus; Fable on a high blast. Gating advise uses vary-reader: Astra by default, Fable on a high blast, no rotation. assign stays first-by-priority.",
   "families": {
     "sonnet": {
       "model": "claude-sonnet-5-5",
@@ -146,7 +146,7 @@
       "shapes": [
         "design"
       ],
-      "priority": 1,
+      "priority": 2,
       "role": "worker",
       "harness": "claude",
       "surface": "skill-host",
@@ -155,7 +155,7 @@
       "skills": [
         "designer"
       ],
-      "notes": "Initial architecture. The session driver may edit the draft."
+      "notes": "Drafts the initial architecture when the blast is high, or when a human names Fable. The session driver may edit that draft."
     },
     {
       "id": "opus-design",
@@ -163,7 +163,7 @@
       "shapes": [
         "design"
       ],
-      "priority": 2,
+      "priority": 1,
       "role": "worker",
       "harness": "claude",
       "surface": "skill-host",
@@ -171,27 +171,12 @@
       "effort": "low",
       "skills": [
         "designer"
-      ]
+      ],
+      "notes": "Ordinary initial architecture. The session driver may edit the draft."
     },
     {
       "id": "fable-plan",
       "family": "fable",
-      "shapes": [
-        "plan",
-        "replan",
-        "intend-consult"
-      ],
-      "priority": 1,
-      "role": "consultant",
-      "harness": "claude",
-      "surface": "skill-host",
-      "density": "lean",
-      "effort": "high",
-      "notes": "Big-picture plan. Astra is the detail pass."
-    },
-    {
-      "id": "opus-plan",
-      "family": "opus",
       "shapes": [
         "plan",
         "replan",
@@ -203,7 +188,23 @@
       "surface": "skill-host",
       "density": "lean",
       "effort": "high",
-      "notes": "Fallback when Fable and Astra are not eligible."
+      "notes": "High-blast plan, or a human named Fable."
+    },
+    {
+      "id": "opus-plan",
+      "family": "opus",
+      "shapes": [
+        "plan",
+        "replan",
+        "intend-consult"
+      ],
+      "priority": 2,
+      "role": "consultant",
+      "harness": "claude",
+      "surface": "skill-host",
+      "density": "lean",
+      "effort": "high",
+      "notes": "Plan fallback when Astra is not eligible."
     },
     {
       "id": "astra-plan",
@@ -213,13 +214,13 @@
         "replan",
         "intend-consult"
       ],
-      "priority": 2,
+      "priority": 1,
       "role": "consultant",
       "harness": "codex",
       "surface": "packet-only",
       "density": "lean",
       "effort": "high",
-      "notes": "Detail pass after Fable."
+      "notes": "Ordinary plan consult."
     },
     {
       "id": "opus-fold",
@@ -255,7 +256,8 @@
       "shapes": [
         "architecture-review"
       ],
-      "priority": 1,
+      "priority": 3,
+      "notes": "High blast only: schema, deletion, protocol, durability.",
       "role": "reader",
       "harness": "claude",
       "surface": "skill-host",
@@ -268,7 +270,7 @@
       "shapes": [
         "architecture-review"
       ],
-      "priority": 3,
+      "priority": 4,
       "role": "reader",
       "harness": "claude",
       "surface": "skill-host",
@@ -281,12 +283,13 @@
       "shapes": [
         "architecture-review"
       ],
-      "priority": 2,
+      "priority": 1,
       "role": "reader",
       "harness": "codex",
       "surface": "packet-only",
       "density": "lean",
-      "effort": "high"
+      "effort": "high",
+      "notes": "Default architecture reader."
     },
     {
       "id": "grok-arch-review",
@@ -294,7 +297,7 @@
       "shapes": [
         "architecture-review"
       ],
-      "priority": 4,
+      "priority": 2,
       "role": "reader",
       "harness": "grok",
       "surface": "skill-host",

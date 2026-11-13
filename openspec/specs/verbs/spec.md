@@ -583,20 +583,21 @@ model SHALL provide a `pin_reason`. Historical route ids MAY remain migration
 aliases for one release.
 
 The default order SHALL be Sonnet then Terra for known/mechanical work; Sol
-then Opus for implementation/thinking; Fable 5.2 then Opus for design; Fable
-5.2 then Astra for planning, with Opus only when that pair is not eligible;
-Opus then optional Grok for fold; and Fable 5.2 at
-high effort, then Astra, then Opus, then Grok for architecture review. Fable
+then Opus for implementation/thinking; Opus then Fable 5.2 for design; Astra,
+then Opus, then Fable 5.2 for planning; Opus then optional Grok for fold; and
+Astra, then Grok, then Fable 5.2, then Opus for architecture review. Fable
 5.2 SHALL resolve to `claude-fable-5-2`. Fable 5.1 SHALL NOT be configured
 and SHALL NOT alias to Opus. Sol and Terra SHALL NOT be architecture-review
 routes. Grok routes SHALL resolve to Grok 4.7.
 
-Fable 5.2 SHALL be the assignee for the initial architecture draft and for
-high blast. The session driver, often Grok, MAY edit that draft. The author
-family passed to review SHALL be that driver, so a Grok edit keeps Fable
-eligible. Ordinary gating review SHALL rotate Fable 5.2 and Astra when either
-is eligible, and SHALL use Opus or Grok only when that pair is not. Astra is
-the detail reviewer. A high-blast Fable accept counts as Fable's turn.
+Opus SHALL be the assignee for an ordinary initial architecture draft. Fable
+5.2 SHALL draft that architecture, and SHALL take plan consult, only when the
+blast is high or a human names Fable. The session driver, often Grok, MAY edit
+that draft. The author family passed to review SHALL be that driver. Ordinary
+gating review SHALL select Astra and SHALL NOT rotate after an accept. A high
+blast (schema, deletion, protocol, or durability) SHALL select Fable 5.2 when
+that route is eligible. A send-back SHALL return to that review's reader when
+the route is still eligible.
 
 #### Scenario: Known coding task
 
@@ -609,8 +610,8 @@ the detail reviewer. A high-blast Fable accept counts as Fable's turn.
 
 - GIVEN shape `plan`
 - WHEN assignment runs
-- THEN Fable 5.2 is first and Astra is second
-- AND Opus is used only when that pair is not eligible
+- THEN Astra is first, Opus is second, and Fable 5.2 is third
+- AND an ordinary plan assignment does not select Fable
 - AND no Fable 5.1 or Sol planning route exists
 
 #### Scenario: High blast review is Fable
@@ -630,15 +631,27 @@ the detail reviewer. A high-blast Fable accept counts as Fable's turn.
 #### Scenario: Architecture review order
 
 - GIVEN shape `architecture-review`
-- WHEN assignment runs for a non-Anthropic author
-- THEN Fable 5.2 at high effort is first, Astra is second, Opus is third, and Grok 4.7 is fourth
+- WHEN assignment runs for a Grok author
+- THEN Astra is first, Grok 4.7 is second, Fable 5.2 is third, and Opus is fourth
 - AND no Fable 5.1, Sol, Terra, or pinned Opus 4.8 review route exists
 
-#### Scenario: Design draft is Fable
+#### Scenario: Ordinary review stays with Astra
 
-- GIVEN shape `design`
+- GIVEN the latest accepting architecture reader is Astra and the author is Grok
+- WHEN `vary-reader` runs with no high blast
+- THEN the reader is Astra again
+
+#### Scenario: Design draft is Opus
+
+- GIVEN shape `design` and no high blast
 - WHEN assignment runs
-- THEN Fable 5.2 is first and Opus is the fallback
+- THEN Opus is first and Fable 5.2 is the fallback
+
+#### Scenario: High blast draft is Fable
+
+- GIVEN shape `design` and blast `schema`
+- WHEN `vary-reader` runs for a non-Anthropic author
+- THEN the drafter is Fable 5.2
 - AND the concrete model is `claude-fable-5-2`
 
 #### Scenario: Cross-family review by default
@@ -1176,18 +1189,19 @@ retry according to bounded fallback; it SHALL NOT manufacture a verdict.
 - WHEN automatic advise assignment runs
 - THEN it skips Fable and Opus and selects executable Astra, otherwise Grok 4.7
 
-#### Scenario: Codex author uses Fable
+#### Scenario: Codex author uses Grok
 
 - GIVEN Codex authored an architecture change
 - WHEN automatic advise assignment runs
-- THEN it selects Fable 5.2 at high effort when executable
+- THEN it selects Grok 4.7 when executable
+- AND it does not select Fable
 
-#### Scenario: Grok driver reviews with Fable and Astra
+#### Scenario: Grok driver reviews with Astra
 
 - GIVEN Grok edited the architecture draft
-- WHEN ordinary `vary-reader` runs, then runs again after Fable accepted
-- THEN the first reader is Fable 5.2 and the next is Astra
-- AND the turn after Astra returns to Fable 5.2
+- WHEN ordinary `vary-reader` runs, including after Astra accepted
+- THEN the reader is Astra
+- AND a high blast selects Fable 5.2
 
 ### Requirement: run operator flags
 

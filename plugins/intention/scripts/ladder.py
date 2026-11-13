@@ -170,13 +170,6 @@ _READER_LINE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
 _TRAILING_SEQ = re.compile(r"^(.*)-(\d+)$")
 _ACCEPTING = {"accept", "accept-with-nits"}
 _HIGH_BLAST = {"high", "schema", "deletion", "protocol", "durability", "challenging"}
-_PREFERRED_READERS = {"fable", "astra"}
-
-
-def _review_pool(eligible: list[dict]) -> list[dict]:
-    """Ordinary gating rotates Fable 5.2 and Astra. The wider ladder is the fallback."""
-    pair = [route for route in eligible if route.get("family") in _PREFERRED_READERS]
-    return pair or eligible
 
 
 def _review_sort_key(path: Path) -> tuple[str, int]:
@@ -252,11 +245,12 @@ def vary_reader(
     change_dir: Path | None = None,
     shape: str = "architecture-review",
 ) -> dict:
-    """Gating architecture reader.
+    """Gating reader. Priority order stays the fallback list.
 
-    High blast prefers Fable 5.2. A send-back on this change returns to that
-    reader. Otherwise rotate Fable 5.2 and Astra when either is eligible.
-    Opus and Grok are used when that pair is not. The author's vendor is skipped.
+    Architecture review defaults to Astra and does not rotate. A high
+    blast prefers Fable 5.2, including a design or plan draft. A
+    send-back on this change returns to that reader. The author's vendor
+    is already gone from `eligible`.
     """
     eligible = candidates(data, shape, author_family=author_family)
     if not eligible:
@@ -272,15 +266,18 @@ def vary_reader(
         fable = next((route for route in eligible if route.get("family") == "fable"), None)
         chosen = fable or eligible[0]
         reason = "high-blast" if fable else "high-blast-author-skipped"
-    else:
-        pool = _review_pool(eligible)
-        ids = [route["id"] for route in pool]
-        if last_reader in ids and len(ids) > 1:
-            chosen = pool[(ids.index(last_reader) + 1) % len(ids)]
-            reason = "rotate"
+    elif shape == "architecture-review":
+        astra = next((route for route in eligible if route.get("family") == "astra"), None)
+        if astra is not None:
+            chosen, reason = astra, "default"
         else:
-            chosen = pool[0]
-            reason = "first"
+            ordinary = [route for route in eligible if route.get("family") != "fable"]
+            if ordinary:
+                chosen, reason = ordinary[0], "default-author-skipped"
+            else:
+                chosen, reason = eligible[0], "default-only-fable"
+    else:
+        chosen, reason = eligible[0], "first"
     return {**chosen, "vary_reason": reason, "last_reader": last_reader}
 
 
@@ -343,7 +340,7 @@ def main() -> int:
 
     vary = sub.add_parser(
         "vary-reader",
-        help="gating architecture reader: Fable on high blast, else rotate",
+        help="gating reader: Astra by default, Fable on a high blast",
     )
     vary.add_argument("--shape", default="architecture-review")
     vary.add_argument("--blast", default="", help="high, schema, deletion, protocol, or durability")

@@ -2,13 +2,14 @@
 
 Append-only. One line per hard-won fact. Dated, with a file reference.
 
-- 2026-11-10 — High blast and plan consult default to Fable 5.2. Astra is the detail reviewer, next in the rotation and second on plan. (`plugins/intention/scripts/ladder.py`, `plugins/intention/references/ladder.json`)
+- 2026-11-12 — Architecture review is Astra by default and does not rotate. Fable 5.2 reviews a high blast and drafts the initial architecture only then, or when a human names Fable. Ordinary design is Opus. Ordinary plan consult is Astra, then Opus. (`plugins/intention/references/reviewers.md`, `plugins/intention/scripts/ladder.py`)
+- 2026-11-10 — **Superseded 2026-11-12 for the review default.** High blast and plan consult default to Fable 5.2. Astra is the detail reviewer, next in the rotation and second on plan. (`plugins/intention/scripts/ladder.py`, `plugins/intention/references/ladder.json`)
 
 - 2026-11-10 — A ready change `/run` leaves behind is a decision. The halt card prints `STEER`. `Do: run or close` on that same bead sends the owner in a loop. (`plugins/intention/skills/run/scripts/run.py`)
 
 - 2026-11-10 — `/run-wave` is not a command. `/run` launches the `run-wave` workflow when two or more disjoint writes are ready. (`plugins/intention/skills/run/SKILL.md`, `plugins/intention/workflows/run-wave.rhai`)
 
-- 2026-11-10 — Fable 5.2 (`claude-fable-5-2`) is the architect: it drafts, the session driver (often Grok) may edit, and ordinary advise rotates Fable and Astra. Fable 5.1 is gone and is not an alias of Opus. (`plugins/intention/references/ladder.json`, `scripts/ladder.py`)
+- 2026-11-10 — **Superseded 2026-11-12 for the review default and the ordinary draft.** Fable 5.2 (`claude-fable-5-2`) is the architect: it drafts, the session driver (often Grok) may edit, and ordinary advise rotates Fable and Astra. Fable 5.1 is gone and is not an alias of Opus. (`plugins/intention/references/ladder.json`, `scripts/ladder.py`)
 
 - 2026-09-27 — `max_inflight` is campaign-local and lease-backed: only held leases tagged with the explicit pinned intention/root consume its slots. Collision ownership remains global across every held lease, including legacy and empty-path leases; bead `in_progress` is tracking, not capacity. (`plugins/intention/scripts/conductor.py`, ADR-009)
 

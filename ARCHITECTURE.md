@@ -164,14 +164,15 @@ and verification dates live only in `references/ladder.json`:
 |---|---|
 | Known / mechanical | Sonnet then Terra · `explicit` |
 | Implementation / thinking | Sol then Opus · `standard` · effort medium |
-| Design | Fable 5.2, then Opus. The session driver may edit Fable's draft |
-| Planning helper / replan consult | Fable 5.2 then Astra, Opus when that pair is not eligible · `lean` · no write |
-| Real architecture review | Fable 5.2 then Astra, then Opus, then Grok. High blast prefers Fable. Ordinary gating rotates Fable and Astra; Astra is the detail reviewer |
+| Design | Opus, then Fable. Fable drafts a high blast. The driver may edit the draft |
+| Planning helper / replan consult | Astra then Opus, Fable on a high blast · `lean` · no write |
+| Real architecture review | Astra by default; Fable on a high blast; then Grok, then Opus. No rotation |
 | Fold | Opus then optional Grok |
 
 Same-vendor review still cannot promote. The resolver takes an explicit
-author harness/family/vendor: a Grok driver keeps Fable then Astra; Claude
-authors use Astra, otherwise Grok. Human picks can explicitly override routing.
+author harness/family/vendor: a Grok driver uses Astra, and Fable on a
+high blast. Claude authors use Astra, otherwise Grok. Codex authors use
+Grok, not Fable. Human picks can explicitly override routing.
 Fable 5.1 is not configured and does not alias to Opus.
 Configuration, permission-aware executability, and passive health are separate.
 API-only OpenAI is read-only. Unknown and verified health stay eligible;
