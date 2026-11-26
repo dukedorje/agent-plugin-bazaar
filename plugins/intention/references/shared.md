@@ -1,6 +1,6 @@
 # Shared vocabulary
 
-Loaded by `intend`, `steer`, `change`, `advise`, `act`, `demo`, `fold`, `brief`, `debrief`, `map`, `status`, `run`, and `consult`. None of them restates
+Loaded by `intend`, `steer`, `change`, `advise`, `act`, `demo`, `fold`, `brief`, `debrief`, `map`, `status`, `run`, `orchestrate`, and `consult`. None of them restates
 the agent surface. If this file and `docs/contracts/agent-surface.md`
 disagree, the contract wins.
 
@@ -37,8 +37,9 @@ disagree, the contract wins.
 | `map` | Intend-dag page with live status; session current pin (not in the repo) | Implement, unpark, repo-level current |
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias. `--queue` is the honest open pile (unblocked leaves + blocked). | Implement, unpark |
 | `brief` | Disposable one-pager | Become a story template |
-| `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend | Fold, implement, become a story template |
+| `debrief` | Expansion of a finished or failed unit; takeaways; feeds intend. On an intention root: the campaign debrief (decisions with how to reverse them, learnings appended to `LEARNINGS.md`). | Fold, implement, become a story template, re-decide |
 | `run` | Campaign card + waves until a stop predicate. Two+ disjoint dispatchable writes launch the `run-wave` workflow. Same-family advise spawns, does not halt. Persist on current HEAD by default; explicit task/user/workflow branch transitions are allowed after protecting dirty work. Check whether HEAD backs an open PR and keep unrelated commits off that branch. `--autonomous` skips steer pause; does not flip PENDING without a grant. | Second packet schema; slash a foreign worker; inline other verb bodies; park same-family advise as stuck; halt fold/act over branch name; invent an implementation branch; append unrelated commits to an open-PR branch |
+| `orchestrate` | A whole intention taken to done: background builders each run one lane (`run <scope> --no-fold --no-beads`), disjoint write-sets side by side. Decisions and facts on the root bead; DECISION / ARCHITECTURE / REVIEW / BLOCKED notices in chat; then fold, epic close, docs pass, campaign `debrief`. The invocation is the “run this whole intention” grant plus decision delegation inside the goal. | Implement a node or run a builder's loop inline; let a builder fold, push, or ask the human; decide scope growth, `sensitive`, `ambiguous`, EYES, or PARKED; accept a review; a store beside beads |
 | `consult` | Second opinions from architecture/plan/thinking readers. stdin/stdout. No intend node. | Implement, fold, write advise reviews, unblock `act` |
 
 ## Preparation and authority

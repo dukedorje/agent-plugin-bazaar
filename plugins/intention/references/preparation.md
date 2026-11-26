@@ -22,6 +22,13 @@ activation remains valid only within the scope approved. `--autonomous` /
 `--go` skip the steer pause; they are not themselves a grant. ASK/EYES
 boxes stay unchecked — review afterwards is `map` / `demo` / `status`.
 
+`orchestrate` is that same “run this whole intention” grant with decision
+delegation: the orchestrator, not the human, settles forks and changed
+architectural commitments that stay inside the intention's goals and
+non-goals, records each one (node notes / `steer.md`, and a `DECISION` line
+on the root bead), and reports it. A wrong goal, scope growth, `sensitive`,
+`ambiguous`, EYES, and PARKED stay with the human.
+
 Only `change` applies delegated activation, after preparation. It may set
 ACTIVE BUILD for a dependency-ready node covered by the recorded grant.
 Do not pre-activate blocked descendants. Explicit node activation remains

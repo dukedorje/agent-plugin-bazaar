@@ -5,7 +5,8 @@ Default loop from intention to a running system:
 `intend` → `steer` → `change` → `advise` → `act` → `demo` → `fold`
 
 Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
-(campaign; takes waves when two+ disjoint writes are ready), `consult` (second
+(campaign; takes waves when two+ disjoint writes are ready), `orchestrate`
+(hand off the whole intention; builders run the lanes), `consult` (second
 opinion, no intend node), `demo` (try a landed act). `steer` is the
 default next after `intend` (not a `/run` wave; not `/ask`). Every verb
 is listed in the [glossary of commands](references/glossary.md). The
@@ -30,6 +31,8 @@ without a plugin install.
 | Lay of *this* DAG (inflight / done / pending) | `map` (uses current) or `map <id>` (peek) |
 | What’s on deck (OpenSpec **and** beads) | `status` |
 | Honest open pile (unblocked leaves, no empty faces) | `status --queue` |
+| I'm confident in the plan; build it all and tell me what you decided | `orchestrate` (builders per lane, decisions in chat, fold, close, debrief) |
+| What was decided for me, and how do I undo it | `debrief <root-id>` |
 | Keep going while unblocked | `run` (waves internally when two+ disjoint writes are ready) |
 | Try a landed act (internal ring) | `demo` / `demo <change-id>` |
 | At the desk; halt at first ASK/EYES/PENDING | `run --wait` |

@@ -111,9 +111,10 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `fold` | Living spec + archive. Designated folder is Opus 5; may spawn in the background |
 | `status` | Board: READY / PENDING / ASK / EYES / PUNT / beads / parked. `/ready` is an alias |
 | `brief` | Disposable one-pager (also shipped in morphist-tools) |
-| `debrief` | Expand a finished or failed unit; takeaways; feeds intend |
+| `debrief` | Expand a finished or failed unit; takeaways; feeds intend. On an intention root: campaign debrief with every delegated decision and how to reverse it; writes LEARNINGS |
 | `map` | Intend DAG with live status + decision briefing. `--current <id>` pins this tab’s DAG |
 | `run` | Campaign until a stop. Default walks away (roll) and waves when two+ disjoint writes are ready; `--wait` is desk mode; `--tidy` folds; `--autonomous` skips steer pause, does not flip PENDING without a grant; “run it by me” never acts |
+| `orchestrate` | Hand off a whole intended DAG. Background builders each run one lane through `run`; the orchestrator decides forks inside the goal, shares facts across lanes, posts DECISION / ARCHITECTURE / REVIEW / BLOCKED notices, then folds, closes the epic, runs a docs pass, and debriefs |
 | `setup` | Ready a repo: bd, beads init, `node` type, openspec layout, gitignore. Idempotent; `--check` reports only |
 
 Operator how-to: `plugins/intention/README.md`.
