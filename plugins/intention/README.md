@@ -7,7 +7,8 @@ Default loop from intention to a running system:
 Plus `brief` / `debrief` (disposable), `status` / `map` (observe), `run`
 (campaign; takes waves when two+ disjoint writes are ready), `orchestrate`
 (hand off the whole intention; builders run the lanes), `consult` (second
-opinion, no intend node), `demo` (try a landed act). `steer` is the
+opinion, no intend node), `break` (attacker's read; does not gate `act`),
+`demo` (try a landed act). `steer` is the
 default next after `intend` (not a `/run` wave; not `/ask`). Every verb
 is listed in the [glossary of commands](references/glossary.md). The
 between-turn choice is the [Jev prompt](references/jev-next.md). Canonical
@@ -42,6 +43,7 @@ without a plugin install.
 | Tidy only | `run --tidy` |
 | Fold a landed change (background, Opus 5) | `fold <id>` |
 | Second opinion (no change, no act unblock) | `consult` / `consult --who opus,astra` / `consult --panel` |
+| Try to break it; find the holes an attacker would use | `break` / `break <change-id>` |
 | Dispatch a small task (no intend node) | `oneshot` / `oneshot --who terra` |
 
 `--wait` may still `act` until an elicitation. “Run it by me”

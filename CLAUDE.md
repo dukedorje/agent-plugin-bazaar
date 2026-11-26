@@ -116,6 +116,7 @@ Only skills that exist on disk. Dropped 2026-07-28 names are in
 | `run` | Campaign until a stop. Default walks away (roll) and waves when two+ disjoint writes are ready; `--wait` is desk mode; `--tidy` folds; `--autonomous` skips steer pause, does not flip PENDING without a grant; “run it by me” never acts |
 | `orchestrate` | Hand off a whole intended DAG. Background builders each run one lane through `run`; the orchestrator decides forks inside the goal, shares facts across lanes, posts DECISION / ARCHITECTURE / REVIEW / BLOCKED notices, then folds, closes the epic, runs a docs pass, and debriefs |
 | `setup` | Ready a repo: bd, beads init, `node` type, openspec layout, gitignore. Idempotent; `--check` reports only |
+| `break` | Adversarial read of a change, design, or landed system. Findings only. Does not accept a review or gate `act` |
 
 Operator how-to: `plugins/intention/README.md`.
 

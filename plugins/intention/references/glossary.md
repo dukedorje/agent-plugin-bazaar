@@ -34,6 +34,7 @@ Skill files: `plugins/intention/skills/<verb>/SKILL.md`.
 | [`run`](../skills/run/SKILL.md) | A campaign: observe, then one sibling verb per wave, until a stop predicate. One ready node at a time. Parallel lanes are `orchestrate`. `--autonomous` skips the steer pause. `--wait` is desk mode. `--tidy` folds. |
 | [`orchestrate`](../skills/orchestrate/SKILL.md) | A whole intention taken to done. Builder subagents each carry one lane through `run`. The orchestrator decides forks inside the goal, shares facts across lanes, reports decisions in chat, then folds, closes the epic, and gives the campaign `debrief`. |
 | [`consult`](../skills/consult/SKILL.md) | Second opinions from architecture, plan, and thinking readers. Stdin in, JSON opinions out. No intend node, and no review file under the change. |
+| [`break`](../skills/break/SKILL.md) | An attacker's read. Try to break the change, design, or landed system and report the holes, with evidence. Does not accept a review and does not gate `act`. |
 | [`setup`](../skills/setup/SKILL.md) | A repo ready for Intention: `bd`, the `node` issue type, the `openspec/` skeleton, scratch dirs gitignored, and an agent pointer. `--check` reports only. Once per repo. |
 
 ## Dispatch, no skill file
