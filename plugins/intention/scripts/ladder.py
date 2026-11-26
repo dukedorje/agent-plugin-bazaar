@@ -169,7 +169,11 @@ _ADVISE_LINE = re.compile(
 _READER_LINE = re.compile(r"^>\s*\*\*READER:\*\*\s*(\S+)", re.I)
 _TRAILING_SEQ = re.compile(r"^(.*)-(\d+)$")
 _ACCEPTING = {"accept", "accept-with-nits"}
-_HIGH_BLAST = {"high", "schema", "deletion", "protocol", "durability", "challenging"}
+# Category blasts pick Fable at medium effort. Bare "high" and
+# "challenging" do not: those were being passed on ordinary reads.
+# "hardest" is the only token that raises Fable to effort high.
+_FABLE_BLAST = {"schema", "deletion", "protocol", "durability"}
+_HARDEST_BLAST = {"hardest"}
 
 
 def _review_sort_key(path: Path) -> tuple[str, int]:
@@ -247,10 +251,11 @@ def vary_reader(
 ) -> dict:
     """Gating reader. Priority order stays the fallback list.
 
-    Architecture review defaults to Astra and does not rotate. A high
-    blast prefers Fable 5.2, including a design or plan draft. A
-    send-back on this change returns to that reader. The author's vendor
-    is already gone from `eligible`.
+    Architecture review defaults to Astra at medium effort and does not
+    rotate. Schema, deletion, protocol, and durability prefer Fable 5.2
+    at medium effort, including a design or plan draft. Effort high is
+    only `--blast hardest`. A send-back on this change returns to that
+    reader. The author's vendor is already gone from `eligible`.
     """
     eligible = candidates(data, shape, author_family=author_family)
     if not eligible:
@@ -261,11 +266,16 @@ def vary_reader(
             same = next((route for route in eligible if route["id"] == reader), None)
             if same is not None:
                 return {**same, "vary_reason": "send-back", "last_reader": last_reader}
-    high = (blast or "").strip().lower() in _HIGH_BLAST
-    if high:
+    token = (blast or "").strip().lower()
+    hardest = token in _HARDEST_BLAST
+    fable_blast = hardest or token in _FABLE_BLAST
+    if fable_blast:
         fable = next((route for route in eligible if route.get("family") == "fable"), None)
         chosen = fable or eligible[0]
         reason = "high-blast" if fable else "high-blast-author-skipped"
+        effort = "high" if hardest and fable else "medium"
+        if fable:
+            chosen = {**chosen, "effort": effort}
     elif shape == "architecture-review":
         astra = next((route for route in eligible if route.get("family") == "astra"), None)
         if astra is not None:
@@ -340,10 +350,14 @@ def main() -> int:
 
     vary = sub.add_parser(
         "vary-reader",
-        help="gating reader: Astra by default, Fable on a high blast",
+        help="gating reader: Astra by default; Fable on schema, deletion, protocol, or durability",
     )
     vary.add_argument("--shape", default="architecture-review")
-    vary.add_argument("--blast", default="", help="high, schema, deletion, protocol, or durability")
+    vary.add_argument(
+        "--blast",
+        default="",
+        help="schema, deletion, protocol, durability, or hardest (Fable effort high)",
+    )
     vary.add_argument("--last-reader", help="route id of the previous accepting reader")
     vary.add_argument("--openspec", type=Path, help="scan changes and archive for the last accept")
     vary.add_argument("--change-dir", type=Path, help="this change; a send-back returns to that reader")

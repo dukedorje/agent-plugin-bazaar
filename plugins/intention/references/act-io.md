@@ -83,10 +83,8 @@ Writes `signature.content_hash` (`sha256:` + hex) over the result with
 
 ## Native host (Grok)
 
-When the conductor tab has `spawn_subagent` / `workflow`, disjoint
-`act` nodes go through `conductor.py wave --campaign <root-id>` then
-`.grok/workflows/run-wave.rhai`.
-Single Grok assignee: `spawn_subagent`. Claude/Codex: `spawn.py` below.
+`run-wave` is retired. One Grok act is `spawn_subagent`. Parallel
+lanes are `orchestrate`. Claude/Codex: `spawn.py` below.
 
 ## Spawn
 
@@ -242,8 +240,8 @@ python3 plugins/intention/scripts/ladder.py assign --shape fold
 ```
 
 Source: `plugins/intention/references/ladder.json`. Configured priority (`--after` handoff; `panel` fan-out): known → Sonnet
-then Terra; implementation/thinking → Sol then Opus; plan → Astra then Opus, Fable on a high blast;
-design → Opus, then Fable (Fable drafts a high blast; the driver may edit the draft); architecture gating → `vary-reader` (Astra by default, Fable on a high blast, no rotation; fallback list is Astra, Grok, Fable, Opus); fold → Opus, optional Grok.
+then Terra; implementation/thinking → Sol then Opus; plan → Astra then Opus at medium effort, Fable on schema, deletion, protocol, or durability;
+design → Opus, then Fable (Fable drafts those four blasts at medium effort; `--blast hardest` is effort high; the driver may edit the draft); architecture gating → `vary-reader` (Astra medium by default, Fable medium on those four blasts, Fable high only for hardest, no rotation; fallback list is Astra, Grok, Fable, Opus); fold → Opus, optional Grok.
 Concrete models and verification dates live only in the family registry.
 Same-family author passes `--author-family <author>` (harness/family/vendor)
 and **spawns** an executable different-vendor reader. Advise needs write

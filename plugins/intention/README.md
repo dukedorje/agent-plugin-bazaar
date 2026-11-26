@@ -119,8 +119,8 @@ Grok: clone is enough (`.agents/skills/`). Or
 `grok plugin marketplace add <this-repo>` and
 `grok plugin install intention --trust`.
 
-Codex: install the complete plugin so shared references, scripts, workflows,
-and agents stay beside the skills:
+Codex: install the complete plugin so shared references, scripts, and agents
+stay beside the skills:
 
 ```bash
 codex plugin marketplace add /path/to/agent-plugin-bazaar
@@ -133,7 +133,7 @@ Start a new Codex thread after install or update. Invoke by `$intend`,
 Hermes / Prime use the Agent Skills standard from a checkout whose
 `.agents/skills/` entries point into this complete plugin tree. Do not
 globally copy only `skills/`: Intention verbs also load the sibling
-`references/`, `scripts/`, `workflows/`, and `agents/` directories. Matrix:
+`references/`, `scripts/`, and `agents/` directories. Matrix:
 [`references/harness.md`](references/harness.md).
 
 New repo: run `setup` once (`/setup`, `$setup`). It installs nothing

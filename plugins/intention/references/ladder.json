@@ -3,7 +3,7 @@
   "human_override": "always wins",
   "max_inflight": 2,
   "max_fallback_hops": 2,
-  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Ordinary design is Opus; Fable drafts the initial architecture on a high blast or when a human names Fable. Plan consult is Astra, then Opus; Fable on a high blast. Gating advise uses vary-reader: Astra by default, Fable on a high blast, no rotation. assign stays first-by-priority.",
+  "notes": "Fable 5.2 (claude-fable-5-2) verified 2026-11-10. Fable 5.1 is removed and is not an alias of Opus. Priority is independent of executability and passive health. Ordinary design is Opus at low effort. Fable drafts on schema, deletion, protocol, or durability, or when a human names Fable, at medium effort. Effort high is only --blast hardest. Plan consult is Astra, then Opus, both medium; Fable on those four blasts. Gating advise uses vary-reader: Astra medium by default, no rotation. assign stays first-by-priority.",
   "families": {
     "sonnet": {
       "model": "claude-sonnet-5-5",
@@ -30,7 +30,7 @@
     "fable": {
       "model": "claude-fable-5-2",
       "vendor": "anthropic",
-      "effort": "high",
+      "effort": "medium",
       "aliases": [
         "fable-5.2",
         "fable-5",
@@ -57,7 +57,7 @@
     "astra": {
       "model": "gpt-6-astra",
       "vendor": "openai",
-      "effort": "high",
+      "effort": "medium",
       "aliases": [],
       "verified_at": "2026-10-05"
     },
@@ -151,11 +151,11 @@
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high",
+      "effort": "medium",
       "skills": [
         "designer"
       ],
-      "notes": "Drafts the initial architecture when the blast is high, or when a human names Fable. The session driver may edit that draft."
+      "notes": "Drafts the initial architecture on schema, deletion, protocol, or durability, or when a human names Fable. Effort stays medium unless --blast hardest. The session driver may edit that draft."
     },
     {
       "id": "opus-design",
@@ -187,8 +187,8 @@
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high",
-      "notes": "High-blast plan, or a human named Fable."
+      "effort": "medium",
+      "notes": "Schema, deletion, protocol, or durability plan, or a human named Fable. Effort high only for --blast hardest."
     },
     {
       "id": "opus-plan",
@@ -203,7 +203,7 @@
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high",
+      "effort": "medium",
       "notes": "Plan fallback when Astra is not eligible."
     },
     {
@@ -219,7 +219,7 @@
       "harness": "codex",
       "surface": "packet-only",
       "density": "lean",
-      "effort": "high",
+      "effort": "medium",
       "notes": "Ordinary plan consult."
     },
     {
@@ -257,12 +257,12 @@
         "architecture-review"
       ],
       "priority": 3,
-      "notes": "High blast only: schema, deletion, protocol, durability.",
+      "notes": "Schema, deletion, protocol, or durability, at medium effort. Effort high only when vary-reader is passed --blast hardest.",
       "role": "reader",
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high"
+      "effort": "medium"
     },
     {
       "id": "opus-arch-review",
@@ -275,7 +275,7 @@
       "harness": "claude",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high"
+      "effort": "medium"
     },
     {
       "id": "astra-arch-review",
@@ -288,8 +288,8 @@
       "harness": "codex",
       "surface": "packet-only",
       "density": "lean",
-      "effort": "high",
-      "notes": "Default architecture reader."
+      "effort": "medium",
+      "notes": "Default architecture reader. Medium effort."
     },
     {
       "id": "grok-arch-review",
@@ -302,7 +302,7 @@
       "harness": "grok",
       "surface": "skill-host",
       "density": "lean",
-      "effort": "high"
+      "effort": "medium"
     }
   ]
 }

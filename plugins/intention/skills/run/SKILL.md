@@ -266,25 +266,9 @@ while waves < max_waves:
     prepare each dispatch candidate via change/brief (preparation.md)
     if contract/activation/review/dependencies changed: continue  # re-observe
     defer candidates without current preparation or authority
-  if card.next is act and this host has workflow:
-    write+lint packets for dispatchable  # write-set before pick
-    wave = conductor.py wave --campaign campaign_id  # whole-packet disjoint subset
-    wave = intersect(wave, prepared_authorized_in_scope_ids)
-    # Never take unrelated or deferred ids returned by the global selector.
-    if len(wave) >= 2:
-      # card never says act while a ready node has an open spike line;
-      # if one slipped in, drop it here and let the next card spike it
-      take each wave node --campaign campaign_id
-      try:
-        workflow name=run-wave args.nodes=[{id, packet}]
-      except infra-red:
-        release each taken node
-        continue
-      persist each node's paths sequentially on HEAD
-      classify / close / repair / park per node
-      waves += 1
-      continue
-    # else single act below
+  if card.next is act:
+    # One node. run-wave is retired. Parallel lanes are orchestrate.
+    # A second disjoint write waits for the next card.
   if card.next is fold:
     assign ladder --shape fold          # opus-fold unless human picked Grok
     if this session is not that route:
@@ -294,7 +278,7 @@ while waves < max_waves:
     # else inline fold/SKILL.md below
   if card.next is advise:
     author = recorded change-author harness/family (this session if you wrote it)
-    route = ladder vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id> [--blast high]
+    route = ladder vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id>
     # On infra-red, pass --after <route-id> --fallback-hops <completed hops>.
     # Carry route.fallback_hops across attempts; never exceed two automatic hops.
     if assign failed:                   # no executable other-family
@@ -318,26 +302,19 @@ punt, not a fake send-back. Punt is last-resort only.
 
 ## Native host
 
-This session may have `spawn_subagent` and `workflow` (Grok). Python
-`spawn.py` cannot call them.
+This session may have `spawn_subagent` (Grok). Python `spawn.py`
+cannot call it. Do not launch a `workflow` for act. `run-wave` is
+retired. Two ready writes run one after the other. Side-by-side lanes
+are `orchestrate`.
 
-- **`act` wave, two or more wholly disjoint packets:**
-  `conductor.py wave --campaign <campaign_id>`. A node with an open
-  spike line never reaches a wave (the card says `next: spike` first);
-  drop one if it does. `take --campaign <campaign_id>`. Then
-  `workflow` `run-wave` (`plugins/intention/workflows/run-wave.rhai`,
-  also `.grok/workflows/run-wave.rhai` in this clone). Children stay
-  on HEAD. Do not isolate (worktrees PARKED). Conductor persists
-  sequentially after join. Not host `isolation_worktree`. Fileset
-  organizer (shared-file split) is a later node, not this slice.
-- **Single `act`, assignee grok:** `spawn_subagent`
-  `general-purpose` with the packet path. Follow `act`.
+- **`act`, assignee grok:** `spawn_subagent` `general-purpose` with
+  the packet path. Follow `act`. One node.
 - **Assignee claude / codex:** `spawn.py` as today.
 - **Fold:** `subagent_type="intention:folder"` when the host has it;
   else `spawn.py`.
 
 Packet is still the brief. Do not slash a foreign worker. Do not
-replace this whole loop with Rhai — the workflow is one act fan-out.
+replace this loop with Rhai.
 
 ## Policy
 
@@ -361,9 +338,8 @@ and “and run” enter this walk). It does **not**
 check EYES. Review afterwards is `map` / `demo` / `status`. Mailbox
 is `/status`, not this card.
 
-The `run-wave` workflow is the fan-out this loop launches when two or
-more wholly disjoint writes are dispatchable. There is no `/run-wave`
-command.
+`run-wave` is retired. This loop takes one ready node at a time.
+Parallel lanes are `orchestrate`. There is no `/run-wave` command.
 
 ### Run it by me
 

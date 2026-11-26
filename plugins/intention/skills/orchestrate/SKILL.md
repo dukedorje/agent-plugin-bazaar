@@ -29,8 +29,8 @@ host has, say so in one line and carry on.
 
 Load `../../references/shared.md`. The loop a builder runs is
 `../run/SKILL.md`; you do not restate it and you do not run it inline
-for a node. Lanes replace the `run-wave` fan-out: parallelism is yours,
-not the builders'.
+for a node. `run-wave` is retired. Parallelism is yours, not the
+builders', and not `/run`.
 
 ## What invoking this grants
 
@@ -236,7 +236,7 @@ When every node is landed or parked with a reason:
 
 - Implement a node yourself, or run a builder's loop inline
 - Let two lanes write overlapping paths at once
-- Let a builder fold, push, launch `run-wave`, or ask the human
+- Let a builder fold, push, fan out a wave, or ask the human
 - Decide a human-only matter, check an EYES box, or unpark
 - Accept a review in this session, or change readers to get an accept
 - Keep decisions or facts anywhere but beads and the change dir

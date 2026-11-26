@@ -34,7 +34,9 @@ The packet is the only interface. Schema:
    `needs_advise`.
 2. **Assign.** `ladder.py assign --shape <shape>`. Human pick wins.
    Complementary → weave. Architecture advise uses `vary-reader`
-   (`references/reviewers.md`): Astra by default, Fable on a high blast.
+   (`references/reviewers.md`): Astra at medium effort by default. Fable
+   at medium effort on schema, deletion, protocol, or durability.
+   Fable effort high only for `--blast hardest`.
    Do not rotate. Skip the author's vendor. Foreign harness → packet file, never a slash command.
 3. **Spike gate.** Load `../../references/from-sprint-exec.md`. If
    this node still has an open unverified hypothesis (a `- Spike:`
@@ -60,9 +62,8 @@ The packet is the only interface. Schema:
 7. **Launch.** If this host has `spawn_subagent` and the assignee
    harness is `grok`, spawn `general-purpose` with the packet path
    (the worker reads `act` and the packet). If the host has
-   `workflow` and this node is one of a disjoint wave, the
-   conductor already launched the `run-wave` workflow — do not launch again.
-   Otherwise stage a unique prompt (`spawn.py stage --packet
+   `workflow`, do not launch `run-wave`. That fan-out is retired.
+   Parallel lanes belong to `orchestrate`. Stage a unique prompt (`spawn.py stage --packet
    <packet>`) and `spawn.py run --adapter claude` or `codex`.
    Empty/missing prompt is a hard fail. Stall → `infra-red`. On
    infra-red / park, `release` the node.

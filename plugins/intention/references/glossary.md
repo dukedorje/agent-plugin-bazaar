@@ -31,7 +31,7 @@ Skill files: `plugins/intention/skills/<verb>/SKILL.md`.
 | [`map`](../skills/map/SKILL.md) | This tab’s intend DAG with live status. `map --current <id>` pins the session. `map <id>` peeks and leaves the pin. The pin is not in the repo. |
 | [`status`](../skills/status/SKILL.md) | The board: READY, PENDING, ASK, EYES, PUNT, beads, parked. `--queue` is the open pile (unblocked leaves, then blocked). |
 | [`ready`](../skills/ready/SKILL.md) | Alias of `status`. Same board, same script. Prefer `status`. |
-| [`run`](../skills/run/SKILL.md) | A campaign: observe, then one sibling verb per wave, until a stop predicate. Two or more disjoint writes launch the `run-wave` workflow. `--autonomous` skips the steer pause. `--wait` is desk mode. `--tidy` folds. |
+| [`run`](../skills/run/SKILL.md) | A campaign: observe, then one sibling verb per wave, until a stop predicate. One ready node at a time. Parallel lanes are `orchestrate`. `--autonomous` skips the steer pause. `--wait` is desk mode. `--tidy` folds. |
 | [`orchestrate`](../skills/orchestrate/SKILL.md) | A whole intention taken to done. Builder subagents each carry one lane through `run`. The orchestrator decides forks inside the goal, shares facts across lanes, reports decisions in chat, then folds, closes the epic, and gives the campaign `debrief`. |
 | [`consult`](../skills/consult/SKILL.md) | Second opinions from architecture, plan, and thinking readers. Stdin in, JSON opinions out. No intend node, and no review file under the change. |
 | [`setup`](../skills/setup/SKILL.md) | A repo ready for Intention: `bd`, the `node` issue type, the `openspec/` skeleton, scratch dirs gitignored, and an agent pointer. `--check` reports only. Once per repo. |

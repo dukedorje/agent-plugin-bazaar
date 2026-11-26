@@ -29,7 +29,7 @@ a gated reader, use `advise` instead.
    a change-id. Pass the question on stdin (or `--goal`). `--paths`
    for files they named.
 2. **Shape first, then who.** Default shape is `architecture-review`.
-   Plan/replan → `--shape plan` (Astra, then Opus; Fable on a high blast).
+   Plan/replan → `--shape plan` (Astra, then Opus, medium effort; Fable on schema, deletion, protocol, or durability; effort high only for `--blast hardest`).
    Thinking → `--shape thinking`
    (still `permission: read`). Nicknames bind *inside* that shape
    (`opus` resolves the current registry version in every shape).

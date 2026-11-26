@@ -53,11 +53,12 @@ unrelated ASK/EYES work.
    (this session if you wrote it; else the packet / review identity).
    Resolve a reader that is **not** that family:
 
-   `python3 <this-skill-dir>/../../scripts/ladder.py vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id> [--blast high]`
+   `python3 <this-skill-dir>/../../scripts/ladder.py vary-reader --permission write --author-family <author> --openspec openspec --change-dir openspec/changes/<id>`
 
-   Load `../../references/reviewers.md`. High blast (schema, deletion,
-   protocol, durability) passes `--blast high` and prefers Fable 5.2.
-   Ordinary reads are Astra and do not rotate. A send-back on this change returns to that
+   Load `../../references/reviewers.md`. Pass `--blast` only for schema,
+   deletion, protocol, or durability (Fable 5.2, medium effort), or
+   `hardest` (Fable effort high). Do not pass `--blast high`. Ordinary
+   reads are Astra at medium effort and do not rotate. A send-back on this change returns to that
    `READER`. `assign` without `vary-reader` is the fallback list only.
 
    Run `ladder.py show` / `assign`: configured, executable, and health
@@ -73,9 +74,9 @@ unrelated ASK/EYES work.
    Eligible order stays Astra, then Grok, then Fable, then Opus.
    Ordinary varying picks Astra. Claude authors skip Fable and Opus;
    Codex authors skip Astra and land on Grok, not Fable. A Grok driver
-   keeps Astra for an ordinary read and Fable for a high blast.
+   keeps Astra for an ordinary read and Fable for a category blast.
    Human picks may override the vendor boundary and degraded health with
-   a warning. Optional extra: `--shape plan` consult (Astra, then Opus; Fable on a high blast). Plan consult is
+   a warning. Optional extra: `--shape plan` consult (Astra, then Opus; Fable on a category blast, effort high only for `--blast hardest`). Plan consult is
    **not** the sole accept.
 
    If `assign --author-family <author>` finds no executable route:

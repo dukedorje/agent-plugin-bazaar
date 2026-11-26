@@ -47,8 +47,8 @@ Other builders are editing this working tree on other paths. So:
   seconds and retry. Do not remove the lock.
 - A check that fails on files outside your paths is `baseline-red`.
   Report which files; it may be another lane mid-edit.
-- Do not fold, push, or launch the `run-wave` workflow. If more than
-  one node in your scope is ready at once, do them in order.
+- Do not fold, push, or fan out parallel acts. `run-wave` is retired.
+  If more than one node in your scope is ready at once, do them in order.
 
 ## Decisions and facts already made
 

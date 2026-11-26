@@ -38,8 +38,8 @@ no flag (blank-page observe still happened).
 - Density: lean | standard | explicit   ← from ladder.py; inverse of capability
 - Surface: skill-host | packet-only
 - Assignee: `ladder.py assign --shape <known|thinking|design|plan|architecture-review|fold>`
-- Consult: plan/replan → Astra then Opus. Fable on a high blast, or when a human names Fable. Write stays here
-- Architecture: Opus drafts; Fable drafts a high blast. The driver may edit. Review-pair via `vary-reader`. Astra by default. Fable when blast is schema, deletion, protocol, or durability. Do not rotate. Skip the author's vendor.
+- Consult: plan/replan → Astra then Opus, medium effort. Fable on schema, deletion, protocol, or durability, or when a human names Fable. Effort high only for `--blast hardest`. Write stays here
+- Architecture: Opus drafts. Fable drafts those four blasts at medium effort. The driver may edit. Review-pair via `vary-reader`. Astra at medium effort by default. Fable medium on those four blasts. Fable high only for `--blast hardest`. Do not rotate. Skip the author's vendor. Do not pass `--blast high`.
 - Activation: none | needs human | already activated
 - Acceptance: command `…` | journey | contrast | none
 - Spike: `<id> <claim> — unverified (<confidence>, <verification>)` | `go` | `skipped` — omit when nothing is unverified

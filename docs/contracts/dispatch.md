@@ -56,8 +56,11 @@ python3 plugins/intention/scripts/ladder.py assign --shape known
 Source: `plugins/intention/references/ladder.json`. Known work is
 Codex Terra when the CLI is present, else Sonnet 5. Implementation
 and thinking are Sol, else Opus 5. The ordinary architecture draft is
-Opus; Fable 5.2 drafts it on a high blast. Ordinary review is Astra.
-Fable reviews a high blast. Plan consult is Astra, then Opus. Grok is
+Opus at low effort. Fable 5.2 drafts schema, deletion, protocol, or
+durability at medium effort. Ordinary review is Astra at medium effort.
+Fable reviews those four blasts at medium effort. Fable effort high is
+only `--blast hardest`. Plan consult is Astra, then Opus, both medium.
+Grok is
 the driver and the cross-family reader when Astra is not eligible.
 
 Blast **raises** density and never lowers it: schema/migration, auth,
